@@ -95,7 +95,7 @@ class MyBot(commands.Bot):
                 for fruit, details in normal_stock_data.items():
                     temp_stock.append(fruit)
                     stock_display = ", ".join(details['Stock Type'])
-                    printable_string += f"\n- {emoji_data[fruit]} **{fruit}**  {emoji_data['beli']}{details['Value'].replace('$', '')}"
+                    printable_string += f"\n- {emoji_data[fruit][0]} **{fruit}**  {emoji_data['beli'][0]}{details['Value'].replace('$', '')}"
                     #await message.channel.send(f"**{fruit}**- **Value** = {details['Value']}, **Stock Type** - {stock_display}")
 
                 for fruit, details in normal_stock_data.items():
@@ -144,7 +144,7 @@ class MyBot(commands.Bot):
                 for fruit, details in mirage_stock_data.items():
                     temp_m_stock.append(fruit)
                     stock_display = ", ".join(details['Stock Type'])
-                    printable_string2 += f"\n- {emoji_data[fruit]} **{fruit}**  {emoji_data['beli']}{details['Value'].replace('$', '')}" 
+                    printable_string2 += f"\n- {emoji_data[fruit][0]} **{fruit}**  {emoji_data['beli'][0]}{details['Value'].replace('$', '')}" 
                     #await message.channel.send(f"**{fruit}** **Value** = {details['Value']}, **Stock Type** - {stock_display}")
 
                 for fruit, details in mirage_stock_data.items():
