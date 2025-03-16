@@ -1,21 +1,38 @@
-MIT License
+License Agreement for LilyV2
+Copyright © Shree Varshan | Johith. All Rights Reserved.
 
-Copyright (c) 2025 ittzspsv
+This License Agreement (the "Agreement") governs the use of the Discord bot LilyV2 (the "Bot") and its associated source code, files, and assets (the "Materials") provided in this repository. By downloading, using, or distributing the Bot, you (the "User") agree to comply with the following terms:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. License Grant
+You are free to use, distribute, and monetize LilyV2 without explicit permission from the Licensor.
+However, this license does not transfer ownership of the code or any associated intellectual property.
+2. Modification & Permission Requirement
+If you wish to modify or alter the Bot (including its source code, features, branding, or core functionality), you must obtain explicit permission from Shree Varshan.
+To request permission, contact:
+📧 shreevarshan822@gmail.com | johithjr@gmail.com 
+💬 Discord: shreespsv | johi_18
+Minor configuration changes (such as bot token, command prefix, or environment variables) do NOT require permission.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+3. Credit & Attribution
+If you use, distribute, or monetize LilyV2, proper credit must be given by including the following notice in your project:
+"Original bot created by Shree Varshan – LilyV2. Used with permission."
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Removing or altering this attribution is not allowed.
+
+4. Prohibited Uses
+You may not:
+
+Claim ownership of the Bot or its code.
+Modify and redistribute the Bot without explicit permission.
+Remove or modify copyright and licensing notices.
+Use the Bot for illegal, harmful, or malicious purposes.
+5. Disclaimer & Liability
+LilyV2 is provided "as is" without any warranties. The creator is not responsible for any damages, losses, or issues resulting from its use.
+
+6. License Termination
+Failure to comply with these terms may result in revocation of your license to use the Bot.
+
+TL;DR:
+  You can use and monetize LilyV2 freely.
+  If you modify it, you must ask for permission first.
+  Give credit, don’t claim ownership, and don’t misuse it.
