@@ -18,8 +18,8 @@ def extract_trade_details(sentence):
     if len(trade_parts) < 2:
         return [], [], [], []
 
-    clean_your_side = re.sub(r"^(i want to|i wanna|i want|trade|i traded|i trade|traded my)\s*(trade my|trade|my)?\s*", "", trade_parts[0]).strip()
-    clean_their_side = re.sub(r"\bhis|their|her|is it|that|\b", "", trade_parts[1]).strip()
+    clean_your_side = re.sub(r"^(i (want to|wanna|want) |(i )?(traded|trade)( my)? )", "", trade_parts[0]).strip()
+    clean_their_side = re.sub(r"\bhis|their|her|is it|that|his|\b", "", trade_parts[1]).strip()
 
     your_side = clean_your_side.split(",")
     their_side = clean_their_side.split(",")
@@ -36,7 +36,7 @@ def extract_trade_details(sentence):
 
             if item in fruit_names:
                 fruit_type = "permanent" if is_permanent else "physical"
-                fruits.append(item.capitalize())
+                fruits.append(item.title())
                 fruit_types.append(fruit_type)
 
         return fruits, fruit_types
@@ -52,5 +52,5 @@ your_fruit_types = []
 their_fruits = []
 their_fruits_types = []
 
-your_fruits, your_fruit_types, their_fruits, their_fruits_types = extract_trade_details("i wanna trade my venom, spider for spirit w or l")
+your_fruits, your_fruit_types, their_fruits, their_fruits_types = extract_trade_details("traded my perm portal for east dragon")
 print(f'{your_fruits} \n{your_fruit_types} \n{their_fruits} \n{their_fruits_types}')

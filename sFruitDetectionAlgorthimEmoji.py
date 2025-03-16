@@ -15,9 +15,10 @@ else:
 
 emoji_id_to_name = {}
 for fruit_name, emoji_value in emoji_data.items():
-    match = re.search(r"<:(\w+):(\d+)>", emoji_value)
-    if match:
-        emoji_id_to_name[match.group(2)] = fruit_name.title()
+    for emoji_values in emoji_value:
+        match = re.search(r"<:(\w+):(\d+)>", emoji_values)
+        if match:
+            emoji_id_to_name[match.group(2)] = fruit_name.title()
 
 
 def extract_fruit_trade(emoji_string, emoji_id_to_name):

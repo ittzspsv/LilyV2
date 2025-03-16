@@ -21,12 +21,12 @@ def is_valid_trade_format(message, fruit_names):
         return False  # No clear trade format detected
 
     # Remove unnecessary prefixes and pronouns
-    clean_your_side = re.sub(r"^(i want to|i wanna|i want|trade|i traded|i trade|trade|traded|trade my|traded my)\s*(trade my|trade|my)?\s*", "", trade_parts[0]).strip()
+    clean_your_side = re.sub(r"^(i (want to|wanna|want) |(i )?(traded|trade)( my)? )", "", trade_parts[0]).strip()
     clean_their_side = re.sub(r"\bhis|their|her\b", "", trade_parts[1]).strip()
 
     # Split items by comma, handling spaces properly
-    your_side = [item.strip() for item in clean_your_side.split(",")]
-    their_side = [item.strip() for item in clean_their_side.split(",")]
+    your_side = re.split(r"\s*and\s*|\s*,\s*", clean_your_side)
+    their_side = re.split(r"\s*and\s*|\s*,\s*", clean_their_side)
 
     def extract_fruits(fruit_list):
         fruits = []
@@ -35,9 +35,9 @@ def is_valid_trade_format(message, fruit_names):
             item = item.strip()
 
             # Remove "perm" or "permanent" at the beginning
-            item = re.sub(r"^(perm|permanent)\s+", "", item)
+            item = re.sub(r"^(perm|permanent)\s+", "", item).strip()
 
-            # Check if the cleaned item exists in fruit database
+             # Check if the cleaned item exists in fruit database
             if item in fruit_names:
                 fruits.append(item)
 
@@ -46,9 +46,6 @@ def is_valid_trade_format(message, fruit_names):
     # Extract valid fruits
     your_fruits = extract_fruits(your_side)
     their_fruits = extract_fruits(their_side)
-
+    
     # Ensure at least one valid fruit exists on both sides
     return bool(your_fruits) and bool(their_fruits)
-
-'''test_bool = is_valid_trade_format("i traded my venom, spider for spirit w or l?", fruit_names)
-print(test_bool)'''

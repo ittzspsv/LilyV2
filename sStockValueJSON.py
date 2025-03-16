@@ -153,6 +153,8 @@ def calculate_win_loss(my_value, opponent_value):
 def extract_trade_details(sentence):
     sentence = sentence.lower()
 
+    sentence = sentence.replace("?", "")
+
     sentence = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", sentence).strip()
 
     trade_parts = sentence.split(" for ")
@@ -161,10 +163,12 @@ def extract_trade_details(sentence):
         return [], [], [], []
 
     # Improved regex to handle more variations
-    clean_your_side = re.sub(r"^(i want to|i wanna|i want|trade|i traded|i trade|traded my)\s*(trade my|trade|my)?\s*", "", trade_parts[0]).strip()
-    clean_their_side = re.sub(r"\bhis|their|her|is it|that|\b", "", trade_parts[1]).strip()
-    your_side = clean_your_side.split(",")
-    their_side = clean_their_side.split(",")
+    clean_your_side = re.sub(r"^(i (want to|wanna|want) |(i )?(traded|trade)( my)? )", "", trade_parts[0]).strip()
+    clean_their_side = re.sub(r"\bhis|their|her|is it|that\b", "", trade_parts[1]).strip()
+
+    # Split items using both "and" and ","
+    your_side = re.split(r"\s*and\s*|\s*,\s*", clean_your_side)
+    their_side = re.split(r"\s*and\s*|\s*,\s*", clean_their_side)
 
     def extract_fruits(fruit_list):
         fruits = []
@@ -178,7 +182,7 @@ def extract_trade_details(sentence):
 
             if item in fruit_names:
                 fruit_type = "permanent" if is_permanent else "physical"
-                fruits.append(item.capitalize())
+                fruits.append(item.title())
                 fruit_types.append(fruit_type)
 
         return fruits, fruit_types
@@ -223,3 +227,7 @@ def update_fruit_data(name, physical_value, permanent_value, physical_demand, pe
 ]
     
     update_fruit_data_json_type(value_data_path, updated_fruits)
+
+sentence1 = "I traded dough and leopard for gas"
+print(sentence1)
+print(extract_trade_details(sentence1))

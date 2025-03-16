@@ -27,9 +27,10 @@ if port == 0:
 
     emoji_id_to_name = {}
     for fruit_name, emoji_value in emoji_data.items():
-        match = re.search(r"<:(\w+):(\d+)>", emoji_value)
-        if match:
-            emoji_id_to_name[match.group(2)] = fruit_name.title()
+        for emoji_values in emoji_value:
+            match = re.search(r"<:(\w+):(\d+)>", emoji_values)
+            if match:
+                emoji_id_to_name[match.group(2)] = fruit_name.title()
 
 else:
     emoji_data_path = "bEmojiData.json"
@@ -38,9 +39,10 @@ else:
 
     emoji_id_to_name = {}
     for fruit_name, emoji_value in emoji_data.items():
-        match = re.search(r"<:(\w+):(\d+)>", emoji_value)
-        if match:
-            emoji_id_to_name[match.group(2)] = fruit_name.title()
+        for emoji_values in emoji_value:
+            match = re.search(r"<:(\w+):(\d+)>", emoji_values)
+            if match:
+                emoji_id_to_name[match.group(2)] = fruit_name.title()
 
 fruit_names = [fruit["name"].lower() for fruit in value_data]
 
@@ -230,6 +232,7 @@ class MyBot(commands.Bot):
             match = re.search(r"\b(?:fruit value of|value of)\s+(.+)", message.content.lower())
             if match:
                     item_name = match.group(1).strip()
+                    item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
                     item_name_capital = item_name.title()
                     print(item_name_capital)
                     jsonfruitdata = fetch_fruit_details(item_name)
@@ -297,11 +300,11 @@ class MyBot(commands.Bot):
 
                     your_fruit_values = []
                     for i in range(min(len(your_fruit_types), len(your_fruits), len(output_dict["Your_IndividualValues"]))):
-                        your_fruit_values.append(f"- {emoji_data[your_fruit_types[i].title()]} {emoji_data[your_fruits[i]]}  {emoji_data['beli']}{'{:,}'.format(output_dict['Your_IndividualValues'][i])}")
+                        your_fruit_values.append(f"- {emoji_data[your_fruit_types[i].title()][0]} {emoji_data[your_fruits[i]][0]} {emoji_data['beli'][0]}{'{:,}'.format(output_dict['Your_IndividualValues'][i])}")
 
                     their_fruit_values = []
                     for i in range(min(len(their_fruits_types), len(their_fruits), len(output_dict["Their_IndividualValues"]))):
-                       their_fruit_values.append(f"- {emoji_data[their_fruits_types[i].title()]} {emoji_data[their_fruits[i]]}  {emoji_data['beli']}{'{:,}'.format(output_dict['Their_IndividualValues'][i])}")
+                       their_fruit_values.append(f"- {emoji_data[their_fruits_types[i].title()][0]} {emoji_data[their_fruits[i]][0]} {emoji_data['beli'][0]}{'{:,}'.format(output_dict['Their_IndividualValues'][i])}")
 
                     embed.add_field(
                         name="Your Fruit Values",
@@ -345,11 +348,11 @@ class MyBot(commands.Bot):
                 
                 your_fruit_values = []
                 for i in range(min(len(your_fruit_typess), len(your_fruitss), len(output_dict["Your_IndividualValues"]))):
-                    your_fruit_values.append(f"- {emoji_data[your_fruit_typess[i].title()]} {emoji_data[your_fruitss[i]]}  {emoji_data['beli']}{'{:,}'.format(output_dict['Your_IndividualValues'][i])}")
+                    your_fruit_values.append(f"- {emoji_data[your_fruit_typess[i].title()][0]} {emoji_data[your_fruitss[i]][0]} {emoji_data['beli'][0]}{'{:,}'.format(output_dict['Your_IndividualValues'][i])}")
 
                 their_fruit_values = []
                 for i in range(min(len(their_fruits_typess), len(their_fruitss), len(output_dict["Their_IndividualValues"]))):
-                    their_fruit_values.append(f"- {emoji_data[their_fruits_typess[i].title()]} {emoji_data[their_fruitss[i]]}  {emoji_data['beli']}{'{:,}'.format(output_dict['Their_IndividualValues'][i])}")
+                    their_fruit_values.append(f"- {emoji_data[their_fruits_typess[i].title()][0]} {emoji_data[their_fruitss[i]][0]} {emoji_data['beli'][0]}{'{:,}'.format(output_dict['Their_IndividualValues'][i])}")
 
                 embed.add_field(
                         name="Your Fruit Values",
@@ -402,7 +405,6 @@ async def item_value(ctx: commands.Context, item_name: str):
         if ctx.channel == fChannel:
             item_name = item_name
             item_name_capital = item_name.title()
-            print(item_name_capital)
             jsonfruitdata = fetch_fruit_details(item_name)
             if isinstance(jsonfruitdata, dict):
                     fruit_img_link = FetchFruitImage(item_name_capital, 100)

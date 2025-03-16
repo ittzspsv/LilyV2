@@ -362,7 +362,7 @@
     {
         "name": "East Dragon",
         "physical_value": "860,000,000",
-        "permanent_value": "1,785,000,000",
+        "permanent_value": "2,300,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
