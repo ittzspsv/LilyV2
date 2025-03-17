@@ -169,27 +169,25 @@ def extract_trade_details(sentence):
     def extract_fruits(text):
         fruits = []
         fruit_types = []
-        words = re.split(r",\s*|\s+", text)  # Split by commas or spaces
+        words = re.split(r",\s*|\s+", text)
 
         i = 0
         while i < len(words):
             item = words[i]
 
-            # Check for "perm" or "permanent" before a fruit
             is_permanent = item in ("perm", "permanent")
             if is_permanent:
-                i += 1  # Move to next word
+                i += 1
                 if i < len(words):
-                    item = words[i]  # Get the actual fruit name
+                    item = words[i]
 
-            # **New Fix: First check for 3-word, then 2-word, then 1-word fruits**
             for length in range(3, 0, -1):  
                 possible_fruit = " ".join(words[i:i+length])
                 if possible_fruit in fruit_names:
                     fruit_type = "permanent" if is_permanent else "physical"
-                    fruits.append(possible_fruit.title())  # Capitalize for better output
+                    fruits.append(possible_fruit.title())
                     fruit_types.append(fruit_type)
-                    i += length - 1  # Skip detected words
+                    i += length - 1
                     break  
 
             i += 1
