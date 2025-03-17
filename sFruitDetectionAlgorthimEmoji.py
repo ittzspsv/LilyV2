@@ -24,20 +24,20 @@ for fruit_name, emoji_value in emoji_data.items():
 def extract_fruit_trade(emoji_string, emoji_id_to_name):
     emojis = re.findall(r"<:(\w+):(\d+)>", emoji_string)
 
-    if not any(emoji_id == BD.TRADE_EMOJI_ID for _, emoji_id in emojis):
-        return False
+    if not any(emoji_id in BD.TRADE_EMOJI_ID for _, emoji_id in emojis):
+        return [], [], [], []
 
     your_fruits, your_fruit_types = [], []
     their_fruits, their_fruit_types = [], []
 
-    trade_index = next((i for i, (_, emoji_id) in enumerate(emojis) if emoji_id == BD.TRADE_EMOJI_ID), None)
+    trade_index = next((i for i, (_, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), None)
     
     if trade_index is None:
-        return False
+        return [], [], [], []
 
     i = 0
     while i < trade_index:
-        if emojis[i][1] == BD.PERM_EMOJI_ID: 
+        if any(emojis[i][1] == perm_emoji_id for perm_emoji_id in BD.PERM_EMOJI_ID): 
             if i + 1 < trade_index and emojis[i + 1][1] in emoji_id_to_name:
                 your_fruits.append(emoji_id_to_name[emojis[i + 1][1]])
                 your_fruit_types.append("permanent")
@@ -50,7 +50,7 @@ def extract_fruit_trade(emoji_string, emoji_id_to_name):
 
     i = trade_index + 1
     while i < len(emojis):
-        if emojis[i][1] == BD.PERM_EMOJI_ID:
+        if any(emojis[i][1] == perm_emoji_id for perm_emoji_id in BD.PERM_EMOJI_ID):
             if i + 1 < len(emojis) and emojis[i + 1][1] in emoji_id_to_name:
                 their_fruits.append(emoji_id_to_name[emojis[i + 1][1]])
                 their_fruit_types.append("permanent")
@@ -64,22 +64,27 @@ def extract_fruit_trade(emoji_string, emoji_id_to_name):
     return your_fruits, your_fruit_types, their_fruits, their_fruit_types
 
 def is_valid_trade_sequence(emoji_string, emoji_id_to_name):
-    if BD.TRADE_EMOJI_ID not in emoji_string:
+    if not any(trade_emoji in emoji_string for trade_emoji in BD.TRADE_EMOJI_ID):
         return False
 
     emojis = re.findall(r"<:(\w+):(\d+)>", emoji_string)
 
-    trade_index = next((i for i, (_, emoji_id) in enumerate(emojis) if emoji_id == BD.TRADE_EMOJI_ID), None)
+    trade_index = next(
+        (i for i, (_, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), 
+        None
+    )
 
     if trade_index is None or trade_index == 0 or trade_index == len(emojis) - 1:
         return False
 
     valid_fruits_before_trade = any(
-        emoji_id in emoji_id_to_name for _, emoji_id in emojis[:trade_index] if emoji_id != BD.PERM_EMOJI_ID
+        emoji_id in emoji_id_to_name and emoji_id not in BD.PERM_EMOJI_ID 
+        for _, emoji_id in emojis[:trade_index]
     )
 
     valid_fruits_after_trade = any(
-        emoji_id in emoji_id_to_name for _, emoji_id in emojis[trade_index + 1:] if emoji_id != BD.PERM_EMOJI_ID
+        emoji_id in emoji_id_to_name and emoji_id not in BD.PERM_EMOJI_ID
+        for _, emoji_id in emojis[trade_index + 1:]
     )
 
     return valid_fruits_before_trade and valid_fruits_after_trade

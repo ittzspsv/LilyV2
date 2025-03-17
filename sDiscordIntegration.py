@@ -60,12 +60,19 @@ update_times = [
 
 mirage_update_times = [
     (3, 40),
+    (5, 40)
     (7, 40),
+    (9, 40)
     (11, 40),
+    (13, 40)
     (15, 40),
+    (17, 40)
     (19, 40),
+    (21, 40),
     (23, 40)
 ]
+
+
 
 #Previous Normal Stock
 previous_normal_stock_fruits = []
@@ -103,7 +110,6 @@ class MyBot(commands.Bot):
                         current_good_fruits_n.append(fruit)
                 
                 if temp_stock == previous_normal_stock_fruits:
-                    #await Channel.send("Repeatation Of Stock")
                     await asyncio.sleep(2)
                     await self.check_time_and_post()
                     return
@@ -154,7 +160,6 @@ class MyBot(commands.Bot):
                 if temp_m_stock == previous_mirage_stock_fruits:
                     await asyncio.sleep(2)
                     await self.check_time_and_post()
-                    #await Channel.send("Repeatation of stock")
                     return
                 
                 #Mirage Stock Embed
@@ -187,21 +192,13 @@ class MyBot(commands.Bot):
             await bot.wait_until_ready()
             channel = bot.get_channel(stock_update_channel_id)
 
-            '''if channel:
-                if stock_fetch_type == 0:
-                    await self.normal_stock(channel)
-                    await self.mirage_stock(channel)
-                else:
-                    await self.vNormal_stock(channel)
-                    await self.vMirage_stock(channel)'''
-
             while not self.is_closed():
                 delay = 2
 
-
                 # Get the current IST time
-                now = datetime.now()
+                now = datetime.now(ist)
                 current_time = (now.hour, now.minute)
+
 
                 # Check if current time matches any update time
                 if current_time in update_times:
@@ -318,6 +315,18 @@ class MyBot(commands.Bot):
                         inline=True
                     )
 
+                    embed.add_field(
+                        name="Your Total Values: ",
+                        value=f"{emoji_data['beli'][0]}{'{:,}'.format(output_dict['Your_TotalValue'])} " if output_dict['Your_TotalValue'] else "*No values available*",
+                        inline=False
+                    )
+                
+                    embed.add_field(
+                            name="Their Total Values: ",
+                            value=f"{emoji_data['beli'][0]}{'{:,}'.format(output_dict['Their_TotalValue'])} " if output_dict['Their_TotalValue'] else "*No values available*",
+                            inline=False
+                        )
+
                     if(percentage_calculation != "Invalid input. Please enter numerical values."):
                         embed.add_field(name=percentage_calculation,
                         value="",
@@ -334,6 +343,8 @@ class MyBot(commands.Bot):
 
         elif FDAE.is_valid_trade_sequence(message.content, emoji_id_to_name):
             your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
+            print(message.content)
+            print(your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess)
 
             output_dict = j_LorW(your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess)
             if(isinstance(output_dict, dict)):
@@ -368,13 +379,13 @@ class MyBot(commands.Bot):
                 
                 embed.add_field(
                         name="Your Total Values: ",
-                        value=f"{emoji_data['beli']}{'{:,}'.format(output_dict['Your_TotalValue'])} " if output_dict['Your_TotalValue'] else "*No values available*",
+                        value=f"{emoji_data['beli'][0]}{'{:,}'.format(output_dict['Your_TotalValue'])} " if output_dict['Your_TotalValue'] else "*No values available*",
                         inline=False
                     )
                 
                 embed.add_field(
                         name="Their Total Values: ",
-                        value=f"{emoji_data['beli']}{'{:,}'.format(output_dict['Their_TotalValue'])} " if output_dict['Their_TotalValue'] else "*No values available*",
+                        value=f"{emoji_data['beli'][0]}{'{:,}'.format(output_dict['Their_TotalValue'])} " if output_dict['Their_TotalValue'] else "*No values available*",
                         inline=False
                     )
 

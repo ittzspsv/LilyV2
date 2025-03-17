@@ -52,5 +52,6 @@ your_fruit_types = []
 their_fruits = []
 their_fruits_types = []
 
+'''
 your_fruits, your_fruit_types, their_fruits, their_fruits_types = extract_trade_details("traded my perm portal for east dragon")
-print(f'{your_fruits} \n{your_fruit_types} \n{their_fruits} \n{their_fruits_types}')
+print(f'{your_fruits} \n{your_fruit_types} \n{their_fruits} \n{their_fruits_types}')'''
