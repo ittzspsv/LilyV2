@@ -1,6 +1,7 @@
 import json
 import re
 from sBotDetails import *
+from sTradeFormatAlgorthim import *
 
 value_data_path = "ValueData.json"
 
@@ -151,44 +152,52 @@ def calculate_win_loss(my_value, opponent_value):
 #Custom algorthim that extracts your fruit and their fruits based on commas
 #Example - I wanna trade my perm leopard for his kitsune, kitsune, kitsune, kitsune
 def extract_trade_details(sentence):
-    sentence = sentence.lower()
+    sentence = sentence.lower().replace("?", "")
 
-    sentence = sentence.replace("?", "")
-
+    # Remove "w or l" type queries
     sentence = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", sentence).strip()
 
+    # Identify trade direction
     trade_parts = sentence.split(" for ")
-
     if len(trade_parts) < 2:
         return [], [], [], []
 
-    # Improved regex to handle more variations
-    clean_your_side = re.sub(r"^(i (want to|wanna|want) |(i )?(traded|trade)( my)? )", "", trade_parts[0]).strip()
+    # Remove unnecessary words
+    clean_your_side = re.sub(r"^(i (got|gave|want to|wanna|want) |(i )?(traded|trade)( my)? )", "", trade_parts[0]).strip()
     clean_their_side = re.sub(r"\bhis|their|her|is it|that\b", "", trade_parts[1]).strip()
 
-    # Split items using both "and" and ","
-    your_side = re.split(r"\s*and\s*|\s*,\s*", clean_your_side)
-    their_side = re.split(r"\s*and\s*|\s*,\s*", clean_their_side)
-
-    def extract_fruits(fruit_list):
+    def extract_fruits(text):
         fruits = []
         fruit_types = []
+        words = re.split(r",\s*|\s+", text)  # Split by commas or spaces
 
-        for item in fruit_list:
-            item = item.strip()
+        i = 0
+        while i < len(words):
+            item = words[i]
 
-            is_permanent = item.startswith(("perm ", "permanent "))
-            item = re.sub(r"^(perm|permanent)\s+", "", item)
+            # Check for "perm" or "permanent" before a fruit
+            is_permanent = item in ("perm", "permanent")
+            if is_permanent:
+                i += 1  # Move to next word
+                if i < len(words):
+                    item = words[i]  # Get the actual fruit name
 
-            if item in fruit_names:
-                fruit_type = "permanent" if is_permanent else "physical"
-                fruits.append(item.title())
-                fruit_types.append(fruit_type)
+            # **New Fix: First check for 3-word, then 2-word, then 1-word fruits**
+            for length in range(3, 0, -1):  
+                possible_fruit = " ".join(words[i:i+length])
+                if possible_fruit in fruit_names:
+                    fruit_type = "permanent" if is_permanent else "physical"
+                    fruits.append(possible_fruit.title())  # Capitalize for better output
+                    fruit_types.append(fruit_type)
+                    i += length - 1  # Skip detected words
+                    break  
 
+            i += 1
+        
         return fruits, fruit_types
 
-    your_fruits, your_fruit_type = extract_fruits(your_side)
-    their_fruits, their_fruit_type = extract_fruits(their_side)
+    your_fruits, your_fruit_type = extract_fruits(clean_your_side)
+    their_fruits, their_fruit_type = extract_fruits(clean_their_side)
 
     return your_fruits, your_fruit_type, their_fruits, their_fruit_type
 
@@ -228,6 +237,10 @@ def update_fruit_data(name, physical_value, permanent_value, physical_demand, pe
     
     update_fruit_data_json_type(value_data_path, updated_fruits)
 
-sentence1 = "I traded dough and leopard for gas"
-print(sentence1)
-print(extract_trade_details(sentence1))
+
+'''
+sentence = "adsjfkasklhfakjhfkal me trade 2x mastery for dough"
+print(sentence)
+print(is_valid_trade_format(sentence, fruit_names))
+print(extract_trade_details(sentence))
+'''

@@ -11,41 +11,41 @@ fruit_names = {fruit["name"].lower() for fruit in value_data}
 def is_valid_trade_format(message, fruit_names):
     message = message.lower().strip()
 
-    # Remove unnecessary words but preserve structure
     message = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", message).strip()
 
-    # Split the trade into two parts (before & after "for")
     trade_parts = message.split(" for ")
 
     if len(trade_parts) < 2:
-        return False  # No clear trade format detected
+        return False 
 
-    # Remove unnecessary prefixes and pronouns
-    clean_your_side = re.sub(r"^(i (want to|wanna|want) |(i )?(traded|trade)( my)? )", "", trade_parts[0]).strip()
-    clean_their_side = re.sub(r"\bhis|their|her\b", "", trade_parts[1]).strip()
+    clean_your_side = re.sub(r"^(i (got|gave|want to|wanna|want) |(i )?(traded|trade)( my)? )", "", trade_parts[0]).strip()
+    clean_their_side = re.sub(r"\bhis|their|her|is it|that\b", "", trade_parts[1]).strip()
 
-    # Split items by comma, handling spaces properly
-    your_side = re.split(r"\s*and\s*|\s*,\s*", clean_your_side)
-    their_side = re.split(r"\s*and\s*|\s*,\s*", clean_their_side)
-
-    def extract_fruits(fruit_list):
+    def extract_fruits(text):
         fruits = []
+        words = re.split(r",\s*|\s+", text)
 
-        for item in fruit_list:
-            item = item.strip()
+        i = 0
+        while i < len(words):
+            item = words[i]
 
-            # Remove "perm" or "permanent" at the beginning
-            item = re.sub(r"^(perm|permanent)\s+", "", item).strip()
+            if item in ("perm", "permanent"):
+                i += 1
+                if i < len(words):
+                    item = words[i]
 
-             # Check if the cleaned item exists in fruit database
-            if item in fruit_names:
-                fruits.append(item)
+            for length in range(3, 0, -1):  
+                possible_fruit = " ".join(words[i:i+length])
+                if possible_fruit in fruit_names:
+                    fruits.append(possible_fruit)
+                    i += length - 1
+                    break  
+
+            i += 1
 
         return fruits
 
-    # Extract valid fruits
-    your_fruits = extract_fruits(your_side)
-    their_fruits = extract_fruits(their_side)
-    
-    # Ensure at least one valid fruit exists on both sides
+    your_fruits = extract_fruits(clean_your_side)
+    their_fruits = extract_fruits(clean_their_side)
+
     return bool(your_fruits) and bool(their_fruits)
