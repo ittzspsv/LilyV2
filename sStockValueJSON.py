@@ -247,11 +247,11 @@ def update_fruit_data(name, physical_value, permanent_value, physical_demand, pe
     update_fruit_data_json_type(value_data_path, updated_fruits)
 
 
-
+'''
 sentence = "i wana trade 2 leopard for 4 doughs"
 print(sentence)
 print("is it a valid trade format : " , is_valid_trade_format(sentence, fruit_names))
 print(extract_trade_details(sentence))
-
+'''
 
 

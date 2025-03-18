@@ -42,5 +42,3 @@ def FetchFruitImage(fruit_name, imgsize):
                 return clean_url
 
     return None
-
-print(FetchFruitImage("2X Boss Drops", 100))
