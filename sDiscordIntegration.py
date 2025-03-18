@@ -230,6 +230,7 @@ class MyBot(commands.Bot):
             if match:
                     item_name = match.group(1).strip()
                     item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
+                    item_name = MatchFruitSet(item_name, fruit_names)
                     item_name_capital = item_name.title()
                     print(item_name_capital)
                     jsonfruitdata = fetch_fruit_details(item_name)
