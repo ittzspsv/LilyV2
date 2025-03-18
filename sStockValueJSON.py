@@ -151,6 +151,46 @@ def calculate_win_loss(my_value, opponent_value):
 
 #Custom algorthim that extracts your fruit and their fruits based on commas
 #Example - I wanna trade my perm leopard for his kitsune, kitsune, kitsune, kitsune
+#UPDATE - i wana trade my 2 leopard for 4 dough
+def extract_fruits(text):
+    fruits = []
+    fruit_types = []
+    words = re.split(r",\s*|\s+", text)
+    i = 0
+    while i < len(words):
+        item = words[i]
+
+        if item.isdigit():
+            quantity = int(item)
+            i += 1
+            if i < len(words):
+                item = words[i]
+        else:
+            quantity = 1
+
+        is_permanent = PermanentMatch(item)
+        if is_permanent:
+            i += 1
+            if i < len(words):
+                item = words[i]
+
+        matched_fruit = None
+        for length in range(3, 0, -1):
+            possible_fruit = " ".join(words[i:i+length])
+            matched_fruit = MatchFruitSet(possible_fruit, fruit_names)
+            if matched_fruit:
+                i += length - 1
+                break
+
+        if matched_fruit:
+            fruit_type = "permanent" if is_permanent else "physical"
+            fruits.extend([matched_fruit.title()] * quantity)
+            fruit_types.extend([fruit_type] * quantity)
+
+        i += 1
+    
+    return fruits, fruit_types
+
 def extract_trade_details(sentence):
     sentence = sentence.lower().replace("?", "")
 
@@ -163,40 +203,12 @@ def extract_trade_details(sentence):
     clean_your_side = predict_trade_message(trade_parts[0], TradeInitializer)
     clean_their_side = predict_trade_message(trade_parts[1], OpponentTradeSplitter)
 
-    def extract_fruits(text):
-        fruits = []
-        fruit_types = []
-        words = re.split(r",\s*|\s+", text)
-
-        i = 0
-        while i < len(words):
-            item = words[i]
-
-            is_permanent = PermanentMatch(item)
-            if isPermanentMatch(item):
-                i += 1
-                if i < len(words):
-                    item = words[i]
-
-            for length in range(3, 0, -1):  
-                possible_fruit = " ".join(words[i:i+length])
-                matched_fruit = MatchFruitSet(possible_fruit, fruit_names)
-                
-                if matched_fruit:
-                    fruit_type = "permanent" if is_permanent else "physical"
-                    fruits.append(matched_fruit.title())
-                    fruit_types.append(fruit_type)
-                    i += length - 1
-                    break  
-
-            i += 1
-        
-        return fruits, fruit_types
-
     your_fruits, your_fruit_type = extract_fruits(clean_your_side)
     their_fruits, their_fruit_type = extract_fruits(clean_their_side)
 
     return your_fruits, your_fruit_type, their_fruits, their_fruit_type
+
+
 
 def update_fruit_data_json_type(json_file_path, updated_fruits):
     with open(json_file_path, "r", encoding="utf-8") as json_file:
@@ -234,9 +246,12 @@ def update_fruit_data(name, physical_value, permanent_value, physical_demand, pe
     
     update_fruit_data_json_type(value_data_path, updated_fruits)
 
-'''
-sentence = "tarade kitsuni daough parmanent leoapard for 2x mastaery"
+
+
+sentence = "i wana trade 2 leopard for 4 doughs"
 print(sentence)
 print("is it a valid trade format : " , is_valid_trade_format(sentence, fruit_names))
-print(extract_trade_details(sentence))'
-'''
+print(extract_trade_details(sentence))
+
+
+

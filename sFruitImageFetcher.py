@@ -18,7 +18,7 @@ predefined_images = {
 }
 
 def FetchFruitImage(fruit_name, imgsize):
-    fruit_name_1 = "Dragon" if fruit_name in ["East Dragon", "West Dragon"] else fruit_name
+    fruit_name_1 = "Dragon" if fruit_name in ["East Dragon", "West Dragon", "Dragon"] else fruit_name
 
     if fruit_name_1 in predefined_images:
         return predefined_images[fruit_name_1]

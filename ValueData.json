@@ -484,5 +484,15 @@
         "permanent_demand": "",
         "demand_type": "Overpaid",
         "permanent_demand_type": ""
+    },
+
+    {
+        "name": "Dragon",
+        "physical_value": "1,000,000,000",
+        "permanent_value": "2,300,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "Overpaid"
     }
 ]
