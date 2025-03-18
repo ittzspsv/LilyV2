@@ -251,7 +251,7 @@ def update_fruit_data(name, physical_value, permanent_value, physical_demand, pe
 sentence = "i wana trade 2 leopard for 4 doughs"
 print(sentence)
 print("is it a valid trade format : " , is_valid_trade_format(sentence, fruit_names))
-print(extract_trade_details(sentence))
-'''
+print(extract_trade_details(sentence))'''
+
 
 

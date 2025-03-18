@@ -455,8 +455,6 @@ async def item_value(ctx: commands.Context, item_name: str):
                     await ctx.send(embed=embed)
 
 
-
-
         else:
             await ctx.send("Use Appropriate Channels")
 

@@ -1,4 +1,5 @@
-pip install bs4
-pip install requests
-pip install pytz
-pip install discord.py
+beautifulsoup4==4.12.2
+requests==2.32.3
+pytz==2025.1
+discord.py==2.5.2
+rapidfuzz==3.12.2
