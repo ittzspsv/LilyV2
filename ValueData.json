@@ -6,7 +6,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Stable"
+        "permanent_demand_type": "Stable",
+        "category": "common"
     },
     {
         "name": "Spin",
@@ -15,7 +16,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Stable"
+        "permanent_demand_type": "Stable",
+        "category": "common"
     },
     {
         "name": "Blade",
@@ -24,7 +26,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "3/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Stable"
+        "permanent_demand_type": "Stable",
+        "category": "common"
     },
     {
         "name": "Spring",
@@ -33,7 +36,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Stable"
+        "permanent_demand_type": "Stable",
+        "category": "common"
     },
     {
         "name": "Bomb",
@@ -42,7 +46,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Stable"
+        "permanent_demand_type": "Stable",
+        "category": "common"
     },
     {
         "name": "Smoke",
@@ -51,7 +56,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Stable"
+        "permanent_demand_type": "Stable",
+        "category": "common"
     },
     {
         "name": "Spike",
@@ -60,7 +66,8 @@
         "physical_demand": "0/10",
         "permanent_demand": "1/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Stable"
+        "permanent_demand_type": "Stable",
+        "category": "common"
     },
     {
         "name": "Flame",
@@ -69,7 +76,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "4/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "uncommon"
     },
     {
         "name": "Falcon",
@@ -78,7 +86,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Underpaid",
-        "permanent_demand_type": "Underpaid"
+        "permanent_demand_type": "Underpaid",
+        "category": "uncommon"
     },
     {
         "name": "Dark",
@@ -87,7 +96,8 @@
         "physical_demand": "2/10",
         "permanent_demand": "6/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "uncommon"
     },
     {
         "name": "Sand",
@@ -96,7 +106,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "3/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "uncommon"
     },
     {
         "name": "Ice",
@@ -105,7 +116,8 @@
         "physical_demand": "2/10",
         "permanent_demand": "8/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "uncommon"
     },
     {
         "name": "Diamond",
@@ -114,7 +126,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "3/10",
         "demand_type": "Underpaid",
-        "permanent_demand_type": "Underpaid"
+        "permanent_demand_type": "Underpaid",
+        "category": "uncommon"
     },
     {
         "name": "Rubber",
@@ -123,7 +136,8 @@
         "physical_demand": "2/10",
         "permanent_demand": "4/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "rare"
     },
     {
         "name": "Light",
@@ -132,7 +146,8 @@
         "physical_demand": "3/10",
         "permanent_demand": "7/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "rare"
     },
     {
         "name": "Barrier",
@@ -141,7 +156,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Underpaid",
-        "permanent_demand_type": "Underpaid"
+        "permanent_demand_type": "Underpaid",
+        "category": "rare"
     },
     {
         "name": "Ghost",
@@ -150,7 +166,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Underpaid",
-        "permanent_demand_type": "Underpaid"
+        "permanent_demand_type": "Underpaid",
+        "category": "rare"
     },
     {
         "name": "Magma",
@@ -159,7 +176,8 @@
         "physical_demand": "4/10",
         "permanent_demand": "7/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "rare"
     },
     {
         "name": "Quake",
@@ -168,7 +186,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "3/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary"
     },
     {
         "name": "Spider",
@@ -177,7 +196,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "3/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary"
     },
     {
         "name": "Love",
@@ -186,7 +206,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "3/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary"
     },
     {
         "name": "Pain",
@@ -195,7 +216,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Underpaid",
-        "permanent_demand_type": "Underpaid"
+        "permanent_demand_type": "Underpaid",
+        "category": "legendary"
     },
     {
         "name": "Sound",
@@ -204,7 +226,8 @@
         "physical_demand": "4/10",
         "permanent_demand": "4/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary"
     },
     {
         "name": "Phoenix",
@@ -213,7 +236,8 @@
         "physical_demand": "4/10",
         "permanent_demand": "4/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary"
     },
     {
         "name": "Blizzard",
@@ -222,7 +246,8 @@
         "physical_demand": "6/10",
         "permanent_demand": "5/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary"
     },
     {
         "name": "Rumble",
@@ -231,7 +256,8 @@
         "physical_demand": "7/10",
         "permanent_demand": "9/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary"
     },
     {
         "name": "Buddha",
@@ -240,7 +266,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary"
     },
     {
         "name": "Portal",
@@ -249,7 +276,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary"
     },
     {
         "name": "Gravity",
@@ -258,7 +286,8 @@
         "physical_demand": "1/10",
         "permanent_demand": "2/10",
         "demand_type": "Underpaid",
-        "permanent_demand_type": "Underpaid"
+        "permanent_demand_type": "Underpaid",
+        "category": "mythical"
     },
     {
         "name": "Shadow",
@@ -267,7 +296,8 @@
         "physical_demand": "6/10",
         "permanent_demand": "6/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Venom",
@@ -276,7 +306,8 @@
         "physical_demand": "7/10",
         "permanent_demand": "8/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Mammoth",
@@ -285,7 +316,8 @@
         "physical_demand": "6/10",
         "permanent_demand": "7/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Underpaid"
+        "permanent_demand_type": "Underpaid",
+        "category": "mythical"
     },
     {
         "name": "Spirit",
@@ -294,7 +326,8 @@
         "physical_demand": "7/10",
         "permanent_demand": "8/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Trex",
@@ -303,7 +336,8 @@
         "physical_demand": "8/10",
         "permanent_demand": "8/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Dough",
@@ -312,7 +346,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Control",
@@ -321,7 +356,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Leopard",
@@ -330,7 +366,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Gas",
@@ -339,7 +376,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Yeti",
@@ -348,7 +386,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Kitsune",
@@ -357,7 +396,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "East Dragon",
@@ -366,7 +406,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "West Dragon",
@@ -375,7 +416,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     },
     {
         "name": "Fast Boats",
@@ -384,7 +426,8 @@
         "physical_demand": "8/10",
         "permanent_demand": "",
         "demand_type": "Stable",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "gamepass"
     },
     {
         "name": "2x Boss Drops",
@@ -393,7 +436,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "gamepass"
     },
     {
         "name": "2x Mastery",
@@ -402,7 +446,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "gamepass"
     },
     {
         "name": "2x Money",
@@ -411,7 +456,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "gamepass"
     },
     {
         "name": "Fruit Storage",
@@ -420,7 +466,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "gamepass"
     },
     {
         "name": "Legendary Scrolls",
@@ -429,7 +476,8 @@
         "physical_demand": "4/10",
         "permanent_demand": "",
         "demand_type": "Stable",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "gamepass"
     },
     {
         "name": "Dark Blade",
@@ -438,7 +486,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "gamepass"
     },
     {
         "name": "Mythical Scrolls",
@@ -447,7 +496,8 @@
         "physical_demand": "6/10",
         "permanent_demand": "",
         "demand_type": "Stable",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "gamepass"
     },
     {
         "name": "Fruit Notifier",
@@ -456,7 +506,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "gamepass"
     },
     {
         "name": "Dragon Token",
@@ -465,7 +516,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "limited"
     },
     {
         "name": "Permanent Dragon Token",
@@ -474,7 +526,8 @@
         "physical_demand": "10/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "limited"
     },
     {
         "name": "Chromatic Skin",
@@ -483,9 +536,9 @@
         "physical_demand": "10/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
-        "permanent_demand_type": ""
+        "permanent_demand_type": "",
+        "category": "limited"
     },
-
     {
         "name": "Dragon",
         "physical_value": "1,000,000,000",
@@ -493,6 +546,7 @@
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid"
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     }
 ]

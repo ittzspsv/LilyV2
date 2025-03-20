@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 
 
-good_fruits = ["Buddha", "Portal", "Shadow", "Venom", "Spirit", "T-Rex", "Dough", "Control", "Leopard", "Gas", "Yeti", "Kitsune", "Dragon"]
+good_fruits = ["Buddha", "Portal", "Mammoth", "Shadow", "Venom", "Spirit", "T-Rex", "Dough", "Control", "Leopard", "Gas", "Yeti", "Kitsune", "Dragon"]
 
 
 def get_stock(url, stock_filter):

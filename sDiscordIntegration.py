@@ -14,7 +14,6 @@ import asyncio
     
 import re
 
-
 #ACCESSING DATA FORMATS
 value_data_path = "ValueData.json"
 with open(value_data_path, "r", encoding="utf-8") as json_file:
@@ -49,6 +48,7 @@ fruit_names = [fruit["name"].lower() for fruit in value_data]
 ist = pytz.timezone('Asia/Kolkata')
 
 # Based on Indian Standard Time and 10 mins waiting for correct fetch BASED ON INTERNATIONAL TIMESCALINGS
+
 update_times = [
     (5, 40),
     (9, 40),
@@ -71,8 +71,6 @@ mirage_update_times = [
     (21, 40),
     (23, 40)
 ]
-
-
 
 #Previous Normal Stock
 previous_normal_stock_fruits = []
@@ -136,8 +134,8 @@ class MyBot(commands.Bot):
                     if current_good_fruits_n != []:
                         await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_n)} is in Normal Stock :blush:.  Make sure to buy them")
 
-                    previous_normal_stock_fruits.clear()
-                    previous_normal_stock_fruits.extend(temp_stock)
+                    '''previous_normal_stock_fruits.clear()
+                    previous_normal_stock_fruits.extend(temp_stock)'''
 
     async def mirage_stock(self, Channel):
             #Mirage stock
@@ -185,43 +183,53 @@ class MyBot(commands.Bot):
                 if current_good_fruits_m != []:
                     await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_m)} is in Mirage Stock:blush:.  Make sure to buy them")
 
-                previous_mirage_stock_fruits.clear()
-                previous_mirage_stock_fruits.extend(temp_m_stock)
+                '''previous_mirage_stock_fruits.clear()
+                previous_mirage_stock_fruits.extend(temp_m_stock)'''
 
     async def check_time_and_post(self):
-            await bot.wait_until_ready()
-            channel = bot.get_channel(stock_update_channel_id)
+        await bot.wait_until_ready()
+        channel = bot.get_channel(stock_update_channel_id)
+        
+        while not self.is_closed():
+            now = datetime.now(ist)
+            current_time = (now.hour, now.minute)
 
-            while not self.is_closed():
-                delay = 2
+            tasks = []
 
-                # Get the current IST time
-                now = datetime.now(ist)
-                current_time = (now.hour, now.minute)
+            if current_time in update_times:
+                tasks.append(asyncio.create_task(self.safe_post_stock(self.normal_stock, channel)))
 
+            if current_time in mirage_update_times:
+                tasks.append(asyncio.create_task(self.safe_post_stock(self.mirage_stock, channel)))
 
-                # Check if current time matches any update time
-                if current_time in update_times:
-                    await self.normal_stock(channel)
+            if tasks:
+                await asyncio.gather(*tasks)
 
-                    #after posting the stock let skip the current time
-                    delay = 60
-                    
+            future_times = sorted(
+                [(h, m) for h, m in (update_times + mirage_update_times) if (h, m) > current_time]
+            )
 
-                else:
-                    delay = 2 
+            if future_times:
+                next_h, next_m = future_times[0]
+                next_check_time = now.replace(hour=next_h, minute=next_m, second=0, microsecond=0)
+                sleep_time = (next_check_time - now).total_seconds()
+            else:
+                sleep_time = 60
 
-                if current_time in mirage_update_times:
-                    await self.mirage_stock(channel)
-                        
-                    #after posting the stock let skip the current time
-                    delay = 60
-                else:
-                    delay = 2
-                await asyncio.sleep(delay)
-            
+            await asyncio.sleep(max(sleep_time, 1))
+
+    async def safe_post_stock(self, stock_function, channel):
+        try:
+            await stock_function(channel)
+        except Exception as e:
+            print(f"Error posting stock: {e}")
+            await asyncio.sleep(5)
+            try:
+                await stock_function(channel)
+            except Exception as e:
+                print(f"Failed to post stock again: {e}")
+                
     async def on_message(self, message):
-        # don't respond to ourselves
         if message.author == self.user:
               return
 
@@ -402,6 +410,7 @@ class MyBot(commands.Bot):
                 _w_or_l_channel = self.get_channel(w_or_l_channel_id)
                 if message.channel == _w_or_l_channel:
                     await message.reply(embed=embed)   
+
 bot = MyBot()
 
 @bot.hybrid_command(name='item_value', description='Gives you the value details of a single fruit')
@@ -458,5 +467,7 @@ async def item_value(ctx: commands.Context, item_name: str):
 
         else:
             await ctx.send("Use Appropriate Channels")
+
+
 
 bot.run(bot_token)
