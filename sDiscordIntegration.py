@@ -8,6 +8,7 @@ from sBotDetails import *
 import sTradeFormatAlgorthim as TFA
 from datetime import datetime, timedelta
 import sFruitDetectionAlgorthimEmoji as FDAE
+import sFruitDetectionAlgorthim as FDA
 
 import pytz
 import asyncio
@@ -43,7 +44,8 @@ else:
             if match:
                 emoji_id_to_name[match.group(2)] = fruit_name.title()
 
-fruit_names = [fruit["name"].lower() for fruit in value_data]
+fruit_names = sorted([fruit["name"].lower() for fruit in value_data], key=len, reverse=True)
+fruit_set = set(fruit_names)
 
 ist = pytz.timezone('Asia/Kolkata')
 
@@ -107,10 +109,6 @@ class MyBot(commands.Bot):
                     if fruit in good_fruits:
                         current_good_fruits_n.append(fruit)
                 
-                if temp_stock == previous_normal_stock_fruits:
-                    await asyncio.sleep(2)
-                    await self.check_time_and_post()
-                    return
 
                 else:
                     #Normal Stock Embed
@@ -134,9 +132,6 @@ class MyBot(commands.Bot):
                     if current_good_fruits_n != []:
                         await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_n)} is in Normal Stock :blush:.  Make sure to buy them")
 
-                    '''previous_normal_stock_fruits.clear()
-                    previous_normal_stock_fruits.extend(temp_stock)'''
-
     async def mirage_stock(self, Channel):
             #Mirage stock
             mirage_stock_data = get_mirage_stock()
@@ -155,11 +150,6 @@ class MyBot(commands.Bot):
                     if fruit in good_fruits:
                         current_good_fruits_m.append(fruit)
 
-                if temp_m_stock == previous_mirage_stock_fruits:
-                    await asyncio.sleep(2)
-                    await self.check_time_and_post()
-                    return
-                
                 #Mirage Stock Embed
                 embed = discord.Embed(title="MIRAGE STOCK",
                             description=f"{printable_string2}",
@@ -183,8 +173,6 @@ class MyBot(commands.Bot):
                 if current_good_fruits_m != []:
                     await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_m)} is in Mirage Stock:blush:.  Make sure to buy them")
 
-                '''previous_mirage_stock_fruits.clear()
-                previous_mirage_stock_fruits.extend(temp_m_stock)'''
 
     async def check_time_and_post(self):
         await bot.wait_until_ready()
@@ -290,7 +278,7 @@ class MyBot(commands.Bot):
                 their_fruits = []
                 their_fruits_types=[]
 
-                your_fruits, your_fruit_types, their_fruits, their_fruits_types = extract_trade_details(message.content)
+                your_fruits, your_fruit_types, their_fruits, their_fruits_types = FDA.extract_trade_details(message.content)
                 output_dict = j_LorW(your_fruits, your_fruit_types, their_fruits, their_fruits_types)
                 #await message.channel.send(resultant)
                 if isinstance(output_dict, dict):
@@ -349,7 +337,6 @@ class MyBot(commands.Bot):
                     if message.channel == w_or_l_channel:
                         await message.reply(embed=embed)
                             
-
         elif FDAE.is_valid_trade_sequence(message.content, emoji_id_to_name):
             your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
             print(message.content)

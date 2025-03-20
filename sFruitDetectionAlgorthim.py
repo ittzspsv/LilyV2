@@ -1,57 +1,64 @@
-import re
 import json
+import re
+from rapidfuzz import process, fuzz
+from sTradeFormatAlgorthim import *
 
+# Load fruit names
 value_data_path = "ValueData.json"
-
 with open(value_data_path, "r", encoding="utf-8") as json_file:
     value_data = json.load(json_file)
-fruit_names = {fruit["name"].lower() for fruit in value_data}
 
+fruit_names = sorted([fruit["name"].lower() for fruit in value_data], key=len, reverse=True)
+fruit_set = set(fruit_names)
 
-def extract_trade_details(sentence):
-    sentence = sentence.lower()
+def extract_trade_details(message):
+    message = message.lower()
+    message = re.sub(r'[^\w\s]', '', message)  # Remove punctuation
+    message_parsed = message.split()
 
-    sentence = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", sentence).strip()
+    trade_split_index = message_parsed.index("for") if "for" in message_parsed else -1
+    your_message_split = message_parsed[:trade_split_index]
+    their_message_split = message_parsed[trade_split_index + 1:]
 
-    trade_parts = sentence.split(" for ")
-
-    if len(trade_parts) < 2:
-        return [], [], [], []
-
-    clean_your_side = re.sub(r"^(i (want to|wanna|want) |(i )?(traded|trade)( my)? )", "", trade_parts[0]).strip()
-    clean_their_side = re.sub(r"\bhis|their|her|is it|that|his|\b", "", trade_parts[1]).strip()
-
-    your_side = clean_your_side.split(",")
-    their_side = clean_their_side.split(",")
-
-    def extract_fruits(fruit_list):
-        fruits = []
+    def extract_fruits(message_split):
+        fruit_list = []
         fruit_types = []
+        
+        i = 0
+        while i < len(message_split):
+            matched_fruit = None
+            matched_length = 0
 
-        for item in fruit_list:
-            item = item.strip()
+            for fruit in fruit_names:
+                matched_fruit = MatchFruitSet(' '.join(message_split[i:i + len(fruit.split())]), fruit_set)
+                if matched_fruit:
+                    matched_length = len(matched_fruit.split())
+                    break
 
-            is_permanent = item.startswith(("perm ", "permanent "))
-            item = re.sub(r"^(perm|permanent)\s+", "", item)
+            if matched_fruit:
+                counter = 1
+                
+                if i > 0 and message_split[i - 1].isdigit():
+                    counter = int(message_split[i - 1])
 
-            if item in fruit_names:
-                fruit_type = "permanent" if is_permanent else "physical"
-                fruits.append(item.title())
-                fruit_types.append(fruit_type)
+                fruit_type = "Permanent" if (i > 0 and isPermanentMatch(message_split[i - 1])) else "Physical"
 
-        return fruits, fruit_types
+                for _ in range(counter):
+                    fruit_list.append(matched_fruit)
+                    fruit_types.append(fruit_type)
 
-    your_fruits, your_fruit_type = extract_fruits(your_side)
-    their_fruits, their_fruit_type = extract_fruits(their_side)
+                i += matched_length - 1
 
-    return your_fruits, your_fruit_type, their_fruits, their_fruit_type
+            i += 1
+        
+        return fruit_list, fruit_types
 
+    your_fruits, your_fruit_type = extract_fruits(your_message_split)
+    their_fruits, their_fruit_types = extract_fruits(their_message_split)
 
-your_fruits = []
-your_fruit_types = []
-their_fruits = []
-their_fruits_types = []
+    
+    your_fruits = [yourfruit.title() for yourfruit in your_fruits]
+    their_fruits = [theirfruit.title() for theirfruit in their_fruits]
 
-'''
-your_fruits, your_fruit_types, their_fruits, their_fruits_types = extract_trade_details("traded my perm portal for east dragon")
-print(f'{your_fruits} \n{your_fruit_types} \n{their_fruits} \n{their_fruits_types}')'''
+    
+    return your_fruits, your_fruit_type, their_fruits, their_fruit_types
