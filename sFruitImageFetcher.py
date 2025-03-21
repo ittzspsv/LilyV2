@@ -14,7 +14,8 @@ predefined_images = {
     "Mythical Scrolls": "https://static.wikia.nocookie.net/roblox-blox-piece/images/9/9f/BadgeMythicalScrollx3.png/",
     "Legendary Scrolls": "https://static.wikia.nocookie.net/roblox-blox-piece/images/3/3e/BadgeLegendaryScrollx5.png/",
     "Dragon Token": "https://static.wikia.nocookie.net/roblox-blox-piece/images/6/61/DragonTokenPhysical.png/",
-    "Permanent Dragon Token": "https://static.wikia.nocookie.net/roblox-blox-piece/images/2/29/Dragon_Token_%28Permanent%29.png/"
+    "Permanent Dragon Token": "https://static.wikia.nocookie.net/roblox-blox-piece/images/2/29/Dragon_Token_%28Permanent%29.png/",
+    "Fruit Storage"  : "https://static.wikia.nocookie.net/roblox-blox-piece/images/6/6a/BadgeFruitStorage.png"
 }
 
 def FetchFruitImage(fruit_name, imgsize):
