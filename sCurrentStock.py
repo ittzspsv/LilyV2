@@ -1,5 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
+import asyncio
+import random
 
 
 
@@ -7,10 +9,15 @@ good_fruits = ["Buddha", "Portal", "Mammoth", "Shadow", "Venom", "Spirit", "T-Re
 
 
 def get_stock(url, stock_filter):
-    headers = {"User-Agent": "Mozilla/5.0"}
+    headers = {
+        "User-Agent": random.choice([
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+        ])
+    }
     response = requests.get(url, headers=headers)
 
-    if response.status_code == 200:  # 200 = Success
+    if response.status_code == 200:
         soup = BeautifulSoup(response.text, "html.parser")
 
         # Fruit Names
@@ -47,20 +54,20 @@ def get_stock(url, stock_filter):
     else:
         return "Failed to scrape web data"
 
-def get_current_stock_remaining_time():
-    url = 'https://www.gamersberg.com/blox-fruits/stock'
-    headers = {"User-Agent": "Mozilla/5.0"}  # Prevents blocking
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, 'html.parser')
 
-    # Use a valid CSS selector (escaped class names)
-    timer_div = soup.select_one("div.lg\\:text-6xl.sm\\:text-5xl.text-4xl.font-bold")
 
-    if timer_div:
-        timer_value = timer_div.get_text(strip=True)
-        print(f'Timer Value: {timer_value}')
-    else:
-        print('Timer element not found.')
+async def fetch_stock_until_update(stock_filter, retry_delay=100, max_retries=500):    
+    retries = 0
+    url = "https://fruityblox.com/stock"
+    while retries < max_retries:
+        stock_data = get_stock(url, stock_filter)
+        if stock_data:
+            return stock_data
+        await asyncio.sleep(retry_delay)
+        retries += 1
+
+    return {}
+
 
 # Fetch only Normal Stock fruits
 def get_normal_stock():
@@ -71,6 +78,7 @@ def get_normal_stock():
 def get_mirage_stock():
     url = "https://fruityblox.com/stock"
     return get_stock(url, "Mirage Stock")
+
 # Fetch and print Normal Stock data
 def PrintNormalStock():
     current_good_fruits = []

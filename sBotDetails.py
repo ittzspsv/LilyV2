@@ -1,4 +1,3 @@
-
 #VERY IMPORTANT TOKEN THAT SHOULD NOT BE SHARED HERE
 bot_token = ""
 
@@ -84,4 +83,14 @@ else:
     MAKE SURE THIS IS FILLED BECAUSE WE CANNOT ACCESS THE STOCK PING ROLE ID
     '''
     stock_ping_role_id = "1348020649444114574"
+
+embed_color_codes = {
+    "common" : 0xa1a4a5,
+    "uncommon" : 0x1c78ce,
+    "rare" : 0x1f1cce,
+    "legendary" : 0x9f1cce,
+    "mythical" : 0xce1c1c,
+    "gamepass" : 0xffd500,
+    "limited" : 0xffd500
+}
     

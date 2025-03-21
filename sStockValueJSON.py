@@ -5,6 +5,7 @@ from sTradeFormatAlgorthim import *
 
 value_data_path = "ValueData.json"
 
+
 with open(value_data_path, "r", encoding="utf-8") as json_file:
     value_data = json.load(json_file)
 fruit_names = {fruit["name"].lower() for fruit in value_data}
@@ -87,48 +88,51 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
             "Your_IndividualValues" : [],
             "Their_IndividualValues" : [],
             "Your_TotalValue" : "",
-            "Their_TotalValue" : ""
+            "Their_TotalValue" : "",
+            "ColorKey" : ""
 
         }
 
     if (total_value_of_your_fruit < total_value_of_their_fruit and fruit_exceed_limit != 1):
         WORLT = "W"
-        output_dict["TradeConclusion"] = f"It is a {WORLT} Trade"
+        output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
         output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
         output_dict["Your_IndividualValues"] = your_fruit_individual_values
         output_dict["Their_IndividualValues"] = their_fruit_individual_values
         output_dict["Your_TotalValue"] = total_value_of_your_fruit
         output_dict["Their_TotalValue"] = total_value_of_their_fruit
+        output_dict["ColorKey"] = 0xffd500
 
 
         return output_dict
     elif (total_value_of_your_fruit == total_value_of_their_fruit) and fruit_exceed_limit != 1:
         WORLT = "Fair"
-        output_dict["TradeConclusion"] = f"It is a {WORLT} Trade"
+        output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
         output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
         output_dict["Your_IndividualValues"] = your_fruit_individual_values
         output_dict["Their_IndividualValues"] = their_fruit_individual_values
         output_dict["Your_TotalValue"] = total_value_of_your_fruit
         output_dict["Their_TotalValue"] = total_value_of_their_fruit
-
+        output_dict["ColorKey"] = 0xff6600
 
         return output_dict
     
     elif fruit_exceed_limit != 1:
         WORLT = "L"
-        output_dict["TradeConclusion"] = f"It is a {WORLT} Trade"
+        output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
         output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
         output_dict["Your_IndividualValues"] = your_fruit_individual_values
         output_dict["Their_IndividualValues"] = their_fruit_individual_values
         output_dict["Your_TotalValue"] = total_value_of_your_fruit
         output_dict["Their_TotalValue"] = total_value_of_their_fruit
-
+        output_dict["ColorKey"] = 0x79817d
 
         return output_dict
     
     else:
         output_dict["TradeConclusion"] = f"Fruit Value exceeded for one of the trader"
         output_dict["TradeDescription"] = f"In Blox fruit you can only trade upto 4 fruits at a time. \n\nIf you wanna trade multiple fruits like that then make sure to use **{server_name}'s Middlemen System** for a **safe** and **trusted multiple trades**.  You can request for a middlemen here <#{middle_men_channel_id}>"
+        output_dict["ColorKey"] = 0xff0000
 
         return output_dict
 

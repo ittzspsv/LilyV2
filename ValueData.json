@@ -281,12 +281,12 @@
     },
     {
         "name": "Gravity",
-        "physical_value": "2,000,000",
-        "permanent_value": "965,000,000",
-        "physical_demand": "1/10",
-        "permanent_demand": "2/10",
-        "demand_type": "Underpaid",
-        "permanent_demand_type": "Underpaid",
+        "physical_value": "55,000,000",
+        "permanent_value": "1,850,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "Overpaid",
         "category": "mythical"
     },
     {

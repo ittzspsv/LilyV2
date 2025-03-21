@@ -16,9 +16,11 @@ import asyncio
 import re
 
 #ACCESSING DATA FORMATS
+
 value_data_path = "ValueData.json"
 with open(value_data_path, "r", encoding="utf-8") as json_file:
     value_data = json.load(json_file)
+
 
 if port == 0:
     emoji_data_path = "EmojiData.json"
@@ -52,26 +54,26 @@ ist = pytz.timezone('Asia/Kolkata')
 # Based on Indian Standard Time and 10 mins waiting for correct fetch BASED ON INTERNATIONAL TIMESCALINGS
 
 update_times = [
-    (5, 40),
-    (9, 40),
-    (13, 40),
-    (17, 40),
-    (21, 40),
-    (1, 40)
+    (5, 30),
+    (9, 30),
+    (13, 30),
+    (17, 30),
+    (21, 30),
+    (1, 30),
 ]
 
 mirage_update_times = [
-    (3, 40),
-    (5, 40),
-    (7, 40),
-    (9, 40),
-    (11, 40),
-    (13, 40),
-    (15, 40),
-    (17, 40),
-    (19, 40),
-    (21, 40),
-    (23, 40)
+    (3, 30),
+    (5, 30),
+    (7, 30),
+    (9, 30),
+    (11, 30),
+    (13, 30),
+    (15, 30),
+    (17, 30),
+    (19, 30),
+    (21, 30),
+    (23, 30),
 ]
 
 #Previous Normal Stock
@@ -95,7 +97,7 @@ class MyBot(commands.Bot):
             #Normal Stock Display
             printable_string = ""
             current_good_fruits_n = []
-            normal_stock_data = get_normal_stock()
+            normal_stock_data = await fetch_stock_until_update("Normal Stock")
             temp_stock = []
             if isinstance(normal_stock_data, dict) and normal_stock_data:
                 #await message.channel.send("# NORMAL STOCK")
@@ -134,7 +136,7 @@ class MyBot(commands.Bot):
 
     async def mirage_stock(self, Channel):
             #Mirage stock
-            mirage_stock_data = get_mirage_stock()
+            mirage_stock_data = await fetch_stock_until_update("Mirage Stock")
             current_good_fruits_m = []
             temp_m_stock = []
             printable_string2 = ""
@@ -200,7 +202,7 @@ class MyBot(commands.Bot):
             if future_times:
                 next_h, next_m = future_times[0]
                 next_check_time = now.replace(hour=next_h, minute=next_m, second=0, microsecond=0)
-                sleep_time = (next_check_time - now).total_seconds()
+                sleep_time = (next_check_time - now).total_seconds()    
             else:
                 sleep_time = 60
 
@@ -228,13 +230,12 @@ class MyBot(commands.Bot):
                     item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
                     item_name = MatchFruitSet(item_name, fruit_names)
                     item_name_capital = item_name.title()
-                    print(item_name_capital)
                     jsonfruitdata = fetch_fruit_details(item_name)
                     if isinstance(jsonfruitdata, dict):
                         fruit_img_link = FetchFruitImage(item_name_capital, 100)
                         #await message.channel.send(f"> # {item_name.title()}\n> - **Physical Value**: {jsonfruitdata['physical_value']} \n> - **Physical Demand**: {jsonfruitdata['physical_demand']} \n> - **Physical DemandType **: {jsonfruitdata['demand_type']} \n> - **Permanent Value**: {jsonfruitdata['permanent_value']} \n> - **Permanent Demand**: {jsonfruitdata['permanent_demand']} \n> - **Permanent Demand Type**: {jsonfruitdata['permanent_demand_type']}")
                         embed = discord.Embed(title=f"{item_name.title()}",
-                        colour=embed_color_code)
+                        colour=embed_color_codes[jsonfruitdata['category']])
 
                         embed.set_author(name=bot_name,
                         icon_url=bot_icon_link_url)
@@ -287,7 +288,7 @@ class MyBot(commands.Bot):
                 
                     embed = discord.Embed(title=output_dict["TradeConclusion"],
                         description= output_dict["TradeDescription"],
-                        colour=0xc2004e,)
+                        colour=output_dict["ColorKey"],)
 
                     embed.set_author(name=bot_name,
                                     icon_url=bot_icon_link_url)
@@ -348,7 +349,7 @@ class MyBot(commands.Bot):
                 
                 embed = discord.Embed(title=output_dict["TradeConclusion"],
                         description= output_dict["TradeDescription"],
-                        colour=0xc2004e,)
+                        colour=output_dict["ColorKey"],)
 
                 embed.set_author(name=bot_name,
                                     icon_url=bot_icon_link_url)
@@ -398,6 +399,7 @@ class MyBot(commands.Bot):
                 if message.channel == _w_or_l_channel:
                     await message.reply(embed=embed)   
 
+        
 bot = MyBot()
 
 @bot.hybrid_command(name='item_value', description='Gives you the value details of a single fruit')
@@ -454,7 +456,6 @@ async def item_value(ctx: commands.Context, item_name: str):
 
         else:
             await ctx.send("Use Appropriate Channels")
-
 
 
 bot.run(bot_token)
