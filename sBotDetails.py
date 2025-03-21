@@ -82,7 +82,7 @@ else:
     '''
     MAKE SURE THIS IS FILLED BECAUSE WE CANNOT ACCESS THE STOCK PING ROLE ID
     '''
-    stock_ping_role_id = "1348020649444114574"
+    stock_ping_role_id = "1345555258314588170"
 
 embed_color_codes = {
     "common" : 0xa1a4a5,
