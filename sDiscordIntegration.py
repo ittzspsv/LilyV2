@@ -213,11 +213,6 @@ class MyBot(commands.Bot):
             await stock_function(channel)
         except Exception as e:
             print(f"Error posting stock: {e}")
-            await asyncio.sleep(5)
-            try:
-                await stock_function(channel)
-            except Exception as e:
-                print(f"Failed to post stock again: {e}")
                 
     async def on_message(self, message):
         if message.author == self.user:
