@@ -54,26 +54,26 @@ ist = pytz.timezone('Asia/Kolkata')
 # Based on Indian Standard Time and 10 mins waiting for correct fetch BASED ON INTERNATIONAL TIMESCALINGS
 
 update_times = [
-    (5, 30),
-    (9, 30),
-    (13, 30),
-    (17, 30),
-    (21, 30),
-    (1, 30),
+    (5, 35),
+    (9, 35),
+    (13, 35),
+    (17, 35),
+    (21, 35),
+    (1, 35),
 ]
 
 mirage_update_times = [
-    (3, 30),
-    (5, 30),
-    (7, 30),
-    (9, 30),
-    (11, 30),
-    (13, 30),
-    (15, 30),
-    (17, 30),
-    (19, 30),
-    (21, 30),
-    (23, 30),
+    (3, 35),
+    (5, 35),
+    (7, 35),
+    (9, 35),
+    (11, 35),
+    (13, 35),
+    (15, 35),
+    (17, 35),
+    (19, 35),
+    (21, 35),
+    (23, 35),
 ]
 
 #Previous Normal Stock
@@ -394,7 +394,7 @@ class MyBot(commands.Bot):
 
                 _w_or_l_channel = self.get_channel(w_or_l_channel_id)
                 if message.channel == _w_or_l_channel:
-                    await message.reply(embed=embed)   
+                    await message.reply(embed=embed) 
 
         
 bot = MyBot()

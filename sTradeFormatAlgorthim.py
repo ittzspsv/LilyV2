@@ -9,8 +9,6 @@ with open(value_data_path, "r", encoding="utf-8") as json_file:
 fruit_names = {fruit["name"].lower() for fruit in value_data}
 
 
-
-
 '''Trade Initializer are the words that people uses to start the trade'''
 TradeInitializer = [
     "i got", "i gave", "i want to", "i wanna", "i want", 
