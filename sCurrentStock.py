@@ -7,6 +7,9 @@ import random
 
 good_fruits = ["Buddha", "Portal", "Mammoth", "Shadow", "Venom", "Spirit", "T-Rex", "Dough", "Control", "Leopard", "Gas", "Yeti", "Kitsune", "Dragon"]
 
+previous_normal_stock = {}
+previous_mirage_stock = {}
+
 
 def get_stock(url, stock_filter):
     headers = {
@@ -56,13 +59,30 @@ def get_stock(url, stock_filter):
 
 
 
-async def fetch_stock_until_update(stock_filter, retry_delay=100, max_retries=500):    
+async def fetch_stock_until_update(stock_filter, retry_delay=5, max_retries=500):    
+    global previous_normal_stock, previous_mirage_stock
     retries = 0
     url = "https://fruityblox.com/stock"
     while retries < max_retries:
         stock_data = get_stock(url, stock_filter)
         if stock_data:
-            return stock_data
+            if stock_filter == "Normal Stock":
+                if stock_data == previous_normal_stock:
+                    return {}
+                else:
+                    previous_normal_stock = stock_data
+                    return stock_data
+
+            elif stock_filter == "Mirage Stock":
+                if stock_data == previous_mirage_stock:
+                    return {}
+                else:
+                    previous_mirage_stock = stock_data
+                    return stock_data
+
+        else:
+            print("No stock data received.")
+
         await asyncio.sleep(retry_delay)
         retries += 1
 

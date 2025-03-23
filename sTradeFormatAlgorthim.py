@@ -42,29 +42,36 @@ def MatchFruit(fruits, data, threshold = 80):
 
 #THE CONCEPT HERE IS TO FIRST VERIFY FIRST LETTER OF THE FRUIT NAME, FILTER ALL FRUITS AND MATCH THE EXACT FRUIT FROM THE LETTER
 def MatchFruitSet(fruit: str, data: set, threshold=80):
-    fruit = fruit.lower().strip()
-    fruit_words = set(fruit.split())  # Convert input to a set of words
+    if not fruit or not data:
+        return None  
 
+    fruit = fruit.lower().strip()
+    if not fruit:
+        return None  
+
+    fruit_words = set(fruit.split())
     filtered_fruits = set()
 
     for f in data:
-        if set(f.split()) == fruit_words:  # Exact match regardless of order
+        if not f:
+            continue
+
+        if set(f.split()) == fruit_words:
             return f
 
-        if f[0].lower() == fruit[0]:  # Filter fruits by first letter
+        if f[0].lower() == fruit[0]:
             filtered_fruits.add(f)
 
     if not filtered_fruits:
         return None
 
-    # Find the best match from filtered fruits
     match = process.extractOne(fruit, filtered_fruits, scorer=fuzz.ratio)
     
     if match:
-        best_match, score, _ = match
+        best_match, score = match[0], match[1]
         if score >= threshold:
             return best_match
-    
+
     return None
 
 

@@ -7,20 +7,22 @@ from sFruitImageFetcher import *
 from sBotDetails import *
 import sTradeFormatAlgorthim as TFA
 from datetime import datetime, timedelta
+
 import sFruitDetectionAlgorthimEmoji as FDAE
 import sFruitDetectionAlgorthim as FDA
+import sLinkScamDetectionAlgorthim as SLSDA
+
+from sStockValueJSON import *
+from collections import deque
 
 import pytz
+import os
+import random
 import asyncio
     
 import re
 
 #ACCESSING DATA FORMATS
-
-value_data_path = "ValueData.json"
-with open(value_data_path, "r", encoding="utf-8") as json_file:
-    value_data = json.load(json_file)
-
 
 if port == 0:
     emoji_data_path = "EmojiData.json"
@@ -80,8 +82,12 @@ mirage_update_times = [
 previous_normal_stock_fruits = []
 previous_mirage_stock_fruits = []
 
-intents = discord.Intents.default()
+intents = discord.Intents.all() 
 intents.message_content = True
+intents.members = True
+intents.presences = True 
+
+
 class MyBot(commands.Bot):
     def __init__(self):
         
@@ -93,11 +99,45 @@ class MyBot(commands.Bot):
         self.loop.create_task(self.check_time_and_post())
         await self.tree.sync()
 
+
+    async def WriteLog(self, user_id, log_txt):
+        log_file_path = "logs.log"
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_entry = f"{user_id} [{timestamp}] made a change :  {log_txt}\n" 
+
+        with open(log_file_path, "a", encoding="utf-8") as log_file:
+            log_file.write(log_entry)
+
+    
+
+    async def load_flagged_users(self):
+        log_file_path = "flag.log"
+        if not os.path.exists(log_file_path):
+            return set()
+        
+        with open(log_file_path, "r", encoding="utf-8") as file:
+            return {int(line.strip()) for line in file if line.strip().isdigit()}
+
+    async def log_flagged_user(self, user_id):
+        log_file_path = "flag.log"
+        with open(log_file_path, "a", encoding="utf-8") as file:
+            file.write(f"{user_id}\n")
+
+    async def FindActiveModeratorRandom(self, guild, role_name):
+        mod_role = discord.utils.get(guild.roles, name=role_name)
+        if not mod_role:
+            return None
+
+        active_mods = [member for member in mod_role.members if member.status in (discord.Status.online, discord.Status.idle)]
+
+        return random.choice(active_mods) if active_mods else None
+
+
     async def normal_stock(self, Channel): 
             #Normal Stock Display
             printable_string = ""
             current_good_fruits_n = []
-            normal_stock_data = await fetch_stock_until_update("Normal Stock")
+            normal_stock_data = await fetch_stock_until_update("Normal Stock")  
             temp_stock = []
             if isinstance(normal_stock_data, dict) and normal_stock_data:
                 #await message.channel.send("# NORMAL STOCK")
@@ -111,7 +151,6 @@ class MyBot(commands.Bot):
                     if fruit in good_fruits:
                         current_good_fruits_n.append(fruit)
                 
-
                 else:
                     #Normal Stock Embed
                     embed = discord.Embed(title="NORMAL STOCK",
@@ -176,7 +215,6 @@ class MyBot(commands.Bot):
                 if current_good_fruits_m != []:
                     pass #disabled pinging system temporarily
                     #await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_m)} is in Mirage Stock:blush:.  Make sure to buy them")
-
 
     async def check_time_and_post(self):
         await bot.wait_until_ready()
@@ -267,7 +305,7 @@ class MyBot(commands.Bot):
                         if message.channel == fChannel:
                             await message.reply(embed=embed)                    
 
-        elif TFA.is_valid_trade_format(message.content.lower(), fruit_names):
+        elif TFA.is_valid_trade_format(message.content.lower(), fruit_names): 
             lowered_message = message.content.lower()
             match = TFA.is_valid_trade_format(lowered_message, fruit_names)
             if match:
@@ -396,7 +434,210 @@ class MyBot(commands.Bot):
                 if message.channel == _w_or_l_channel:
                     await message.reply(embed=embed) 
 
-        
+        elif f"value.update" in message.content.lower():
+            if message.author.id in ids:
+                user_message = message.content.lower()
+                message_parsed = user_message.split()
+                
+                #name, physical_value, permanent_value, physical_demand, permanent_demand, demand_type, permanent_demand_type
+
+                prompt = "value.update name kitsune physical_value 225,000,000 permanent_value 1,800,000,000 physical_demand 10/10 permanent_demand 10/10 demand_type Overpaid permanent_demand_type Overpaid"
+            
+                name_index = message_parsed.index("name")
+                physical_value_index = message_parsed.index("physical_value")
+                permanent_value_index = message_parsed.index("permanent_value")
+                physical_demand_index = message_parsed.index("physical_demand")
+                permanent_demand_index = message_parsed.index("permanent_demand")
+                demand_type_index = message_parsed.index("demand_type")
+                permanent_demand_type_index = message_parsed.index("permanent_demand_type")
+
+            
+                name = message_parsed[name_index + 1].title()
+                physical_value = message_parsed[physical_value_index + 1]
+                permanent_value = message_parsed[permanent_value_index + 1]
+                physical_demand = message_parsed[physical_demand_index + 1]
+                permanent_demand = message_parsed[permanent_demand_index + 1]
+                demand_type = message_parsed[demand_type_index + 1].title()
+                permanent_demand_type = message_parsed[permanent_demand_type_index + 1].title()
+
+
+                update_fruit_data(name, physical_value, permanent_value, physical_demand, permanent_demand, demand_type, permanent_demand_type)
+
+                await message.channel.send("Value Of Fruit Updated SuccessFully!")
+                await self.WriteLog(message.author.id, f" Updated {name} Value!")
+
+            else:
+
+                user_message = message.content.lower()
+                message_parsed = user_message.split()
+                name_index = message_parsed.index("name")
+                name = message_parsed[name_index + 1].title()
+
+
+                await message.channel.send("You don't have access to use this command!")
+                await self.WriteLog(f"**{message.author.id}**", f" Attempted to update **{name}** Value!")
+
+            
+        elif "update logs" in message.content.lower():
+            if message.author.id in ids:
+
+                parser = message.content.lower().split()
+                if "logs" in parser:
+                    log_index = parser.index("logs")
+                    
+                    if log_index + 1 < len(parser):
+                        try:
+                            loglen = int(parser[log_index + 1])
+                        except ValueError:
+                            loglen = 10 
+                    else:
+                        loglen = 10
+                else:
+                    loglen = 10
+
+                logs_string = ""
+                log_file_path = "logs.log"
+                with open(log_file_path, "r", encoding="utf-8") as log_file:
+                    last_lines = deque(log_file, maxlen=loglen)     
+                    
+                    for line in last_lines:
+                        logs_string += f"{line.strip()} \n\n"
+
+
+                    embed = discord.Embed(title="LOGS",
+                        description=f"{logs_string}",
+                        colour=0xfe169d)
+
+                    embed.set_author(name=f"{bot_name}")
+
+
+                    await message.channel.send(embed=embed)
+
+            else:
+                await message.channel.send("You don't have access to use this command!")
+
+        elif "clear logs keeplast" in message.content.lower():
+            if message.author.id in ids:
+                log_file_path = "logs.log"
+                parser =  parser = message.content.lower().split()
+                if "keeplast" in parser:
+                    log_index = parser.index("keeplast")
+                    
+                    if log_index + 1 < len(parser):
+                        try:
+                            lines_to_keep = int(parser[log_index + 1])
+                        except ValueError:
+                            lines_to_keep = 10 
+                    else:
+                        lines_to_keep = 10
+                else:
+                    lines_to_keep = 10
+
+
+                with open(log_file_path, "r", encoding="utf-8") as log_file:
+                    lines = log_file.readlines()
+
+                # Keep only the last `lines_to_keep`
+                recent_logs = lines[-lines_to_keep:]
+
+                with open(log_file_path, "w", encoding="utf-8") as log_file:
+                    log_file.writelines(recent_logs)
+
+                await message.channel.send(f"Logs Deleted Keeping Last {lines_to_keep} Logs!")
+
+            else:
+                await message.channel.send("You don't have access to use this command!")    
+
+        elif "clear flags keeplast" in message.content.lower():
+            if message.author.id in ids:
+                log_file_path = "flag.log"
+                parser =  parser = message.content.lower().split()
+                if "keeplast" in parser:
+                    log_index = parser.index("keeplast")
+                    
+                    if log_index + 1 < len(parser):
+                        try:
+                            lines_to_keep = int(parser[log_index + 1])
+                        except ValueError:
+                            lines_to_keep = 10 
+                    else:
+                        lines_to_keep = 10
+                else:
+                    lines_to_keep = 10
+
+
+                with open(log_file_path, "r", encoding="utf-8") as log_file:
+                    lines = log_file.readlines()
+
+                recent_logs = lines[-lines_to_keep:]
+
+                with open(log_file_path, "w", encoding="utf-8") as log_file:
+                    log_file.writelines(recent_logs)
+
+                await message.channel.send(f"Logs Deleted Keeping Last {lines_to_keep} Logs!")
+
+            else:
+                await message.channel.send("You don't have access to use this command!")          
+
+        elif message.content.lower() == "normal stock":
+            stock_update_channel = bot.get_channel(stock_update_channel_id)
+            if message.channel == stock_update_channel:
+                allowed_role_name = stock_team_roll_name
+                role_check = discord.utils.get(message.author.roles, name=allowed_role_name)
+                if role_check:
+                    channel = bot.get_channel(stock_update_channel_id)
+                    await self.normal_stock(channel)
+                    await self.WriteLog(message.author.id, f" Used Normal Stock Command")
+
+        elif message.content.lower() == "mirage stock":
+            stock_update_channel = bot.get_channel(stock_update_channel_id)
+            if message.channel == stock_update_channel:
+                allowed_role_name = stock_team_roll_name
+                role_check = discord.utils.get(message.author.roles, name=allowed_role_name)
+                if role_check:
+                    channel = bot.get_channel(stock_update_channel_id)
+                    await self.mirage_stock(channel)
+                    await self.WriteLog(message.author.id, f" Used Mirage Stock Command")
+
+        elif SLSDA.detect_beamer_message(message.content.lower(), "sea_event") and TFA.is_valid_trade_format(message.content.lower(), fruit_names):
+            if scam_Detection_prompts == 1:
+                flagged_users = await self.load_flagged_users()
+                print(flagged_users)
+                if message.author.id not in flagged_users:
+                    #await self.log_flagged_user(message.author.id)
+                    active_moderator = await self.FindActiveModeratorRandom(message.guild, trial_moderator_name)
+                    print(active_moderator)
+                    embed = discord.Embed(title="POTENTIAL LINKS DETECTED",
+                                        description="Seems like this user might possibly send a link.",
+                                        colour=0xf50000)
+
+                    if active_moderator:
+                        embed.add_field(name="", value=f"{active_moderator.mention}", inline=False)
+                    else:
+                        embed.add_field(name="", value="No Moderators", inline=False)
+
+                    await message.reply(embed=embed)
+
+        elif SLSDA.detect_beamer_message(message.content.lower(), "free_Stuffs") and not TFA.is_valid_trade_format(message.content.lower(), fruit_names):
+            if scam_Detection_prompts == 1:
+                flagged_users = await self.load_flagged_users()
+                if message.author.id not in flagged_users:
+                    #await self.log_flagged_user(message.author.id)
+                    active_moderator = await self.FindActiveModeratorRandom(message.guild, trial_moderator_name)
+                    print(active_moderator)
+                    embed = discord.Embed(title="POTENTIAL LINKS/SERVER ADV/SCAMS DETECTED",
+                                        description="Seems like this user might possibly send a link/Adv his server/Trying to scam you.",
+                                        colour=0xf50000)
+
+                    if active_moderator:
+                        embed.add_field(name="", value=f"{active_moderator.mention}", inline=False)
+                    else:
+                        embed.add_field(name="", value="No Moderators", inline=False)
+
+                    await message.reply(embed=embed)
+
+
+
 bot = MyBot()
 
 @bot.hybrid_command(name='item_value', description='Gives you the value details of a single fruit')
@@ -417,7 +658,7 @@ async def item_value(ctx: commands.Context, item_name: str):
                     fruit_img_link = FetchFruitImage(item_name_capital, 100)
                     #await message.channel.send(f"> # {item_name.title()}\n> - **Physical Value**: {jsonfruitdata['physical_value']} \n> - **Physical Demand**: {jsonfruitdata['physical_demand']} \n> - **Physical DemandType **: {jsonfruitdata['demand_type']} \n> - **Permanent Value**: {jsonfruitdata['permanent_value']} \n> - **Permanent Demand**: {jsonfruitdata['permanent_demand']} \n> - **Permanent Demand Type**: {jsonfruitdata['permanent_demand_type']}")
                     embed = discord.Embed(title=f"{item_name.title()}",
-                    colour=embed_color_code)
+                    colour=embed_color_codes[jsonfruitdata['category']])
 
                     embed.set_author(name=bot_name,
                     icon_url=bot_icon_link_url)

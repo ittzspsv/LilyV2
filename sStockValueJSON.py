@@ -5,16 +5,23 @@ from sTradeFormatAlgorthim import *
 
 value_data_path = "ValueData.json"
 
-
-with open(value_data_path, "r", encoding="utf-8") as json_file:
-    value_data = json.load(json_file)
-fruit_names = {fruit["name"].lower() for fruit in value_data}
-
-
 fruit_dict = {}
-for fruit in value_data:
-    fruit_name = fruit["name"].lower()
-    fruit_dict[fruit_name] = fruit
+fruit_names = {}
+
+def UpdateFruitDict():
+    global fruit_dict
+    global fruit_names
+    try:
+        with open(value_data_path, "r", encoding="utf-8") as file:
+            value_data = json.load(file)  # Load JSON data
+
+        fruit_dict = {fruit["name"].lower(): fruit for fruit in value_data}
+        fruit_names = {fruit["name"].lower() for fruit in value_data}
+
+    except (FileNotFoundError, json.JSONDecodeError):
+        print(f"Error: Unable to load {value_data_path}. Check if the file exists and has valid JSON.")
+
+UpdateFruitDict()
 
 def fetch_fruit_details(fruit_name):
     fruit_name = fruit_name.lower()
@@ -233,6 +240,7 @@ def update_fruit_data_json_type(json_file_path, updated_fruits):
     with open(json_file_path, "w", encoding="utf-8") as json_file:
         json.dump(updated_fruit_data, json_file, indent=4, ensure_ascii=False)
 
+    UpdateFruitDict()
     print("JSON successfully updated!")
 
 def update_fruit_data(name, physical_value, permanent_value, physical_demand, permanent_demand, demand_type, permanent_demand_type):
