@@ -56,26 +56,26 @@ ist = pytz.timezone('Asia/Kolkata')
 # Based on Indian Standard Time and 10 mins waiting for correct fetch BASED ON INTERNATIONAL TIMESCALINGS
 
 update_times = [
-    (5, 35),
-    (9, 35),
-    (13, 35),
-    (17, 35),
-    (21, 35),
-    (1, 35),
+    (5, 30),
+    (9, 30),
+    (13, 30),
+    (17, 30),
+    (21, 30),
+    (1, 30),
 ]
 
 mirage_update_times = [
-    (3, 35),
-    (5, 35),
-    (7, 35),
-    (9, 35),
-    (11, 35),
-    (13, 35),
-    (15, 35),
-    (17, 35),
-    (19, 35),
-    (21, 35),
-    (23, 35),
+    (3, 30),
+    (5, 30),
+    (7, 30),
+    (9, 30),
+    (11, 30),
+    (13, 30),
+    (15, 30),
+    (17, 30),
+    (19, 30),
+    (21, 30),
+    (23, 30),
 ]
 
 #Previous Normal Stock
@@ -99,6 +99,15 @@ class MyBot(commands.Bot):
         self.loop.create_task(self.check_time_and_post())
         await self.tree.sync()
 
+
+    async def send_discord_message(message):
+        await bot.wait_until_ready()
+        channel = bot.get_channel(stock_update_channel_id)
+        
+        if channel:
+            await channel.send(message)
+        else:
+            pass
 
     async def WriteLog(self, user_id, log_txt):
         log_file_path = "logs.log"
@@ -130,11 +139,11 @@ class MyBot(commands.Bot):
 
         return random.choice(active_mods) if active_mods else None
 
-    async def normal_stock(self, Channel): 
+    async def normal_stock(self, Channel, type=0): 
             #Normal Stock Display
             printable_string = ""
             current_good_fruits_n = []
-            normal_stock_data = await fetch_stock_until_update("Normal Stock")  
+            normal_stock_data = await fetch_stock_until_update("Normal Stock") if type==0 else get_stock("https://fruityblox.com/stock", "Normal Stock")
             temp_stock = []
             if isinstance(normal_stock_data, dict) and normal_stock_data:
                 #await message.channel.send("# NORMAL STOCK")
@@ -171,9 +180,9 @@ class MyBot(commands.Bot):
                         pass #disabled pinging system temporarily
                         #await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_n)} is in Normal Stock :blush:.  Make sure to buy them")
 
-    async def mirage_stock(self, Channel):
+    async def mirage_stock(self, Channel, type=0):
             #Mirage stock
-            mirage_stock_data = await fetch_stock_until_update("Mirage Stock")
+            mirage_stock_data = await fetch_stock_until_update("Mirage Stock") if type == 0 else get_stock("https://fruityblox.com/stock", "Mirage Stock")
             current_good_fruits_m = []
             temp_m_stock = []
             printable_string2 = ""
@@ -583,7 +592,7 @@ class MyBot(commands.Bot):
                 role_check = discord.utils.get(message.author.roles, name=allowed_role_name)
                 if role_check:
                     channel = bot.get_channel(stock_update_channel_id)
-                    await self.normal_stock(channel)
+                    await self.normal_stock(channel, type=1)
                     await self.WriteLog(message.author.id, f" Used Normal Stock Command")
 
         elif message.content.lower() == "mirage stock":
@@ -593,7 +602,7 @@ class MyBot(commands.Bot):
                 role_check = discord.utils.get(message.author.roles, name=allowed_role_name)
                 if role_check:
                     channel = bot.get_channel(stock_update_channel_id)
-                    await self.mirage_stock(channel)
+                    await self.mirage_stock(channel, type=1)
                     await self.WriteLog(message.author.id, f" Used Mirage Stock Command")
 
         elif SLSDA.detect_beamer_message(message.content.lower(), "sea_event") and TFA.is_valid_trade_format(message.content.lower(), fruit_names):
