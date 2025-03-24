@@ -108,8 +108,6 @@ class MyBot(commands.Bot):
         with open(log_file_path, "a", encoding="utf-8") as log_file:
             log_file.write(log_entry)
 
-    
-
     async def load_flagged_users(self):
         log_file_path = "flag.log"
         if not os.path.exists(log_file_path):
@@ -131,7 +129,6 @@ class MyBot(commands.Bot):
         active_mods = [member for member in mod_role.members if member.status in (discord.Status.online, discord.Status.idle)]
 
         return random.choice(active_mods) if active_mods else None
-
 
     async def normal_stock(self, Channel): 
             #Normal Stock Display
@@ -635,8 +632,6 @@ class MyBot(commands.Bot):
                         embed.add_field(name="", value="No Moderators", inline=False)
 
                     await message.reply(embed=embed)
-
-
 
 bot = MyBot()
 

@@ -59,7 +59,7 @@ def get_stock(url, stock_filter):
 
 
 
-async def fetch_stock_until_update(stock_filter, retry_delay=5, max_retries=500):    
+async def fetch_stock_until_update(stock_filter, retry_delay=120, max_retries=500):    
     global previous_normal_stock, previous_mirage_stock
     retries = 0
     url = "https://fruityblox.com/stock"
