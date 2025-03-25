@@ -548,5 +548,15 @@
         "demand_type": "Overpaid",
         "permanent_demand_type": "Overpaid",
         "category": "mythical"
+    },
+    {
+        "name": "T-Rex",
+        "physical_value": "20,000,000",
+        "permanent_value": "1,000,000,000",
+        "physical_demand": "8/10",
+        "permanent_demand": "8/10",
+        "demand_type": "Stable",
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical"
     }
 ]
