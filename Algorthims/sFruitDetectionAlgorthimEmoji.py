@@ -1,6 +1,6 @@
 import re
 import json
-import sBotDetails as BD
+import Config.sBotDetails as BD
 
 
 
@@ -30,7 +30,7 @@ def extract_fruit_trade(emoji_string, emoji_id_to_name):
     your_fruits, your_fruit_types = [], []
     their_fruits, their_fruit_types = [], []
 
-    trade_index = next((i for i, (_, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), None)
+    trade_index = next((i for i, (garbage, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), None)
     
     if trade_index is None:
         return [], [], [], []
@@ -70,7 +70,7 @@ def is_valid_trade_sequence(emoji_string, emoji_id_to_name):
     emojis = re.findall(r"<:(\w+):(\d+)>", emoji_string)
 
     trade_index = next(
-        (i for i, (_, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), 
+        (i for i, (garbage, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), 
         None
     )
 
@@ -79,12 +79,32 @@ def is_valid_trade_sequence(emoji_string, emoji_id_to_name):
 
     valid_fruits_before_trade = any(
         emoji_id in emoji_id_to_name and emoji_id not in BD.PERM_EMOJI_ID 
-        for _, emoji_id in emojis[:trade_index]
+        for garbage, emoji_id in emojis[:trade_index]
     )
 
     valid_fruits_after_trade = any(
         emoji_id in emoji_id_to_name and emoji_id not in BD.PERM_EMOJI_ID
-        for _, emoji_id in emojis[trade_index + 1:]
+        for garbage, emoji_id in emojis[trade_index + 1:]
     )
 
     return valid_fruits_before_trade and valid_fruits_after_trade
+
+def is_valid_trade_suggestor_sequence(emoji_string):
+    if not any(trade_emoji in emoji_string for trade_emoji in BD.TRADE_EMOJI_ID):
+        return False
+    
+    emojis = re.findall(r"<:(\w+):(\d+)>", emoji_string)
+
+    trade_index = next(
+        (i for i, (garbage, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), 
+        None
+    )
+
+    if trade_index is None:
+        return False
+
+    trade_emoji_str = f"<:{emojis[trade_index][0]}:{emojis[trade_index][1]}>"
+    trade_emoji_pos = emoji_string.find(trade_emoji_str)
+
+    after_trade_emoji = emoji_string[trade_emoji_pos + len(trade_emoji_str):].strip()
+    return after_trade_emoji.startswith("❓")

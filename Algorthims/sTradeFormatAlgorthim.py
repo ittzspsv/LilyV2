@@ -133,3 +133,45 @@ def is_valid_trade_format(message, fruit_names):
 
     return bool(your_fruits) and bool(their_fruits)
 
+
+def is_valid_trade_suggestor_format(message, fruit_names):
+    message = message.lower().strip()
+
+    message = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", message).strip()
+
+    if "for" not in message:
+        return False
+    trade_parts = message.split(" for ")
+
+    clean_your_side = predict_trade_message(trade_parts[0], TradeInitializer)
+
+    def extract_fruits(text):
+        fruits = []
+        words = re.split(r",\s*|\s+", text)
+
+        i = 0
+        while i < len(words):
+            item = words[i]
+
+            if isPermanentMatch(item):
+                i += 1
+                if i < len(words):
+                    item = words[i]
+
+            for length in range(3, 0, -1):  
+                possible_fruit = " ".join(words[i:i+length])
+                matched_fruit = MatchFruitSet(possible_fruit, fruit_names)
+                
+                if matched_fruit:
+                    fruits.append(matched_fruit)
+                    i += length - 1
+                    break  
+
+            i += 1
+
+        return fruits
+
+    your_fruits = extract_fruits(clean_your_side)
+
+    return bool(your_fruits)
+

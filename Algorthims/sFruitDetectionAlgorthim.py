@@ -1,9 +1,9 @@
 import json
 import re
 from rapidfuzz import process, fuzz
-from sTradeFormatAlgorthim import *
+from Algorthims.sTradeFormatAlgorthim import *
 
-# Load fruit names
+
 value_data_path = "ValueData.json"
 with open(value_data_path, "r", encoding="utf-8") as json_file:
     value_data = json.load(json_file)
@@ -13,7 +13,7 @@ fruit_set = set(fruit_names)
 
 def extract_trade_details(message):
     message = message.lower()
-    message = re.sub(r'[^\w\s]', '', message)  # Remove punctuation
+    message = re.sub(r'[^\w\s]', '', message)
     message_parsed = message.split()
 
     trade_split_index = message_parsed.index("for") if "for" in message_parsed else -1
@@ -39,10 +39,11 @@ def extract_trade_details(message):
                 counter = 1
                 
                 if i > 0 and message_split[i - 1].isdigit():
-                    counter = int(message_split[i - 1])
+                    counter = min(int(message_split[i - 1]), 10)
 
                 fruit_type = "Permanent" if (i > 0 and isPermanentMatch(message_split[i - 1])) else "Physical"
 
+                
                 for _ in range(counter):
                     fruit_list.append(matched_fruit)
                     fruit_types.append(fruit_type)

@@ -1,25 +1,28 @@
 import json
 import re
-from sBotDetails import *
-from sTradeFormatAlgorthim import *
+from Config.sBotDetails import *
+from Algorthims.sTradeFormatAlgorthim import *
 
 value_data_path = "ValueData.json"
 
 fruit_dict = {}
 fruit_names = {}
+fruit_s_dict = {}
 
 def UpdateFruitDict():
     global fruit_dict
     global fruit_names
+    global fruit_s_dict
     try:
         with open(value_data_path, "r", encoding="utf-8") as file:
             value_data = json.load(file)  # Load JSON data
 
         fruit_dict = {fruit["name"].lower(): fruit for fruit in value_data}
+        fruit_s_dict = {fruit["name"] : int(fruit["physical_value"].replace(",", "")) for fruit in value_data if not fruit["category"] in ("limited", "gamepass")}
         fruit_names = {fruit["name"].lower() for fruit in value_data}
 
     except (FileNotFoundError, json.JSONDecodeError):
-        print(f"Error: Unable to load {value_data_path}. Check if the file exists and has valid JSON.")
+        pass
 
 UpdateFruitDict()
 
@@ -46,7 +49,6 @@ def fetch_all_fruits():
     return value_data
 
 def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type=[]):
-    # Check if trade exceeds the 4-fruit limit
     fruit_exceed_limit = 0
     if len(your_fruits) > 4 or len(their_fruits) > 4:
         fruit_exceed_limit = 1
@@ -158,67 +160,6 @@ def calculate_win_loss(my_value, opponent_value):
         return f"Win Percentage: {100:.1f}%" if win_percentage > 99.9 else f"Win Percentage: {win_percentage:.1f}%"
     else:
         return "0% - Fair match"
-
-
-#Custom algorthim that extracts your fruit and their fruits based on commas
-#Example - I wanna trade my perm leopard for his kitsune, kitsune, kitsune, kitsune
-#UPDATE - i wana trade my 2 leopard for 4 dough
-def extract_fruits(text):
-    fruits = []
-    fruit_types = []
-    words = re.split(r",\s*|\s+", text)
-    i = 0
-    while i < len(words):
-        item = words[i]
-
-        if item.isdigit():
-            quantity = int(item)
-            i += 1
-            if i < len(words):
-                item = words[i]
-        else:
-            quantity = 1
-
-        is_permanent = PermanentMatch(item)
-        if is_permanent:
-            i += 1
-            if i < len(words):
-                item = words[i]
-
-        matched_fruit = None
-        for length in range(3, 0, -1):
-            possible_fruit = " ".join(words[i:i+length])
-            matched_fruit = MatchFruitSet(possible_fruit, fruit_names)
-            if matched_fruit:
-                i += length - 1
-                break
-
-        if matched_fruit:
-            fruit_type = "permanent" if is_permanent else "physical"
-            fruits.extend([matched_fruit.title()] * quantity)
-            fruit_types.extend([fruit_type] * quantity)
-
-        i += 1
-    
-    return fruits, fruit_types
-
-def extract_trade_details(sentence):
-    sentence = sentence.lower().replace("?", "")
-
-    sentence = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", sentence).strip()
-
-    trade_parts = sentence.split(" for ")
-    if len(trade_parts) < 2:
-        return [], [], [], []
-
-    clean_your_side = predict_trade_message(trade_parts[0], TradeInitializer)
-    clean_their_side = predict_trade_message(trade_parts[1], OpponentTradeSplitter)
-
-    your_fruits, your_fruit_type = extract_fruits(clean_your_side)
-    their_fruits, their_fruit_type = extract_fruits(clean_their_side)
-
-    return your_fruits, your_fruit_type, their_fruits, their_fruit_type
-
 
 
 def update_fruit_data_json_type(json_file_path, updated_fruits):

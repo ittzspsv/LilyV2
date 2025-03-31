@@ -1,6 +1,10 @@
 #VERY IMPORTANT TOKEN THAT SHOULD NOT BE SHARED HERE
 bot_token = ""
 
+
+bot_command_prefix = "!"
+
+
 '''SET THE BOT NAME HERE
     THIS WILL BE DISPLAYED AS AUTHOR NAME IN THE EMBED'''
 bot_name = "BloxTrade"
@@ -59,6 +63,18 @@ if port == 0:
     '''IF THE BOT HAS SKIPPED THE CURRENT STOCK.  THE ONE WITH STOCK TEAM ROLE CAN PUT A COMMAND THAT GETS NORMAL / MIRAGE STOCK'''
     stock_team_roll_name = "Stock Ping"
 
+    '''ROLE THAT CAN PERFORM A LIMITED BAN'''
+    limit_ban_role_id = 1356187197526638693
+
+    '''EXCEPTIONAL USER_ID THAT CAN'T BAN BUT HAVE ROLES'''
+    exceptional_limited_ban_id = []
+
+    '''ENTER THE CHANNEL ID WHERE ALL THE BANS IS LOGGED'''
+    logs_channel_id = 1356223694388723792
+
+    '''ENTER THE DAILY BAN LIMIT'''
+
+    BAN_LIMIT = 3
 
 
     '''SEA EVENT LINK DETECTORS.  IT DETECT IF SOMEONE SENDS MESSAGE LIKE 
@@ -75,9 +91,9 @@ if port == 0:
 
    '''
 
-    '''CURRENTLY SET TO ZERO.  IT WONT DETECT.  IF THIS FEATURE SHOULD BE ENABLED SET TO 1'''
+    '''CURRENTLY SET TO ZERO.  IT WONT DETECT.  IF THIS FEATURE SHOULD BE ENABLED SET TO 1 STILL IN EXPERIMENTAL'''
 
-    scam_Detection_prompts = 1
+    scam_Detection_prompts = 0
     trial_moderator_name = "Stock Ping"
 
 
@@ -123,10 +139,24 @@ else:
 
    '''
 
-    '''CURRENTLY SET TO ZERO.  IT WONT DETECT.  IF THIS FEATURE SHOULD BE ENABLED SET TO 1'''
+    '''CURRENTLY SET TO ZERO.  IT WONT DETECT.  IF THIS FEATURE SHOULD BE ENABLED SET TO 1 STILL IN EXPERIMENTAL'''
 
     scam_Detection_prompts = 0
     trial_moderator_name = "Trial Moderator"
+
+
+    '''ROLE THAT CAN PERFORM A LIMITED BAN'''
+    limit_ban_role_id = 0
+
+    '''EXCEPTIONAL USER_ID THAT CAN'T BAN BUT HAVE ROLES'''
+    exceptional_limited_ban_id = []
+
+    '''ENTER THE CHANNEL ID WHERE ALL THE BANS IS LOGGED'''
+    logs_channel_id = 0
+
+    '''ENTER THE DAILY BAN LIMIT'''
+
+    BAN_LIMIT = 5
 
 
 embed_color_codes = {
@@ -138,7 +168,6 @@ embed_color_codes = {
     "gamepass" : 0xffd500,
     "limited" : 0xffd500
 }
-
 
 '''ACCESSIBLE DEFINITIONS : SOME OF THE COMMANDS CAN BE ONLY ACCESSED BY SPECIFIC PEOPLES CALLED AS MODERATORS / DEVELOPERS
 COMMAND SHOULD NOT BE MESSED AND TYPED WRONGLY.  IF THEN JSON VALUE WILL BE OVERRRIDE CAUSING ISSUES.  FRUIT NAME SHOULD NOT BE EVER CHANGED

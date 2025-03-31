@@ -1,19 +1,22 @@
 import discord
-from sCurrentStock import *
-from sStockValueJSON import *
+from Stock.sCurrentStock import *
+from Values.sStockValueJSON import *
 from discord.ext import commands
-from sStockValuesScrapper import *
-from sFruitImageFetcher import *
-from sBotDetails import *
-import sTradeFormatAlgorthim as TFA
+from Misc.sFruitImageFetcher import *
+from Config.sBotDetails import *
+import Algorthims.sTradeFormatAlgorthim as TFA
 from datetime import datetime, timedelta
 
-import sFruitDetectionAlgorthimEmoji as FDAE
-import sFruitDetectionAlgorthim as FDA
-import sLinkScamDetectionAlgorthim as SLSDA
+import Algorthims.sFruitDetectionAlgorthimEmoji as FDAE
+import Algorthims.sFruitDetectionAlgorthim as FDA
+import Algorthims.sLinkScamDetectionAlgorthim as SLSDA
+import Algorthims.sNSFWDetectionAlgorthim as NSFWDA
+import Algorthims.sFruitSuggestorAlgorthim_ as FSA
+import Moderation.sLilyModeration as mLily
 
-from sStockValueJSON import *
+from Values.sStockValueJSON import *
 from collections import deque
+from itertools import cycle
 
 import pytz
 import os
@@ -56,49 +59,46 @@ ist = pytz.timezone('Asia/Kolkata')
 # Based on Indian Standard Time and 10 mins waiting for correct fetch BASED ON INTERNATIONAL TIMESCALINGS
 
 update_times = [
-    (5, 30),
-    (9, 30),
-    (13, 30),
-    (17, 30),
-    (21, 30),
-    (1, 30),
+    (5, 33),
+    (9, 33),
+    (13, 33),
+    (17, 33),
+    (21, 33),
+    (1, 33),
 ]
 
 mirage_update_times = [
-    (3, 30),
-    (5, 30),
-    (7, 30),
-    (9, 30),
-    (11, 30),
-    (13, 30),
-    (15, 30),
-    (17, 30),
-    (19, 30),
-    (21, 30),
-    (23, 30),
+    (3, 33),
+    (5, 33),
+    (7, 33),
+    (9, 33),
+    (11, 33),
+    (13, 33),
+    (15, 33),
+    (17, 33),
+    (19, 33),
+    (21, 33),
+    (23, 33),
 ]
 
 #Previous Normal Stock
 previous_normal_stock_fruits = []
 previous_mirage_stock_fruits = []
 
-intents = discord.Intents.all() 
-intents.message_content = True
-intents.members = True
-intents.presences = True 
-
 
 class MyBot(commands.Bot):
     def __init__(self):
-        
-        super().__init__(command_prefix="!", intents=intents)
-
+        intents = discord.Intents.all() 
+        intents.message_content = True
+        intents.members = True
+        intents.presences = True 
+        intents.guilds = True
+        super().__init__(command_prefix=bot_command_prefix, intents=intents)
 
     async def on_ready(self):
         print('Logged on as', self.user)
         self.loop.create_task(self.check_time_and_post())
         await self.tree.sync()
-
 
     async def send_discord_message(message):
         await bot.wait_until_ready()
@@ -262,7 +262,7 @@ class MyBot(commands.Bot):
                 
     async def on_message(self, message):
         if message.author == self.user:
-              return
+              return      
 
         elif re.search(r"\b(fruit value of|value of)\b", message.content.lower()):
             match = re.search(r"\b(?:fruit value of|value of)\s+(.+)", message.content.lower())
@@ -440,6 +440,43 @@ class MyBot(commands.Bot):
                 if message.channel == _w_or_l_channel:
                     await message.reply(embed=embed) 
 
+        elif TFA.is_valid_trade_suggestor_format(message.content.lower(), fruit_names): 
+            pass
+            '''
+            s_my_fruits, s_my_fruit_types, s_your_fruits, s_your_fruit_typess = FDA.extract_trade_details(message.content.lower())
+            suggested_fruits, total_value = FSA.get_trade_suggestions(s_my_fruits, 4, 5)
+
+            my_fruits_emoji = ""
+            for individuals in s_my_fruits:
+                my_fruits_emoji += f'{emoji_data[individuals][0]}'
+
+            embed = discord.Embed(
+                title="TRADE SUGGESTOR",
+                description="Here are some of my suggestions for your fruits",
+                colour=0x00b0f4
+            )
+            embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
+            
+            count = 1
+            for trade_value, fruit_lists in suggested_fruits.items():
+                fruit_suggested_emoji = ""
+                for inner_tuple in fruit_lists[0]:
+                    fruit_suggested_emoji += emoji_data[inner_tuple][0]
+                embed.add_field(
+                            name=f"SUGGESTION {count}",
+                            value=f"{my_fruits_emoji}{emoji_data['TradePointer'][0]}{fruit_suggested_emoji} {emoji_data['beli'][0]}{trade_value}",
+                            inline=False
+                )
+
+                count = count + 1
+
+            w_or_l_channel = self.get_channel(w_or_l_channel_id)
+            if message.channel == w_or_l_channel:
+                await message.reply(embed=embed)'''
+
+        elif FDAE.is_valid_trade_suggestor_sequence(message.content.lower()):
+            pass
+
         elif f"value.update" in message.content.lower():
             if message.author.id in ids:
                 user_message = message.content.lower()
@@ -447,7 +484,7 @@ class MyBot(commands.Bot):
                 
                 #name, physical_value, permanent_value, physical_demand, permanent_demand, demand_type, permanent_demand_type
 
-                prompt = "value.update name kitsune physical_value 225,000,000 permanent_value 1,800,000,000 physical_demand 10/10 permanent_demand 10/10 demand_type Overpaid permanent_demand_type Overpaid"
+                prompt = "value.update name gravity physical_value 35,000,000 permanent_value 1,850,000,000 physical_demand 10/10 permanent_demand 10/10 demand_type Overpaid permanent_demand_type Insane"
             
                 name_index = message_parsed.index("name")
                 physical_value_index = message_parsed.index("physical_value")
@@ -483,7 +520,6 @@ class MyBot(commands.Bot):
                 await message.channel.send("You don't have access to use this command!")
                 await self.WriteLog(f"**{message.author.id}**", f" Attempted to update **{name}** Value!")
 
-            
         elif "update logs" in message.content.lower():
             if message.author.id in ids:
 
@@ -605,44 +641,84 @@ class MyBot(commands.Bot):
                     await self.mirage_stock(channel, type=1)
                     await self.WriteLog(message.author.id, f" Used Mirage Stock Command")
 
-        elif SLSDA.detect_beamer_message(message.content.lower(), "sea_event") and TFA.is_valid_trade_format(message.content.lower(), fruit_names):
+        #Scam Word Detection Algorthim
+
+        elif SLSDA.detect_beamer_message(message.content.lower()) and not TFA.is_valid_trade_format(message.content.lower(), fruit_names):  
+            ping_pattern = r"<@\d+>"
+            updated_text         = re.sub(ping_pattern, "", message.content.lower())
+            emoji_pattern = r"<:\w+:\d+>"
+            updated_text = re.sub(emoji_pattern, "", message.content.lower())
             if scam_Detection_prompts == 1:
-                flagged_users = await self.load_flagged_users()
-                print(flagged_users)
-                if message.author.id not in flagged_users:
-                    #await self.log_flagged_user(message.author.id)
-                    active_moderator = await self.FindActiveModeratorRandom(message.guild, trial_moderator_name)
-                    print(active_moderator)
-                    embed = discord.Embed(title="POTENTIAL LINKS DETECTED",
-                                        description="Seems like this user might possibly send a link.",
-                                        colour=0xf50000)
+                boolean = SLSDA.detect_beamer_message(updated_text)
+                print(boolean)
+                if boolean:
+                    flagged_users = await self.load_flagged_users()
+                    if message.author.id not in flagged_users:
+                        #await self.log_flagged_user(message.author.id)
+                        active_moderator = await self.FindActiveModeratorRandom(message.guild, trial_moderator_name)
+                        embed = discord.Embed(title=f"Matched Scam",
+                                            description="Seems like this user might possibly send a link/Advertise his server/Try to scam.",
+                                            colour=0xf50000)
 
-                    if active_moderator:
-                        embed.add_field(name="", value=f"{active_moderator.mention}", inline=False)
-                    else:
-                        embed.add_field(name="", value="No Moderators", inline=False)
+                        if active_moderator:
+                            embed.add_field(name="", value=f"{active_moderator.mention}", inline=False)
+                        else:
+                            embed.add_field(name="", value="No Moderators", inline=False)
 
-                    await message.reply(embed=embed)
+                        await message.reply(embed=embed)
+                        await message.reply(SLSDA.debug_String)
+        
+        #NSFW Words deletion
+        if "||" in message.content:
+            print(message.content)
+            rephrased = message.content.replace("||", "")
+            if NSFWDA.is_nsfw(rephrased, NSFWDA.nsfw_set):
+                try:
+                    await message.delete()
+                    await message.channel.send("Flagged Words Deleted")
+                except discord.NotFound:
+                    pass
 
-        elif SLSDA.detect_beamer_message(message.content.lower(), "free_Stuffs") and not TFA.is_valid_trade_format(message.content.lower(), fruit_names):
-            if scam_Detection_prompts == 1:
-                flagged_users = await self.load_flagged_users()
-                if message.author.id not in flagged_users:
-                    #await self.log_flagged_user(message.author.id)
-                    active_moderator = await self.FindActiveModeratorRandom(message.guild, trial_moderator_name)
-                    print(active_moderator)
-                    embed = discord.Embed(title="POTENTIAL LINKS/SERVER ADV/SCAMS DETECTED",
-                                        description="Seems like this user might possibly send a link/Adv his server/Trying to scam you.",
-                                        colour=0xf50000)
+        if NSFWDA.is_nsfw(message.content.lower(), NSFWDA.nsfw_set):
+            try:
+                await message.delete()
+                await message.channel.send("Flagged Words Deleted")
+            except discord.NotFound:
+                pass
 
-                    if active_moderator:
-                        embed.add_field(name="", value=f"{active_moderator.mention}", inline=False)
-                    else:
-                        embed.add_field(name="", value="No Moderators", inline=False)
-
-                    await message.reply(embed=embed)
-
+        await bot.process_commands(message)
 bot = MyBot()
+
+@bot.command()
+async def ban(ctx, member: str, *, reason="No reason provided"):
+    try:
+        target_user = None
+        try:
+            target_user = await commands.MemberConverter().convert(ctx, member)
+        except commands.MemberNotFound:
+            try:
+                if isinstance(member, discord.User):
+                    user_id = member.id
+                else:
+                    user_id = int(member)
+                target_user = await ctx.bot.fetch_user(user_id)
+            except ValueError:
+                await ctx.send(embed=mLily.SimpleEmbed("Invalid user ID format. Provide a valid numeric ID."))
+                return
+            except discord.NotFound:
+                await ctx.send(embed=mLily.SimpleEmbed(f"User ID {member} not found. Please check the ID."))
+                return
+            except discord.HTTPException as e:
+                await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user data: {e}"))
+                return
+
+        if not mLily.exceeded_ban_limit(ctx.author.id):
+            await mLily.ban_user(ctx, target_user, reason)
+        else:
+            await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit"))
+
+    except Exception as e:
+        await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}"))
 
 @bot.hybrid_command(name='item_value', description='Gives you the value details of a single fruit')
 async def item_value(ctx: commands.Context, item_name: str):
@@ -701,3 +777,4 @@ async def item_value(ctx: commands.Context, item_name: str):
 
 
 bot.run(bot_token)
+
