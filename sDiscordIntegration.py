@@ -768,10 +768,7 @@ async def vouch(ctx: commands.Context,  member: discord.Member, note: str = "", 
         if account_age < 90:
             await ctx.send(embed=mLily.SimpleEmbed("Your Account is Not Old Enough to Vouch! a Service provider"))
         else:
-            if NSFWDA.is_nsfw(note) or NSFWDA.is_nsfw(received):
-                await ctx.send(embed=mLily.SimpleEmbed("Inappropriate words Detected!"))
-            else:
-                await ctx.send(embed=vLily.store_vouch(ctx, member, note, received))
+            await ctx.send(embed=vLily.store_vouch(ctx, member, note, received))
     pass
 
 @bot.hybrid_command(name='show_vouches', description='displays recent 5 vouches for a  service handler')

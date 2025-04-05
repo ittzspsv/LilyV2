@@ -166,7 +166,7 @@ def display_vouch_embed(member: discord.Member, min=0, max=5):
 
     member_id_str = str(member.id)
     existing_entry = df.filter(df["Member ID"] == member_id_str)
-
+    filtered = df.filter(pl.col("Member ID") == member_id_str)
     if len(existing_entry) == 0:
         return discord.Embed(
             title=f"{member.name}'s VOUCHES",
@@ -179,6 +179,10 @@ def display_vouch_embed(member: discord.Member, min=0, max=5):
     existing_entry = existing_entry.with_columns(
         pl.col("Timestamp").str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S%.f", strict=False)
     )
+
+    total_vouches = len(existing_entry)
+    unique_receivers = existing_entry.select("Receiver ID").unique().height
+    trust_percentage = round((unique_receivers / total_vouches) * 100, 2) if total_vouches > 0 else 100.0
 
     first_vouch_date = existing_entry["Timestamp"].min()
     experience_days = (datetime.now() - first_vouch_date).days
@@ -202,6 +206,7 @@ def display_vouch_embed(member: discord.Member, min=0, max=5):
 
     embed.add_field(name="🛠 **Vouches**", value=f"{vouch_count}", inline=True)
     embed.add_field(name="📅 **Experience**", value=f"{experience_days} days", inline=True)
+    #embed.add_field(name="**Unique Users Vouched**", value=f"{trust_percentage}%", inline=True)
     embed.add_field(name="**Verified**", value=f"{verified}", inline=True)
 
     embed.add_field(name="\u200b", value="━━━━━━━━━━━━━━━━━━━", inline=False)
