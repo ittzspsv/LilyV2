@@ -281,8 +281,8 @@
     },
     {
         "name": "Gravity",
-        "physical_value": "35,000,000",
-        "permanent_value": "1,850,000,000",
+        "physical_value": "40,000,000",
+        "permanent_value": "1,800,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
@@ -351,11 +351,11 @@
     },
     {
         "name": "Control",
-        "physical_value": "35,000,000",
+        "physical_value": "25,000,000",
         "permanent_value": "1,150,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
+        "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
         "category": "mythical"
     },
@@ -382,7 +382,7 @@
     {
         "name": "Yeti",
         "physical_value": "140,000,000",
-        "permanent_value": "1,215,000,000",
+        "permanent_value": "1,340,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",

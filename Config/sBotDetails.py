@@ -2,6 +2,7 @@
 bot_token = ""
 
 
+
 bot_command_prefix = "!"
 
 
@@ -96,6 +97,9 @@ if port == 0:
     scam_Detection_prompts = 0
     trial_moderator_name = "Stock Ping"
 
+    '''SERVICE MANAGER ROLL ID - CURRENT'''
+    service_manager_roll_id = 1356187197526638693
+
 
 
 #USED IN REAL SERVER (BLOXTRADE)
@@ -157,6 +161,9 @@ else:
     '''ENTER THE DAILY BAN LIMIT'''
 
     BAN_LIMIT = 5
+
+    '''SERVICE MANAGER ROLL ID - CURRENT'''
+    service_manager_roll_id = 0
 
 
 embed_color_codes = {

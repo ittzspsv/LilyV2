@@ -8,7 +8,7 @@ import pytz
 
 ist = pytz.timezone('Asia/Kolkata')
 good_fruits = ["Buddha", "Portal", "Mammoth", "Shadow", "Venom", "Spirit", "T-Rex", "Dough", "Control", "Leopard", "Gas", "Yeti", "Kitsune", "Dragon"]
-
+m_good_fruits = ["Leopard", "Gas", "Yeti", "Kitsune", "Dragon"]
 previous_normal_stock = {}
 previous_mirage_stock = {}
 

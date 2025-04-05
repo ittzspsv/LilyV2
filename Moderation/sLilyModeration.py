@@ -42,6 +42,53 @@ def log_ban(moderator_id, banned_user_id, reason="No reason provided"):
 
     #print(f"Ban logged: {banned_user_id} banned by {moderator_id} for '{reason}' at {now}")
 
+def display_logs(user_id, user, slice_expr=None):
+    file_path = f"{user_id}-logs.csv"
+    if not os.path.exists(file_path):
+        return SimpleEmbed("No Logs Found For the given user id")
+    df = pd.read_csv(file_path)
+    df = df[::-1]
+    
+    if slice_expr is not None:
+        df = df.iloc[slice_expr]
+
+    log_dict =  df.to_dict(orient='records')
+
+    embed = discord.Embed(
+    title="🚫 Ban Logs",
+    description=f"🔨 Moderator: <@{user_id}>",
+    colour=0xe74c3c,
+    timestamp=datetime.now()
+)
+
+    embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
+    embed.set_thumbnail(url=user.avatar.url if user.avatar else "https://example.com/default_avatar.png")
+
+    embed.add_field(name="🧰 Total Logs", value=f"{len(log_dict)}", inline=True)
+    embed.add_field(name="🗓️ Date", value=f"{datetime.now().strftime('%Y-%m-%d')}", inline=True)
+    embed.add_field(name="🕵️‍♂️ Moderator ID", value=f"`{user_id}`", inline=True)
+
+    embed.add_field(name="\u200b", value="━━━━━━━━━━━━━━━━━━━", inline=False)
+
+    for index, log_entry in enumerate(log_dict, start=1):
+        ban_timestamp = log_entry['ban_time']
+        dt = datetime.fromisoformat(ban_timestamp)
+        
+        formatted_time = dt.strftime("%Y-%m-%d %I:%M:%S %p")
+        timezone = dt.tzinfo if dt.tzinfo else "UTC"
+
+        embed.add_field(
+            name=f"🚷 Ban Log #{index}",
+            value=(
+                f"> **👤 User:** <@{log_entry['banned_user_id']}>\n"
+                f"> **📄 Reason:** {log_entry['reason']}\n"
+                f"> **⏲️ Time:** {formatted_time} ({timezone})"
+            ),
+            inline=False
+        )
+
+    return embed
+
 
 def SimpleEmbed(stringformat):
     embed = discord.Embed(description=stringformat, colour=0x6600ff, timestamp=datetime.now())
@@ -67,6 +114,10 @@ async def ban_user(ctx, user_input, reason="No reason provided"):
 
     if ctx.author.id in exceptional_limited_ban_id:
         await ctx.send(embed=SimpleEmbed(f"You have the role {limit_ban_role.name}, but you cannot ban."))
+        return
+    
+    if target_user.top_role >= ctx.author.top_role and ctx.author.id != ctx.guild.owner_id:
+        await ctx.send(embed=SimpleEmbed("You cannot ban someone with an equal or higher role than yours."))
         return
 
     if not any(role.id == limit_ban_role_id for role in ctx.author.roles):

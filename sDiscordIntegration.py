@@ -13,6 +13,7 @@ import Algorthims.sLinkScamDetectionAlgorthim as SLSDA
 import Algorthims.sNSFWDetectionAlgorthim as NSFWDA
 import Algorthims.sFruitSuggestorAlgorthim_ as FSA
 import Moderation.sLilyModeration as mLily
+import Vouch.sLilyVouches as vLily
 
 from Values.sStockValueJSON import *
 from collections import deque
@@ -178,7 +179,7 @@ class MyBot(commands.Bot):
 
                     if current_good_fruits_n != []:
                         pass #disabled pinging system temporarily
-                        #await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_n)} is in Normal Stock :blush:.  Make sure to buy them")
+                        await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_n)} is in Normal Stock :blush:.  Make sure to buy them")
 
     async def mirage_stock(self, Channel, type=0):
             #Mirage stock
@@ -195,7 +196,7 @@ class MyBot(commands.Bot):
                     #await message.channel.send(f"**{fruit}** **Value** = {details['Value']}, **Stock Type** - {stock_display}")
 
                 for fruit, details in mirage_stock_data.items():
-                    if fruit in good_fruits:
+                    if fruit in m_good_fruits:
                         current_good_fruits_m.append(fruit)
 
                 #Mirage Stock Embed
@@ -220,7 +221,7 @@ class MyBot(commands.Bot):
                 #await message.channel.send(f"> ### Normal Stock: \n> {printable_string} \n> ### Mirage Stock: \n> {printable_string2}")
                 if current_good_fruits_m != []:
                     pass #disabled pinging system temporarily
-                    #await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_m)} is in Mirage Stock:blush:.  Make sure to buy them")
+                    await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_m)} is in Mirage Stock:blush:.  Make sure to buy them")
 
     async def check_time_and_post(self):
         await bot.wait_until_ready()
@@ -261,6 +262,7 @@ class MyBot(commands.Bot):
             print(f"Error posting stock: {e}")
                 
     async def on_message(self, message):
+
         if message.author == self.user:
               return      
 
@@ -327,59 +329,65 @@ class MyBot(commands.Bot):
 
                     percentage_calculation = calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
                 
-                    embed = discord.Embed(title=output_dict["TradeConclusion"],
-                        description= output_dict["TradeDescription"],
-                        colour=output_dict["ColorKey"],)
+                    embed = discord.Embed(title=output_dict["TradeConclusion"],description=output_dict["TradeDescription"],color=output_dict["ColorKey"],)
+                    embed.set_author(
+                        name=bot_name,
+                        icon_url=bot_icon_link_url
+                    )
 
-                    embed.set_author(name=bot_name,
-                                    icon_url=bot_icon_link_url)
+                    your_fruit_values = [
+                        f"{emoji_data[your_fruit_types[i].title()][0]} {emoji_data[your_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
+                        for i in range(min(len(your_fruit_types), len(your_fruits), len(output_dict["Your_IndividualValues"])))
+                    ]
 
-                    your_fruit_values = []
-                    for i in range(min(len(your_fruit_types), len(your_fruits), len(output_dict["Your_IndividualValues"]))):
-                        your_fruit_values.append(f"- {emoji_data[your_fruit_types[i].title()][0]} {emoji_data[your_fruits[i]][0]} {emoji_data['beli'][0]}{'{:,}'.format(output_dict['Your_IndividualValues'][i])}")
-
-                    their_fruit_values = []
-                    for i in range(min(len(their_fruits_types), len(their_fruits), len(output_dict["Their_IndividualValues"]))):
-                       their_fruit_values.append(f"- {emoji_data[their_fruits_types[i].title()][0]} {emoji_data[their_fruits[i]][0]} {emoji_data['beli'][0]}{'{:,}'.format(output_dict['Their_IndividualValues'][i])}")
+                    their_fruit_values = [
+                        f"{emoji_data[their_fruits_types[i].title()][0]} {emoji_data[their_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
+                        for i in range(min(len(their_fruits_types), len(their_fruits), len(output_dict["Their_IndividualValues"])))
+                    ]
 
                     embed.add_field(
-                        name="Your Fruit Values",
-                        value=f"\n" + "\n".join(your_fruit_values) + "" if your_fruit_values else "*No values available*",
+                        name="🔹 **Your Offered Fruits**",
+                        value="\n".join(your_fruit_values) if your_fruit_values else "*No fruits offered*",
                         inline=True
                     )
 
                     embed.add_field(
-                        name="Their Fruit Values",
-                        value=f"\n" + "\n".join(their_fruit_values) + "" if their_fruit_values else "*No values available*",
+                        name="🔹 **Their Offered Fruits**",
+                        value="\n".join(their_fruit_values) if their_fruit_values else "*No fruits offered*",
                         inline=True
                     )
 
                     embed.add_field(
-                        name="Your Total Values: ",
-                        value=f"{emoji_data['beli'][0]}{'{:,}'.format(output_dict['Your_TotalValue'])} " if output_dict['Your_TotalValue'] else "*No values available*",
+                        name="💰 **Your Total Value:**",
+                        value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_TotalValue'])}**" if output_dict['Your_TotalValue'] else "*No values available*",
                         inline=False
                     )
-                
+
                     embed.add_field(
-                            name="Their Total Values: ",
-                            value=f"{emoji_data['beli'][0]}{'{:,}'.format(output_dict['Their_TotalValue'])} " if output_dict['Their_TotalValue'] else "*No values available*",
+                        name="💰 **Their Total Value:**",
+                        value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_TotalValue'])}**" if output_dict['Their_TotalValue'] else "*No values available*",
+                        inline=False
+                    )
+
+                    if percentage_calculation != "Invalid input. Please enter numerical values.":
+                        embed.add_field(
+                            name=f"📊 {percentage_calculation}",
+                            value="",
                             inline=False
                         )
 
-                    if(percentage_calculation != "Invalid input. Please enter numerical values."):
-                        embed.add_field(name=percentage_calculation,
-                        value="",
-                        inline=False)
+                    embed.add_field(
+                        name="",
+                        value=f"[{server_name}]({server_invite_link})",
+                        inline=False
+                    )
 
-                    embed.add_field(name="",
-                    value=f"[{server_name}]({server_invite_link})",
-                    inline=False)
 
                     w_or_l_channel = self.get_channel(w_or_l_channel_id)
                     if message.channel == w_or_l_channel:
                         await message.reply(embed=embed)
                             
-        elif FDAE.is_valid_trade_sequence(message.content, emoji_id_to_name):
+        elif FDAE.is_valid_trade_sequence(message.content, emoji_id_to_name):   
             your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
             print(message.content)
             print(your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess)
@@ -388,53 +396,56 @@ class MyBot(commands.Bot):
             if(isinstance(output_dict, dict)):
                 percentage_calculation = calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
                 
-                embed = discord.Embed(title=output_dict["TradeConclusion"],
-                        description= output_dict["TradeDescription"],
-                        colour=output_dict["ColorKey"],)
+                embed = discord.Embed(title=output_dict["TradeConclusion"],description=output_dict["TradeDescription"],color=output_dict["ColorKey"])
 
-                embed.set_author(name=bot_name,
-                                    icon_url=bot_icon_link_url)
-                
-                your_fruit_values = []
-                for i in range(min(len(your_fruit_typess), len(your_fruitss), len(output_dict["Your_IndividualValues"]))):
-                    your_fruit_values.append(f"- {emoji_data[your_fruit_typess[i].title()][0]} {emoji_data[your_fruitss[i]][0]} {emoji_data['beli'][0]}{'{:,}'.format(output_dict['Your_IndividualValues'][i])}")
+                embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
 
-                their_fruit_values = []
-                for i in range(min(len(their_fruits_typess), len(their_fruitss), len(output_dict["Their_IndividualValues"]))):
-                    their_fruit_values.append(f"- {emoji_data[their_fruits_typess[i].title()][0]} {emoji_data[their_fruitss[i]][0]} {emoji_data['beli'][0]}{'{:,}'.format(output_dict['Their_IndividualValues'][i])}")
+                your_fruit_values = [
+                    f"{emoji_data[your_fruit_typess[i].title()][0]} {emoji_data[your_fruitss[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
+                    for i in range(min(len(your_fruit_typess), len(your_fruitss), len(output_dict["Your_IndividualValues"])))
+                ]
 
-                embed.add_field(
-                        name="Your Fruit Values",
-                        value=f"\n" + "\n".join(your_fruit_values) + "" if your_fruit_values else "*No values available*",
-                        inline=True
-                    )
+                their_fruit_values = [
+                    f"{emoji_data[their_fruits_typess[i].title()][0]} {emoji_data[their_fruitss[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
+                    for i in range(min(len(their_fruits_typess), len(their_fruitss), len(output_dict["Their_IndividualValues"])))
+                ]
 
                 embed.add_field(
-                        name="Their Fruit Values",
-                        value=f"\n" + "\n".join(their_fruit_values) + "" if their_fruit_values else "*No values available*",
-                        inline=True
-                    )
-                
-                embed.add_field(
-                        name="Your Total Values: ",
-                        value=f"{emoji_data['beli'][0]}{'{:,}'.format(output_dict['Your_TotalValue'])} " if output_dict['Your_TotalValue'] else "*No values available*",
-                        inline=False
-                    )
-                
-                embed.add_field(
-                        name="Their Total Values: ",
-                        value=f"{emoji_data['beli'][0]}{'{:,}'.format(output_dict['Their_TotalValue'])} " if output_dict['Their_TotalValue'] else "*No values available*",
-                        inline=False
-                    )
+                    name="🔹 **Your Fruits & Values**",
+                    value="\n".join(your_fruit_values) if your_fruit_values else "*No fruits offered*",
+                    inline=True
+                )
 
-                if(percentage_calculation != "Invalid input. Please enter numerical values."):
-                        embed.add_field(name=percentage_calculation,
+                embed.add_field(
+                    name="🔹 **Their Fruits & Values**",
+                    value="\n".join(their_fruit_values) if their_fruit_values else "*No fruits offered*",
+                    inline=True
+                )
+
+                embed.add_field(
+                    name="💰 **Your Total Value:**",
+                    value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_TotalValue'])}**" if output_dict['Your_TotalValue'] else "*No values available*",
+                    inline=False
+                )
+
+                embed.add_field(
+                    name="💰 **Their Total Value:**",
+                    value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_TotalValue'])}**" if output_dict['Their_TotalValue'] else "*No values available*",
+                    inline=False
+                )
+
+                if percentage_calculation != "Invalid input. Please enter numerical values.":
+                    embed.add_field(
+                        name=f"📊 **Trade Balance:** {percentage_calculation}",
                         value="",
-                        inline=False)
+                        inline=False
+                    )
 
-                embed.add_field(name="",
-                value=f"[{server_name}]({server_invite_link})",
-                inline=False)
+                embed.add_field(
+                    name="",
+                    value=f"[{server_name}]({server_invite_link})",
+                    inline=False
+                )
 
                 _w_or_l_channel = self.get_channel(w_or_l_channel_id)
                 if message.channel == _w_or_l_channel:
@@ -657,7 +668,7 @@ class MyBot(commands.Bot):
                         #await self.log_flagged_user(message.author.id)
                         active_moderator = await self.FindActiveModeratorRandom(message.guild, trial_moderator_name)
                         embed = discord.Embed(title=f"Matched Scam",
-                                            description="Seems like this user might possibly send a link/Advertise his server/Try to scam.",
+                                            description="First Encounter : Deleted the message",
                                             colour=0xf50000)
 
                         if active_moderator:
@@ -670,6 +681,10 @@ class MyBot(commands.Bot):
         
         #NSFW Words deletion
         if "||" in message.content:
+            #DISABLED TEMPORARILY
+            textwf = 0
+            if textwf == 0:
+                return
             print(message.content)
             rephrased = message.content.replace("||", "")
             if NSFWDA.is_nsfw(rephrased, NSFWDA.nsfw_set):
@@ -680,6 +695,10 @@ class MyBot(commands.Bot):
                     pass
 
         if NSFWDA.is_nsfw(message.content.lower(), NSFWDA.nsfw_set):
+            #DISABLED TEMPORARILY
+            textwf = 0
+            if textwf == 0:
+                return
             try:
                 await message.delete()
                 await message.channel.send("Flagged Words Deleted")
@@ -687,7 +706,9 @@ class MyBot(commands.Bot):
                 pass
 
         await bot.process_commands(message)
+
 bot = MyBot()
+
 
 @bot.command()
 async def ban(ctx, member: str, *, reason="No reason provided"):
@@ -719,6 +740,87 @@ async def ban(ctx, member: str, *, reason="No reason provided"):
 
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}"))
+
+@bot.command()
+async def banlogs(ctx, slice_exp: str, member: str = ""):
+    try:
+        start, stop = (int(x) if x else 0 for x in slice_exp.split(":"))
+    except ValueError:
+        await ctx.send(embed=mLily.SimpleEmbed("Slicing Error. Make sure your slicing is in the format 'start:stop'"))
+        return
+    if not member:
+        user = await bot.fetch_user(ctx)
+        embed = mLily.display_logs(ctx.author.id, user, slice_expr=slice(start, stop))
+    else:
+        user = await bot.fetch_user(member)
+        embed = mLily.display_logs(member, user, slice_expr=slice(start, stop))
+
+    await ctx.send(embed=embed)
+
+@bot.hybrid_command(name='vouch', description='Vouch a service handler')
+async def vouch(ctx: commands.Context,  member: discord.Member, note: str = "", received: str = ""):
+    if not member:
+        pass
+    elif member == ctx.author:
+        await ctx.send(embed=mLily.SimpleEmbed("You cannot vouch yourself!"))
+    else:
+        account_age = (discord.utils.utcnow() - ctx.author.created_at).days
+        if account_age < 90:
+            await ctx.send(embed=mLily.SimpleEmbed("Your Account is Not Old Enough to Vouch! a Service provider"))
+        else:
+            if NSFWDA.is_nsfw(note) or NSFWDA.is_nsfw(received):
+                await ctx.send(embed=mLily.SimpleEmbed("Inappropriate words Detected!"))
+            else:
+                await ctx.send(embed=vLily.store_vouch(ctx, member, note, received))
+    pass
+
+@bot.hybrid_command(name='show_vouches', description='displays recent 5 vouches for a  service handler')
+async def show_vouches(ctx: commands.Context,  member: discord.Member, min:int = 0, max:int = 3):
+    if not member:
+        pass
+    else:
+        await ctx.send(embed=vLily.display_vouch_embed(member, min, max))
+    pass
+
+@bot.hybrid_command(name='verify_service_provider', description='if a service provider is trusted then he can be verified')
+async def verify_service_provider(ctx: commands.Context,  member: discord.Member):
+    if not member:
+        await ctx.send(embed=mLily.SimpleEmbed("No Members Passed in!"))
+    else:
+        role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
+
+        if role:
+            await ctx.send(embed=vLily.verify_servicer(member.id))
+        else:
+            await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
+
+@bot.hybrid_command(name='unverify_service_provider', description='if a service provider is found to be  fraud after verification then he can be un-verified')
+async def unverify_service_provider(ctx: commands.Context,  member: discord.Member):
+    if not member:
+        await ctx.send(embed=mLily.SimpleEmbed("No Members Passed in!"))
+    else:
+        role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
+
+        if role:
+            await ctx.send(embed=vLily.unverify_servicer(member.id))
+        else:
+            await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
+
+@bot.hybrid_command(name='delete_vouch', description='deletes a vouch from mentioned service provider at a particular timeframe')
+async def delete_vouch(ctx: commands.Context,  member: discord.Member, timestamp_str: str):
+    if not member:
+        await ctx.send(embed=mLily.SimpleEmbed("No Members Passed in!"))
+    else:
+        role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
+
+        if role:
+            success = vLily.delete_vouch(member.id, timestamp_str)
+            if success:
+                await ctx.send(embed=mLily.SimpleEmbed("Successfully deleted vouch from the service provider"))
+            else:
+                await ctx.send(embed=mLily.SimpleEmbed("Unable to delete vouch from the service provider!  Verify correct timestamp"))
+        else:
+            await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
 
 @bot.hybrid_command(name='item_value', description='Gives you the value details of a single fruit')
 async def item_value(ctx: commands.Context, item_name: str):
@@ -775,6 +877,4 @@ async def item_value(ctx: commands.Context, item_name: str):
         else:
             await ctx.send("Use Appropriate Channels")
 
-
-bot.run(bot_token)
-
+bot.run(bot_token)  

@@ -40,6 +40,30 @@ ZERO_WIDTH_CHARS = re.compile(r'[\u200B-\u200F\u202A-\u202E\u2060-\u206F]')
 
 IGNORE_WORDS = {"moderation", "testing", "idle", "online", "pings", "moderators", "ping"}
 
+
+def regional_indicator_to_text(text):
+    styled_letters = {
+        "🅰️": "A", "🅱️": "B", "🆎": "AB", "🆑": "CL", "🆒": "COOL",
+        "🆓": "FREE", "🆔": "ID", "🆕": "NEW", "🆖": "NG", "🆗": "OK",
+        "🆘": "SOS", "🆙": "UP", "🆚": "VS", "Ⓜ️": "M", "🅾️": "O"
+    }
+    
+    def convert_match(match):
+        char = match.group(0)
+        char = char.replace("️", "") 
+        if char in styled_letters:
+            return styled_letters[char]
+        if '\U0001F1E6' <= char <= '\U0001F1FF':
+            unicode_val = ord(char) - 0x1F1E6
+            return chr(unicode_val + ord('A'))
+        if '\u24B6' <= char <= '\u24CF':
+            return chr(ord(char) - 0x24B6 + ord('A'))
+        return char
+    
+    text = text.replace("️", "")
+    converted_text = re.sub(r'[\U0001F1E6-\U0001F1FFⒶ-Ⓩ\U0001F170-\U0001F189]', convert_match, text)
+    return converted_text.replace(" ", "")
+
 def normalize_text(text):
     text = ZERO_WIDTH_CHARS.sub('', text)
     text = unicodedata.normalize('NFKC', text)
@@ -50,7 +74,6 @@ def normalize_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
     text = text.lower()
     return text
-
 
 
 debug_String = ""
