@@ -336,42 +336,42 @@ class MyBot(commands.Bot):
                     )
 
                     your_fruit_values = [
-                        f"{emoji_data[your_fruit_types[i].title()][0]} {emoji_data[your_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
+                        f"- {emoji_data[your_fruit_types[i].title()][0]} {emoji_data[your_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
                         for i in range(min(len(your_fruit_types), len(your_fruits), len(output_dict["Your_IndividualValues"])))
                     ]
 
                     their_fruit_values = [
-                        f"{emoji_data[their_fruits_types[i].title()][0]} {emoji_data[their_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
+                        f"- {emoji_data[their_fruits_types[i].title()][0]} {emoji_data[their_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
                         for i in range(min(len(their_fruits_types), len(their_fruits), len(output_dict["Their_IndividualValues"])))
                     ]
 
                     embed.add_field(
-                        name="🔹 **Your Offered Fruits**",
-                        value="\n".join(your_fruit_values) if your_fruit_values else "*No fruits offered*",
+                        name="**Your Offered Fruits**",
+                        value=" \n".join(your_fruit_values) if your_fruit_values else "*No fruits offered*",
                         inline=True
                     )
 
                     embed.add_field(
-                        name="🔹 **Their Offered Fruits**",
+                        name="**Their Offered Fruits**",
                         value="\n".join(their_fruit_values) if their_fruit_values else "*No fruits offered*",
                         inline=True
                     )
 
                     embed.add_field(
-                        name="💰 **Your Total Value:**",
+                        name="**Your Total Value:**",
                         value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_TotalValue'])}**" if output_dict['Your_TotalValue'] else "*No values available*",
                         inline=False
                     )
 
                     embed.add_field(
-                        name="💰 **Their Total Value:**",
+                        name="**Their Total Value:**",
                         value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_TotalValue'])}**" if output_dict['Their_TotalValue'] else "*No values available*",
                         inline=False
                     )
 
                     if percentage_calculation != "Invalid input. Please enter numerical values.":
                         embed.add_field(
-                            name=f"📊 {percentage_calculation}",
+                            name=f"{percentage_calculation}",
                             value="",
                             inline=False
                         )
@@ -389,8 +389,6 @@ class MyBot(commands.Bot):
                             
         elif FDAE.is_valid_trade_sequence(message.content, emoji_id_to_name):   
             your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
-            print(message.content)
-            print(your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess)
 
             output_dict = j_LorW(your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess)
             if(isinstance(output_dict, dict)):
@@ -401,42 +399,42 @@ class MyBot(commands.Bot):
                 embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
 
                 your_fruit_values = [
-                    f"{emoji_data[your_fruit_typess[i].title()][0]} {emoji_data[your_fruitss[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
+                    f"- {emoji_data[your_fruit_typess[i].title()][0]} {emoji_data[your_fruitss[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
                     for i in range(min(len(your_fruit_typess), len(your_fruitss), len(output_dict["Your_IndividualValues"])))
                 ]
 
                 their_fruit_values = [
-                    f"{emoji_data[their_fruits_typess[i].title()][0]} {emoji_data[their_fruitss[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
+                    f"- {emoji_data[their_fruits_typess[i].title()][0]} {emoji_data[their_fruitss[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
                     for i in range(min(len(their_fruits_typess), len(their_fruitss), len(output_dict["Their_IndividualValues"])))
                 ]
 
                 embed.add_field(
-                    name="🔹 **Your Fruits & Values**",
+                    name="**Your Fruits & Values**",
                     value="\n".join(your_fruit_values) if your_fruit_values else "*No fruits offered*",
                     inline=True
                 )
 
                 embed.add_field(
-                    name="🔹 **Their Fruits & Values**",
+                    name="**Their Fruits & Values**",
                     value="\n".join(their_fruit_values) if their_fruit_values else "*No fruits offered*",
                     inline=True
                 )
 
                 embed.add_field(
-                    name="💰 **Your Total Value:**",
+                    name="**Your Total Value:**",
                     value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_TotalValue'])}**" if output_dict['Your_TotalValue'] else "*No values available*",
                     inline=False
                 )
 
                 embed.add_field(
-                    name="💰 **Their Total Value:**",
+                    name="**Their Total Value:**",
                     value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_TotalValue'])}**" if output_dict['Their_TotalValue'] else "*No values available*",
                     inline=False
                 )
 
                 if percentage_calculation != "Invalid input. Please enter numerical values.":
                     embed.add_field(
-                        name=f"📊 **Trade Balance:** {percentage_calculation}",
+                        name=f"**Trade Balance:** {percentage_calculation}",
                         value="",
                         inline=False
                     )
@@ -452,8 +450,7 @@ class MyBot(commands.Bot):
                     await message.reply(embed=embed) 
 
         elif TFA.is_valid_trade_suggestor_format(message.content.lower(), fruit_names): 
-            pass
-            '''
+            return
             s_my_fruits, s_my_fruit_types, s_your_fruits, s_your_fruit_typess = FDA.extract_trade_details(message.content.lower())
             suggested_fruits, total_value = FSA.get_trade_suggestions(s_my_fruits, 4, 5)
 
@@ -462,10 +459,9 @@ class MyBot(commands.Bot):
                 my_fruits_emoji += f'{emoji_data[individuals][0]}'
 
             embed = discord.Embed(
-                title="TRADE SUGGESTOR",
-                description="Here are some of my suggestions for your fruits",
-                colour=0x00b0f4
-            )
+            title="✨ Trade Suggestor ✨",
+            description="Here are some suggestions based on your offered fruits!",
+            colour=0x00b0f4)
             embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
             
             count = 1
@@ -474,7 +470,7 @@ class MyBot(commands.Bot):
                 for inner_tuple in fruit_lists[0]:
                     fruit_suggested_emoji += emoji_data[inner_tuple][0]
                 embed.add_field(
-                            name=f"SUGGESTION {count}",
+                            name=f"Suggestion {count}",
                             value=f"{my_fruits_emoji}{emoji_data['TradePointer'][0]}{fruit_suggested_emoji} {emoji_data['beli'][0]}{trade_value}",
                             inline=False
                 )
@@ -483,7 +479,7 @@ class MyBot(commands.Bot):
 
             w_or_l_channel = self.get_channel(w_or_l_channel_id)
             if message.channel == w_or_l_channel:
-                await message.reply(embed=embed)'''
+                await message.reply(embed=embed)
 
         elif FDAE.is_valid_trade_suggestor_sequence(message.content.lower()):
             pass
@@ -874,4 +870,5 @@ async def item_value(ctx: commands.Context, item_name: str):
         else:
             await ctx.send("Use Appropriate Channels")
 
+print(SLSDA.detect_beamer_message("F1rst 5 pērsôn's wìll mêsãgé mê qüîckly wîns åny P€RM!!"))
 bot.run(bot_token)  

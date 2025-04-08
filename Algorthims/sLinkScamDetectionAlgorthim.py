@@ -10,7 +10,7 @@ HIGH_RISK_WORDS = {
 
 SCAM_WORDS = {
     "hosting", "fully bribed", "private server", "briber", "shipwright", "d_m",
-    "beast hunter", "have boat", "levi", "leviathan", "tiki", "hydra", "heart", "hunt"
+    "beast hunter", "have boat", "levi", "leviathan", "tiki", "hydra", "heart", "hunt", "preshistoric"
 }
 
 FREE_STUFF_WORDS = {
@@ -120,7 +120,7 @@ def detect_beamer_message(message):
     if word_count["high_risk"] >= 1 and word_count["scam"] >= 1:
         score += 7
 
-    THRESHOLD = 15
+    THRESHOLD = 20
 
     confirmation_probability = min(100, max(0, round((score / THRESHOLD) * 100 - 50)))
 
