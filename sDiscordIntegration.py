@@ -708,6 +708,7 @@ bot = MyBot()
 
 @bot.command()
 async def ban(ctx, member: str, *, reason="No reason provided"):
+    role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
     try:
         target_user = None
         try:
@@ -729,10 +730,10 @@ async def ban(ctx, member: str, *, reason="No reason provided"):
                 await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user data: {e}"))
                 return
 
-        if not mLily.exceeded_ban_limit(ctx.author.id):
+        if not mLily.exceeded_ban_limit(ctx.author.id, role_ids):
             await mLily.ban_user(ctx, target_user, reason)
         else:
-            await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n You can ban in {mLily.remaining_Ban_time(ctx.author.id, role_ids)}"))
 
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}"))
@@ -870,5 +871,69 @@ async def item_value(ctx: commands.Context, item_name: str):
         else:
             await ctx.send("Use Appropriate Channels")
 
-print(SLSDA.detect_beamer_message("F1rst 5 pērsôn's wìll mêsãgé mê qüîckly wîns åny P€RM!!"))
-bot.run(bot_token)  
+@bot.hybrid_command(name="blacklist_user", description="Blacklist a user ID from being limited banned.")
+async def blacklist_user(ctx: commands.Context, user: discord.Member):
+
+    if isinstance(ctx.author, discord.Member):
+        if not ctx.author.id in owner_ids:
+            await ctx.send(embed=mLily.SimpleEmbed("You do not have permission to use this command."))
+            return
+    current_ids = load_exceptional_ban_ids()
+
+    if user.id in current_ids:
+        await ctx.send(embed=mLily.SimpleEmbed("User is already blacklisted"))
+        return
+
+    current_ids.append(user.id)
+    save_exceptional_ban_ids(current_ids)
+
+    await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> Got Blacklisted"))
+
+@bot.hybrid_command(name="assign_role", description="Assign a role to a user if it's allowed")
+async def assign_role(ctx: commands.Context, user: discord.Member, role: discord.Role):
+    assignable_roles = load_roles()
+    if ctx.author.id not in role_assignable_ids:
+        await ctx.reply("You cannot assign roles to someone.", ephemeral=True)
+        return
+    if role.id not in assignable_roles:
+        await ctx.reply(f"The role {role.name} is not assignable.")
+        return
+    if role in user.roles:
+        await ctx.reply(f"{user.display_name} already has the {role.name} role.")
+        return
+    if role.position >= ctx.author.top_role.position:
+        await ctx.reply("You cannot assign a role that is higher than or equal to your highest role.")
+        return
+
+    try:
+        await user.add_roles(role, reason=f"Assigned by {ctx.author}")
+        await ctx.reply(f"Assigned {role.name} to {user.display_name}.")
+    except discord.Forbidden:
+        await ctx.reply("I don't have permission to assign that role.")
+    except Exception as e:
+        await ctx.reply(f"An error occurred: {e}")
+
+@bot.hybrid_command(name="make_role_assignable", description="Allows specific users to assign this role")
+async def make_roles_assignable(ctx: commands.Context, role: discord.Role):
+    try:
+        assignable_roles = load_roles()
+    except Exception as e:
+        await ctx.reply(f"Failed to load assignable roles: `{e}`")
+        return
+
+    if ctx.author.id not in owner_ids:
+        await ctx.reply("You are not authorized to use this command.")
+        return
+
+    try:
+        if role.id not in assignable_roles:
+            try:
+                save_roles([role.id])
+                await ctx.reply(f"Added Role {role.name} to assignables.")
+            except Exception as e:
+                await ctx.reply(f"Failed to save role with exception {e}")
+        else:
+            await ctx.reply(f"Role {role.name} already exists in assignables.")
+    except Exception as e:
+        await ctx.reply(f"Unhandled Exception: {e}", ephemeral=True)
+bot.run(bot_token)

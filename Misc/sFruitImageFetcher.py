@@ -19,7 +19,7 @@ predefined_images = {
     "Trex" : "https://static.wikia.nocookie.net/roblox-blox-piece/images/e/ea/T-RexFruit.png"
 }
 
-def FetchFruitImage(fruit_name, imgsize):
+def FetchFruitImage(fruit_name):
     fruit_name_1 = "Dragon" if fruit_name in ["East Dragon", "West Dragon", "Dragon"] else fruit_name
 
     if fruit_name_1 in predefined_images:
