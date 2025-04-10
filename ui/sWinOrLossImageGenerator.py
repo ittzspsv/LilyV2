@@ -5,7 +5,7 @@ your_values = [110000000, 11000000, 11000000, 11000000]
 their_fruits = ['Rumble', 'Portal', 'Light', 'Yeti']
 their_values = [11000000, 11000000, 11000000, 11000000]
 
-def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values, trade_winorlose = "WIN", trade_conclusion="YOUR TRADE IS A W", trade_conclusion_color="gold", percentage_Calculation = 77):
+def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values,your_fruit_types, their_fruit_types, trade_winorlose = "WIN", trade_conclusion="YOUR TRADE IS A W", trade_conclusion_color="gold", percentage_Calculation = 77):
     icon_size = 120
     value_font_offset = 6
 
@@ -28,6 +28,8 @@ def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values, trad
     font_result = load_font(40)
     font_diff = load_font(34)
     font_footer = load_font(22)
+    font_grid_label = load_font(28)
+    font_total = load_font(22)
 
     def paste_fruits(fruits, coords, values):
         for fruit, coord, val in zip(fruits, coords, values):
@@ -60,8 +62,6 @@ def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values, trad
     draw.text((img.width // 2, 100), "CALCULATOR", font=font_title_sub, fill="orange", anchor="mm")
 
     # Grid Labels
-    font_grid_label = load_font(28)
-
     your_label_x = (your_coords[0][0] + your_coords[1][0] + icon_size) // 2
     their_label_x = (their_coords[0][0] + their_coords[1][0] + icon_size) // 2
     label_y = 200
@@ -69,25 +69,26 @@ def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values, trad
     draw.text((your_label_x, label_y), "YOUR ITEMS", font=font_grid_label, fill="#FFD700", anchor="mm")
     draw.text((their_label_x, label_y), "THEIR ITEMS", font=font_grid_label, fill="#00FFFF", anchor="mm")
 
+    # Totals below grids
+    draw.text((your_label_x, 575), f"TOTAL: ${your_total:,}", font=font_total, fill="white", anchor="mm")
+    draw.text((their_label_x, 575), f"TOTAL: ${their_total:,}", font=font_total, fill="white", anchor="mm")
+
     # Win bar
     center_x = img.width // 2
     bar_x, bar_y, bar_width, bar_height = 140, 660, 420, 12
     draw.rectangle([bar_x, bar_y, bar_x + int(bar_width * (percent / 100)), bar_y + bar_height], fill="lime")
 
-    draw.text((center_x, bar_y - 70), f"{percent}% {trade_winorlose}", font=font_percentage, fill="orange", anchor="mm")
+    draw.text((center_x, bar_y - 30), f"{percent}% {trade_winorlose}", font=font_percentage, fill="orange", anchor="mm")
 
     trade_msg = trade_conclusion
     draw.text((center_x, bar_y + 80), trade_msg, font=font_result, fill=f"{trade_conclusion_color}", anchor="mm")
 
-    '''
-    diff_msg = f"WINNING BY ${abs(diff):,}" if not win else f"LOSING BY ${abs(diff):,}"
-    draw.text((center_x, bar_y + 110), diff_msg, font=font_diff, fill="cyan", anchor="mm")'''
-
-    draw.text((center_x, 820), ".GG/BLOXTRADE", font=font_footer, fill="orange", anchor="mm")
+    # Footer
+    draw.text((20, 820), ".GG/BLOXTRADE", font=font_footer, fill="orange", anchor="lm")
 
     output_path = "trade_Result.png"
     img.save(output_path)
     img.show()
     return output_path
 
-GenerateWORLImage(your_fruits, your_values, their_fruits, their_values)
+#GenerateWORLImage(your_fruits, your_values, their_fruits, their_values)

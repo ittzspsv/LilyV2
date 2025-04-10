@@ -5,3 +5,4 @@ discord.py==2.5.2
 rapidfuzz==3.12.2
 pandas
 polars
+pillow
