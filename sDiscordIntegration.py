@@ -23,6 +23,8 @@ import pytz
 import os
 import random
 import asyncio
+import io
+import polars as pl
     
 import re
 
@@ -111,12 +113,25 @@ class MyBot(commands.Bot):
             pass
 
     async def WriteLog(self, user_id, log_txt):
-        log_file_path = "logs.log"
+        log_file_path = "logs.csv"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        log_entry = f"{user_id} [{timestamp}] made a change :  {log_txt}\n" 
 
-        with open(log_file_path, "a", encoding="utf-8") as log_file:
-            log_file.write(log_entry)
+        new_log = pl.DataFrame({
+            "user_id": [str(user_id)],
+            "timestamp": [timestamp],
+            "log": [log_txt]
+        })
+
+        if os.path.exists(log_file_path):
+            existing_logs = pl.read_csv(log_file_path)
+
+            new_log = new_log.cast(existing_logs.schema)
+
+            updated_logs = pl.concat([existing_logs, new_log], how="vertical")
+        else:
+            updated_logs = new_log
+
+        updated_logs.write_csv(log_file_path)
 
     async def load_flagged_users(self):
         log_file_path = "flag.log"
@@ -261,7 +276,7 @@ class MyBot(commands.Bot):
         except Exception as e:
             print(f"Error posting stock: {e}")
                 
-    async def on_message(self, message):
+    async def on_message(self, message): 
 
         if message.author == self.user:
               return      
@@ -321,72 +336,83 @@ class MyBot(commands.Bot):
                 your_fruit_types=[]
                 their_fruits = []
                 their_fruits_types=[]
-
                 your_fruits, your_fruit_types, their_fruits, their_fruits_types = FDA.extract_trade_details(message.content)
-                output_dict = j_LorW(your_fruits, your_fruit_types, their_fruits, their_fruits_types)
-                #await message.channel.send(resultant)
-                if isinstance(output_dict, dict):
+                with open("Values/valueconfig.logs", "r") as fileptr:
+                    Type = int(fileptr.read().strip())
+                if Type == 0:
+                    output_dict = j_LorW(your_fruits, your_fruit_types, their_fruits, their_fruits_types, Type)
+                    #await message.channel.send(resultant)
+                    if isinstance(output_dict, dict):
 
-                    percentage_calculation = calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
-                
-                    embed = discord.Embed(title=output_dict["TradeConclusion"],description=output_dict["TradeDescription"],color=output_dict["ColorKey"],)
-                    embed.set_author(
-                        name=bot_name,
-                        icon_url=bot_icon_link_url
-                    )
+                        percentage_calculation = calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
+                    
+                        embed = discord.Embed(title=output_dict["TradeConclusion"],description=output_dict["TradeDescription"],color=output_dict["ColorKey"],)
+                        embed.set_author(
+                            name=bot_name,
+                            icon_url=bot_icon_link_url
+                        )
 
-                    your_fruit_values = [
-                        f"- {emoji_data[your_fruit_types[i].title()][0]} {emoji_data[your_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
-                        for i in range(min(len(your_fruit_types), len(your_fruits), len(output_dict["Your_IndividualValues"])))
-                    ]
+                        your_fruit_values = [
+                            f"- {emoji_data[your_fruit_types[i].title()][0]} {emoji_data[your_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
+                            for i in range(min(len(your_fruit_types), len(your_fruits), len(output_dict["Your_IndividualValues"])))
+                        ]
 
-                    their_fruit_values = [
-                        f"- {emoji_data[their_fruits_types[i].title()][0]} {emoji_data[their_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
-                        for i in range(min(len(their_fruits_types), len(their_fruits), len(output_dict["Their_IndividualValues"])))
-                    ]
+                        their_fruit_values = [
+                            f"- {emoji_data[their_fruits_types[i].title()][0]} {emoji_data[their_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
+                            for i in range(min(len(their_fruits_types), len(their_fruits), len(output_dict["Their_IndividualValues"])))
+                        ]
 
-                    embed.add_field(
-                        name="**Your Offered Fruits**",
-                        value=" \n".join(your_fruit_values) if your_fruit_values else "*No fruits offered*",
-                        inline=True
-                    )
-
-                    embed.add_field(
-                        name="**Their Offered Fruits**",
-                        value="\n".join(their_fruit_values) if their_fruit_values else "*No fruits offered*",
-                        inline=True
-                    )
-
-                    embed.add_field(
-                        name="**Your Total Value:**",
-                        value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_TotalValue'])}**" if output_dict['Your_TotalValue'] else "*No values available*",
-                        inline=False
-                    )
-
-                    embed.add_field(
-                        name="**Their Total Value:**",
-                        value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_TotalValue'])}**" if output_dict['Their_TotalValue'] else "*No values available*",
-                        inline=False
-                    )
-
-                    if percentage_calculation != "Invalid input. Please enter numerical values.":
                         embed.add_field(
-                            name=f"{percentage_calculation}",
-                            value="",
+                            name="**Your Offered Fruits**",
+                            value=" \n".join(your_fruit_values) if your_fruit_values else "*No fruits offered*",
+                            inline=True
+                        )
+
+                        embed.add_field(
+                            name="**Their Offered Fruits**",
+                            value="\n".join(their_fruit_values) if their_fruit_values else "*No fruits offered*",
+                            inline=True
+                        )
+
+                        embed.add_field(
+                            name="**Your Total Value:**",
+                            value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_TotalValue'])}**" if output_dict['Your_TotalValue'] else "*No values available*",
                             inline=False
                         )
 
-                    embed.add_field(
-                        name="",
-                        value=f"[{server_name}]({server_invite_link})",
-                        inline=False
-                    )
+                        embed.add_field(
+                            name="**Their Total Value:**",
+                            value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_TotalValue'])}**" if output_dict['Their_TotalValue'] else "*No values available*",
+                            inline=False
+                        )
 
+                        if percentage_calculation != "Invalid input. Please enter numerical values.":
+                            embed.add_field(
+                                name=f"{percentage_calculation}",
+                                value="",
+                                inline=False
+                            )
 
-                    w_or_l_channel = self.get_channel(w_or_l_channel_id)
-                    if message.channel == w_or_l_channel:
+                        embed.add_field(
+                            name="",
+                            value=f"[{server_name}]({server_invite_link})",
+                            inline=False
+                        )
+
+                        '''
+                        w_or_l_channel = self.get_channel(w_or_l_channel_id)
+                        if message.channel == w_or_l_channel:'''
                         await message.reply(embed=embed)
-                            
+
+                else:
+                    status_msg = await message.reply("Thinking...")
+                    image = await asyncio.to_thread(j_LorW, your_fruits, your_fruit_types, their_fruits, their_fruits_types, Type)
+                    buffer = io.BytesIO()
+                    image.save(buffer, format="PNG", optimize=True)
+                    buffer.seek(0)
+                    discord_file = discord.File(fp=buffer, filename="trade_Result.png")
+                    await status_msg.edit(content=None, attachments=[discord_file])
+
         elif FDAE.is_valid_trade_sequence(message.content, emoji_id_to_name):   
             your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
 
@@ -528,105 +554,138 @@ class MyBot(commands.Bot):
                 await self.WriteLog(f"**{message.author.id}**", f" Attempted to update **{name}** Value!")
 
         elif "update logs" in message.content.lower():
-            if message.author.id in ids:
+            if message.author.id in ids + trusted_moderator_ids + owner_ids:
 
                 parser = message.content.lower().split()
+                log_min = 0
+                log_max = 10
+                user_id_filter = None
+
                 if "logs" in parser:
                     log_index = parser.index("logs")
-                    
-                    if log_index + 1 < len(parser):
-                        try:
-                            loglen = int(parser[log_index + 1])
-                        except ValueError:
-                            loglen = 10 
-                    else:
-                        loglen = 10
-                else:
-                    loglen = 10
+
+                    if log_index + 1 < len(parser) and parser[log_index + 1].isdigit():
+                        user_id_filter = parser[log_index + 1]
+
+                        if log_index + 2 < len(parser):
+                            range_part = parser[log_index + 2]
+                            if ':' in range_part:
+                                try:
+                                    log_min, log_max = map(int, range_part.split(":"))
+                                except ValueError:
+                                    log_min, log_max = 0, 10
+                            else:
+                                try:
+                                    log_max = int(range_part)
+                                except ValueError:
+                                    log_max = 10
+
+                    elif log_index + 1 < len(parser):
+                        range_part = parser[log_index + 1]
+                        if ':' in range_part:
+                            try:
+                                log_min, log_max = map(int, range_part.split(":"))
+                            except ValueError:
+                                log_min, log_max = 0, 10
+                        else:
+                            try:
+                                log_max = int(range_part)
+                            except ValueError:
+                                log_max = 10
 
                 logs_string = ""
-                log_file_path = "logs.log"
-                with open(log_file_path, "r", encoding="utf-8") as log_file:
-                    last_lines = deque(log_file, maxlen=loglen)     
+                log_file_path = "logs.csv"
+
+                try:
+                    df = pl.read_csv(log_file_path)
+
+                    if user_id_filter:
+                        df = df.filter(pl.col("user_id") == int(user_id_filter))
+
+                    df = df.reverse()
+                    total_rows = df.height
+                    log_min = max(0, log_min)
+                    log_max = min(total_rows, log_max)
+
+                    df = df.slice(log_min, log_max)
+
+                    embed = discord.Embed(
+                        title="LOGS",
+                        description=f"Showing logs for user <@{user_id_filter}>" if user_id_filter else "Latest logs",
+                        colour=0xfe169d
+                    )
                     
-                    for line in last_lines:
-                        logs_string += f"{line.strip()} \n\n"
-
-
-                    embed = discord.Embed(title="LOGS",
-                        description=f"{logs_string}",
-                        colour=0xfe169d)
-
                     embed.set_author(name=f"{bot_name}")
 
+                    for row in df.iter_rows():
+                        user_id, timestamp, log_text = row
+                        embed.add_field(
+                            name="",
+                            value=f"**User** <@{user_id}> at {timestamp}\n**Log-** {log_text}",
+                            inline=False
+                        )
 
-                    await message.channel.send(embed=embed)
+                except Exception as e:
+                    logs_string = f"Error reading logs: {str(e)}"
+                
+                await message.channel.send(embed=embed)
 
             else:
-                await message.channel.send("You don't have access to use this command!")
+                await message.channel.send("You don't have access to use this command!") 
 
         elif "clear logs keeplast" in message.content.lower():
             if message.author.id in ids:
-                log_file_path = "logs.log"
-                parser =  parser = message.content.lower().split()
+                log_file_path = "logs.csv"
+                parser = message.content.lower().split()
+                
                 if "keeplast" in parser:
                     log_index = parser.index("keeplast")
-                    
                     if log_index + 1 < len(parser):
                         try:
                             lines_to_keep = int(parser[log_index + 1])
                         except ValueError:
-                            lines_to_keep = 10 
+                            lines_to_keep = 10
                     else:
                         lines_to_keep = 10
                 else:
                     lines_to_keep = 10
 
+                try:
+                    df = pl.read_csv(log_file_path)
 
-                with open(log_file_path, "r", encoding="utf-8") as log_file:
-                    lines = log_file.readlines()
+                    if df.height > lines_to_keep:
+                        df = df.tail(lines_to_keep)
 
-                # Keep only the last `lines_to_keep`
-                recent_logs = lines[-lines_to_keep:]
-
-                with open(log_file_path, "w", encoding="utf-8") as log_file:
-                    log_file.writelines(recent_logs)
-
-                await message.channel.send(f"Logs Deleted Keeping Last {lines_to_keep} Logs!")
-
-            else:
-                await message.channel.send("You don't have access to use this command!")    
-
-        elif "clear flags keeplast" in message.content.lower():
-            if message.author.id in ids:
-                log_file_path = "flag.log"
-                parser =  parser = message.content.lower().split()
-                if "keeplast" in parser:
-                    log_index = parser.index("keeplast")
-                    
-                    if log_index + 1 < len(parser):
-                        try:
-                            lines_to_keep = int(parser[log_index + 1])
-                        except ValueError:
-                            lines_to_keep = 10 
+                        df.write_csv(log_file_path)
+                        await message.channel.send(f"Logs deleted, keeping the last {lines_to_keep} logs!")
                     else:
-                        lines_to_keep = 10
-                else:
-                    lines_to_keep = 10
+                        await message.channel.send("Not enough logs to delete. Keeping existing logs.")
 
-
-                with open(log_file_path, "r", encoding="utf-8") as log_file:
-                    lines = log_file.readlines()
-
-                recent_logs = lines[-lines_to_keep:]
-
-                with open(log_file_path, "w", encoding="utf-8") as log_file:
-                    log_file.writelines(recent_logs)
-
-                await message.channel.send(f"Logs Deleted Keeping Last {lines_to_keep} Logs!")
+                except Exception as e:
+                    await message.channel.send(f"Error clearing logs: {e}")
 
             else:
-                await message.channel.send("You don't have access to use this command!")          
+                await message.channel.send("You don't have access to use this command!")         
+
+        #TEMPORARY FUNCTIONS : WILL BE REMOVED IN THE FUTURE UPDATE
+        elif "switch ui mode" in message.content.lower():
+            if message.author.id in ids + trusted_moderator_ids + owner_ids:
+                parts = message.content.lower().split()
+                if len(parts) >= 4 and parts[2] == "mode":
+                    number = parts[3]
+                    with open("Values/valueconfig.logs", "w") as fileptr:
+                        fileptr.write(number)
+                        await message.reply("Switched Mode!")
+
+        elif "assign ban log channel id:" in message.content.lower():
+            if message.author.id in ids + trusted_moderator_ids + owner_ids:
+                channel_id = message.content.replace("assign ban log channel id:", "").strip()
+                
+                with open("Moderation/logchannelid.log", "w") as file:
+                    file.write(str(channel_id))
+        
+                await message.channel.send(f"Ban log channel ID set to <#{channel_id}>.")
+
 
         elif message.content.lower() == "normal stock":
             stock_update_channel = bot.get_channel(stock_update_channel_id)
@@ -707,7 +766,7 @@ bot = MyBot()
 
 
 @bot.command()
-async def ban(ctx, member: str, *, reason="No reason provided"):
+async def ban(ctx, member: str="", *, reason="No reason provided"):
     role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
     try:
         target_user = None
@@ -739,20 +798,47 @@ async def ban(ctx, member: str, *, reason="No reason provided"):
         await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}"))
 
 @bot.command()
-async def banlogs(ctx, slice_exp: str, member: str = ""):
+async def banlogs(ctx, slice_exp: str = None, member: str = ""):
     try:
-        start, stop = (int(x) if x else 0 for x in slice_exp.split(":"))
-    except ValueError:
-        await ctx.send(embed=mLily.SimpleEmbed("Slicing Error. Make sure your slicing is in the format 'start:stop'"))
-        return
-    if not member:
-        user = await bot.fetch_user(ctx)
-        embed = mLily.display_logs(ctx.author.id, user, slice_expr=slice(start, stop))
-    else:
-        user = await bot.fetch_user(member)
-        embed = mLily.display_logs(member, user, slice_expr=slice(start, stop))
+        try:
+            start, stop = (int(x) if x else 0 for x in slice_exp.split(":"))
+        except ValueError:
+            await ctx.send(embed=mLily.SimpleEmbed("Slicing Error. Make sure your slicing is in the format 'start:stop'"))
+            return
+        except Exception as e:
+            await ctx.send(embed=mLily.SimpleEmbed(f"Error while parsing slice: {e}"))
+            return
 
-    await ctx.send(embed=embed)
+        accessible_roles = []
+        for keys, values in limit_Ban_details.items():
+            accessible_roles.append(keys)
+
+        if not any(role.id in accessible_roles for role in ctx.author.roles):
+            await ctx.send("Access Denied!", delete_after=5)
+            return
+
+        if not member:
+            try:
+                user = await bot.fetch_user(ctx.author.id)
+                embed = mLily.display_logs(ctx.author.id, user, slice_expr=slice(start, stop))
+            except Exception as e:
+                await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user or display logs: {e}"))
+                return
+        else:
+            try:
+                user = await bot.fetch_user(int(member))
+                embed = mLily.display_logs(int(member), user, slice_expr=slice(start, stop))
+            except ValueError:
+                await ctx.send(embed=mLily.SimpleEmbed("Member ID must be a integer"))
+                return
+            except Exception as e:
+                await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch member ban logs csv: {e}"))
+                return
+
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
 
 @bot.hybrid_command(name='vouch', description='Vouch a service handler')
 async def vouch(ctx: commands.Context,  member: discord.Member, note: str = "", received: str = ""):
@@ -871,11 +957,10 @@ async def item_value(ctx: commands.Context, item_name: str):
         else:
             await ctx.send("Use Appropriate Channels")
 
-@bot.hybrid_command(name="blacklist_user", description="Blacklist a user ID from being limited banned.")
+@bot.hybrid_command(name="blacklist_user", description="Blacklist a user ID from using limited ban command.")
 async def blacklist_user(ctx: commands.Context, user: discord.Member):
-
     if isinstance(ctx.author, discord.Member):
-        if not ctx.author.id in owner_ids:
+        if not ctx.author.id in owner_ids + trusted_moderator_ids:
             await ctx.send(embed=mLily.SimpleEmbed("You do not have permission to use this command."))
             return
     current_ids = load_exceptional_ban_ids()
@@ -888,11 +973,31 @@ async def blacklist_user(ctx: commands.Context, user: discord.Member):
     save_exceptional_ban_ids(current_ids)
 
     await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> Got Blacklisted"))
+    await bot.WriteLog(ctx.author.id, f"has Blacklisted <@{user.id}> from using **Limited Bans**")
+
+@bot.hybrid_command(name="unblacklist_user", description="Remove a user ID from the limited ban blacklist.")
+async def unblacklist_user(ctx: commands.Context, user: discord.Member):
+    if isinstance(ctx.author, discord.Member):
+        if not ctx.author.id in owner_ids + trusted_moderator_ids:
+            await ctx.send(embed=mLily.SimpleEmbed("You do not have permission to use this command."))
+            return
+
+    current_ids = load_exceptional_ban_ids()
+
+    if user.id not in current_ids:
+        await ctx.send(embed=mLily.SimpleEmbed("User is not blacklisted."))
+        return
+
+    current_ids.remove(user.id)
+    save_exceptional_ban_ids(current_ids)
+
+    await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> has been removed from the blacklist."))
+    await bot.WriteLog(ctx.author.id, f"has removed <@{user.id}> from the **Limited Bans** blacklist.")
 
 @bot.hybrid_command(name="assign_role", description="Assign a role to a user if it's allowed")
 async def assign_role(ctx: commands.Context, user: discord.Member, role: discord.Role):
     assignable_roles = load_roles()
-    if ctx.author.id not in role_assignable_ids:
+    if ctx.author.id not in trusted_moderator_ids + owner_ids:
         await ctx.reply("You cannot assign roles to someone.", ephemeral=True)
         return
     if role.id not in assignable_roles:
@@ -908,8 +1013,34 @@ async def assign_role(ctx: commands.Context, user: discord.Member, role: discord
     try:
         await user.add_roles(role, reason=f"Assigned by {ctx.author}")
         await ctx.reply(f"Assigned {role.name} to {user.display_name}.")
+        await bot.WriteLog(ctx.author.id, f" has Assigned <@&{role.id}> to {user.display_name}.")
     except discord.Forbidden:
         await ctx.reply("I don't have permission to assign that role.")
+    except Exception as e:
+        await ctx.reply(f"An error occurred: {e}")
+
+@bot.hybrid_command(name="unassign_role", description="Remove a role from a user if it's allowed")
+async def unassign_role(ctx: commands.Context, user: discord.Member, role: discord.Role):
+    assignable_roles = load_roles()
+    if ctx.author.id not in trusted_moderator_ids + owner_ids:
+        await ctx.reply("You cannot remove roles from someone.")
+        return
+    if role.id not in assignable_roles:
+        await ctx.reply(f"The role {role.name} is not in assignables.  so it can't be removed")
+        return
+    if role not in user.roles:
+        await ctx.reply(f"{user.display_name} does not have the {role.name} role.")
+        return
+    if role.position >= ctx.author.top_role.position:
+        await ctx.reply("You cannot remove a role that is higher than or equal to your highest role.")
+        return
+
+    try:
+        await user.remove_roles(role, reason=f"Removed by {ctx.author}")
+        await ctx.reply(f"Removed {role.name} from {user.display_name}.")
+        await bot.WriteLog(ctx.author.id, f" has Removed <@&{role.id}> to {user.display_name}.")
+    except discord.Forbidden:
+        await ctx.reply("I don't have permission to remove that role.")
     except Exception as e:
         await ctx.reply(f"An error occurred: {e}")
 
@@ -936,4 +1067,28 @@ async def make_roles_assignable(ctx: commands.Context, role: discord.Role):
             await ctx.reply(f"Role {role.name} already exists in assignables.")
     except Exception as e:
         await ctx.reply(f"Unhandled Exception: {e}", ephemeral=True)
+
+@bot.command()
+async def fetchbanlog(ctx, user: str = None):
+    if user is None:
+        target = ctx.author
+    else:
+        try:
+            user_id = int(user.replace("<@", "").replace(bot_command_prefix, "").replace(">", ""))
+            target = await ctx.guild.fetch_member(user_id)
+        except (ValueError, discord.NotFound):
+            return await ctx.send(embed=mLily.SimpleEmbed("Could not find that user."))
+
+    file_name = f"{target.id}-logs.csv"
+    if ctx.author.id not in owner_ids + trusted_moderator_ids:
+        await ctx.send(embed=mLily.SimpleEmbed(f"Access Denied for Downloading Source CSV"))
+        return
+    try:
+        with open(file_name, "rb") as f:
+            await ctx.send(file=discord.File(f, filename=file_name))
+    except FileNotFoundError:
+        await ctx.send(embed=mLily.SimpleEmbed(f"No logs found for user {target.mention}."))
+    except Exception as e:
+        await ctx.send(embed=mLily.SimpleEmbed(f"Excepted Error : {e}."))
+
 bot.run(bot_token)

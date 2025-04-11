@@ -1,18 +1,123 @@
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 
-your_fruits = ['Dark Blade', 'Dough', 'Leopard', 'Shadow']
-your_values = [110000000, 11000000, 11000000, 11000000]
-their_fruits = ['Rumble', 'Portal', 'Light', 'Yeti']
-their_values = [11000000, 11000000, 11000000, 11000000]
 
-def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values,your_fruit_types, their_fruit_types, trade_winorlose = "WIN", trade_conclusion="YOUR TRADE IS A W", trade_conclusion_color="gold", percentage_Calculation = 77):
+
+def format_value(val):
+    if val >= 1_000_000_000:
+        return f"{val / 1_000_000_000:.1f}b"
+    elif val >= 1_000_000:
+        return f"{val / 1_000_000:.1f}m"
+    elif val >= 1_000:
+        return f"{val / 1_000:.1f}k"
+    else:
+        return str(val)
+
+
+
+def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm"):
+    draw = ImageDraw.Draw(img)
+    glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow)
+
+    for offset in range(1, 4):
+        glow_draw.text(position, text, font=font, fill=glow_color, anchor=anchor, stroke_width=offset)
+
+    blurred_glow = glow.filter(ImageFilter.GaussianBlur(radius=5))
+    img.paste(blurred_glow, (0, 0), blurred_glow)
+
+    draw.text(position, text, font=font, fill=text_color, anchor=anchor)
+
+
+def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt", stretch_height=1.0):
+    temp_img = Image.new("RGBA", (1000, 500), (0, 0, 0, 0))
+    draw_temp = ImageDraw.Draw(temp_img)
+    text_bbox = draw_temp.textbbox((0, 0), text, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = int((text_bbox[3] - text_bbox[1]) * stretch_height)
+
+    text_mask = Image.new("L", (text_width, text_height), 0)
+    draw_mask = ImageDraw.Draw(text_mask)
+    draw_mask.text((0, 0), text, font=font, fill=255)
+
+    gradient = Image.new("RGBA", (text_width, text_height), color=0)
+    for y in range(text_height):
+        ratio = y / text_height
+        r = int(gradient_colors[0][0] * (1 - ratio) + gradient_colors[1][0] * ratio)
+        g = int(gradient_colors[0][1] * (1 - ratio) + gradient_colors[1][1] * ratio)
+        b = int(gradient_colors[0][2] * (1 - ratio) + gradient_colors[1][2] * ratio)
+        ImageDraw.Draw(gradient).line([(0, y), (text_width, y)], fill=(r, g, b), width=1)
+
+    gradient.putalpha(text_mask)
+
+    x, y = position
+    if anchor in ("mm", "mt", "mb"):
+        x -= text_width // 2
+    elif anchor in ("rm", "rt", "rb"):
+        x -= text_width
+    if anchor in ("mm", "lm", "rm"):
+        y -= text_height // 2
+    elif anchor in ("mb", "lb", "rb"):
+        y -= text_height
+
+    image.paste(gradient, (int(x), int(y)), gradient)
+
+
+
+def draw_gradient_bar(image, x, y, width, height, percent, color_start, color_end, bg_color=(40, 40, 40, 180), stretch_ratio=0.5):
+    draw = ImageDraw.Draw(image)
+
+    draw.rectangle([x, y, x + width, y + height], fill=bg_color)
+
+    bar_width = int(width * (percent / 100))
+
+    for i in range(bar_width):
+        stretched_i = i / (width * stretch_ratio)
+        stretched_i = min(stretched_i, 1.0)
+
+        r = int(color_start[0] * (1 - stretched_i) + color_end[0] * stretched_i)
+        g = int(color_start[1] * (1 - stretched_i) + color_end[1] * stretched_i)
+        b = int(color_start[2] * (1 - stretched_i) + color_end[2] * stretched_i)
+
+        draw.line([(x + i, y), (x + i, y + height)], fill=(r, g, b), width=1)
+
+def add_glow_border(icon, glow_color=(255, 255, 255), blur_radius=6, glow_alpha=150):
+    glow_size = (icon.size[0] + 20, icon.size[1] + 20)
+    glow = Image.new("RGBA", glow_size, (0, 0, 0, 0))
+
+    offset = (10, 10)
+    temp_icon = Image.new("RGBA", glow_size, (0, 0, 0, 0))
+    temp_icon.paste(icon, offset, icon)
+
+    mask = temp_icon.split()[-1]
+    solid_color = Image.new("RGBA", glow_size, glow_color + (0,))
+    solid_color.putalpha(mask)
+
+    blurred = solid_color.filter(ImageFilter.GaussianBlur(blur_radius))
+
+    alpha = blurred.split()[-1].point(lambda x: x * (glow_alpha / 255))
+    blurred.putalpha(alpha)
+
+    return blurred
+
+def GenerateWORLImage(
+    your_fruits, your_values, their_fruits, their_values,
+    trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=77, winorloseorfair = 0
+):
     icon_size = 120
     value_font_offset = 6
+    background_path = "ui/WORLBase.png"
+    output_path = "trade_Result.png"
 
     your_coords = [(64, 240), (208, 240), (64, 390), (208, 390)]
     their_coords = [(408, 240), (552, 240), (408, 390), (552, 390)]
 
-    img = Image.new("RGBA", (704, 883), "black")
+    try:
+        bg = Image.open(background_path).convert("RGBA")
+        img = bg.resize((704, 883))
+    except FileNotFoundError:
+        print(f"Background not found: {background_path}, using black background.")
+        img = Image.new("RGBA", (704, 883), "black")
+
     draw = ImageDraw.Draw(img)
 
     def load_font(size):
@@ -21,74 +126,120 @@ def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values,your_
         except:
             return ImageFont.load_default()
 
-    font_title_main = load_font(48)
-    font_title_sub = load_font(42)
     font_small = load_font(20)
     font_percentage = load_font(32)
-    font_result = load_font(40)
-    font_diff = load_font(34)
-    font_footer = load_font(22)
-    font_grid_label = load_font(28)
+    font_result = load_font(45)
     font_total = load_font(22)
 
     def paste_fruits(fruits, coords, values):
-        for fruit, coord, val in zip(fruits, coords, values):
-            try:
-                icon_path = f"ui/fruit_icons/{fruit}.png"
-                icon = Image.open(icon_path).convert("RGBA").resize((icon_size, icon_size))
+        total_slots = 4
+        for i in range(total_slots):
+            coord = coords[i]
 
-                shadow = icon.copy().resize((icon_size + 20, icon_size + 20)).filter(ImageFilter.GaussianBlur(10))
-                shadow_pos = (coord[0] - 10, coord[1] - 10)
-                img.paste(shadow, shadow_pos, shadow)
+            if i < len(fruits):
+                fruit = fruits[i]
+                val = values[i]
+                try:
+                    icon_path = f"ui/fruit_icons/{fruit}.png"
+                    icon = Image.open(icon_path).convert("RGBA").resize((icon_size, icon_size))
 
-                img.paste(icon, coord, icon)
+                    # Add clean glow behind the fruit
+                    glow = add_glow_border(icon, glow_color=(186, 85, 211), blur_radius=8, glow_alpha=180)
+                    glow_pos = (coord[0] - 10, coord[1] - 10)
+                    img.paste(glow, glow_pos, glow)
 
-                text_pos = (coord[0] + icon_size // 2, coord[1] + icon_size + value_font_offset)
-                draw.text(text_pos, f"${val:,}", font=font_small, fill="lime", anchor="mt")
-            except FileNotFoundError:
-                print(f"Missing icon: {fruit}")
+                    # Paste the actual fruit icon
+                    img.paste(icon, coord, icon)
+
+                    # Value text
+                    text_pos = (coord[0] + icon_size // 2, coord[1] + icon_size + value_font_offset)
+                    draw_gradient_text(
+                        img,
+                        text_pos,
+                        f"${format_value(val)}",
+                        font=font_small,
+                        gradient_colors=[(186, 85, 211), (0, 191, 255)],
+                        anchor="mt",
+                        stretch_height=1.1
+                    )
+                except FileNotFoundError:
+                    print(f"Missing icon: {fruit}")
+            else:
+                glow_size = icon_size
+                placeholder = Image.new("RGBA", (glow_size, glow_size), (0, 0, 0, 0))
+                draw = ImageDraw.Draw(placeholder)
+                draw.ellipse((0, 0, glow_size, glow_size), fill=(255, 255, 255, 20))
+                blurred = placeholder.filter(ImageFilter.GaussianBlur(radius=6))
+
+                img.paste(blurred, coord, blurred)
+
 
     paste_fruits(your_fruits, your_coords, your_values)
     paste_fruits(their_fruits, their_coords, their_values)
 
     your_total = sum(your_values)
     their_total = sum(their_values)
-    diff = your_total - their_total
     percent = percentage_Calculation
-    win = diff > 0
 
-    # Titles
-    draw.text((img.width // 2, 40), "WIN OR LOSS", font=font_title_main, fill="lime", anchor="mm")
-    draw.text((img.width // 2, 100), "CALCULATOR", font=font_title_sub, fill="orange", anchor="mm")
 
-    # Grid Labels
     your_label_x = (your_coords[0][0] + your_coords[1][0] + icon_size) // 2
     their_label_x = (their_coords[0][0] + their_coords[1][0] + icon_size) // 2
-    label_y = 200
-
-    draw.text((your_label_x, label_y), "YOUR ITEMS", font=font_grid_label, fill="#FFD700", anchor="mm")
-    draw.text((their_label_x, label_y), "THEIR ITEMS", font=font_grid_label, fill="#00FFFF", anchor="mm")
-
-    # Totals below grids
-    draw.text((your_label_x, 575), f"TOTAL: ${your_total:,}", font=font_total, fill="white", anchor="mm")
-    draw.text((their_label_x, 575), f"TOTAL: ${their_total:,}", font=font_total, fill="white", anchor="mm")
-
-    # Win bar
     center_x = img.width // 2
-    bar_x, bar_y, bar_width, bar_height = 140, 660, 420, 12
-    draw.rectangle([bar_x, bar_y, bar_x + int(bar_width * (percent / 100)), bar_y + bar_height], fill="lime")
 
-    draw.text((center_x, bar_y - 30), f"{percent}% {trade_winorlose}", font=font_percentage, fill="orange", anchor="mm")
+    draw_gradient_text(img, (your_label_x, 575), f"TOTAL: ${your_total:,}",
+                    font=font_total, gradient_colors=[(128, 255, 255), (255, 128, 255)], anchor="mm")
 
-    trade_msg = trade_conclusion
-    draw.text((center_x, bar_y + 80), trade_msg, font=font_result, fill=f"{trade_conclusion_color}", anchor="mm")
+    draw_gradient_text(img, (their_label_x, 575), f"TOTAL: ${their_total:,}",
+                    font=font_total, gradient_colors=[(255, 180, 255), (180, 255, 255)], anchor="mm")
 
-    # Footer
-    draw.text((20, 820), ".GG/BLOXTRADE", font=font_footer, fill="orange", anchor="lm")
+    if winorloseorfair == 0:
+        bar_x, bar_y, bar_width, bar_height = 140, 660, 420, 12
+        draw_gradient_bar(img, bar_x, bar_y, bar_width, bar_height, percent,
+                        color_start=(180, 140, 0), color_end=(255, 230, 100))
 
-    output_path = "trade_Result.png"
-    img.save(output_path)
-    img.show()
-    return output_path
+        draw_gradient_text(img, (center_x, bar_y - 30), f"{percent}% {trade_winorlose}",
+                        font=font_percentage, gradient_colors=[(180, 140, 0), (255, 230, 100)], anchor="mm")
+        
+        draw_gradient_text(
+            img,
+            (center_x - 20, bar_y + 80),
+            trade_conclusion,
+            font=font_result,
+            gradient_colors=[(180, 140, 0), (255, 230, 100)],
+            anchor="mm"
+        )
 
-#GenerateWORLImage(your_fruits, your_values, their_fruits, their_values)
+    elif winorloseorfair == 1:
+        bar_x, bar_y, bar_width, bar_height = 140, 660, 420, 12
+        draw_gradient_bar(img, bar_x, bar_y, bar_width, bar_height, percent,
+                        color_start=(120, 0, 0), color_end=(255, 100, 100))
+        draw_gradient_text(img, (center_x, bar_y - 30), f"{percent}% {trade_winorlose}",
+                        font=font_percentage, gradient_colors=[(120, 0, 0), (255, 100, 100)], anchor="mm")
+        
+        draw_gradient_text(
+            img,
+            (center_x - 20, bar_y + 80),
+            trade_conclusion,
+            font=font_result,
+            gradient_colors=[(120, 0, 0), (255, 100, 100)],
+            anchor="mm"
+        )
+
+    else:
+        bar_x, bar_y, bar_width, bar_height = 140, 660, 420, 12
+        draw_gradient_bar(img, bar_x, bar_y, bar_width, bar_height, percent,
+                        color_start=(180, 100, 0), color_end=(255, 210, 120))
+
+        draw_gradient_text(img, (center_x, bar_y - 20), f"{percent}% {trade_winorlose}",
+                        font=font_percentage, gradient_colors=[(180, 100, 0), (255, 210, 120)], anchor="mm")
+
+        draw_gradient_text(
+            img,
+            (center_x - 20, bar_y + 80),
+            trade_conclusion,
+            font=font_result,
+            gradient_colors=[(180, 100, 0), (255, 210, 120)],
+            anchor="mm"
+        )
+
+    return img

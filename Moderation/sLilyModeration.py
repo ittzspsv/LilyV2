@@ -219,7 +219,10 @@ async def ban_user(ctx, user_input, reason="No reason provided"):
             await ctx.send(embed=SimpleEmbed(f"Banned: <@{target_user.id}> \n**Reason:** {reason}"))
 
             log_ban(ctx.author.id, target_user.id, reason)
-            log_channel = ctx.guild.get_channel(logs_channel_id)
+
+            with open("Moderation/logchannelid.log", "r") as file:
+                logs_channel_id = file.read().strip()
+            log_channel = ctx.guild.get_channel(int(logs_channel_id))
             if log_channel:
                 await log_channel.send(embed=LogEmbed(target_user, ctx.author, reason))
 

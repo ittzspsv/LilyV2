@@ -2,6 +2,7 @@ import json
 import re
 from Config.sBotDetails import *
 from Algorthims.sTradeFormatAlgorthim import *
+from ui.sWinOrLossImageGenerator import *
 
 value_data_path = "ValueData.json"
 
@@ -48,7 +49,35 @@ def fetch_fruit_details(fruit_name):
 def fetch_all_fruits():
     return value_data
 
-def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type=[]):
+
+
+def calculate_win_loss(my_value, opponent_value, Type=0):
+    try:
+        my_value = float(my_value)
+        opponent_value = float(opponent_value)
+    except ValueError:
+        return "Invalid input. Please enter numerical values."
+    if Type==0:
+        if my_value > opponent_value:
+            loss_percentage = (1 - (opponent_value / my_value)) * 100
+            return f"Loss Percentage: {100:.1f}%" if loss_percentage > 99.9 else f"Loss Percentage: {loss_percentage:.1f}%"
+        elif my_value < opponent_value:
+            win_percentage = (1 - (my_value / opponent_value)) * 100
+            return f"Win Percentage: {100:.1f}%" if win_percentage > 99.9 else f"Win Percentage: {win_percentage:.1f}%"
+        else:
+            return "0% - Fair match"
+    else:
+        if my_value > opponent_value:
+            loss_percentage = (1 - (opponent_value / my_value)) * 100
+            return 100 if loss_percentage > 99.9 else int(loss_percentage)
+        elif my_value < opponent_value:
+            win_percentage = (1 - (my_value / opponent_value)) * 100
+            return 100 if win_percentage > 99.9 else int(win_percentage)
+        else:
+            return 0
+
+
+def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type=[], Type=0):
     fruit_exceed_limit = 0
     if len(your_fruits) > 4 or len(their_fruits) > 4:
         fruit_exceed_limit = 1
@@ -102,64 +131,59 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
 
         }
 
-    if (total_value_of_your_fruit < total_value_of_their_fruit and fruit_exceed_limit != 1):
-        WORLT = "W"
-        output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
-        output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
-        output_dict["Your_IndividualValues"] = your_fruit_individual_values
-        output_dict["Their_IndividualValues"] = their_fruit_individual_values
-        output_dict["Your_TotalValue"] = total_value_of_your_fruit
-        output_dict["Their_TotalValue"] = total_value_of_their_fruit
-        output_dict["ColorKey"] = 0xffd500
+    if Type == 0:
+        if (total_value_of_your_fruit < total_value_of_their_fruit and fruit_exceed_limit != 1):
+            WORLT = "W"
+            output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+            output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
+            output_dict["Your_IndividualValues"] = your_fruit_individual_values
+            output_dict["Their_IndividualValues"] = their_fruit_individual_values
+            output_dict["Your_TotalValue"] = total_value_of_your_fruit
+            output_dict["Their_TotalValue"] = total_value_of_their_fruit
+            output_dict["ColorKey"] = 0xffd500
 
 
-        return output_dict
-    elif (total_value_of_your_fruit == total_value_of_their_fruit) and fruit_exceed_limit != 1:
-        WORLT = "Fair"
-        output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
-        output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
-        output_dict["Your_IndividualValues"] = your_fruit_individual_values
-        output_dict["Their_IndividualValues"] = their_fruit_individual_values
-        output_dict["Your_TotalValue"] = total_value_of_your_fruit
-        output_dict["Their_TotalValue"] = total_value_of_their_fruit
-        output_dict["ColorKey"] = 0xff6600
+            return output_dict
+        elif (total_value_of_your_fruit == total_value_of_their_fruit) and fruit_exceed_limit != 1:
+            WORLT = "Fair"
+            output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+            output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
+            output_dict["Your_IndividualValues"] = your_fruit_individual_values
+            output_dict["Their_IndividualValues"] = their_fruit_individual_values
+            output_dict["Your_TotalValue"] = total_value_of_your_fruit
+            output_dict["Their_TotalValue"] = total_value_of_their_fruit
+            output_dict["ColorKey"] = 0xff6600
 
-        return output_dict
-    
-    elif fruit_exceed_limit != 1:
-        WORLT = "L"
-        output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
-        output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
-        output_dict["Your_IndividualValues"] = your_fruit_individual_values
-        output_dict["Their_IndividualValues"] = their_fruit_individual_values
-        output_dict["Your_TotalValue"] = total_value_of_your_fruit
-        output_dict["Their_TotalValue"] = total_value_of_their_fruit
-        output_dict["ColorKey"] = 0x79817d
+            return output_dict
+        
+        elif fruit_exceed_limit != 1:
+            WORLT = "L"
+            output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+            output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
+            output_dict["Your_IndividualValues"] = your_fruit_individual_values
+            output_dict["Their_IndividualValues"] = their_fruit_individual_values
+            output_dict["Your_TotalValue"] = total_value_of_your_fruit
+            output_dict["Their_TotalValue"] = total_value_of_their_fruit
+            output_dict["ColorKey"] = 0x79817d
 
-        return output_dict
-    
+            return output_dict
+        
+        else:
+            output_dict["TradeConclusion"] = f"Fruit Value exceeded for one of the trader"
+            output_dict["TradeDescription"] = f"In Blox fruit you can only trade upto 4 fruits at a time. \n\nIf you wanna trade multiple fruits like that then make sure to use **{server_name}'s Middlemen System** for a **safe** and **trusted multiple trades**.  You can request for a middlemen here <#{middle_men_channel_id}>"
+            output_dict["ColorKey"] = 0xff0000
+
+            return output_dict
+
     else:
-        output_dict["TradeConclusion"] = f"Fruit Value exceeded for one of the trader"
-        output_dict["TradeDescription"] = f"In Blox fruit you can only trade upto 4 fruits at a time. \n\nIf you wanna trade multiple fruits like that then make sure to use **{server_name}'s Middlemen System** for a **safe** and **trusted multiple trades**.  You can request for a middlemen here <#{middle_men_channel_id}>"
-        output_dict["ColorKey"] = 0xff0000
-
-        return output_dict
-
-def calculate_win_loss(my_value, opponent_value):
-    try:
-        my_value = float(my_value)
-        opponent_value = float(opponent_value)
-    except ValueError:
-        return "Invalid input. Please enter numerical values."
-    
-    if my_value > opponent_value:
-        loss_percentage = (1 - (opponent_value / my_value)) * 100
-        return f"Loss Percentage: {100:.1f}%" if loss_percentage > 99.9 else f"Loss Percentage: {loss_percentage:.1f}%"
-    elif my_value < opponent_value:
-        win_percentage = (1 - (my_value / opponent_value)) * 100
-        return f"Win Percentage: {100:.1f}%" if win_percentage > 99.9 else f"Win Percentage: {win_percentage:.1f}%"
-    else:
-        return "0% - Fair match"
+        if (total_value_of_your_fruit < total_value_of_their_fruit and fruit_exceed_limit != 1):
+            return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values, trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS AN W", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=0)
+        elif (total_value_of_your_fruit == total_value_of_their_fruit) and fruit_exceed_limit != 1:
+            return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values, trade_winorlose="FAIR", trade_conclusion="YOUR TRADE IS FAIR", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=2)
+        elif fruit_exceed_limit != 1:
+            return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values, trade_winorlose="LOSE", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=1)
+        else:
+            pass
 
 
 def update_fruit_data_json_type(json_file_path, updated_fruits):

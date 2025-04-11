@@ -14,6 +14,24 @@ def save_exceptional_ban_ids(ids):
     with open(Ban_Exceptional_File, "w") as f:
         json.dump({"ids": ids}, f, indent=4)
 
+def remove_exceptional_ban_id(remove_id):
+    try:
+        with open(Ban_Exceptional_File, "r") as f:
+            data = json.load(f)
+
+        if "ids" in data and remove_id in data["ids"]:
+            data["ids"].remove(remove_id)
+
+            with open(Ban_Exceptional_File, "w") as f:
+                json.dump(data, f, indent=4)
+
+            return True
+        else:
+            return False
+
+    except (FileNotFoundError, json.JSONDecodeError):
+        return False
+
 def load_roles():
     if os.path.exists(Role_Assignable_File):
         with open(Role_Assignable_File, "r") as f:
@@ -49,7 +67,7 @@ fruit_value_embed_type = 1
 port = 1  # Currently set to Production Server
 
 # ENVIRONMENT SETTINGS
-if port == 1:
+if port == 0:
     # DEVELOPMENT SERVER SETTINGS
     TRADE_EMOJI_ID = ["1348722170586599465"]
     PERM_EMOJI_ID = ["1349449830048731206"]
@@ -61,11 +79,9 @@ if port == 1:
     stock_ping_role_id = "1348020649444114574"
     stock_team_roll_name = "Stock Ping"
 
-    logs_channel_id = 1356223694388723792
-
     limit_Ban_details = {
-        1356187197526638693: 3,
-        1348020649444114574: 2
+        1356187197526638693: 3, #HEAD ADMIN
+        1348020649444114574: 2  #STOCK PING
     }
 
     exceptional_limited_ban_id = load_exceptional_ban_ids()
@@ -92,17 +108,16 @@ else:
     # Experimental sea event message detector (currently disabled)
     scam_Detection_prompts = 0
     trial_moderator_name = "Trial Moderator"
-    
-    logs_channel_id = 0
 
     exceptional_limited_ban_id = load_exceptional_ban_ids()
     #Their user id followed by how much limited ban they can do in a day
     limit_Ban_details = {
         1333123391875584011 : 20, #HEAD MODERATOR
-        1348412603701133506 : 10, #SENIOR MODERATOR
+        1348412603701133506 : 5,  #SENIOR MODERATOR
+        1324581146272595999 : 2   #MODERATORS
     }
 
-    service_manager_roll_id = 0
+    service_manager_roll_id = 1333123391875584011 #CURRENTLY HEAD MODERATORS
 
 # Embed colors based on item type
 embed_color_codes = {
@@ -123,10 +138,6 @@ ids = [
     549777573551276051
 ]
 
-#Owner IDS - IDS who can blacklist moderators from using limited bans
-#COMMANDS THEY CAN USE : Blacklist user, Make Role Assignable
-owner_ids = [549777573551276051, 1120025980178796714]  #CURRENT USER IDS - ZELY, VOUCH
 
-#Role assignable IDS 
-#COMMANDS THEY CAN USE : Assign Roles
-role_assignable_ids = [1329951007311921212, 895649073082814475, 869064913535004753] #CURRENT USER IDS KAI, LELOUCH, OBLIVION
+owner_ids = [549777573551276051, 1120025980178796714]  #CURRENT USER IDS - [ZELY, VOUCH]
+trusted_moderator_ids = [1329951007311921212, 895649073082814475] #CURRENT USER IDS [KAI, LELOUCH]
