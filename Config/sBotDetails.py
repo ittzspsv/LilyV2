@@ -49,7 +49,7 @@ fruit_value_embed_type = 1
 port = 1  # Currently set to Production Server
 
 # ENVIRONMENT SETTINGS
-if port == 1:
+if port == 0:
     # DEVELOPMENT SERVER SETTINGS
     TRADE_EMOJI_ID = ["1348722170586599465"]
     PERM_EMOJI_ID = ["1349449830048731206"]
