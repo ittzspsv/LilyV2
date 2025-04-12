@@ -215,7 +215,10 @@ async def ban_user(ctx, user_input, reason="No reason provided"):
             await ctx.send(embed=SimpleEmbed("Cannot ban the user! I'm Sorry But you have exceeded your daily limit"))
             return
         try:
-            await ctx.guild.ban(discord.Object(id=target_user.id), reason=reason)
+            if isinstance(target_user, discord.Member):
+                await ctx.guild.ban(target_user, reason=reason)
+            else:
+                await ctx.guild.ban(discord.Object(id=target_user.id), reason=reason)
             await ctx.send(embed=SimpleEmbed(f"Banned: <@{target_user.id}> \n**Reason:** {reason}"))
 
             log_ban(ctx.author.id, target_user.id, reason)
