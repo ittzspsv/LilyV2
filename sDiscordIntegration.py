@@ -290,7 +290,7 @@ class MyBot(commands.Bot):
                     item_name_capital = item_name.title()
                     jsonfruitdata = fetch_fruit_details(item_name)
                     if isinstance(jsonfruitdata, dict):
-                        fruit_img_link = FetchFruitImage(item_name_capital, 100)
+                        fruit_img_link = FetchFruitImage(item_name_capital)
                         #await message.channel.send(f"> # {item_name.title()}\n> - **Physical Value**: {jsonfruitdata['physical_value']} \n> - **Physical Demand**: {jsonfruitdata['physical_demand']} \n> - **Physical DemandType **: {jsonfruitdata['demand_type']} \n> - **Permanent Value**: {jsonfruitdata['permanent_value']} \n> - **Permanent Demand**: {jsonfruitdata['permanent_demand']} \n> - **Permanent Demand Type**: {jsonfruitdata['permanent_demand_type']}")
                         embed = discord.Embed(title=f"{item_name.title()}",
                         colour=embed_color_codes[jsonfruitdata['category']])
@@ -918,7 +918,7 @@ async def item_value(ctx: commands.Context, item_name: str):
             item_name_capital = item_name.title()
             jsonfruitdata = fetch_fruit_details(item_name)
             if isinstance(jsonfruitdata, dict):
-                    fruit_img_link = FetchFruitImage(item_name_capital, 100)
+                    fruit_img_link = FetchFruitImage(item_name_capital)
                     #await message.channel.send(f"> # {item_name.title()}\n> - **Physical Value**: {jsonfruitdata['physical_value']} \n> - **Physical Demand**: {jsonfruitdata['physical_demand']} \n> - **Physical DemandType **: {jsonfruitdata['demand_type']} \n> - **Permanent Value**: {jsonfruitdata['permanent_value']} \n> - **Permanent Demand**: {jsonfruitdata['permanent_demand']} \n> - **Permanent Demand Type**: {jsonfruitdata['permanent_demand_type']}")
                     embed = discord.Embed(title=f"{item_name.title()}",
                     colour=embed_color_codes[jsonfruitdata['category']])
