@@ -225,9 +225,6 @@ async def ban_user(ctx, user_input, reason="No reason provided"):
             log_channel = ctx.guild.get_channel(int(logs_channel_id))
             if log_channel:
                 await log_channel.send(embed=LogEmbed(target_user, ctx.author, reason))
-
-        except discord.Forbidden:
-            await ctx.send(embed=SimpleEmbed("I do not have permission to ban this user."))
         except discord.HTTPException as e:
             await ctx.send(embed=SimpleEmbed(f"Failed to ban the user. {e}"))
         except Exception as e:
@@ -235,4 +232,3 @@ async def ban_user(ctx, user_input, reason="No reason provided"):
 
     except Exception as e:
         await ctx.send(embed=SimpleEmbed(f"Unhandled Exception: {e}"))
-

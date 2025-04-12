@@ -399,19 +399,20 @@ class MyBot(commands.Bot):
                             inline=False
                         )
 
-                        '''
                         w_or_l_channel = self.get_channel(w_or_l_channel_id)
-                        if message.channel == w_or_l_channel:'''
-                        await message.reply(embed=embed)
+                        if message.channel == w_or_l_channel:
+                            await message.reply(embed=embed)
 
                 else:
-                    status_msg = await message.reply("Thinking...")
-                    image = await asyncio.to_thread(j_LorW, your_fruits, your_fruit_types, their_fruits, their_fruits_types, Type)
-                    buffer = io.BytesIO()
-                    image.save(buffer, format="PNG", optimize=True)
-                    buffer.seek(0)
-                    discord_file = discord.File(fp=buffer, filename="trade_Result.png")
-                    await status_msg.edit(content=None, attachments=[discord_file])
+                    w_or_l_channel = self.get_channel(w_or_l_channel_id)
+                    if message.channel == w_or_l_channel:
+                        status_msg = await message.reply("Thinking...")
+                        image = await asyncio.to_thread(j_LorW, your_fruits, your_fruit_types, their_fruits, their_fruits_types, Type)
+                        buffer = io.BytesIO()
+                        image.save(buffer, format="PNG", optimize=True)
+                        buffer.seek(0)
+                        discord_file = discord.File(fp=buffer, filename="trade_Result.png")
+                        await status_msg.edit(content=None, attachments=[discord_file])
 
         elif FDAE.is_valid_trade_sequence(message.content, emoji_id_to_name):   
             your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
