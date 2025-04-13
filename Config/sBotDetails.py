@@ -64,7 +64,7 @@ server_invite_link = "https://discord.com/invite/bloxtrade"
 fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
-port = 1  # Currently set to Production Server
+port = 1 # Currently set to Production Server
 
 # ENVIRONMENT SETTINGS
 if port == 0:
@@ -80,8 +80,9 @@ if port == 0:
     stock_team_roll_name = "Stock Ping"
 
     limit_Ban_details = {
-        1356187197526638693: 3, #HEAD ADMIN
-        1348020649444114574: 2  #STOCK PING
+        1356187197526638693: 3, #HEAD ADMIN in SHREE_SPSV SERVER
+        1348020649444114574: 2,  #STOCK PING in SHREE_SPSV SERVER
+        1325145748035207239 : 3 #CREATORS ROLE IN TEXIOVERSE,
     }
 
     exceptional_limited_ban_id = load_exceptional_ban_ids()
@@ -114,7 +115,7 @@ else:
     limit_Ban_details = {
         1333123391875584011 : 20, #HEAD MODERATOR
         1348412603701133506 : 5,  #SENIOR MODERATOR
-        1324581146272595999 : 2   #MODERATORS
+        1324581146272595999 : 2  #MODERATORS
     }
 
     service_manager_roll_id = 1333123391875584011 #CURRENTLY HEAD MODERATORS

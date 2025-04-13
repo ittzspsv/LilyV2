@@ -555,7 +555,7 @@ class MyBot(commands.Bot):
                 await self.WriteLog(f"**{message.author.id}**", f" Attempted to update **{name}** Value!")
 
         elif "update logs" in message.content.lower():
-            if message.author.id in ids + trusted_moderator_ids + owner_ids:
+            if message.author.id in ids + owner_ids:
 
                 parser = message.content.lower().split()
                 log_min = 0
@@ -670,7 +670,7 @@ class MyBot(commands.Bot):
 
         #TEMPORARY FUNCTIONS : WILL BE REMOVED IN THE FUTURE UPDATE
         elif "switch ui mode" in message.content.lower():
-            if message.author.id in ids + trusted_moderator_ids + owner_ids:
+            if message.author.id in ids + owner_ids:
                 parts = message.content.lower().split()
                 if len(parts) >= 4 and parts[2] == "mode":
                     number = parts[3]
@@ -679,14 +679,13 @@ class MyBot(commands.Bot):
                         await message.reply("Switched Mode!")
 
         elif "assign ban log channel id:" in message.content.lower():
-            if message.author.id in ids + trusted_moderator_ids + owner_ids:
+            if message.author.id in ids + owner_ids:
                 channel_id = message.content.replace("assign ban log channel id:", "").strip()
                 
                 with open("Moderation/logchannelid.log", "w") as file:
                     file.write(str(channel_id))
         
                 await message.channel.send(f"Ban log channel ID set to <#{channel_id}>.")
-
 
         elif message.content.lower() == "normal stock":
             stock_update_channel = bot.get_channel(stock_update_channel_id)
@@ -768,7 +767,16 @@ bot = MyBot()
 
 @bot.command()
 async def ban(ctx, member: str = "", *, reason="No reason provided"):
+    proofs = []
     role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
+
+    for attachment in ctx.message.attachments:
+        if attachment.content_type and any(attachment.content_type.startswith(t) for t in ["image/", "video/"]):
+            file = await attachment.to_file()
+            proofs.append(file)
+        else:
+            await ctx.send(f"File type {attachment.filename} Not Supported, so it will not be sent to logs channel")
+
     try:
         target_user = None
         try:
@@ -792,7 +800,7 @@ async def ban(ctx, member: str = "", *, reason="No reason provided"):
             return
 
         if not mLily.exceeded_ban_limit(ctx.author.id, role_ids):
-            await mLily.ban_user(ctx, target_user, reason)
+            await mLily.ban_user(ctx, target_user, reason, proofs)
         else:
             await ctx.send(embed=mLily.SimpleEmbed(
                 f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"

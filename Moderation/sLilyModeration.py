@@ -13,7 +13,6 @@ def evaluate_log_file(filename):
         df = pd.DataFrame(columns=["banned_user_id", "reason", "ban_time"])
         df.to_csv(filename, index=False)
 
-
 def exceeded_ban_limit(moderator_id, moderator_role_ids):
     filename = f"{moderator_id}-logs.csv"
 
@@ -40,7 +39,6 @@ def exceeded_ban_limit(moderator_id, moderator_role_ids):
 
     except Exception as e:
         return False
-
 
 def remaining_Ban_time(moderator_id, moderator_role_ids):
     filename = f"{moderator_id}-logs.csv"
@@ -81,7 +79,6 @@ def remaining_Ban_time(moderator_id, moderator_role_ids):
     except Exception as e:
         return None
 
-
 def log_ban(moderator_id, banned_user_id, reason="No reason provided"):
     filename = f"{moderator_id}-logs.csv"
     now = datetime.now(pytz.utc).isoformat()
@@ -89,7 +86,6 @@ def log_ban(moderator_id, banned_user_id, reason="No reason provided"):
 
     file_exists = os.path.exists(filename) and os.path.getsize(filename) > 0
     new_ban.to_csv(filename, mode="a", header=not file_exists, index=False)
-
 
 def display_logs(user_id, user, slice_expr=None):
     file_path = f"{user_id}-logs.csv"
@@ -138,12 +134,10 @@ def display_logs(user_id, user, slice_expr=None):
 
     return embed
 
-
 def SimpleEmbed(stringformat):
     embed = discord.Embed(description=stringformat, colour=0x6600ff, timestamp=datetime.now())
     embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
     return embed
-
 
 def LogEmbed(user, moderator: discord.Member, reason: str):
     embed = discord.Embed(title="BANNED LOG", colour=0x6600ff, timestamp=datetime.now())
@@ -157,8 +151,7 @@ def LogEmbed(user, moderator: discord.Member, reason: str):
     embed.set_footer(text=f"ID : {user.id}")
     return embed
 
-
-async def ban_user(ctx, user_input, reason="No reason provided"):
+async def ban_user(ctx, user_input, reason="No reason provided", proofs:list=[]):
     except_limit_ban_ids = load_exceptional_ban_ids()
     author_role_ids = [role.id for role in ctx.author.roles]
     valid_limit_roles = [role_id for role_id in author_role_ids if role_id in limit_Ban_details]
@@ -227,7 +220,7 @@ async def ban_user(ctx, user_input, reason="No reason provided"):
                 logs_channel_id = file.read().strip()
             log_channel = ctx.guild.get_channel(int(logs_channel_id))
             if log_channel:
-                await log_channel.send(embed=LogEmbed(target_user, ctx.author, reason))
+                await log_channel.send(embed=LogEmbed(target_user, ctx.author, reason), files=proofs)
 
         except discord.HTTPException as e:
             await ctx.send(embed=SimpleEmbed(f"Failed to ban the user. {e}"))
