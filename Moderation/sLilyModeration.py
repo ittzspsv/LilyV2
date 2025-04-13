@@ -161,7 +161,7 @@ def LogEmbed(user, moderator: discord.Member, reason: str):
 async def ban_user(ctx, user_input, reason="No reason provided"):
     except_limit_ban_ids = load_exceptional_ban_ids()
     author_role_ids = [role.id for role in ctx.author.roles]
-    valid_limit_roles = [rid for rid in author_role_ids if rid in limit_Ban_details]
+    valid_limit_roles = [role_id for role_id in author_role_ids if role_id in limit_Ban_details]
 
     if ctx.author.id in except_limit_ban_ids:
         await ctx.send(embed=SimpleEmbed("You Have the role to ban.  But you can't ban.  Maybe you are restricted from using this command"))
@@ -172,62 +172,63 @@ async def ban_user(ctx, user_input, reason="No reason provided"):
         return
 
     try:
-        target_user = None
+        try:
+            user_id = user_input.id if isinstance(user_input, (discord.User, discord.Member)) else int(user_input)
+        except ValueError:
+            await ctx.send(embed=SimpleEmbed("User ID is Not Valid"))
+            return
+        
+        member_obj = ctx.guild.get_member(user_id)
 
-        if isinstance(user_input, (discord.Member, discord.User)):
-            target_user = user_input
+        if member_obj:
+            target_user = member_obj
         else:
             try:
-                target_user = await commands.MemberConverter().convert(ctx, str(user_input))
-            except commands.MemberNotFound:
-                try:
-                    user_id = int(user_input)
-                    target_user = await ctx.bot.fetch_user(user_id)
-                except ValueError:
-                    await ctx.send(embed=SimpleEmbed("User ID is Not Valid"))
-                    return
-                except discord.NotFound:
-                    await ctx.send(embed=SimpleEmbed("User not found. Recheck"))
-                    return
-                except discord.HTTPException as e:
-                    await ctx.send(embed=SimpleEmbed(f"Exception : HTTPException  {e}"))
-                    return
+                target_user = await ctx.bot.fetch_user(user_id)
+            except discord.NotFound:
+                await ctx.send(embed=SimpleEmbed("User not found. Recheck"))
+                return
+            except discord.HTTPException as e:
+                await ctx.send(embed=SimpleEmbed(f"Exception : HTTPException  {e}"))
+                return
 
-        if isinstance(target_user, discord.Member):
-            if target_user.top_role >= ctx.guild.me.top_role:
+        if member_obj:
+            if member_obj.top_role >= ctx.guild.me.top_role:
                 await ctx.send(embed=SimpleEmbed("I cannot ban this user because their role is higher than mine!"))
                 return
-
-            if target_user.top_role >= ctx.author.top_role:
+            if member_obj.top_role >= ctx.author.top_role:
                 await ctx.send(embed=SimpleEmbed("I cannot ban a user with a role equal to or higher than yours."))
                 return
-            if target_user.id == ctx.guild.owner_id:
+            if member_obj.id == ctx.guild.owner_id:
                 await ctx.send(embed=SimpleEmbed("I cannot ban the server owner!"))
                 return
-            if target_user.id == ctx.bot.user.id:
+            if member_obj.id == ctx.bot.user.id:
                 await ctx.send(embed=SimpleEmbed("You cannot ban me!"))
                 return
-            if target_user.id == ctx.author.id:
+            if member_obj.id == ctx.author.id:
                 await ctx.send(embed=SimpleEmbed("You cannot ban yourself!"))
                 return
 
         if exceeded_ban_limit(ctx.author.id, valid_limit_roles):
             await ctx.send(embed=SimpleEmbed("Cannot ban the user! I'm Sorry But you have exceeded your daily limit"))
             return
-        try:
-            if isinstance(target_user, discord.Member):
-                await ctx.guild.ban(target_user, reason=reason)
-            else:
-                await ctx.guild.ban(discord.Object(id=target_user.id), reason=reason)
-            await ctx.send(embed=SimpleEmbed(f"Banned: <@{target_user.id}> \n**Reason:** {reason}"))
 
-            log_ban(ctx.author.id, target_user.id, reason)
+        try:
+            if member_obj:
+                await ctx.guild.ban(member_obj, reason=reason)
+            else:
+                await ctx.guild.ban(discord.Object(id=user_id), reason=reason)
+
+            await ctx.send(embed=SimpleEmbed(f"Banned: <@{user_id}> \n**Reason:** {reason}"))
+
+            log_ban(ctx.author.id, user_id, reason)
 
             with open("Moderation/logchannelid.log", "r") as file:
                 logs_channel_id = file.read().strip()
             log_channel = ctx.guild.get_channel(int(logs_channel_id))
             if log_channel:
                 await log_channel.send(embed=LogEmbed(target_user, ctx.author, reason))
+
         except discord.HTTPException as e:
             await ctx.send(embed=SimpleEmbed(f"Failed to ban the user. {e}"))
         except Exception as e:

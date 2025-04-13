@@ -767,7 +767,7 @@ bot = MyBot()
 
 
 @bot.command()
-async def ban(ctx, member: str="", *, reason="No reason provided"):
+async def ban(ctx, member: str = "", *, reason="No reason provided"):
     role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
     try:
         target_user = None
@@ -775,13 +775,10 @@ async def ban(ctx, member: str="", *, reason="No reason provided"):
             target_user = await commands.MemberConverter().convert(ctx, member)
         except commands.MemberNotFound:
             try:
-                if isinstance(member, discord.User):
-                    user_id = member.id
-                else:
-                    user_id = int(member)
+                user_id = int(member)
                 target_user = await ctx.bot.fetch_user(user_id)
             except ValueError:
-                await ctx.send(embed=mLily.SimpleEmbed("Invalid user ID format. Provide a valid numeric ID."))
+                await ctx.send(embed=mLily.SimpleEmbed(f"Value Error {ValueError}"))
                 return
             except discord.NotFound:
                 await ctx.send(embed=mLily.SimpleEmbed(f"User ID {member} not found. Please check the ID."))
@@ -790,10 +787,17 @@ async def ban(ctx, member: str="", *, reason="No reason provided"):
                 await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user data: {e}"))
                 return
 
+        if not target_user:
+            await ctx.send(embed=mLily.SimpleEmbed("No Valid Users to Ban"))
+            return
+
         if not mLily.exceeded_ban_limit(ctx.author.id, role_ids):
             await mLily.ban_user(ctx, target_user, reason)
         else:
-            await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n You can ban in {mLily.remaining_Ban_time(ctx.author.id, role_ids)}"))
+            await ctx.send(embed=mLily.SimpleEmbed(
+                f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"
+                f"You can ban in {mLily.remaining_Ban_time(ctx.author.id, role_ids)}"
+            ))
 
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}"))
