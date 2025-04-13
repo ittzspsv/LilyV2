@@ -193,7 +193,6 @@ class MyBot(commands.Bot):
                     await normal_stock_message.add_reaction("🇱")
 
                     if current_good_fruits_n != []:
-                        pass #disabled pinging system temporarily
                         await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_n)} is in Normal Stock :blush:.  Make sure to buy them")
 
     async def mirage_stock(self, Channel, type=0):
@@ -235,7 +234,6 @@ class MyBot(commands.Bot):
 
                 #await message.channel.send(f"> ### Normal Stock: \n> {printable_string} \n> ### Mirage Stock: \n> {printable_string2}")
                 if current_good_fruits_m != []:
-                    pass #disabled pinging system temporarily
                     await Channel.send(f"<@&{stock_ping_role_id}>{', '.join(current_good_fruits_m)} is in Mirage Stock:blush:.  Make sure to buy them")
 
     async def check_time_and_post(self):
