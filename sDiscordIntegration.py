@@ -511,7 +511,7 @@ class MyBot(commands.Bot):
 
         elif f"value.update" in message.content.lower():
             if message.author.id in ids:
-                user_message = message.content.lower()
+                user_message =  message.content.lower()
                 message_parsed = user_message.split()
                 
                 #name, physical_value, permanent_value, physical_demand, permanent_demand, demand_type, permanent_demand_type

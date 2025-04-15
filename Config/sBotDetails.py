@@ -114,8 +114,8 @@ else:
     #Their user id followed by how much limited ban they can do in a day
     limit_Ban_details = {
         1333123391875584011 : 20, #HEAD MODERATOR
-        1348412603701133506 : 5,  #SENIOR MODERATOR
-        1324581146272595999 : 2  #MODERATORS
+        1348412603701133506 : 10,  #SENIOR MODERATOR
+        1324581146272595999 : 5  #MODERATORS
     }
 
     service_manager_roll_id = 1333123391875584011 #CURRENTLY HEAD MODERATORS
