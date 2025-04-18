@@ -4,22 +4,21 @@ from Config.sBotDetails import *
 from Algorthims.sTradeFormatAlgorthim import *
 from ui.sWinOrLossImageGenerator import *
 
+from PIL import Image
+
 value_data_path = "ValueData.json"
 
 fruit_dict = {}
 fruit_names = {}
-fruit_s_dict = {}
 
 def UpdateFruitDict():
     global fruit_dict
     global fruit_names
-    global fruit_s_dict
     try:
         with open(value_data_path, "r", encoding="utf-8") as file:
             value_data = json.load(file)  # Load JSON data
 
         fruit_dict = {fruit["name"].lower(): fruit for fruit in value_data}
-        fruit_s_dict = {fruit["name"] : int(fruit["physical_value"].replace(",", "")) for fruit in value_data if not fruit["category"] in ("limited", "gamepass")}
         fruit_names = {fruit["name"].lower() for fruit in value_data}
 
     except (FileNotFoundError, json.JSONDecodeError):
@@ -77,7 +76,7 @@ def calculate_win_loss(my_value, opponent_value, Type=0):
             return 0
 
 
-def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type=[], Type=0):
+def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type=[], Type=0, suggestion=0):
     fruit_exceed_limit = 0
     if len(your_fruits) > 4 or len(their_fruits) > 4:
         fruit_exceed_limit = 1
@@ -177,13 +176,14 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
 
     else:
         if (total_value_of_your_fruit < total_value_of_their_fruit and fruit_exceed_limit != 1):
-            return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values, trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS AN W", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=0)
+            return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values,your_fruit_type, their_fruit_type, trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS AN W", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=0, background_type=suggestion)
         elif (total_value_of_your_fruit == total_value_of_their_fruit) and fruit_exceed_limit != 1:
-            return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values, trade_winorlose="FAIR", trade_conclusion="YOUR TRADE IS FAIR", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=2)
+            return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values,your_fruit_type, their_fruit_type, trade_winorlose="FAIR", trade_conclusion="YOUR TRADE IS FAIR", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=2, background_type=suggestion)
         elif fruit_exceed_limit != 1:
-            return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values, trade_winorlose="LOSE", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=1)
+            return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values,your_fruit_type, their_fruit_type, trade_winorlose="LOSE", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=1, background_type=suggestion)
         else:
-            pass
+            img = Image.open('ui/TooManyFruitRequests.png')
+            return img
 
 
 def update_fruit_data_json_type(json_file_path, updated_fruits):

@@ -40,7 +40,7 @@ def FetchFruitImage(fruit_name):
             img_tag = figure_tag.find("img")
             if img_tag and "src" in img_tag.attrs:
                 img_url = img_tag["src"]
-                clean_url = img_url.split("/revision")[0]  # Remove unnecessary URL parts
+                clean_url = img_url.split("/revision")[0]
                 return clean_url
 
     return None

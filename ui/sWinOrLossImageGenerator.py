@@ -100,12 +100,15 @@ def add_glow_border(icon, glow_color=(255, 255, 255), blur_radius=6, glow_alpha=
     return blurred
 
 def GenerateWORLImage(
-    your_fruits, your_values, their_fruits, their_values,
-    trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=77, winorloseorfair = 0
+    your_fruits, your_values, their_fruits, their_values,your_fruit_types,their_fruit_types,
+    trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=77, winorloseorfair = 0, background_type=0
 ):
     icon_size = 120
     value_font_offset = 6
-    background_path = "ui/WORLBase.png"
+    if background_type == 0:
+        background_path = "ui/WORLBase.png"
+    else:
+        background_path = "ui/FruitSuggestorBase.png"
     output_path = "trade_Result.png"
 
     your_coords = [(64, 240), (208, 240), (64, 390), (208, 390)]
@@ -131,7 +134,7 @@ def GenerateWORLImage(
     font_result = load_font(45)
     font_total = load_font(22)
 
-    def paste_fruits(fruits, coords, values):
+    def paste_fruits(fruits, coords, values, fruit_types):
         total_slots = 4
         for i in range(total_slots):
             coord = coords[i]
@@ -139,20 +142,20 @@ def GenerateWORLImage(
             if i < len(fruits):
                 fruit = fruits[i]
                 val = values[i]
+                fruit_type = fruit_types[i]
                 try:
                     icon_path = f"ui/fruit_icons/{fruit}.png"
                     icon = Image.open(icon_path).convert("RGBA").resize((icon_size, icon_size))
 
-                    # Add clean glow behind the fruit
                     glow = add_glow_border(icon, glow_color=(186, 85, 211), blur_radius=8, glow_alpha=180)
                     glow_pos = (coord[0] - 10, coord[1] - 10)
                     img.paste(glow, glow_pos, glow)
 
-                    # Paste the actual fruit icon
                     img.paste(icon, coord, icon)
 
-                    # Value text
-                    text_pos = (coord[0] + icon_size // 2, coord[1] + icon_size + value_font_offset)
+                    value_text_y_offset = icon_size + 5
+                    text_pos = (coord[0] + icon_size // 2, coord[1] + value_text_y_offset + value_font_offset)
+
                     draw_gradient_text(
                         img,
                         text_pos,
@@ -162,6 +165,22 @@ def GenerateWORLImage(
                         anchor="mt",
                         stretch_height=1.1
                     )
+
+                    if "permanent" in fruit_type.lower():
+                        permanent_icon_path = "ui/PermanentIcon.png"
+                        perm_icon_size = 44
+                        permanent_icon = Image.open(permanent_icon_path).convert("RGBA").resize((perm_icon_size, perm_icon_size))
+
+                        x_offset = icon_size - perm_icon_size - 6    
+                        y_offset = icon_size - 36                 
+
+                        permanent_pos = (
+                            coord[0] + x_offset,
+                            coord[1] + y_offset
+                        )
+
+                        img.paste(permanent_icon, permanent_pos, permanent_icon)
+
                 except FileNotFoundError:
                     print(f"Missing icon: {fruit}")
             else:
@@ -174,8 +193,8 @@ def GenerateWORLImage(
                 img.paste(blurred, coord, blurred)
 
 
-    paste_fruits(your_fruits, your_coords, your_values)
-    paste_fruits(their_fruits, their_coords, their_values)
+    paste_fruits(your_fruits, your_coords, your_values, your_fruit_types)
+    paste_fruits(their_fruits, their_coords, their_values, their_fruit_types)
 
     your_total = sum(your_values)
     their_total = sum(their_values)

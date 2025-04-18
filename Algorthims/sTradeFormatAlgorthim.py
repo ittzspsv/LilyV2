@@ -8,6 +8,12 @@ with open(value_data_path, "r", encoding="utf-8") as json_file:
     value_data = json.load(json_file)
 fruit_names = {fruit["name"].lower() for fruit in value_data}
 
+alias_map = {}
+
+for fruit in value_data:
+    real_name = fruit["name"].lower()
+    for alias in fruit.get("aliases", []):
+        alias_map[alias.lower()] = real_name
 
 '''Trade Initializer are the words that people uses to start the trade'''
 TradeInitializer = [
@@ -40,7 +46,6 @@ def MatchFruit(fruits, data, threshold = 80):
     else:
         pass
 
-#THE CONCEPT HERE IS TO FIRST VERIFY FIRST LETTER OF THE FRUIT NAME, FILTER ALL FRUITS AND MATCH THE EXACT FRUIT FROM THE LETTER
 def MatchFruitSet(fruit: str, data: set, threshold=80):
     if not fruit or not data:
         return None  
@@ -52,12 +57,15 @@ def MatchFruitSet(fruit: str, data: set, threshold=80):
     fruit_words = set(fruit.split())
     filtered_fruits = set()
 
-    for f in data:
+    all_names = set(data)
+    all_names.update(alias_map.keys())
+
+    for f in all_names:
         if not f:
             continue
 
         if set(f.split()) == fruit_words:
-            return f
+            return alias_map.get(f, f)
 
         if f[0].lower() == fruit[0]:
             filtered_fruits.add(f)
@@ -66,11 +74,11 @@ def MatchFruitSet(fruit: str, data: set, threshold=80):
         return None
 
     match = process.extractOne(fruit, filtered_fruits, scorer=fuzz.ratio)
-    
+
     if match:
         best_match, score = match[0], match[1]
         if score >= threshold:
-            return best_match
+            return alias_map.get(best_match, best_match)
 
     return None
 

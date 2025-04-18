@@ -3,6 +3,7 @@ import os
 import json
 import sFruitImageFetcher as FIF
 
+'''
 with open("ValueData.json", "r") as file:
     value_data = json.load(file)
     fruit_dict = {fruit["name"] for fruit in value_data}
@@ -29,4 +30,13 @@ for fruit in fruit_dict:
         else:
             print(f"No link returned for {fruit}")
     except Exception as e:
-        print(f"Error processing {fruit}: {e}")
+        print(f"Error processing {fruit}: {e}")'''
+
+response = requests.get("https://static.wikia.nocookie.net/roblox-blox-piece/images/5/51/Dragon_%28West%29Fruit.png")
+
+if response.status_code == 200:
+    with open("downloaded_image.png", "wb") as file:
+        file.write(response.content)
+    print("Image downloaded successfully!")
+else:
+    print(f"Failed to download image. Status code: {response.status_code}")

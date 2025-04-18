@@ -7,7 +7,10 @@
         "permanent_demand": "1/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Stable",
-        "category": "common"
+        "category": "common",
+        "aliases": [
+            "Kilo"
+        ]
     },
     {
         "name": "Spin",
@@ -17,7 +20,8 @@
         "permanent_demand": "1/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Stable",
-        "category": "common"
+        "category": "common",
+        "aliases": []
     },
     {
         "name": "Blade",
@@ -27,7 +31,10 @@
         "permanent_demand": "3/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Stable",
-        "category": "common"
+        "category": "common",
+        "aliases": [
+            "Chop"
+        ]
     },
     {
         "name": "Spring",
@@ -37,7 +44,8 @@
         "permanent_demand": "1/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Stable",
-        "category": "common"
+        "category": "common",
+        "aliases": []
     },
     {
         "name": "Bomb",
@@ -47,7 +55,8 @@
         "permanent_demand": "1/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Stable",
-        "category": "common"
+        "category": "common",
+        "aliases": []
     },
     {
         "name": "Smoke",
@@ -57,7 +66,8 @@
         "permanent_demand": "1/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Stable",
-        "category": "common"
+        "category": "common",
+        "aliases": []
     },
     {
         "name": "Spike",
@@ -67,7 +77,8 @@
         "permanent_demand": "1/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Stable",
-        "category": "common"
+        "category": "common",
+        "aliases": []
     },
     {
         "name": "Flame",
@@ -77,17 +88,21 @@
         "permanent_demand": "4/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "uncommon"
+        "category": "uncommon",
+        "aliases": []
     },
     {
-        "name": "Falcon",
-        "physical_value": "300,000",
+        "name": "Eagle",
+        "physical_value": "550,000",
         "permanent_value": "260,000,000",
         "physical_demand": "1/10",
         "permanent_demand": "1/10",
         "demand_type": "Underpaid",
         "permanent_demand_type": "Underpaid",
-        "category": "uncommon"
+        "category": "uncommon",
+        "aliases": [
+            "Falcon"
+        ]
     },
     {
         "name": "Dark",
@@ -97,7 +112,8 @@
         "permanent_demand": "6/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "uncommon"
+        "category": "uncommon",
+        "aliases": []
     },
     {
         "name": "Sand",
@@ -107,7 +123,8 @@
         "permanent_demand": "3/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "uncommon"
+        "category": "uncommon",
+        "aliases": []
     },
     {
         "name": "Ice",
@@ -117,7 +134,8 @@
         "permanent_demand": "8/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "uncommon"
+        "category": "uncommon",
+        "aliases": []
     },
     {
         "name": "Diamond",
@@ -127,7 +145,8 @@
         "permanent_demand": "3/10",
         "demand_type": "Underpaid",
         "permanent_demand_type": "Underpaid",
-        "category": "uncommon"
+        "category": "uncommon",
+        "aliases": []
     },
     {
         "name": "Rubber",
@@ -137,7 +156,8 @@
         "permanent_demand": "4/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "rare"
+        "category": "rare",
+        "aliases": []
     },
     {
         "name": "Light",
@@ -147,17 +167,21 @@
         "permanent_demand": "7/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "rare"
+        "category": "rare",
+        "aliases": []
     },
     {
-        "name": "Barrier",
-        "physical_value": "800,000",
+        "name": "Creation",
+        "physical_value": "1,400,000",
         "permanent_value": "520,000,000",
-        "physical_demand": "1/10",
-        "permanent_demand": "1/10",
-        "demand_type": "Underpaid",
-        "permanent_demand_type": "Underpaid",
-        "category": "rare"
+        "physical_demand": "8/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "Overpaid",
+        "category": "legendary",
+        "aliases": [
+            "Barrier"
+        ]
     },
     {
         "name": "Ghost",
@@ -167,7 +191,10 @@
         "permanent_demand": "1/10",
         "demand_type": "Underpaid",
         "permanent_demand_type": "Underpaid",
-        "category": "rare"
+        "category": "rare",
+        "aliases": [
+            "Review"
+        ]
     },
     {
         "name": "Magma",
@@ -177,7 +204,8 @@
         "permanent_demand": "7/10",
         "demand_type": "Overpaid",
         "permanent_demand_type": "Overpaid",
-        "category": "rare"
+        "category": "rare",
+        "aliases": []
     },
     {
         "name": "Quake",
@@ -187,7 +215,8 @@
         "permanent_demand": "3/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": []
     },
     {
         "name": "Spider",
@@ -197,7 +226,10 @@
         "permanent_demand": "3/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": [
+            "String"
+        ]
     },
     {
         "name": "Love",
@@ -207,7 +239,8 @@
         "permanent_demand": "3/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": []
     },
     {
         "name": "Pain",
@@ -217,7 +250,10 @@
         "permanent_demand": "1/10",
         "demand_type": "Underpaid",
         "permanent_demand_type": "Underpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": [
+            "Paw"
+        ]
     },
     {
         "name": "Sound",
@@ -227,7 +263,8 @@
         "permanent_demand": "4/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": []
     },
     {
         "name": "Phoenix",
@@ -237,7 +274,8 @@
         "permanent_demand": "4/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": []
     },
     {
         "name": "Blizzard",
@@ -247,7 +285,8 @@
         "permanent_demand": "5/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": []
     },
     {
         "name": "Rumble",
@@ -257,7 +296,8 @@
         "permanent_demand": "9/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": []
     },
     {
         "name": "Buddha",
@@ -267,7 +307,8 @@
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
         "permanent_demand_type": "Overpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": []
     },
     {
         "name": "Portal",
@@ -277,17 +318,21 @@
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
         "permanent_demand_type": "Overpaid",
-        "category": "legendary"
+        "category": "legendary",
+        "aliases": []
     },
     {
         "name": "Gravity",
-        "physical_value": "40,000,000",
-        "permanent_value": "1,800,000,000",
+        "physical_value": "75,000,000",
+        "permanent_value": "1,850,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
         "permanent_demand_type": "Insane",
-        "category": "mythical"
+        "category": "mythical",
+        "aliases": [
+            "Grav"
+        ]
     },
     {
         "name": "Shadow",
@@ -297,7 +342,8 @@
         "permanent_demand": "6/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "mythical"
+        "category": "mythical",
+        "aliases": []
     },
     {
         "name": "Venom",
@@ -307,7 +353,8 @@
         "permanent_demand": "8/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "mythical"
+        "category": "mythical",
+        "aliases": []
     },
     {
         "name": "Mammoth",
@@ -317,7 +364,8 @@
         "permanent_demand": "7/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Underpaid",
-        "category": "mythical"
+        "category": "mythical",
+        "aliases": []
     },
     {
         "name": "Spirit",
@@ -327,227 +375,10 @@
         "permanent_demand": "8/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "Trex",
-        "physical_value": "20,000,000",
-        "permanent_value": "1,000,000,000",
-        "physical_demand": "8/10",
-        "permanent_demand": "8/10",
-        "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "Dough",
-        "physical_value": "30,000,000",
-        "permanent_value": "1,000,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "Control",
-        "physical_value": "25,000,000",
-        "permanent_value": "1,150,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "Leopard",
-        "physical_value": "55,000,000",
-        "permanent_value": "1,250,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "Gas",
-        "physical_value": "80,000,000",
-        "permanent_value": "1,150,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "Yeti",
-        "physical_value": "140,000,000",
-        "permanent_value": "1,340,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "Kitsune",
-        "physical_value": "215,000,000",
-        "permanent_value": "1,800,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "East Dragon",
-        "physical_value": "860,000,000",
-        "permanent_value": "2,300,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "West Dragon",
-        "physical_value": "1,000,000,000",
-        "permanent_value": "2,300,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
-    },
-    {
-        "name": "Fast Boats",
-        "physical_value": "120,000,000",
-        "permanent_value": "",
-        "physical_demand": "8/10",
-        "permanent_demand": "",
-        "demand_type": "Stable",
-        "permanent_demand_type": "",
-        "category": "gamepass"
-    },
-    {
-        "name": "2x Boss Drops",
-        "physical_value": "120,000,000",
-        "permanent_value": "",
-        "physical_demand": "10/10",
-        "permanent_demand": "",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "",
-        "category": "gamepass"
-    },
-    {
-        "name": "2x Mastery",
-        "physical_value": "130,000,000",
-        "permanent_value": "",
-        "physical_demand": "10/10",
-        "permanent_demand": "",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "",
-        "category": "gamepass"
-    },
-    {
-        "name": "2x Money",
-        "physical_value": "130,000,000",
-        "permanent_value": "",
-        "physical_demand": "10/10",
-        "permanent_demand": "",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "",
-        "category": "gamepass"
-    },
-    {
-        "name": "Fruit Storage",
-        "physical_value": "150,000,000",
-        "permanent_value": "",
-        "physical_demand": "10/10",
-        "permanent_demand": "",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "",
-        "category": "gamepass"
-    },
-    {
-        "name": "Legendary Scrolls",
-        "physical_value": "190,000,000",
-        "permanent_value": "",
-        "physical_demand": "4/10",
-        "permanent_demand": "",
-        "demand_type": "Stable",
-        "permanent_demand_type": "",
-        "category": "gamepass"
-    },
-    {
-        "name": "Dark Blade",
-        "physical_value": "400,000,000",
-        "permanent_value": "",
-        "physical_demand": "10/10",
-        "permanent_demand": "",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "",
-        "category": "gamepass"
-    },
-    {
-        "name": "Mythical Scrolls",
-        "physical_value": "400,000,000",
-        "permanent_value": "",
-        "physical_demand": "6/10",
-        "permanent_demand": "",
-        "demand_type": "Stable",
-        "permanent_demand_type": "",
-        "category": "gamepass"
-    },
-    {
-        "name": "Fruit Notifier",
-        "physical_value": "1,215,000,000",
-        "permanent_value": "",
-        "physical_demand": "10/10",
-        "permanent_demand": "",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "",
-        "category": "gamepass"
-    },
-    {
-        "name": "Dragon Token",
-        "physical_value": "450,000,000",
-        "permanent_value": "",
-        "physical_demand": "10/10",
-        "permanent_demand": "",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "",
-        "category": "limited"
-    },
-    {
-        "name": "Permanent Dragon Token",
-        "physical_value": "1,000,000,000",
-        "permanent_value": "",
-        "physical_demand": "10/10",
-        "permanent_demand": "",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "",
-        "category": "limited"
-    },
-    {
-        "name": "Chromatic Skin",
-        "physical_value": "1,950,000,000",
-        "permanent_value": "",
-        "physical_demand": "10/10",
-        "permanent_demand": "",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "",
-        "category": "limited"
-    },
-    {
-        "name": "Dragon",
-        "physical_value": "1,000,000,000",
-        "permanent_value": "2,300,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
-        "category": "mythical"
+        "category": "mythical",
+        "aliases": [
+            "Soul"
+        ]
     },
     {
         "name": "T-Rex",
@@ -557,6 +388,249 @@
         "permanent_demand": "8/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
-        "category": "mythical"
+        "category": "mythical",
+        "aliases": [
+            "Trex",
+            "Rex"
+        ]
+    },
+    {
+        "name": "Dough",
+        "physical_value": "30,000,000",
+        "permanent_value": "1,000,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical",
+        "aliases": [
+            "Mochi"
+        ]
+    },
+    {
+        "name": "Control",
+        "physical_value": "25,000,000",
+        "permanent_value": "1,150,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Stable",
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical",
+        "aliases": []
+    },
+    {
+        "name": "Leopard",
+        "physical_value": "55,000,000",
+        "permanent_value": "1,250,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical",
+        "aliases": [
+            "Leo"
+        ]
+    },
+    {
+        "name": "Gas",
+        "physical_value": "80,000,000",
+        "permanent_value": "1,150,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Stable",
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical",
+        "aliases": []
+    },
+    {
+        "name": "Yeti",
+        "physical_value": "140,000,000",
+        "permanent_value": "1,340,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical",
+        "aliases": []
+    },
+    {
+        "name": "Kitsune",
+        "physical_value": "215,000,000",
+        "permanent_value": "1,800,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical",
+        "aliases": [
+            "Kit"
+        ]
+    },
+    {
+        "name": "East Dragon",
+        "physical_value": "860,000,000",
+        "permanent_value": "2,300,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical",
+        "aliases": []
+    },
+    {
+        "name": "West Dragon",
+        "physical_value": "1,000,000,000",
+        "permanent_value": "2,300,000,000",
+        "physical_demand": "10/10",
+        "permanent_demand": "10/10",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "Overpaid",
+        "category": "mythical",
+        "aliases": [
+            "Dragon"
+        ]
+    },
+    {
+        "name": "Fast Boats",
+        "physical_value": "120,000,000",
+        "permanent_value": "",
+        "physical_demand": "8/10",
+        "permanent_demand": "",
+        "demand_type": "Stable",
+        "permanent_demand_type": "",
+        "category": "gamepass",
+        "aliases": []
+    },
+    {
+        "name": "2x Boss Drops",
+        "physical_value": "120,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "",
+        "category": "gamepass",
+        "aliases": [
+            "Boss Drops"
+        ]
+    },
+    {
+        "name": "2x Mastery",
+        "physical_value": "130,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "",
+        "category": "gamepass",
+        "aliases": []
+    },
+    {
+        "name": "2x Money",
+        "physical_value": "130,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "",
+        "category": "gamepass",
+        "aliases": []
+    },
+    {
+        "name": "Fruit Storage",
+        "physical_value": "150,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "",
+        "category": "gamepass",
+        "aliases": [
+            "Storage"
+        ]
+    },
+    {
+        "name": "Legendary Scrolls",
+        "physical_value": "190,000,000",
+        "permanent_value": "",
+        "physical_demand": "4/10",
+        "permanent_demand": "",
+        "demand_type": "Stable",
+        "permanent_demand_type": "",
+        "category": "gamepass",
+        "aliases": []
+    },
+    {
+        "name": "Dark Blade",
+        "physical_value": "400,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "",
+        "category": "gamepass",
+        "aliases": [
+            "db"
+        ]
+    },
+    {
+        "name": "Mythical Scrolls",
+        "physical_value": "400,000,000",
+        "permanent_value": "",
+        "physical_demand": "6/10",
+        "permanent_demand": "",
+        "demand_type": "Stable",
+        "permanent_demand_type": "",
+        "category": "gamepass",
+        "aliases": []
+    },
+    {
+        "name": "Fruit Notifier",
+        "physical_value": "1,215,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "",
+        "category": "gamepass",
+        "aliases": [
+            "Notifier"
+        ]
+    },
+    {
+        "name": "Dragon Token",
+        "physical_value": "450,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "",
+        "category": "limited",
+        "aliases": []
+    },
+    {
+        "name": "Permanent Dragon Token",
+        "physical_value": "1,000,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "",
+        "category": "limited",
+        "aliases": []
+    },
+    {
+        "name": "Chromatic Skin",
+        "physical_value": "1,950,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "Overpaid",
+        "permanent_demand_type": "",
+        "category": "limited",
+        "aliases": [
+            "Eclipse",
+            "Chromatic Eclipse"
+        ]
     }
 ]
