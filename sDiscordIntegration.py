@@ -471,15 +471,11 @@ class MyBot(commands.Bot):
             if message.channel == self.get_channel(w_or_l_channel_id):
                 view = self.TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
 
-                embed = discord.Embed(
-                title="Trade Suggestion Configuration",
-                description="",
-                color=discord.Color.red()
-            )
+                embed = discord.Embed(title="Trade Suggestion Configuration",description="",color=discord.Color.red())
                 
                 embed.add_field(name="• Customize your Suggestor Settings, Then Click Suggest", value="")
 
-            await message.reply(embed=embed, view=view)
+                await message.reply(embed=embed, view=view)
 
         elif FDAE.is_valid_trade_suggestor_sequence(message.content):
             your_fruits1, your_fruit_types1, their_fruits1, their_fruits_types1 = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
@@ -487,15 +483,11 @@ class MyBot(commands.Bot):
             if message.channel == self.get_channel(w_or_l_channel_id):
                 view = self.TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
 
-                embed = discord.Embed(
-                title="Trade Suggestion Configuration",
-                description="",
-                color=discord.Color.red()
-            )
+                embed = discord.Embed(title="Trade Suggestion Configuration",description="",color=discord.Color.red())
                 
                 embed.add_field(name="• Customize your Suggestor Settings, Then Click Suggest", value="")
 
-            await message.reply(embed=embed, view=view)
+                await message.reply(embed=embed, view=view)
 
         elif f"value.update" in message.content.lower():
             if message.author.id in ids:
