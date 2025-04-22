@@ -51,9 +51,11 @@ def EmbedParser(config_str: str, ctx):
         image_match = re.search(r'EMBED_IMAGE\s+"?(.*?)"?\s*\n', embed_block)
         thumb_match = re.search(r'EMBED_THUMBNAIL\s+"?(.*?)"?\s*\n', embed_block)
 
-        desc = re.sub(r'(EMBED\s+".*?"\s*\n|EMBED_COLOR\s+".*?"\s*\n|EMBED_IMAGE\s+".*?"\s*\n|EMBED_THUMBNAIL\s+".*?"\s*\n)', '', embed_block)
+        desc = re.sub(
+            r'(EMBED\s+".*?"\s*\n|EMBED_COLOR\s+".*?"\s*\n|EMBED_IMAGE\s+".*?"\s*\n|EMBED_THUMBNAIL\s+".*?"\s*\n)',
+            '', embed_block)
         desc = re.sub(r'EMBED END', '', desc, flags=re.IGNORECASE).strip()
-        
+
         embed = discord.Embed(description=desc)
 
         if title_match:
@@ -67,7 +69,7 @@ def EmbedParser(config_str: str, ctx):
                 try:
                     embed.color = discord.Color(int(hex_color, 16))
                 except ValueError:
-                    pass  # Ignore invalid color
+                    pass
 
         if image_match:
             image_url = image_match.group(1).strip()
@@ -87,15 +89,22 @@ def EmbedParser(config_str: str, ctx):
         return embed
 
     button_pattern = re.compile(
-        r'BUTTON NAMED\s+"?(.*?)"?\s*\n(EMBED\s+".+?\n.*?\nEMBED END)', re.DOTALL | re.IGNORECASE
+        r'BUTTON NAMED\s+"?(.*?)"?(?:\s+ROW\s*:\s*(\d+))?(?:\s+TYPE\s*:\s*(\w+))?\s*\n(EMBED\s+".+?\n.*?\nEMBED END)',
+        re.DOTALL | re.IGNORECASE
     )
     button_blocks = button_pattern.findall(config_str)
 
     used_embed_blocks = []
-
     seen_ids = set()
 
-    for button_label, embed_block in button_blocks:
+    style_map = {
+        'PRIMARY': discord.ButtonStyle.primary,
+        'SECONDARY': discord.ButtonStyle.secondary,
+        'SUCCESS': discord.ButtonStyle.success,
+        'DANGER': discord.ButtonStyle.danger
+    }
+
+    for button_label, row_str, type_str, embed_block in button_blocks:
         embed = parse_embed_block(embed_block)
 
         base_id = re.sub(r'[^a-zA-Z0-9_]', '_', embed.title or button_label.strip())
@@ -106,10 +115,14 @@ def EmbedParser(config_str: str, ctx):
             counter += 1
         seen_ids.add(custom_id)
 
+        row = int(row_str) if row_str and row_str.isdigit() else None
+        style = style_map.get(type_str.upper(), discord.ButtonStyle.secondary) if type_str else discord.ButtonStyle.secondary
+
         button = discord.ui.Button(
             label=button_label.strip(),
-            style=discord.ButtonStyle.secondary,
-            custom_id=f"show_embed_{custom_id}"
+            style=style,
+            custom_id=f"show_embed_{custom_id}",
+            row=row
         )
         buttons.append((button, embed))
         used_embed_blocks.append(embed_block)
@@ -117,7 +130,6 @@ def EmbedParser(config_str: str, ctx):
     cleaned_config = config_str
     for block in used_embed_blocks:
         cleaned_config = cleaned_config.replace(block, "")
-
 
     base_embed_pattern = re.compile(r'EMBED\s+"?.*?"?\s*\n.*?\nEMBED END', re.DOTALL | re.IGNORECASE)
     for match in base_embed_pattern.finditer(cleaned_config):
