@@ -2,7 +2,7 @@ import re
 import json
 from rapidfuzz import process, fuzz
 
-value_data_path = "ValueData.json"
+value_data_path = "src/ValueData.json"
 
 with open(value_data_path, "r", encoding="utf-8") as json_file:
     value_data = json.load(json_file)

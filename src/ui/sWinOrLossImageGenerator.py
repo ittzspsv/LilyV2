@@ -106,9 +106,9 @@ def GenerateWORLImage(
     icon_size = 120
     value_font_offset = 6
     if background_type == 0:
-        background_path = "ui/WORLBase.png"
+        background_path = "src/ui/WORLBase.png"
     else:
-        background_path = "ui/FruitSuggestorBase.png"
+        background_path = "src/ui/FruitSuggestorBase.png"
     output_path = "trade_Result.png"
 
     your_coords = [(64, 240), (208, 240), (64, 390), (208, 390)]
@@ -125,7 +125,7 @@ def GenerateWORLImage(
 
     def load_font(size):
         try:
-            return ImageFont.truetype("ui/font/Game Bubble.ttf", size)
+            return ImageFont.truetype("src/ui/font/Game Bubble.ttf", size)
         except:
             return ImageFont.load_default()
 
@@ -144,7 +144,7 @@ def GenerateWORLImage(
                 val = values[i]
                 fruit_type = fruit_types[i]
                 try:
-                    icon_path = f"ui/fruit_icons/{fruit}.png"
+                    icon_path = f"src/ui/fruit_icons/{fruit}.png"
                     icon = Image.open(icon_path).convert("RGBA").resize((icon_size, icon_size))
 
                     glow = add_glow_border(icon, glow_color=(186, 85, 211), blur_radius=8, glow_alpha=180)

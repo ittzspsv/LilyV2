@@ -6,7 +6,7 @@ from ui.sWinOrLossImageGenerator import *
 
 from PIL import Image
 
-value_data_path = "ValueData.json"
+value_data_path = "src/ValueData.json"
 
 fruit_dict = {}
 fruit_names = {}
@@ -182,7 +182,7 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
         elif fruit_exceed_limit != 1:
             return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values,your_fruit_type, their_fruit_type, trade_winorlose="LOSE", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=1, background_type=suggestion)
         else:
-            img = Image.open('ui/TooManyFruitRequests.png')
+            img = Image.open('src/ui/TooManyFruitRequests.png')
             return img
 
 

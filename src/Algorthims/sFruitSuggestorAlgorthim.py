@@ -1,7 +1,7 @@
 import json
 import random
 
-with open("ValueData.json", "r") as f:
+with open("src/ValueData.json", "r") as f:
     raw_fruit_data = json.load(f)
 
 fruit_data = raw_fruit_data[:-2]
@@ -33,7 +33,7 @@ def build_candidate_pool(user_fruits, suggest_permanent, suggest_gamepass):
                 pool.append((name, "physical", phys_val, "fruit"))
     return pool
 
-def generate_suggestion(pool, target_value, min_ratio=1.0, max_ratio=1.08, max_attempts=15000, max_gamepass=2):
+def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_attempts=15000, max_gamepass=2):
     target_min = int(target_value * min_ratio)
     target_max = int(target_value * max_ratio)
     best_valid = None

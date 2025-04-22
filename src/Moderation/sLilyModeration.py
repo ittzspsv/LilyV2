@@ -17,7 +17,7 @@ def evaluate_log_file(filename):
         df.write_csv(filename)
 
 def exceeded_ban_limit(moderator_id, moderator_role_ids):
-    filename = f"{moderator_id}-logs.csv"
+    filename = f"storage/banlogs/{moderator_id}-logs.csv"
     if not os.path.exists(filename):
         return False
 
@@ -38,7 +38,7 @@ def exceeded_ban_limit(moderator_id, moderator_role_ids):
 
 
 def remaining_Ban_time(moderator_id, moderator_role_ids):
-    filename = f"{moderator_id}-logs.csv"
+    filename = f"storage/banlogs/{moderator_id}-logs.csv"
     if not os.path.exists(filename):
         return None
 
@@ -70,7 +70,7 @@ def remaining_Ban_time(moderator_id, moderator_role_ids):
         return None
 
 def remaining_ban_count(moderator_id, moderator_role_ids):
-    filename = f"{moderator_id}-logs.csv"
+    filename = f"storage/banlogs/{moderator_id}-logs.csv"
     if not os.path.exists(filename):
         return max([limit_Ban_details.get(role_id, 0) for role_id in moderator_role_ids], default=0)
 
@@ -87,7 +87,7 @@ def remaining_ban_count(moderator_id, moderator_role_ids):
         return 0
 
 def log_ban(moderator_id, banned_user_id, reason="No reason provided"):
-    filename = f"{moderator_id}-logs.csv"
+    filename = f"storage/banlogs/{moderator_id}-logs.csv"
     now = datetime.now(pytz.utc).isoformat()
 
     new_entry = pl.DataFrame({
@@ -106,7 +106,7 @@ def log_ban(moderator_id, banned_user_id, reason="No reason provided"):
     combined.write_csv(filename)
 
 def display_logs(user_id, user, slice_expr=None):
-    file_path = f"{user_id}-logs.csv"
+    file_path = f"storage/banlogs/{user_id}-logs.csv"
     if not os.path.exists(file_path):
         return SimpleEmbed("No Logs Found For the given user id")
 
@@ -238,7 +238,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs:list=[])
 
             log_ban(ctx.author.id, user_id, reason)
 
-            with open("Moderation/logchannelid.log", "r") as file:
+            with open("src/Moderation/logchannelid.log", "r") as file:
                 logs_channel_id = file.read().strip()
             log_channel = ctx.guild.get_channel(int(logs_channel_id))
             if log_channel:

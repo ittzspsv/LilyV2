@@ -2,8 +2,9 @@ import json
 import os
 
 
-Ban_Exceptional_File = "Config/blacklisted_mods.json"
-Role_Assignable_File = "Config/assignable_roles.json"
+Ban_Exceptional_File = "storage/configs/blacklisted_mods.json"
+Role_Assignable_File = "storage/configs/assignable_roles.json"
+ButtonSessionMemory = "storage/sessions/ButtonSessionMemory.json"
 def load_exceptional_ban_ids():
     if os.path.exists(Ban_Exceptional_File):
         with open(Ban_Exceptional_File, "r") as f:
@@ -35,14 +36,14 @@ def remove_exceptional_ban_id(remove_id):
 def load_roles():
     if os.path.exists(Role_Assignable_File):
         with open(Role_Assignable_File, "r") as f:
-            return json.load(f).get("ids", [])
-    return []
+            return json.load(f).get("roles", {})
+    return {}
 
-def save_roles(new_ids):
-    existing_ids = load_roles()
-    updated_ids = list(set(existing_ids + new_ids))
+def save_roles(new_id, priority):
+    roles = load_roles()
+    roles[str(new_id)] = priority
     with open(Role_Assignable_File, "w") as f:
-        json.dump({"ids": updated_ids}, f, indent=4)
+        json.dump({"roles": roles}, f, indent=4)
 
 
 # VERY IMPORTANT TOKEN THAT SHOULD NOT BE SHARED HERE
@@ -55,7 +56,6 @@ bot_command_prefix = "?"
 bot_name = "BloxTrade"
 bot_icon_link_url = "https://cdn.discordapp.com/icons/970643838047760384/a_a6cfa91910d8e2fff68defeda76dd902.png?size=256"
 embed_color_code = 0xfa0064
-
 # Server display settings
 server_name = "Blox Trade"
 server_invite_link = "https://discord.com/invite/bloxtrade"
@@ -86,13 +86,12 @@ if port == 0:
     }
 
     exceptional_limited_ban_id = load_exceptional_ban_ids()
-    print(exceptional_limited_ban_id)
 
-    # Experimental sea event message detector (currently disabled)
-    scam_Detection_prompts = 0
     trial_moderator_name = "Stock Ping"
 
     service_manager_roll_id = 1356187197526638693
+
+    concurrent_guild_id = 970643838047760384
 
 else:
     # PRODUCTION SERVER SETTINGS (BLOXTRADE)
@@ -106,8 +105,6 @@ else:
     stock_ping_role_id = "1345555258314588170"
     stock_team_roll_name = "Moderator"
     
-    # Experimental sea event message detector (currently disabled)
-    scam_Detection_prompts = 0
     trial_moderator_name = "Trial Moderator"
 
     exceptional_limited_ban_id = load_exceptional_ban_ids()
@@ -119,6 +116,9 @@ else:
     }
 
     service_manager_roll_id = 1333123391875584011 #CURRENTLY HEAD MODERATORS
+    giveaway_hoster_role = 1345579694522630205    #USED TO CREATE EMBEDS
+
+    concurrent_guild_id = 970643838047760384
 
 # Embed colors based on item type
 embed_color_codes = {
@@ -133,12 +133,9 @@ embed_color_codes = {
 
 # Admin/Moderator/Dev access user IDs
 #Commands They can use : update fruit values, fruit value / stock logs, delete fruit value / stock logs
-ids = [
-    845511381637529641,
-    999309816914792630,
-    549777573551276051
-]
+ids = [845511381637529641, 999309816914792630, 549777573551276051, 1120025980178796714] #CURRENT USER IDS - [SHREE, TEXIO, ZELY, VOUCH]
 
 
 owner_ids = [549777573551276051, 1120025980178796714]  #CURRENT USER IDS - [ZELY, VOUCH]
-trusted_moderator_ids = [1329951007311921212, 895649073082814475] #CURRENT USER IDS [KAI, LELOUCH]
+trusted_moderator_ids = [1329951007311921212, 895649073082814475, 845511381637529641, 999309816914792630, 1220169032762920965, 869064913535004753, 827775992521031700] #CURRENT USER IDS [KAI, LELOUCH, SHREE, TEXIO, FAMOPLAYS, OBLIVION, SAMURAI]
+staff_manager_ids = [895649073082814475] #CURRENT USER IDS - [LELOUCH]

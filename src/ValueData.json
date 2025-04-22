@@ -139,7 +139,7 @@
     },
     {
         "name": "Diamond",
-        "physical_value": "1,500,000",
+        "physical_value": "1,000,000",
         "permanent_value": "415,000,000",
         "physical_demand": "1/10",
         "permanent_demand": "3/10",
@@ -172,12 +172,12 @@
     },
     {
         "name": "Creation",
-        "physical_value": "1,400,000",
-        "permanent_value": "520,000,000",
-        "physical_demand": "8/10",
+        "physical_value": "2,000,000",
+        "permanent_value": "800,000,000",
+        "physical_demand": "6/10",
         "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
+        "demand_type": "Unstable",
+        "permanent_demand_type": "Unstable",
         "category": "legendary",
         "aliases": [
             "Barrier"
@@ -319,16 +319,18 @@
         "demand_type": "Overpaid",
         "permanent_demand_type": "Overpaid",
         "category": "legendary",
-        "aliases": []
+        "aliases": [
+            "Door"
+        ]
     },
     {
         "name": "Gravity",
-        "physical_value": "75,000,000",
-        "permanent_value": "1,850,000,000",
-        "physical_demand": "10/10",
+        "physical_value": "67,500,000",
+        "permanent_value": "1,275,000,000",
+        "physical_demand": "7/10",
         "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Insane",
+        "demand_type": "Unstable",
+        "permanent_demand_type": "Overpaid",
         "category": "mythical",
         "aliases": [
             "Grav"
@@ -337,7 +339,7 @@
     {
         "name": "Shadow",
         "physical_value": "6,500,000",
-        "permanent_value": "1,000,000,000",
+        "permanent_value": "1,125,000,000",
         "physical_demand": "6/10",
         "permanent_demand": "6/10",
         "demand_type": "Stable",
@@ -348,7 +350,7 @@
     {
         "name": "Venom",
         "physical_value": "8,000,000",
-        "permanent_value": "1,000,000,000",
+        "permanent_value": "1,125,000,000",
         "physical_demand": "7/10",
         "permanent_demand": "8/10",
         "demand_type": "Stable",
@@ -359,7 +361,7 @@
     {
         "name": "Mammoth",
         "physical_value": "8,000,000",
-        "permanent_value": "1,000,000,000",
+        "permanent_value": "1,200,000,000",
         "physical_demand": "6/10",
         "permanent_demand": "7/10",
         "demand_type": "Stable",
@@ -370,7 +372,7 @@
     {
         "name": "Spirit",
         "physical_value": "10,000,000",
-        "permanent_value": "1,100,000,000",
+        "permanent_value": "1,250,000,000",
         "physical_demand": "7/10",
         "permanent_demand": "8/10",
         "demand_type": "Stable",
@@ -383,21 +385,20 @@
     {
         "name": "T-Rex",
         "physical_value": "20,000,000",
-        "permanent_value": "1,000,000,000",
+        "permanent_value": "1,200,000,000",
         "physical_demand": "8/10",
         "permanent_demand": "8/10",
         "demand_type": "Stable",
         "permanent_demand_type": "Overpaid",
         "category": "mythical",
         "aliases": [
-            "Trex",
-            "Rex"
+            "Trex"
         ]
     },
     {
         "name": "Dough",
         "physical_value": "30,000,000",
-        "permanent_value": "1,000,000,000",
+        "permanent_value": "1,125,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
@@ -409,11 +410,11 @@
     },
     {
         "name": "Control",
-        "physical_value": "25,000,000",
-        "permanent_value": "1,150,000,000",
-        "physical_demand": "10/10",
+        "physical_value": "15,000,000",
+        "permanent_value": "1,175,000,000",
+        "physical_demand": "6/10",
         "permanent_demand": "10/10",
-        "demand_type": "Stable",
+        "demand_type": "Unstable",
         "permanent_demand_type": "Overpaid",
         "category": "mythical",
         "aliases": []
@@ -421,7 +422,7 @@
     {
         "name": "Leopard",
         "physical_value": "55,000,000",
-        "permanent_value": "1,250,000,000",
+        "permanent_value": "1,350,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
@@ -433,8 +434,8 @@
     },
     {
         "name": "Gas",
-        "physical_value": "80,000,000",
-        "permanent_value": "1,150,000,000",
+        "physical_value": "65,000,000",
+        "permanent_value": "1,250,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Stable",
@@ -445,7 +446,7 @@
     {
         "name": "Yeti",
         "physical_value": "140,000,000",
-        "permanent_value": "1,340,000,000",
+        "permanent_value": "1,440,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
@@ -455,7 +456,7 @@
     },
     {
         "name": "Kitsune",
-        "physical_value": "215,000,000",
+        "physical_value": "225,000,000",
         "permanent_value": "1,800,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
@@ -468,8 +469,8 @@
     },
     {
         "name": "East Dragon",
-        "physical_value": "860,000,000",
-        "permanent_value": "2,300,000,000",
+        "physical_value": "960,000,000",
+        "permanent_value": "2,440,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",
@@ -479,8 +480,8 @@
     },
     {
         "name": "West Dragon",
-        "physical_value": "1,000,000,000",
-        "permanent_value": "2,300,000,000",
+        "physical_value": "1,200,000,000",
+        "permanent_value": "2,440,000,000",
         "physical_demand": "10/10",
         "permanent_demand": "10/10",
         "demand_type": "Overpaid",

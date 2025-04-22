@@ -8,7 +8,7 @@ from datetime import datetime
 from Config.sBotDetails import *
 from discord.ext import commands
 
-database = "vouches_database.csv"
+database = "storage/vouches/vouches_database.csv"
 
 def store_vouch(ctx: commands.Context, member: discord.Member, note: str = "", received: str = "", verified: bool = False):
 

@@ -5,11 +5,11 @@ import Config.sBotDetails as BD
 
 
 if BD.port == 0:
-    emoji_data_path = "EmojiData.json"
+    emoji_data_path = "src/EmojiData.json"
     with open(emoji_data_path, "r", encoding="utf-8") as json_file:
         emoji_data = json.load(json_file)
 else:
-    emoji_data_path = "bEmojiData.json"
+    emoji_data_path = "src/bEmojiData.json"
     with open(emoji_data_path, "r", encoding="utf-8") as json_file:
         emoji_data = json.load(json_file)
 
