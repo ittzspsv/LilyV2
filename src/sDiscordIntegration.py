@@ -111,32 +111,36 @@ class MyBot(commands.Bot):
 
                 await interaction.response.edit_message(embed=None, content="Reasoning.....", attachments=[], view=None)
 
-                their_fruits, their_types = FSA.trade_suggestor(
-                    self.your_fruits, self.your_types,
-                    self.include_permanent,
-                    self.include_gamepass
-                )
-
-                if their_fruits != []:
-                    image = await asyncio.to_thread(
-                        j_LorW,
+                try:
+                    their_fruits, their_types, success = FSA.trade_suggestor(
                         self.your_fruits, self.your_types,
-                        their_fruits, their_types,
-                        1, 1
+                        self.include_permanent,
+                        self.include_gamepass
                     )
 
-                    if image is None:
-                        return
+                    if success:
+                        image = await asyncio.to_thread(
+                            j_LorW,
+                            self.your_fruits, self.your_types,
+                            their_fruits, their_types,
+                            1, 1
+                        )
 
-                    buffer = io.BytesIO()
-                    image.save(buffer, format="PNG", optimize=True)
-                    buffer.seek(0)
-                    file = discord.File(fp=buffer, filename="trade_result.png")
+                        if image is None:
+                            raise ValueError("Reasoning Failure")
 
-                    await interaction.edit_original_response(embed=None, content=None, attachments=[file], view=None)
-                    self.image_generated = True
-                else:
-                    await interaction.edit_original_response(content="Reasoning Failure")
+                        buffer = io.BytesIO()
+                        image.save(buffer, format="PNG", optimize=True)
+                        buffer.seek(0)
+                        file = discord.File(fp=buffer, filename="trade_result.png")
+                        await interaction.edit_original_response(embed=None, content=None, attachments=[file], view=None)
+                        self.image_generated = True
+                    else:
+                        raise ValueError("Reasoning Failure")
+                except Exception as e:
+                    await interaction.edit_original_response(
+                        content=f"Unhandled Exception: {str(e)}"
+                    )
 
     async def MemoryButtonSetup(self):
         if not os.path.exists(ButtonSessionMemory):
@@ -1114,87 +1118,118 @@ async def fetchbanlog(ctx, user: str = None):
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"Excepted Error : {e}."))
 
-@bot.hybrid_command(name="embed_create", description="creates an embed based on json config and sends it to specific channel")
+@bot.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
 async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}"):
-    if ctx.author.id not in ids:
-        role = ctx.guild.get_role(giveaway_hoster_role)
-        if not role in ctx.author.roles:
-            await ctx.send("You are Restricted to use this Command")
-            return
-        json_data = json.loads(embed_json_config)
-        sEmbed = LilyEmbed.ParseEmbedFromJSON(json_data)
-        await channel_to_send.send(embed=sEmbed)
-        await ctx.send("Embed Sent")
-    else:
-        json_data = json.loads(embed_json_config)
-        sEmbed = LilyEmbed.ParseEmbedFromJSON(json_data)
-        await channel_to_send.send(embed=sEmbed)
-        await ctx.send("Embed Sent")
+    try:
+        if ctx.author.id not in ids:
+            role = ctx.guild.get_role(giveaway_hoster_role)
+            if role not in ctx.author.roles:
+                await ctx.send("You are restricted", ephemeral=True)
+                return
 
-@bot.hybrid_command(name="create_formatted_embed", description="creates a formatted embed with custom button using set of instructions")
+        try:
+            json_data = json.loads(embed_json_config)
+        except json.JSONDecodeError:
+            await ctx.send("Invalid JSON Format")
+            return
+
+        try:
+            sEmbed = LilyEmbed.ParseEmbedFromJSON(json_data)
+            await channel_to_send.send(embed=sEmbed)
+            await ctx.send("Embed sent successfully.")
+        except Exception as embed_error:
+            await ctx.send(f"Parser Failure: {str(embed_error)}")
+
+    except Exception as e:
+        await ctx.send(f"Unhandled Exception {str(e)}")
+
+@bot.hybrid_command(name="create_formatted_embed", description="Creates a formatted embed with custom buttons using a set of instructions")
 async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link: str = ""):
     if ctx.author.id not in owner_ids + staff_manager_ids + trusted_moderator_ids:
-        await ctx.send("You are restricted to use this command", ephemeral=True)
+        await ctx.send("You are restricted from using this command.", ephemeral=True)
         return
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(link) as response:
-            if response.status != 200:
-                await ctx.send(f"Failed to load config returned status code {response.status}")
+    try:
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(link) as response:
+                    if response.status != 200:
+                        await ctx.send(f"HTTP Exception: {response.status}")
+                        return
+                    config = await response.text()
+            except aiohttp.ClientError as e:
+                await ctx.send(f"Error Fetching Config{str(e)}")
                 return
-            config = await response.text()
 
-    embeds, buttons = LilyEmbed.EmbedParser(config, ctx)
-
-    view = discord.ui.View(timeout=None)
-    persistent_buttons = []
-
-    for idx, (button, embed) in enumerate(buttons):
-        button.custom_id = f"guide_button_{ctx.message.id}_{idx}"
-
-        async def callback(interaction, embed=embed):
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-
-        button.callback = callback
-        view.add_item(button)
-
-        persistent_buttons.append({
-            "label": button.label,
-            "style": button.style.value,
-            "custom_id": button.custom_id,
-            "embed": embed.to_dict()
-        })
-
-    if embeds:
-        message = await channel_to_send.send(embeds=embeds, view=view)
-        await ctx.send("Embed Sent")
-    elif buttons:
-        message = await channel_to_send.send(content="Use the buttons to explore the guide:", view=view)
-        await ctx.send("Embed Sent")
-    else:
-        await ctx.send("No content found in the config")
-        return
-
-    persistent_data = {
-        "message_id": message.id,
-        "channel_id": channel_to_send.id,
-        "buttons": persistent_buttons
-    }
-
-    if os.path.exists(ButtonSessionMemory):
         try:
-            with open(ButtonSessionMemory, "r") as f:
-                content = f.read().strip()
-                all_views = json.loads(content) if content else []
-        except json.JSONDecodeError as e:
+            embeds, buttons = LilyEmbed.EmbedParser(config, ctx)
+        except Exception as e:
+            await ctx.send(f"Parser Error: {str(e)}")
+            return
+
+        view = discord.ui.View(timeout=None)
+        persistent_buttons = []
+
+        for idx, (button, embed) in enumerate(buttons):
+            button.custom_id = f"guide_button_{ctx.message.id}_{idx}"
+
+            async def callback(interaction, embed=embed):
+                try:
+                    await interaction.response.send_message(embed=embed, ephemeral=True)
+                except Exception as e:
+                    await interaction.response.send_message(f"Displaying Embed Failure {str(e)}", ephemeral=True)
+
+            button.callback = callback
+            view.add_item(button)
+
+            persistent_buttons.append({
+                "label": button.label,
+                "style": button.style.value,
+                "custom_id": button.custom_id,
+                "embed": embed.to_dict()
+            })
+
+        try:
+            if embeds:
+                message = await channel_to_send.send(embeds=embeds, view=view)
+                await ctx.send("Embeds sent successfully.")
+            elif buttons:
+                message = await channel_to_send.send(content="Use the buttons to explore the guide:", view=view)
+                await ctx.send("Buttons sent successfully.")
+            else:
+                await ctx.send("No embeds or buttons were found in the config. Please check your format.")
+                return
+        except Exception as e:
+            await ctx.send(f"Failed to send message to the specified channel: {str(e)}")
+            return
+
+        persistent_data = {
+            "message_id": message.id,
+            "channel_id": channel_to_send.id,
+            "buttons": persistent_buttons
+        }
+
+        try:
+            if os.path.exists(ButtonSessionMemory):
+                with open(ButtonSessionMemory, "r") as f:
+                    content = f.read().strip()
+                    all_views = json.loads(content) if content else []
+            else:
+                all_views = []
+        except (json.JSONDecodeError, OSError) as e:
             all_views = []
-    else:
-        all_views = []
 
-    all_views.append(persistent_data)
+        all_views.append(persistent_data)
 
-    with open(ButtonSessionMemory, "w") as f:
-        json.dump(all_views, f, indent=4)
+        try:
+            with open(ButtonSessionMemory, "w") as f:
+                json.dump(all_views, f, indent=4)
+        except Exception as e:
+            await ctx.send(f"Failed to save Button Session.  You may have to post this embed again if program got restarted{str(e)}")
+            return
+
+    except Exception as e:
+        await ctx.send(f"Unhandled Exception: {str(e)}")
 
 @bot.hybrid_command(name="update_formatted_embed", description="Update an existing formatted embed with a new config rule data")
 async def update_formatted_embed(ctx, link: str):

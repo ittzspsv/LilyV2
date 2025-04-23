@@ -34,6 +34,9 @@ def build_candidate_pool(user_fruits, suggest_permanent, suggest_gamepass):
     return pool
 
 def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_attempts=15000, max_gamepass=2):
+    if not pool:
+        return []
+
     target_min = int(target_value * min_ratio)
     target_max = int(target_value * max_ratio)
     best_valid = None
@@ -44,8 +47,13 @@ def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_a
         perm_count = 0
         gp_count = 0
 
-        while len(selected) < 4 and total < target_max:
-            name, ftype, val, category = random.choice(pool)
+        attempt_pool = pool.copy()
+
+        while len(selected) < 4 and total < target_max and attempt_pool:
+            item = random.choice(attempt_pool)
+            attempt_pool.remove(item)
+
+            name, ftype, val, category = item
 
             if ftype == "permanent" and perm_count >= 1:
                 continue
@@ -56,7 +64,7 @@ def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_a
             if total + val > target_max:
                 continue
 
-            selected.append((name, ftype, val, category))
+            selected.append(item)
             total += val
 
             if ftype == "permanent":
@@ -77,10 +85,9 @@ def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_g
     for name, ftype in zip(user_fruits, fruit_types):
         for fruit in fruit_data:
             if fruit["name"] == name:
-                val = parse_value(fruit[f"{ftype.lower()}_value"])
+                val = parse_value(fruit.get(f"{ftype.lower()}_value", "0"))
                 total_value += val
                 break
-
 
     pool = build_candidate_pool(user_fruits, suggest_permanent, suggest_gamepass)
     suggestion = generate_suggestion(pool, total_value)
@@ -89,8 +96,10 @@ def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_g
         pool = build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=True)
         suggestion = generate_suggestion(pool, total_value)
 
+    if not suggestion:
+        return [], [], False
+
     fruit_names = [item[0] for item in suggestion]
     fruit_types = [item[1] for item in suggestion]
-    suggested_value = sum(item[2] for item in suggestion)
 
-    return fruit_names, fruit_types
+    return fruit_names, fruit_types, True
