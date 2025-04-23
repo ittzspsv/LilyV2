@@ -263,7 +263,6 @@ class MyBot(commands.Bot):
 
         if message.author == self.user:
               return  
-        print(message.content)  
           
         #Receives Message from ShreeSPSV's Server For Stock Updates
         if message.guild.id == 1240215331071594536 and message.channel.id == 1362321135231959112:
