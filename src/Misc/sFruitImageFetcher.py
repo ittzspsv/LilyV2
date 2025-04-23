@@ -10,13 +10,14 @@ predefined_images = {
     "2x Boss Drops": "https://static.wikia.nocookie.net/roblox-blox-piece/images/3/3a/BadgeBossDrops.png/",
     "2X Boss Drops": "https://static.wikia.nocookie.net/roblox-blox-piece/images/3/3a/BadgeBossDrops.png/",
     "Fast Boats": "https://static.wikia.nocookie.net/roblox-blox-piece/images/f/fa/BadgeBoats.png/",
-    "Chromatic Skin": "https://static.wikia.nocookie.net/roblox-blox-piece/images/d/d9/Chromaticdragon.png/",
+    "Chromatic Eclipse": "https://static.wikia.nocookie.net/roblox-blox-piece/images/d/d9/Chromaticdragon.png/",
     "Mythical Scrolls": "https://static.wikia.nocookie.net/roblox-blox-piece/images/9/9f/BadgeMythicalScrollx3.png/",
     "Legendary Scrolls": "https://static.wikia.nocookie.net/roblox-blox-piece/images/3/3e/BadgeLegendaryScrollx5.png/",
     "Dragon Token": "https://static.wikia.nocookie.net/roblox-blox-piece/images/6/61/DragonTokenPhysical.png/",
     "Permanent Dragon Token": "https://static.wikia.nocookie.net/roblox-blox-piece/images/2/29/Dragon_Token_%28Permanent%29.png/",
     "Fruit Storage"  : "https://static.wikia.nocookie.net/roblox-blox-piece/images/6/6a/BadgeFruitStorage.png",
-    "Trex" : "https://static.wikia.nocookie.net/roblox-blox-piece/images/e/ea/T-RexFruit.png"
+    "Trex" : "https://static.wikia.nocookie.net/roblox-blox-piece/images/e/ea/T-RexFruit.png",
+    "Parrot Chromatic" : "https://static.wikia.nocookie.net/roblox-blox-piece/images/f/f0/Parrot_Skin.png/"
 }
 
 def FetchFruitImage(fruit_name):

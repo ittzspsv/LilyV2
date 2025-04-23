@@ -262,7 +262,8 @@ class MyBot(commands.Bot):
     async def on_message(self, message): 
 
         if message.author == self.user:
-              return    
+              return  
+        print(message.content)  
           
         #Receives Message from ShreeSPSV's Server For Stock Updates
         if message.guild.id == 1240215331071594536 and message.channel.id == 1362321135231959112:
@@ -590,47 +591,48 @@ class MyBot(commands.Bot):
                 message_parsed = user_message.split()
 
                 fields = {
-                    "name": "",
-                    "physical_value": "",
-                    "permanent_value": "",
-                    "physical_demand": "",
-                    "permanent_demand": "",
-                    "demand_type": "",
-                    "permanent_demand_type": ""
+                    "name": None,
+                    "physical_value": None,
+                    "permanent_value": None,
+                    "physical_demand": None,
+                    "permanent_demand": None,
+                    "demand_type": None,
+                    "permanent_demand_type": None
                 }
-
-                field_keys = list(fields.keys())
 
                 current_key = None
                 for word in message_parsed:
-                    if word in field_keys:
+                    if word in fields:
                         current_key = word
                         fields[current_key] = ""
-                    elif current_key:
+                    elif current_key is not None:
                         if fields[current_key]:
                             fields[current_key] += " "
                         fields[current_key] += word
 
-                if any(not value.strip() for value in fields.values()):
-                    await message.channel.send("Format Invalidation Error")
+                if not fields["name"] or not fields["name"].strip():
+                    await message.channel.send("Name is required for update.")
                     return
 
-                fields["name"] = fields["name"].title()
-                fields["demand_type"] = fields["demand_type"].title()
-                fields["permanent_demand_type"] = fields["permanent_demand_type"].title()
+                if fields["name"]:
+                    fields["name"] = fields["name"].title()
+                if fields["demand_type"]:
+                    fields["demand_type"] = fields["demand_type"].title()
+                if fields["permanent_demand_type"]:
+                    fields["permanent_demand_type"] = fields["permanent_demand_type"].title()
 
                 update_fruit_data(
-                    fields["name"],
-                    fields["physical_value"],
-                    fields["permanent_value"],
-                    fields["physical_demand"],
-                    fields["permanent_demand"],
-                    fields["demand_type"],
-                    fields["permanent_demand_type"]
+                    name=fields["name"],
+                    physical_value=fields["physical_value"],
+                    permanent_value=fields["permanent_value"],
+                    physical_demand=fields["physical_demand"],
+                    permanent_demand=fields["permanent_demand"],
+                    demand_type=fields["demand_type"],
+                    permanent_demand_type=fields["permanent_demand_type"]
                 )
 
-                await message.channel.send("Value of fruit updated successfully!")
-                await self.WriteLog(message.author.id,f"Updated {fields['name']} value!")
+                await message.channel.send(f"Updated value for **{fields['name']}**")
+                await self.WriteLog(message.author.id, f"Updated {fields['name']} values.")
 
             else:
                 user_message = message.content.lower()

@@ -172,12 +172,12 @@
     },
     {
         "name": "Creation",
-        "physical_value": "2,000,000",
-        "permanent_value": "800,000,000",
-        "physical_demand": "6/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Unstable",
-        "permanent_demand_type": "Unstable",
+        "physical_value": "5,000,000",
+        "permanent_value": null,
+        "physical_demand": null,
+        "permanent_demand": null,
+        "demand_type": null,
+        "permanent_demand_type": null,
         "category": "legendary",
         "aliases": [
             "Barrier"
@@ -301,23 +301,23 @@
     },
     {
         "name": "Buddha",
-        "physical_value": "11,000,000",
-        "permanent_value": "685,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
+        "physical_value": "10,000,000",
+        "permanent_value": null,
+        "physical_demand": null,
+        "permanent_demand": null,
+        "demand_type": null,
+        "permanent_demand_type": null,
         "category": "legendary",
         "aliases": []
     },
     {
         "name": "Portal",
-        "physical_value": "11,000,000",
-        "permanent_value": "840,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
+        "physical_value": "10,000,000",
+        "permanent_value": null,
+        "physical_demand": null,
+        "permanent_demand": null,
+        "demand_type": null,
+        "permanent_demand_type": null,
         "category": "legendary",
         "aliases": [
             "Door"
@@ -325,12 +325,12 @@
     },
     {
         "name": "Gravity",
-        "physical_value": "67,500,000",
-        "permanent_value": "1,275,000,000",
-        "physical_demand": "7/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Unstable",
-        "permanent_demand_type": "Overpaid",
+        "physical_value": "65,000,000",
+        "permanent_value": null,
+        "physical_demand": null,
+        "permanent_demand": null,
+        "demand_type": null,
+        "permanent_demand_type": null,
         "category": "mythical",
         "aliases": [
             "Grav"
@@ -349,12 +349,12 @@
     },
     {
         "name": "Venom",
-        "physical_value": "8,000,000",
-        "permanent_value": "1,125,000,000",
-        "physical_demand": "7/10",
-        "permanent_demand": "8/10",
-        "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid",
+        "physical_value": null,
+        "permanent_value": null,
+        "physical_demand": "stable",
+        "permanent_demand": null,
+        "demand_type": null,
+        "permanent_demand_type": null,
         "category": "mythical",
         "aliases": []
     },
@@ -397,12 +397,12 @@
     },
     {
         "name": "Dough",
-        "physical_value": "30,000,000",
-        "permanent_value": "1,125,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
+        "physical_value": null,
+        "permanent_value": null,
+        "physical_demand": "stable",
+        "permanent_demand": null,
+        "demand_type": null,
+        "permanent_demand_type": null,
         "category": "mythical",
         "aliases": [
             "Mochi"
@@ -421,12 +421,12 @@
     },
     {
         "name": "Leopard",
-        "physical_value": "55,000,000",
-        "permanent_value": "1,350,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Overpaid",
-        "permanent_demand_type": "Overpaid",
+        "physical_value": null,
+        "permanent_value": null,
+        "physical_demand": "stable",
+        "permanent_demand": null,
+        "demand_type": null,
+        "permanent_demand_type": null,
         "category": "mythical",
         "aliases": [
             "Leo"
@@ -434,12 +434,12 @@
     },
     {
         "name": "Gas",
-        "physical_value": "65,000,000",
-        "permanent_value": "1,250,000,000",
-        "physical_demand": "10/10",
-        "permanent_demand": "10/10",
-        "demand_type": "Stable",
-        "permanent_demand_type": "Overpaid",
+        "physical_value": "75,000,000",
+        "permanent_value": null,
+        "physical_demand": null,
+        "permanent_demand": null,
+        "demand_type": null,
+        "permanent_demand_type": null,
         "category": "mythical",
         "aliases": []
     },
@@ -611,9 +611,9 @@
     },
     {
         "name": "Permanent Dragon Token",
-        "physical_value": "1,000,000,000",
+        "physical_value": "2,025,000,000",
         "permanent_value": "",
-        "physical_demand": "10/10",
+        "physical_demand": "6/10",
         "permanent_demand": "",
         "demand_type": "Overpaid",
         "permanent_demand_type": "",
@@ -621,17 +621,31 @@
         "aliases": []
     },
     {
-        "name": "Chromatic Skin",
-        "physical_value": "1,950,000,000",
+        "name": "Chromatic Eclipse",
+        "physical_value": "3,000,000,000",
         "permanent_value": "",
         "physical_demand": "10/10",
         "permanent_demand": "",
-        "demand_type": "Overpaid",
+        "demand_type": "",
         "permanent_demand_type": "",
         "category": "limited",
         "aliases": [
-            "Eclipse",
-            "Chromatic Eclipse"
+            "Eclipse"
+        ]
+    },
+
+    {
+        "name": "Parrot Chromatic",
+        "physical_value": "360,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "",
+        "permanent_demand_type": "",
+        "category": "limited",
+        "aliases": [
+            "Eagle Skin",
+            "Eagle Chromatic"
         ]
     }
 ]

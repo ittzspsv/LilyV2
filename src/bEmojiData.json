@@ -55,11 +55,12 @@
     "Fruit Notifier": ["<:fruitnotifier:1331940858198622239>"],
     "Dragon Token": ["<:dragontoken:1331944803373682708>"],
     "Permanent Dragon Token": ["<:permdragontoken:1331944828258488372>"],
-    "Chromatic Skin": ["<:eclipse:1324867804775583775>"],
+    "Chromatic Eclipse": ["<:eclipse:1324867804775583775>"],
     "Permanent" : ["<:PERM:1236412085894905887>"],
     "Physical" : [""],
     "beli" : ["<:beli:1350528667067089007>"],
     "Dragon": ["<:westerndragon:1324867984325349408>", "<:WestDragon:1345776139376922708>"],
     "T-Rex": ["<:trex:1188687304324292638>", "<:TRex:1348420684975444050>"],
-    "TradePointer" : ["<:point_trade:1324867813067984986>"]
+    "TradePointer" : ["<:point_trade:1324867813067984986>"],
+    "Parrot Chromatic" : ["🦜"]
 }

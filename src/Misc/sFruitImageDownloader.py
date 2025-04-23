@@ -32,7 +32,7 @@ for fruit in fruit_dict:
     except Exception as e:
         print(f"Error processing {fruit}: {e}")'''
 
-response = requests.get("https://static.wikia.nocookie.net/roblox-blox-piece/images/5/51/Dragon_%28West%29Fruit.png")
+response = requests.get("https://static.wikia.nocookie.net/roblox-blox-piece/images/f/f0/Parrot_Skin.png/")
 
 if response.status_code == 200:
     with open("downloaded_image.png", "wb") as file:
