@@ -614,12 +614,24 @@ class MyBot(commands.Bot):
                     await message.channel.send("Name is required for update.")
                     return
 
-                if fields["name"]:
-                    fields["name"] = fields["name"].title()
+                fields["name"] = fields["name"].title()
+                fruit_data = fetch_fruit_details(fields["name"])
+
+                if not fruit_data:
+                    await message.channel.send(f"Could not find fruit named **{fields['name']}**.")
+                    return
+
                 if fields["demand_type"]:
                     fields["demand_type"] = fields["demand_type"].title()
                 if fields["permanent_demand_type"]:
                     fields["permanent_demand_type"] = fields["permanent_demand_type"].title()
+
+                fields["physical_value"] = fields["physical_value"] or fruit_data.get("physical_value")
+                fields["permanent_value"] = fields["permanent_value"] or fruit_data.get("permanent_value")
+                fields["physical_demand"] = fields["physical_demand"] or fruit_data.get("physical_demand")
+                fields["permanent_demand"] = fields["permanent_demand"] or fruit_data.get("permanent_demand")
+                fields["demand_type"] = fields["demand_type"] or fruit_data.get("demand_type")
+                fields["permanent_demand_type"] = fields["permanent_demand_type"] or fruit_data.get("permanent_demand_type")
 
                 update_fruit_data(
                     name=fields["name"],
