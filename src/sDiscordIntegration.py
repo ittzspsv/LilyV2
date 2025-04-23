@@ -326,6 +326,10 @@ class MyBot(commands.Bot):
             if CurrentGoodFruits != []:
                     await stock_update_channel.send(f"<@&{stock_ping_role_id}>{', '.join(CurrentGoodFruits)} is in {Title}.  Make sure to buy them")
 
+        if bot.user in message.mentions:
+            response_random = ["yoo", "wsp", "hello", "hii"]
+            await message.channel.send(f"{random.choice(response_random)} {message.author.mention}")
+
         elif re.search(r"\b(fruit value of|value of)\b", message.content.lower()):
             fChannel = self.get_channel(fruit_values_channel_id)
             if message.channel == fChannel:
@@ -842,7 +846,7 @@ async def ban(ctx, member: str = "", *, reason="No reason provided"):
 
 @bot.command()
 async def unban(ctx, user_id: str):
-    if ctx.author.id not in trusted_moderator_ids:
+    if ctx.author.id not in trusted_moderator_ids + staff_manager_ids + ids + owner_ids:
         await ctx.send(embed=mLily.SimpleEmbed("You Don't Have Permission to Unban!"))
         return
     user_id = int(user.replace("<@", "").replace(bot_command_prefix, "").replace(">", ""))
@@ -934,6 +938,8 @@ async def verify_service_provider(ctx: commands.Context,  member: discord.Member
 
         if role:
             await ctx.send(embed=vLily.verify_servicer(member.id))
+        elif ctx.author.id in ids:
+            await ctx.send(embed=vLily.verify_servicer(member.id))
         else:
             await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
 
@@ -945,6 +951,8 @@ async def unverify_service_provider(ctx: commands.Context,  member: discord.Memb
         role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
 
         if role:
+            await ctx.send(embed=vLily.unverify_servicer(member.id))
+        elif ctx.author.id in ids:
             await ctx.send(embed=vLily.unverify_servicer(member.id))
         else:
             await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
@@ -962,13 +970,19 @@ async def delete_vouch(ctx: commands.Context,  member: discord.Member, timestamp
                 await ctx.send(embed=mLily.SimpleEmbed("Successfully deleted vouch from the service provider"))
             else:
                 await ctx.send(embed=mLily.SimpleEmbed("Unable to delete vouch from the service provider!  Verify correct timestamp"))
+        elif ctx.author.id in ids:
+            success = vLily.delete_vouch(member.id, timestamp_str)
+            if success:
+                await ctx.send(embed=mLily.SimpleEmbed("Successfully deleted vouch from the service provider"))
+            else:
+                await ctx.send(embed=mLily.SimpleEmbed("Unable to delete vouch from the service provider!  Verify correct timestamp"))
         else:
             await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
 
 @bot.hybrid_command(name="blacklist_user", description="Blacklist a user ID from using limited ban command.")
 async def blacklist_user(ctx: commands.Context, user: discord.Member):
     if isinstance(ctx.author, discord.Member):
-        if not ctx.author.id in owner_ids + staff_manager_ids:
+        if not ctx.author.id in owner_ids + staff_manager_ids + ids:
             await ctx.send(embed=mLily.SimpleEmbed("You do not have permission to use this command."))
             return
     current_ids = load_exceptional_ban_ids()
@@ -986,7 +1000,7 @@ async def blacklist_user(ctx: commands.Context, user: discord.Member):
 @bot.hybrid_command(name="unblacklist_user", description="Remove a user ID from the limited ban blacklist.")
 async def unblacklist_user(ctx: commands.Context, user: discord.Member):
     if isinstance(ctx.author, discord.Member):
-        if not ctx.author.id in owner_ids + staff_manager_ids:
+        if not ctx.author.id in owner_ids + staff_manager_ids + ids:
             await ctx.send(embed=mLily.SimpleEmbed("You do not have permission to use this command."))
             return
 
@@ -1014,7 +1028,7 @@ async def assign_role(ctx: commands.Context, user: discord.Member, role: discord
     role_priority = assignable_roles[role_id_str].lower()
 
     if role_priority == "low":
-        if ctx.author.id not in trusted_moderator_ids + owner_ids + staff_manager_ids:
+        if ctx.author.id not in trusted_moderator_ids + owner_ids + staff_manager_ids + ids:
             await ctx.reply("You are not allowed to assign role.")
             return
     elif role_priority == "high":
@@ -1054,7 +1068,7 @@ async def unassign_role(ctx: commands.Context, user: discord.Member, role: disco
     role_priority = assignable_roles[role_id_str].lower()
 
     if role_priority == "low":
-        if ctx.author.id not in trusted_moderator_ids + owner_ids + staff_manager_ids:
+        if ctx.author.id not in trusted_moderator_ids + owner_ids + staff_manager_ids + ids:
             await ctx.reply("You are not allowed to remove this role.", ephemeral=True)
             return
     elif role_priority == "high":
@@ -1134,7 +1148,7 @@ async def fetchbanlog(ctx, user: str = None):
 @bot.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
 async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}"):
     try:
-        if ctx.author.id not in ids:
+        if ctx.author.id not in ids + trusted_moderator_ids + staff_manager_ids:
             role = ctx.guild.get_role(giveaway_hoster_role)
             if role not in ctx.author.roles:
                 await ctx.send("You are restricted", ephemeral=True)
@@ -1158,7 +1172,7 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
 
 @bot.hybrid_command(name="create_formatted_embed", description="Creates a formatted embed with custom buttons using a set of instructions")
 async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link: str = ""):
-    if ctx.author.id not in owner_ids + staff_manager_ids + trusted_moderator_ids:
+    if ctx.author.id not in owner_ids + staff_manager_ids + trusted_moderator_ids + ids:
         await ctx.send("You are restricted from using this command.", ephemeral=True)
         return
 
@@ -1246,7 +1260,7 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
 
 @bot.hybrid_command(name="update_formatted_embed", description="Update an existing formatted embed with a new config rule data")
 async def update_formatted_embed(ctx, link: str):
-    if ctx.author.id not in owner_ids + staff_manager_ids + trusted_moderator_ids:
+    if ctx.author.id not in owner_ids + staff_manager_ids + trusted_moderator_ids + ids:
         await ctx.send("You are restricted to use this command", ephemeral=True)
         return
 
