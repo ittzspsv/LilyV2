@@ -1146,7 +1146,7 @@ async def fetchbanlog(ctx, user: str = None):
         await ctx.send(embed=mLily.SimpleEmbed(f"Excepted Error : {e}."))
 
 @bot.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
-async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}"):
+async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}", embed_type: str):
     try:
         if ctx.author.id not in ids + trusted_moderator_ids + staff_manager_ids:
             role = ctx.guild.get_role(giveaway_hoster_role)
@@ -1161,9 +1161,13 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
             return
 
         try:
-            sEmbed = LilyEmbed.ParseEmbedFromJSON(json_data)
-            await channel_to_send.send(embed=sEmbed)
-            await ctx.send("Embed sent successfully.")
+            if embed_type == "1":
+                sEmbed = LilyEmbed.ParseEmbedFromJSON(json_data)
+                await channel_to_send.send(embed=sEmbed)
+                await ctx.send("Embed sent successfully.")
+            else:
+                content, embeds = ParseAdvancedEmbed(embed_data)
+                await ctx.send(content=content, embeds=embeds)
         except Exception as embed_error:
             await ctx.send(f"Parser Failure: {str(embed_error)}")
 
