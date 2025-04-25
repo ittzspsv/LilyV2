@@ -1166,7 +1166,7 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
                 await channel_to_send.send(embed=sEmbed)
                 await ctx.send("Embed sent successfully.")
             else:
-                content, embeds = ParseAdvancedEmbed(embed_data)
+                content, embeds = LilyEmbed.ParseAdvancedEmbed(embed_data)
                 await ctx.send(content=content, embeds=embeds)
         except Exception as embed_error:
             await ctx.send(f"Parser Failure: {str(embed_error)}")
