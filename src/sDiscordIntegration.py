@@ -1147,7 +1147,7 @@ async def fetchbanlog(ctx, user: str = None):
 
 
 @bot.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
-async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}", embed_type: str):
+async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}", embed_type: str = ""):
     try:
         if ctx.author.id not in ids + trusted_moderator_ids + staff_manager_ids:
             role = ctx.guild.get_role(giveaway_hoster_role)
