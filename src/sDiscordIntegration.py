@@ -1145,6 +1145,7 @@ async def fetchbanlog(ctx, user: str = None):
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"Excepted Error : {e}."))
 
+
 @bot.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
 async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}", embed_type: str):
     try:
@@ -1154,25 +1155,42 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
                 await ctx.send("You are restricted", ephemeral=True)
                 return
 
+        
+        if embed_json_config.startswith("http://") or embed_json_config.startswith("https://"):
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(embed_json_config) as resp:
+                        if resp.status != 200:
+                            await ctx.send("Failed to fetch data from the provided link.")
+                            return
+                        embed_json_config = await resp.text()
+            except Exception as fetch_error:
+                await ctx.send(f"Fetch Failure {str(fetch_error)}")
+                return
+
+        
         try:
             json_data = json.loads(embed_json_config)
         except json.JSONDecodeError:
             await ctx.send("Invalid JSON Format")
             return
 
+        
         try:
             if embed_type == "1":
                 sEmbed = LilyEmbed.ParseEmbedFromJSON(json_data)
                 await channel_to_send.send(embed=sEmbed)
                 await ctx.send("Embed sent successfully.")
             else:
-                content, embeds = LilyEmbed.ParseAdvancedEmbed(embed_data)
-                await ctx.send(content=content, embeds=embeds)
+                content, embeds = LilyEmbed.ParseAdvancedEmbed(json_data)
+                await channel_to_send.send(content=content, embeds=embeds)
+                await ctx.send("Embed sent successfully.")
         except Exception as embed_error:
             await ctx.send(f"Parser Failure: {str(embed_error)}")
 
     except Exception as e:
-        await ctx.send(f"Unhandled Exception {str(e)}")
+        await ctx.send(f"Unhandled Exception: {str(e)}")
+
 
 @bot.hybrid_command(name="create_formatted_embed", description="Creates a formatted embed with custom buttons using a set of instructions")
 async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link: str = ""):
