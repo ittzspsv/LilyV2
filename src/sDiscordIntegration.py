@@ -17,7 +17,6 @@ import Algorthims.sStockProcessorAlgorthim as SPA
 import Moderation.sLilyModeration as mLily
 import Vouch.sLilyVouches as vLily
 import Misc.sLilyEmbed as LilyEmbed
-import yaml
 
 from Values.sStockValueJSON import *
 
@@ -355,6 +354,7 @@ class MyBot(commands.Bot):
             else:
                 embed.set_thumbnail(url="https://static.wikia.nocookie.net/roblox-blox-piece/images/0/0d/Advanced_Blox_Fruit_Dealer%282%29.png")
             
+            ctx = await bot.get_context(message)
             channel_data = load_channel_config(ctx)
             if "stock_update_channel_id" in channel_data:
                 stock_update_channel_id = channel_data["stock_update_channel_id"]
@@ -1254,7 +1254,6 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
     except Exception as e:
         await ctx.send(f"Unhandled Exception: {str(e)}")
 
-
 @bot.hybrid_command(name="create_formatted_embed", description="Creates a formatted embed with custom buttons using a set of instructions")
 async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link: str = ""):
     ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
@@ -1469,4 +1468,24 @@ async def assign_channel(ctx, bot_feature: Channels, channel_to_assign: discord.
     else:
         await ctx.send(f"Unable to Assign the Channel")
 
+'''
+#ENGAGING BOT COMMANDS (MISCELLANEOUS)
+@bot.command()
+async def waifu(ctx: commands.Context, member: discord.Member=None):
+    random_texts_no_member = ["Here's your beauty", "Here's your cutie", "Here's your sunshine", "Here's your dream", "Here's your spark", "Here's your magic", "Here's your star", "Here's your glow", "Here's your charm", "Here's your smile", "Here's your sparkle", "Here's your love", "Here's your happiness", "Here's your joy", "Here's your smiley face"]
+    random_footer_text = ["she's not real, bro","touch grass, not her image","she can't hear you through the screen","you're down bad and we all know it","the waifu won't marry you, sorry","bro said shes different","she's literally a JPEG","did you just meow at her?"]
+    requested_response = requests.get("https://api.waifu.pics/sfw/waifu")
+    if requested_response != 200:
+        if not member:
+            data = requested_response.json()
+            embed = discord.Embed(title=f'{random.choice(random_texts_no_member)} {ctx.author.display_name}')
+            embed.set_image(url=data['url'])
+            embed.set_footer(text=random.choice(random_footer_text))
+            await ctx.send(embed=embed)
+        else:
+            data = requested_response.json()
+            embed = discord.Embed(title=f'{random.choice(random_texts_no_member)} {member.display_name}')
+            embed.set_image(url=data['url'])
+            embed.set_footer(text=random.choice(random_footer_text))
+            await ctx.send(embed=embed)'''
 bot.run(bot_token)
