@@ -8,9 +8,10 @@ from datetime import datetime
 from Config.sBotDetails import *
 from discord.ext import commands
 
-database = "storage/vouches/vouches_database.csv"
-
 def store_vouch(ctx: commands.Context, member: discord.Member, note: str = "", received: str = "", verified: bool = False):
+    database = f"storage/{ctx.guild.id}/vouches/vouches_database.csv"
+
+    os.makedirs(os.path.dirname(database), exist_ok=True)
 
     if not os.path.exists(database):
         df = pl.DataFrame({
@@ -65,9 +66,10 @@ def store_vouch(ctx: commands.Context, member: discord.Member, note: str = "", r
     embed = discord.Embed(
         title=f"✅ VOUCH FOR: {member.name}",
         description=f"{ctx.author.mention} **vouched** for {member.mention} 🤝",
-        colour=0x00E4F5,
+        colour=0xaa42ff,
         timestamp=datetime.now()
     )
+
 
     embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
     embed.set_thumbnail(url=member.avatar.url if member.avatar else "https://example.com/default-avatar.png")
@@ -78,7 +80,8 @@ def store_vouch(ctx: commands.Context, member: discord.Member, note: str = "", r
 
     return embed
 
-def verify_servicer(member_id: int):
+def verify_servicer(ctx:commands.Context, member_id: int):
+    database = f"storage/{ctx.guild.id}vouches/vouches_database.csv"
     if not os.path.exists(database):
         print("No vouch records found.")
         return
@@ -111,7 +114,8 @@ def verify_servicer(member_id: int):
     df.write_csv(database)
     return mLily.SimpleEmbed(f"Service Provider <@{member_id}> has been verified ✅ ")
 
-def unverify_servicer(member_id: int):
+def unverify_servicer(ctx: commands.Context, member_id: int):
+    database = f"storage/{ctx.guild.id}vouches/vouches_database.csv"
     if not os.path.exists(database):
         print("No vouch records found.")
         return
@@ -144,7 +148,8 @@ def unverify_servicer(member_id: int):
     df.write_csv(database)
     return mLily.SimpleEmbed(f"Service Provider <@{member_id}> has been Un-Verified. ")
 
-def display_vouch_embed(member: discord.Member, min=0, max=5):
+def display_vouch_embed(ctx: commands.Context, member: discord.Member, min=0, max=5):
+    database = f"storage/{ctx.guild.id}vouches/vouches_database.csv"
     if not os.path.exists(database):
         return discord.Embed(
             title=f"{member.name}'s VOUCHES",
@@ -205,7 +210,7 @@ def display_vouch_embed(member: discord.Member, min=0, max=5):
     embed.set_thumbnail(url=member.avatar.url if member.avatar else "https://example.com/default_avatar.png")
 
     embed.add_field(name="🛠 **Vouches**", value=f"{vouch_count}", inline=True)
-    embed.add_field(name="📅 **Experience**", value=f"{experience_days} days", inline=True)
+    embed.add_field(name="📅 **Experience**", value=f"{abs(experience_days)} days", inline=True)
 
     embed.add_field(name="**👤Unique Users Vouched**", value=f"{unique_percentage}%", inline=True)
     #embed.add_field(name="**Verified**", value=f"{verified}", inline=True)
@@ -230,7 +235,8 @@ def display_vouch_embed(member: discord.Member, min=0, max=5):
 
     return embed
 
-def delete_vouch(member_id: int, timestamp_str: str) -> bool:
+def delete_vouch(ctx:commands.Context, member_id: int, timestamp_str: str) -> bool:
+    database = f"storage/{ctx.guild.id}vouches/vouches_database.csv"
     if not os.path.exists(database):
         return False
 

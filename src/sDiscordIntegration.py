@@ -8,6 +8,7 @@ import Algorthims.sTradeFormatAlgorthim as TFA
 from datetime import datetime, timedelta
 from discord import SelectOption, Interaction, ui
 from enum import Enum
+from dotenv import load_dotenv
 
 import Algorthims.sFruitDetectionAlgorthimEmoji as FDAE
 import Algorthims.sFruitDetectionAlgorthim as FDA
@@ -16,6 +17,7 @@ import Algorthims.sStockProcessorAlgorthim as SPA
 import Moderation.sLilyModeration as mLily
 import Vouch.sLilyVouches as vLily
 import Misc.sLilyEmbed as LilyEmbed
+import yaml
 
 from Values.sStockValueJSON import *
 
@@ -68,6 +70,44 @@ class MyBot(commands.Bot):
         intents.presences = True 
         intents.guilds = True
         super().__init__(command_prefix=bot_command_prefix, intents=discord.Intents.all())
+
+    async def BotStorageInitialization(self, guild):
+        base_path = f"storage/{guild.id}"
+        directories = [
+            base_path,
+            f"{base_path}/banlogs",
+            f"{base_path}/botlogs",
+            f"{base_path}/configs",
+            f"{base_path}/sessions",
+            f"{base_path}/stafflogs",
+            f"{base_path}/vouches",
+        ]
+
+        for directory in directories:
+            os.makedirs(directory, exist_ok=True)
+
+        config_files = {
+            f"{base_path}/configs/assignable_roles.json": {},
+            f"{base_path}/configs/configs.json" : {},
+            f"{base_path}/configs/blacklisted_mods.json": {},
+            f"{base_path}/sessions/ButtonSessionMemory.json": {},
+        }
+
+        for file_path, default_data in config_files.items():
+            if not os.path.exists(file_path):
+                with open(file_path, "w") as f:
+                    json.dump(default_data, f)
+                pass
+                #print(f"Created file: {file_path}")
+            else:
+                pass
+                #print(f"File exists: {file_path} — Skipped")
+        print(f"Initialized {guild.name}")
+
+    async def BotInitialize(self):
+        for guild in self.guilds:
+            await self.BotStorageInitialization(guild)
+            await self.MemoryButtonSetup(guild)
 
     class TradeSuggestorWindow(discord.ui.View):
             def __init__(self, bot, user, your_fruits, your_types):
@@ -142,7 +182,8 @@ class MyBot(commands.Bot):
                         content=f"Unhandled Exception: {str(e)}"
                     )
 
-    async def MemoryButtonSetup(self):
+    async def MemoryButtonSetup(self, Guild: discord.Guild):
+        ButtonSessionMemory = f"storage/{Guild.id}/sessions/ButtonSessionMemory.json"
         if not os.path.exists(ButtonSessionMemory):
             return
         try:
@@ -202,22 +243,16 @@ class MyBot(commands.Bot):
             json.dump(valid_views, f, indent=4)
 
     async def on_ready(self):
-        print('Logged on as', self.user)
-        await self.MemoryButtonSetup()
+        print('Logged on as', self.user)   
+        asyncio.create_task(self.BotInitialize())
 
         await self.tree.sync()
 
-    async def send_discord_message(message):
-        await bot.wait_until_ready()
-        channel = bot.get_channel(stock_update_channel_id)
-        
-        if channel:
-            await channel.send(message)
-        else:
-            pass
+    async def on_guild_join(self, guild):
+        asyncio.create_task(self.BotInitialize())
 
-    async def WriteLog(self, user_id, log_txt):
-        log_file_path = "storage/botlogs/logs.csv"
+    async def WriteLog(self, ctx: commands.Context, user_id, log_txt):
+        log_file_path = f"storage/{ctx.guild.id}/botlogs/logs.csv"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         new_log = pl.DataFrame({
@@ -258,7 +293,7 @@ class MyBot(commands.Bot):
         active_mods = [member for member in mod_role.members if member.status in (discord.Status.online, discord.Status.idle)]
 
         return random.choice(active_mods) if active_mods else None
-    
+
     async def on_message(self, message): 
 
         if message.author == self.user:
@@ -266,7 +301,7 @@ class MyBot(commands.Bot):
           
         #Receives Message from ShreeSPSV's Server For Stock Updates
         if message.guild.id == 1240215331071594536 and message.channel.id == 1362321135231959112:
-            message_id = message.id
+            message_id = 1365480256210735269
             channel = bot.get_channel(1362321135231959112)
 
             embeded_string = ""
@@ -292,21 +327,23 @@ class MyBot(commands.Bot):
             processed_fruits = ""
 
             CurrentGoodFruits = []
+            stock_counter = 1
             for keys, values in Fruit_Items.items():
-                processed_fruits += f"\n- {emoji_data[keys][0]} **{keys}** {emoji_data['beli'][0]} {values}"
+                SubEntry_emoji = emoji_data["SubEntries"][0] if stock_counter == 1 else emoji_data["SubEntries"][1]
+                processed_fruits += f"\n{SubEntry_emoji}{emoji_data[keys][0]} **{keys}** {emoji_data['beli'][0]} {values:,}"
                 if "normal" in title.lower():
                     if keys in good_fruits:
                         CurrentGoodFruits.append(keys)
                 else:
                     if keys in m_good_fruits:
                         CurrentGoodFruits.append(keys)
-
+                stock_counter += 1
 
             embed = discord.Embed(title=Title.upper(),
                             description=f"{processed_fruits}",
-                                    colour=embed_color_code)
+                                    colour=0x4900f5)
                 
-            embed.set_author(name=bot_name,
+            embed.set_author(name=f"{bot_name.title()} Stock",
                     icon_url=bot_icon_link_url)
 
             embed.add_field(name="",
@@ -318,20 +355,27 @@ class MyBot(commands.Bot):
             else:
                 embed.set_thumbnail(url="https://static.wikia.nocookie.net/roblox-blox-piece/images/0/0d/Advanced_Blox_Fruit_Dealer%282%29.png")
             
-            stock_update_channel = bot.get_channel(stock_update_channel_id)
-            stock_message = await stock_update_channel.send(embed=embed)
-            await stock_message.add_reaction("🇼")
-            await stock_message.add_reaction("🇱")
+            channel_data = load_channel_config(ctx)
+            if "stock_update_channel_id" in channel_data:
+                stock_update_channel_id = channel_data["stock_update_channel_id"]
+                stock_update_channel = bot.get_channel(stock_update_channel_id)
+                stock_message = await stock_update_channel.send(embed=embed)
+                await stock_message.add_reaction("🇼")
+                await stock_message.add_reaction("🇱")
 
-            if CurrentGoodFruits != []:
+                if CurrentGoodFruits != []:
                     await stock_update_channel.send(f"<@&{stock_ping_role_id}>{', '.join(CurrentGoodFruits)} is in {Title}.  Make sure to buy them")
-
-        if bot.user in message.mentions:
-            response_random = ["yoo", "wsp", "hello", "hii"]
-            await message.channel.send(f"{random.choice(response_random)} {message.author.mention}")
+            else:
+                return        
 
         elif re.search(r"\b(fruit value of|value of)\b", message.content.lower()):
-            fChannel = self.get_channel(fruit_values_channel_id)
+            ctx = await bot.get_context(message)
+            channel_data = load_channel_config(ctx)
+            if "fruit_values_channel_id" in channel_data:
+                fruit_values_channel_sid = channel_data["fruit_values_channel_id"]
+            else:
+                return
+            fChannel = self.get_channel(fruit_values_channel_sid)
             if message.channel == fChannel:
                 match = re.search(r"\b(?:fruit value of|value of)\s+(.+)", message.content.lower())
                 if match:
@@ -349,22 +393,22 @@ class MyBot(commands.Bot):
                             embed.set_author(name=bot_name,
                             icon_url=bot_icon_link_url)
 
-                            embed.add_field(name="Physical Value",
-                                            value=f"{jsonfruitdata['physical_value']}",
+                            embed.add_field(name=f"{emoji_data["BulletIn"][0]}Physical Value",
+                                            value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['physical_value']}",
                                             inline=False)
-                            embed.add_field(name="Physical Demand",
-                                            value=f"{jsonfruitdata['physical_demand']}",
+                            embed.add_field(name=f"{emoji_data["BulletIn"][0]}Physical Demand",
+                                            value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['physical_demand']}",
                                             inline=False)
                             if jsonfruitdata.get('permanent_value'):
-                                embed.add_field(name="Permanent Value",
-                                                value=f"{jsonfruitdata['permanent_value']}",
+                                embed.add_field(name=f"{emoji_data["BulletIn"][0]}Permanent Value",
+                                                value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['permanent_value']}",
                                                 inline=False)
                             if jsonfruitdata.get('permanent_demand'):
-                                embed.add_field(name="Permanent Demand",
-                                                value=f"{jsonfruitdata['permanent_demand']}",
+                                embed.add_field(name=f"{emoji_data["BulletIn"][0]}Permanent Demand",
+                                                value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['permanent_demand']}",
                                                 inline=False)
-                            embed.add_field(name="Demand Type",
-                                            value=f"{jsonfruitdata['demand_type']}",
+                            embed.add_field(name=f"{emoji_data["BulletIn"][0]}Demand Type",
+                                            value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['demand_type']}",
                                             inline=False)
                             if fruit_value_embed_type == 0:
                                 embed.set_image(url=fruit_img_link)
@@ -447,13 +491,25 @@ class MyBot(commands.Bot):
                             value=f"[{server_name}]({server_invite_link})",
                             inline=False
                         )
+                        ctx = await bot.get_context(message)
+                        channel_data = load_channel_config(ctx)
+                        if "w_or_l_channel_id" in channel_data:
+                            w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+                        else:
+                            return
 
-                        w_or_l_channel = self.get_channel(w_or_l_channel_id)
+                        w_or_l_channel = self.get_channel(w_or_l_channel_sid)
                         if message.channel == w_or_l_channel:
                             await message.reply(embed=embed)
 
                 else:
-                    w_or_l_channel = self.get_channel(w_or_l_channel_id)
+                    ctx = await bot.get_context(message)
+                    channel_data = load_channel_config(ctx)
+                    if "w_or_l_channel_id" in channel_data:
+                            w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+                    else:
+                        return
+                    w_or_l_channel = self.get_channel(w_or_l_channel_sid)
                     if message.channel == w_or_l_channel:
                         status_msg = await message.reply("Thinking...")
 
@@ -536,13 +592,24 @@ class MyBot(commands.Bot):
                         value=f"[{server_name}]({server_invite_link})",
                         inline=False
                     )
-
-                    _w_or_l_channel = self.get_channel(w_or_l_channel_id)
+                    ctx = await bot.get_context(message)
+                    channel_data = load_channel_config(ctx)
+                    if "w_or_l_channel_id" in channel_data:
+                            _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+                    else:
+                        return
+                    _w_or_l_channel = self.get_channel(_w_or_l_channel_sid)
                     if message.channel == _w_or_l_channel:
                         await message.reply(embed=embed) 
 
             else:
-                    w_or_l_channel = self.get_channel(w_or_l_channel_id)
+                    ctx = await bot.get_context(message)
+                    channel_data = load_channel_config(ctx)
+                    if "w_or_l_channel_id" in channel_data:
+                        _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+                    else:
+                        return
+                    w_or_l_channel = self.get_channel(_w_or_l_channel_sid)
                     if message.channel == w_or_l_channel:
                         status_msg = await message.reply("Thinking...")
 
@@ -566,8 +633,10 @@ class MyBot(commands.Bot):
 
         elif TFA.is_valid_trade_suggestor_format(message.content.lower(), fruit_names): 
             your_fruits1, your_fruit_types1, garbage_type, garbage_type1 = FDA.extract_trade_details(message.content)
-
-            if message.channel == self.get_channel(w_or_l_channel_id):
+            ctx = await bot.get_context(message)
+            channel_data = load_channel_config(ctx)
+            _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+            if message.channel == self.get_channel(_w_or_l_channel_sid):
                 view = self.TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
 
                 embed = discord.Embed(title="Trade Suggestion Configuration",description="",color=discord.Color.red())
@@ -578,8 +647,10 @@ class MyBot(commands.Bot):
 
         elif FDAE.is_valid_trade_suggestor_sequence(message.content):
             your_fruits1, your_fruit_types1, their_fruits1, their_fruits_types1 = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
-
-            if message.channel == self.get_channel(w_or_l_channel_id):
+            ctx = await bot.get_context(message)
+            channel_data = load_channel_config(ctx)
+            _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+            if message.channel == self.get_channel(_w_or_l_channel_sid):
                 view = self.TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
 
                 embed = discord.Embed(title="Trade Suggestion Configuration",description="",color=discord.Color.red())
@@ -647,7 +718,8 @@ class MyBot(commands.Bot):
                 )
 
                 await message.channel.send(f"Updated value for **{fields['name']}**")
-                await self.WriteLog(message.author.id, f"Updated {fields['name']} values.")
+                ctx = await bot.get_context(message)
+                await self.WriteLog(ctx, message.author.id, f"Updated {fields['name']} values.")
 
             else:
                 user_message = message.content.lower()
@@ -660,7 +732,8 @@ class MyBot(commands.Bot):
                     name = "Unknown"
 
                 await message.channel.send("No Permission")
-                await self.WriteLog(message.author.id, f"Attempted to update **{name}** value without permission!")
+                ctx = await bot.get_context(message)
+                await self.WriteLog(ctx, message.author.id, f"Attempted to update **{name}** value without permission!")
 
         elif "update logs" in message.content.lower():
             if message.author.id in ids + owner_ids:
@@ -703,7 +776,7 @@ class MyBot(commands.Bot):
                                 log_max = 10
 
                 logs_string = ""
-                log_file_path = "storage/botlogs/logs.csv"
+                log_file_path = f"storage/{message.guild.id}/botlogs/logs.csv"
 
                 try:
                     df = pl.read_csv(log_file_path)
@@ -744,7 +817,7 @@ class MyBot(commands.Bot):
 
         elif "clear logs keeplast" in message.content.lower():
             if message.author.id in ids:
-                log_file_path = "storage/botlogs/logs.csv"
+                log_file_path = f"storage/{message.guild.id}/botlogs/logs.csv"
                 parser = message.content.lower().split()
                 
                 if "keeplast" in parser:
@@ -833,12 +906,12 @@ async def ban(ctx, member: str = "", *, reason="No reason provided"):
             await ctx.send(embed=mLily.SimpleEmbed("No Valid Users to Ban"))
             return
 
-        if not mLily.exceeded_ban_limit(ctx.author.id, role_ids):
+        if not mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
             await mLily.ban_user(ctx, target_user, reason, proofs)
         else:
             await ctx.send(embed=mLily.SimpleEmbed(
                 f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"
-                f"You can ban in {mLily.remaining_Ban_time(ctx.author.id, role_ids)}"
+                f"You can ban in {mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}"
             ))
 
     except Exception as e:
@@ -884,14 +957,14 @@ async def banlogs(ctx, slice_exp: str = None, member: str = ""):
         if not member:
             try:
                 user = await bot.fetch_user(ctx.author.id)
-                embed = mLily.display_logs(ctx.author.id, user, slice_expr=slice(start, stop))
+                embed = mLily.display_logs(ctx,ctx.author.id, user, slice_expr=slice(start, stop))
             except Exception as e:
                 await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user or display logs: {e}"))
                 return
         else:
             try:
                 user = await bot.fetch_user(int(member))
-                embed = mLily.display_logs(int(member), user, slice_expr=slice(start, stop))
+                embed = mLily.display_logs(ctx, int(member), user, slice_expr=slice(start, stop))
             except ValueError:
                 await ctx.send(embed=mLily.SimpleEmbed("Member ID must be a integer"))
                 return
@@ -906,9 +979,6 @@ async def banlogs(ctx, slice_exp: str = None, member: str = ""):
 
 @bot.hybrid_command(name='vouch', description='Vouch a service handler')
 async def vouch(ctx: commands.Context,  member: discord.Member, note: str = "", received: str = ""):
-    if concurrent_guild_id != ctx.guild.id:
-        await ctx.send("You Cannot Vouch Due to Server Change!")
-        return
     if not member:
         pass
     elif member == ctx.author:
@@ -926,7 +996,7 @@ async def show_vouches(ctx: commands.Context,  member: discord.Member, min:int =
     if not member:
         pass
     else:
-        await ctx.send(embed=vLily.display_vouch_embed(member, min, max))
+        await ctx.send(embed=vLily.display_vouch_embed(ctx, member, min, max))
     pass
 
 @bot.hybrid_command(name='verify_service_provider', description='if a service provider is trusted then he can be verified')
@@ -937,9 +1007,9 @@ async def verify_service_provider(ctx: commands.Context,  member: discord.Member
         role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
 
         if role:
-            await ctx.send(embed=vLily.verify_servicer(member.id))
+            await ctx.send(embed=vLily.verify_servicer(ctx, member.id))
         elif ctx.author.id in ids:
-            await ctx.send(embed=vLily.verify_servicer(member.id))
+            await ctx.send(embed=vLily.verify_servicer(ctx, member.id))
         else:
             await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
 
@@ -951,9 +1021,9 @@ async def unverify_service_provider(ctx: commands.Context,  member: discord.Memb
         role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
 
         if role:
-            await ctx.send(embed=vLily.unverify_servicer(member.id))
+            await ctx.send(embed=vLily.unverify_servicer(ctx, member.id))
         elif ctx.author.id in ids:
-            await ctx.send(embed=vLily.unverify_servicer(member.id))
+            await ctx.send(embed=vLily.unverify_servicer(ctx, member.id))
         else:
             await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
 
@@ -965,7 +1035,7 @@ async def delete_vouch(ctx: commands.Context,  member: discord.Member, timestamp
         role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
 
         if role:
-            success = vLily.delete_vouch(member.id, timestamp_str)
+            success = vLily.delete_vouch(ctx, member.id, timestamp_str)
             if success:
                 await ctx.send(embed=mLily.SimpleEmbed("Successfully deleted vouch from the service provider"))
             else:
@@ -985,17 +1055,17 @@ async def blacklist_user(ctx: commands.Context, user: discord.Member):
         if not ctx.author.id in owner_ids + staff_manager_ids + ids:
             await ctx.send(embed=mLily.SimpleEmbed("You do not have permission to use this command."))
             return
-    current_ids = load_exceptional_ban_ids()
+    current_ids = await load_exceptional_ban_ids(ctx)
 
     if user.id in current_ids:
         await ctx.send(embed=mLily.SimpleEmbed("User is already blacklisted"))
         return
 
     current_ids.append(user.id)
-    save_exceptional_ban_ids(current_ids)
+    await save_exceptional_ban_ids(ctx, current_ids)
 
     await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> Got Blacklisted"))
-    await bot.WriteLog(ctx.author.id, f"has Blacklisted <@{user.id}> from using **Limited Bans**")
+    await bot.WriteLog(ctx, ctx.author.id, f"has Blacklisted <@{user.id}> from using **Limited Bans**")
 
 @bot.hybrid_command(name="unblacklist_user", description="Remove a user ID from the limited ban blacklist.")
 async def unblacklist_user(ctx: commands.Context, user: discord.Member):
@@ -1004,21 +1074,21 @@ async def unblacklist_user(ctx: commands.Context, user: discord.Member):
             await ctx.send(embed=mLily.SimpleEmbed("You do not have permission to use this command."))
             return
 
-    current_ids = load_exceptional_ban_ids()
+    current_ids = await load_exceptional_ban_ids(ctx)
 
     if user.id not in current_ids:
         await ctx.send(embed=mLily.SimpleEmbed("User is not blacklisted."))
         return
 
     current_ids.remove(user.id)
-    save_exceptional_ban_ids(current_ids)
+    await save_exceptional_ban_ids(ctx, current_ids)
 
     await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> has been removed from the blacklist."))
-    await bot.WriteLog(ctx.author.id, f"has removed <@{user.id}> from the **Limited Bans** blacklist.")
+    await bot.WriteLog(ctx, ctx.author.id, f"has removed <@{user.id}> from the **Limited Bans** blacklist.")
 
 @bot.hybrid_command(name="assign_role", description="Assign a role to a user if it's allowed")
 async def assign_role(ctx: commands.Context, user: discord.Member, role: discord.Role):
-    assignable_roles = load_roles()
+    assignable_roles = await load_roles(ctx)
     role_id_str = str(role.id)
 
     if role_id_str not in assignable_roles:
@@ -1050,7 +1120,7 @@ async def assign_role(ctx: commands.Context, user: discord.Member, role: discord
     try:
         await user.add_roles(role, reason=f"Assigned by {ctx.author}")
         await ctx.reply(f"Assigned {role.name} to {user.display_name}.")
-        await bot.WriteLog(ctx.author.id, f"Assigned <@&{role.id}> to {user.display_name}.")
+        await bot.WriteLog(ctx, ctx.author.id, f"Assigned <@&{role.id}> to {user.display_name}.")
     except discord.Forbidden:
         await ctx.reply("I don't have permission to assign that role.")
     except Exception as e:
@@ -1058,7 +1128,7 @@ async def assign_role(ctx: commands.Context, user: discord.Member, role: discord
 
 @bot.hybrid_command(name="unassign_role", description="Remove a role from a user if it's allowed")
 async def unassign_role(ctx: commands.Context, user: discord.Member, role: discord.Role):
-    assignable_roles = load_roles()
+    assignable_roles = await load_roles(ctx)
     role_id_str = str(role.id)
 
     if role_id_str not in assignable_roles:
@@ -1089,7 +1159,7 @@ async def unassign_role(ctx: commands.Context, user: discord.Member, role: disco
     try:
         await user.remove_roles(role, reason=f"Removed by {ctx.author}")
         await ctx.reply(f"Removed {role.name} from {user.display_name}.")
-        await bot.WriteLog(ctx.author.id, f"Removed <@&{role.id}> from {user.display_name}.")
+        await bot.WriteLog(ctx, ctx.author.id, f"Removed <@&{role.id}> from {user.display_name}.")
     except discord.Forbidden:
         await ctx.reply("I don't have permission to remove that role.")
     except Exception as e:
@@ -1101,7 +1171,7 @@ class Priority(str, Enum):
 @bot.hybrid_command(name="make_role_assignable", description="Allows specific users to assign this role")
 async def make_roles_assignable(ctx: commands.Context, role: discord.Role, priority: Priority):
     try:
-        assignable_roles = load_roles()
+        assignable_roles = await load_roles(ctx)
     except Exception as e:
         await ctx.reply(f"Failed to load assignable roles: `{e}`")
         return
@@ -1113,7 +1183,7 @@ async def make_roles_assignable(ctx: commands.Context, role: discord.Role, prior
     try:
         if str(role.id) not in assignable_roles:
             try:
-                save_roles(role.id, priority.value)
+                await save_roles(ctx, role.id, priority.value)
                 await ctx.reply(f"Added Role {role.name} to assignables with {priority.value} priority.")
             except Exception as e:
                 await ctx.reply(f"Failed to save role with exception: `{e}`")
@@ -1145,9 +1215,8 @@ async def fetchbanlog(ctx, user: str = None):
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"Excepted Error : {e}."))
 
-
 @bot.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
-async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}", embed_type: str = ""):
+async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}"):
     try:
         if ctx.author.id not in ids + trusted_moderator_ids + staff_manager_ids:
             role = ctx.guild.get_role(giveaway_hoster_role)
@@ -1174,17 +1243,11 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
         except json.JSONDecodeError:
             await ctx.send("Invalid JSON Format")
             return
-
         
         try:
-            if embed_type == "1":
-                sEmbed = LilyEmbed.ParseEmbedFromJSON(json_data)
-                await channel_to_send.send(embed=sEmbed)
-                await ctx.send("Embed sent successfully.")
-            else:
-                content, embeds = LilyEmbed.ParseAdvancedEmbed(json_data)
-                await channel_to_send.send(content=content, embeds=embeds)
-                await ctx.send("Embed sent successfully.")
+            content, embeds = LilyEmbed.ParseAdvancedEmbed(json_data)
+            await channel_to_send.send(content=content, embeds=embeds)
+            await ctx.send("Embed sent successfully.")
         except Exception as embed_error:
             await ctx.send(f"Parser Failure: {str(embed_error)}")
 
@@ -1194,6 +1257,7 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
 
 @bot.hybrid_command(name="create_formatted_embed", description="Creates a formatted embed with custom buttons using a set of instructions")
 async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link: str = ""):
+    ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
     if ctx.author.id not in owner_ids + staff_manager_ids + trusted_moderator_ids + ids:
         await ctx.send("You are restricted from using this command.", ephemeral=True)
         return
@@ -1282,6 +1346,7 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
 
 @bot.hybrid_command(name="update_formatted_embed", description="Update an existing formatted embed with a new config rule data")
 async def update_formatted_embed(ctx, link: str):
+    ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
     if ctx.author.id not in owner_ids + staff_manager_ids + trusted_moderator_ids + ids:
         await ctx.send("You are restricted to use this command", ephemeral=True)
         return
@@ -1380,4 +1445,28 @@ async def update_formatted_embed(ctx, link: str):
 
     view = SessionSelector(ctx, all_views, link)
     await ctx.send("Select the session you'd like to update:", view=view, ephemeral=True)
+
+class Channels(str, Enum):
+    StockUpdate = "StockUpdate"
+    WORL = "WORL"
+    FruitValues = "FruitValues"
+@bot.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
+async def assign_channel(ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
+    if not ctx.author.id in [ctx.guild.owner.id] + ids:
+        message = await ctx.send("Access Denied")
+        await asyncio.sleep(5)
+        await message.delete()
+        return
+    if bot_feature == Channels.StockUpdate:
+        await save_channel(ctx, "stock_update_channel_id", channel_to_assign.id)
+        await ctx.send(f"Stock Update receives in <#{channel_to_assign.id}>")
+    elif bot_feature == Channels.WORL:
+        await save_channel(ctx, "w_or_l_channel_id", channel_to_assign.id)
+        await ctx.send(f"Win or Loss is Caliberated in <#{channel_to_assign.id}>")
+    elif bot_feature == Channels.FruitValues:
+        await save_channel(ctx, "fruit_values_channel_id", channel_to_assign.id)
+        await ctx.send(f"Fruit Values is Caliberated in <#{channel_to_assign.id}>")
+    else:
+        await ctx.send(f"Unable to Assign the Channel")
+
 bot.run(bot_token)

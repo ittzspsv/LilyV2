@@ -1,49 +1,79 @@
 import json
 import os
+import discord
+from discord.ext import commands
 
 
-Ban_Exceptional_File = "storage/configs/blacklisted_mods.json"
-Role_Assignable_File = "storage/configs/assignable_roles.json"
-ButtonSessionMemory = "storage/sessions/ButtonSessionMemory.json"
-def load_exceptional_ban_ids():
-    if os.path.exists(Ban_Exceptional_File):
-        with open(Ban_Exceptional_File, "r") as f:
-            return json.load(f).get("ids", [])
-    return []
+async def load_exceptional_ban_ids(ctx: commands.Context):
+        Ban_Exceptional_File = f"storage/{ctx.guild.id}/configs/blacklisted_mods.json"
+        if os.path.exists(Ban_Exceptional_File):
+            with open(Ban_Exceptional_File, "r") as f:
+                return json.load(f).get("ids", [])
+        return []
 
-def save_exceptional_ban_ids(ids):
-    with open(Ban_Exceptional_File, "w") as f:
-        json.dump({"ids": ids}, f, indent=4)
+async def save_exceptional_ban_ids(ctx, ids):
+        Ban_Exceptional_File = f"storage/{ctx.guild.id}/configs/blacklisted_mods.json"
+        with open(Ban_Exceptional_File, "w") as f:
+            json.dump({"ids": ids}, f, indent=4)
 
-def remove_exceptional_ban_id(remove_id):
-    try:
-        with open(Ban_Exceptional_File, "r") as f:
-            data = json.load(f)
+async def remove_exceptional_ban_id(ctx, remove_id):
+        Ban_Exceptional_File = f"storage/{ctx.guild.id}/configs/blacklisted_mods.json"
+        try:
+            with open(Ban_Exceptional_File, "r") as f:
+                data = json.load(f)
 
-        if "ids" in data and remove_id in data["ids"]:
-            data["ids"].remove(remove_id)
+            if "ids" in data and remove_id in data["ids"]:
+                data["ids"].remove(remove_id)
 
-            with open(Ban_Exceptional_File, "w") as f:
-                json.dump(data, f, indent=4)
+                with open(Ban_Exceptional_File, "w") as f:
+                    json.dump(data, f, indent=4)
 
-            return True
-        else:
+                return True
+            else:
+                return False
+
+        except (FileNotFoundError, json.JSONDecodeError):
             return False
 
-    except (FileNotFoundError, json.JSONDecodeError):
-        return False
+async def load_roles(ctx: commands.Context):
+        Role_Assignable_File = f"storage/{ctx.guild.id}/configs/assignable_roles.json"
+        if os.path.exists(Role_Assignable_File):
+            with open(Role_Assignable_File, "r") as f:
+                return json.load(f).get("roles", {})
+        return {}
 
-def load_roles():
-    if os.path.exists(Role_Assignable_File):
-        with open(Role_Assignable_File, "r") as f:
-            return json.load(f).get("roles", {})
-    return {}
+async def save_roles(ctx: commands.Context, new_id, priority):
+        Role_Assignable_File = f"storage/{ctx.guild.id}/configs/assignable_roles.json"
+        roles = await load_roles(ctx)
+        roles[str(new_id)] = priority
+        with open(Role_Assignable_File, "w") as f:
+            json.dump({"roles": roles}, f, indent=4)
 
-def save_roles(new_id, priority):
-    roles = load_roles()
-    roles[str(new_id)] = priority
-    with open(Role_Assignable_File, "w") as f:
-        json.dump({"roles": roles}, f, indent=4)
+async def save_channel(ctx: commands.Context, channel_name, channel_id):
+    config_path = f"storage/{ctx.guild.id}/configs/configs.json"
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            data = json.load(f)
+    else:
+        data = {}
+    channel_config = data.get("ChannelConfig", {})
+    channel_config[str(channel_name)] = int(channel_id)
+
+    data["ChannelConfig"] = channel_config
+    with open(config_path, "w") as f:
+        json.dump(data, f, indent=4)
+
+def load_channel_config(ctx: commands.Context):
+    config_path = f"storage/{ctx.guild.id}/configs/configs.json"
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    if not os.path.exists(config_path):
+        return {}
+
+    with open(config_path, "r") as f:
+        data = json.load(f)
+
+    return data.get("ChannelConfig", {})
 
 
 # VERY IMPORTANT TOKEN THAT SHOULD NOT BE SHARED HERE
@@ -73,9 +103,6 @@ if port == 0:
     PERM_EMOJI_ID = ["1349449830048731206"]
 
     middle_men_channel_id = 1349351985626878013
-    stock_update_channel_id = 1349358716054671400
-    w_or_l_channel_id = 1349753791704072313
-    fruit_values_channel_id = 1349753820053508186
     stock_ping_role_id = "1348020649444114574"
     stock_team_roll_name = "Stock Ping"
 
@@ -85,13 +112,9 @@ if port == 0:
         1325145748035207239 : 3 #CREATORS ROLE IN TEXIOVERSE,
     }
 
-    exceptional_limited_ban_id = load_exceptional_ban_ids()
-
     trial_moderator_name = "Stock Ping"
 
     service_manager_roll_id = 1356187197526638693
-
-    concurrent_guild_id = 970643838047760384
 
 else:
     # PRODUCTION SERVER SETTINGS (BLOXTRADE)
@@ -99,15 +122,11 @@ else:
     PERM_EMOJI_ID = ["1236412085894905887", "1170178840283316244", "1324867811775877241"]
 
     middle_men_channel_id = 1341106937676304434
-    stock_update_channel_id = 1324581262413004800
-    w_or_l_channel_id = 1350503040616235068
-    fruit_values_channel_id = 1350503093963456603
     stock_ping_role_id = "1345555258314588170"
     stock_team_roll_name = "Moderator"
     
     trial_moderator_name = "Trial Moderator"
 
-    exceptional_limited_ban_id = load_exceptional_ban_ids()
     #Their user id followed by how much limited ban they can do in a day
     limit_Ban_details = {
         1333123391875584011 : 20, #HEAD MODERATOR
@@ -118,8 +137,6 @@ else:
 
     service_manager_roll_id = 1333123391875584011 #CURRENTLY HEAD MODERATORS
     giveaway_hoster_role = 1345579694522630205    #USED TO CREATE EMBEDS
-
-    concurrent_guild_id = 970643838047760384
 
 # Embed colors based on item type
 embed_color_codes = {
@@ -137,6 +154,6 @@ embed_color_codes = {
 ids = [845511381637529641, 999309816914792630, 549777573551276051, 1120025980178796714] #CURRENT USER IDS - [SHREE, TEXIO, ZELY, VOUCH]
 
 
-owner_ids = [549777573551276051, 1120025980178796714]  #CURRENT USER IDS - [ZELY, VOUCH]
+owner_ids = [549777573551276051, 1120025980178796714, 845511381637529641]  #CURRENT USER IDS - [ZELY, VOUCH]
 trusted_moderator_ids = [1329951007311921212, 895649073082814475, 845511381637529641, 999309816914792630, 1220169032762920965, 869064913535004753, 827775992521031700] #CURRENT USER IDS [KAI, LELOUCH, SHREE, TEXIO, FAMOPLAYS, OBLIVION, SAMURAI]
 staff_manager_ids = [895649073082814475] #CURRENT USER IDS - [LELOUCH]

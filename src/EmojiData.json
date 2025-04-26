@@ -61,5 +61,8 @@
     "Chromatic Eclipse": ["<:eclipse:1324867804775583775>"],
     "Dragon": ["<:Dragon:1349377817049301083>"],
     "TradePointer" : ["<:Trade_Emoji_Blox_Fruits:1348722170586599465>"],
-    "Parrot Chromatic" : ["🦜"]
+    "Parrot Chromatic" : ["🦜"],
+    "BulletIn" : ["<:bullet_point:1365491077598941235>"],
+    "Divider" : ["<:Divider:1365491119584051320>"],
+    "SubEntries" : ["<:sub_entry_one:1365491125753745519>", "<:sub_entry_two:1365491132850765925>"]
 }

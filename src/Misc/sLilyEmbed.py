@@ -3,44 +3,6 @@ import re
 from datetime import datetime
 
 
-def ParseEmbedFromJSON(data: dict) -> discord.Embed:
-    try:
-        color = discord.Color(int(data.get("color", "#000000").lstrip("#"), 16))
-    except (ValueError, TypeError):
-        color = discord.Color.default()
-
-    embed = discord.Embed(
-        title=data.get("title"),
-        url=data.get("url"),
-        description=data.get("description"),
-        color=color
-    )
-
-    if "timestamp" in data:
-        try:
-            embed.timestamp = datetime.fromtimestamp(int(data["timestamp"]) / 1000)
-        except (ValueError, TypeError):
-            pass
-
-    if author := data.get("author"):
-        embed.set_author(name=author.get("name"), url=author.get("url"), icon_url=author.get("icon_url"))
-    if thumbnail := data.get("thumbnail"):
-        embed.set_thumbnail(url=thumbnail.get("url"))
-    if image := data.get("image"):
-        embed.set_image(url=image.get("url"))
-    if footer := data.get("footer"):
-        embed.set_footer(text=footer.get("text"), icon_url=footer.get("icon_url"))
-
-    for field in data.get("fields", []):
-        embed.add_field(
-            name=field.get("name"),
-            value=field.get("value"),
-            inline=field.get("inline", False)
-        )
-
-    return embed
-
-
 def EmbedParser(config_str: str, ctx):
     embeds_to_display = []
     buttons = []

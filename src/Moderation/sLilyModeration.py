@@ -16,8 +16,8 @@ def evaluate_log_file(filename):
         })
         df.write_csv(filename)
 
-def exceeded_ban_limit(moderator_id, moderator_role_ids):
-    filename = f"storage/banlogs/{moderator_id}-logs.csv"
+def exceeded_ban_limit(ctx:commands.Context, moderator_id, moderator_role_ids):
+    filename = f"storage/{ctx.guild.id}/banlogs/{moderator_id}-logs.csv"
     if not os.path.exists(filename):
         return False
 
@@ -36,9 +36,8 @@ def exceeded_ban_limit(moderator_id, moderator_role_ids):
     except Exception:
         return False
 
-
-def remaining_Ban_time(moderator_id, moderator_role_ids):
-    filename = f"storage/banlogs/{moderator_id}-logs.csv"
+def remaining_Ban_time(ctx:commands.Context, moderator_id, moderator_role_ids):
+    filename = f"storage/{ctx.guild.id}/banlogs/{moderator_id}-logs.csv"
     if not os.path.exists(filename):
         return None
 
@@ -69,8 +68,8 @@ def remaining_Ban_time(moderator_id, moderator_role_ids):
     except Exception:
         return None
 
-def remaining_ban_count(moderator_id, moderator_role_ids):
-    filename = f"storage/banlogs/{moderator_id}-logs.csv"
+def remaining_ban_count(ctx:commands.Context, moderator_id, moderator_role_ids):
+    filename = f"storage/{ctx.guild.id}/banlogs/{moderator_id}-logs.csv"
     if not os.path.exists(filename):
         return max([limit_Ban_details.get(role_id, 0) for role_id in moderator_role_ids], default=0)
 
@@ -86,8 +85,8 @@ def remaining_ban_count(moderator_id, moderator_role_ids):
     except Exception:
         return 0
 
-def log_ban(moderator_id, banned_user_id, reason="No reason provided"):
-    filename = f"storage/banlogs/{moderator_id}-logs.csv"
+def log_ban(ctx:commands.Context, moderator_id, banned_user_id, reason="No reason provided"):
+    filename = f"storage/{ctx.guild.id}/banlogs/{moderator_id}-logs.csv"
     now = datetime.now(pytz.utc).isoformat()
 
     new_entry = pl.DataFrame({
@@ -105,8 +104,8 @@ def log_ban(moderator_id, banned_user_id, reason="No reason provided"):
 
     combined.write_csv(filename)
 
-def display_logs(user_id, user, slice_expr=None):
-    file_path = f"storage/banlogs/{user_id}-logs.csv"
+def display_logs(ctx: commands.Context, user_id, user, slice_expr=None):
+    file_path = f"storage/{ctx.guild.id}/banlogs/{user_id}-logs.csv"
     if not os.path.exists(file_path):
         return SimpleEmbed("No Logs Found For the given user id")
 
@@ -174,7 +173,7 @@ def LogEmbed(user, moderator: discord.Member, reason: str):
     return embed
 
 async def ban_user(ctx, user_input, reason="No reason provided", proofs:list=[]):
-    except_limit_ban_ids = load_exceptional_ban_ids()
+    except_limit_ban_ids = await load_exceptional_ban_ids(ctx)
     author_role_ids = [role.id for role in ctx.author.roles]
     valid_limit_roles = [role_id for role_id in author_role_ids if role_id in limit_Ban_details]
 
@@ -224,7 +223,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs:list=[])
                 await ctx.send(embed=SimpleEmbed("You cannot ban yourself!"))
                 return
 
-        if exceeded_ban_limit(ctx.author.id, valid_limit_roles):
+        if exceeded_ban_limit(ctx, ctx.author.id, valid_limit_roles):
             await ctx.send(embed=SimpleEmbed("Cannot ban the user! I'm Sorry But you have exceeded your daily limit"))
             return
 
@@ -234,9 +233,9 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs:list=[])
             else:
                 await ctx.guild.ban(discord.Object(id=user_id), reason=reason)
 
-            await ctx.send(embed=SimpleEmbed(f"Banned: <@{user_id}> \n**Reason:** {reason}\n **Bans Remaining: **{remaining_ban_count(ctx.author.id, valid_limit_roles) - 1}"))
+            await ctx.send(embed=SimpleEmbed(f"Banned: <@{user_id}> \n**Reason:** {reason}\n **Bans Remaining: **{remaining_ban_count(ctx, ctx.author.id, valid_limit_roles) - 1}"))
 
-            log_ban(ctx.author.id, user_id, reason)
+            log_ban(ctx, ctx.author.id, user_id, reason)
 
             with open("src/Moderation/logchannelid.log", "r") as file:
                 logs_channel_id = file.read().strip()
