@@ -935,11 +935,11 @@ async def ban(ctx, member: str = "", *, reason="No reason provided"):
 @bot.command()
 async def unban(ctx, user_id: str):
     if ctx.author.id not in trusted_moderator_ids + staff_manager_ids + ids + owner_ids:
-        await ctx.send(embed=mLily.SimpleEmbed("You Don't Have Permission to Unban!"))
+        await ctx.send(embed=mLily.SimpleEmbed("You don't have permission to unban!"))
         return
-    user_id = int(user.replace("<@", "").replace(bot_command_prefix, "").replace(">", ""))
-    user = await bot.fetch_user(user_id)
+    user_id = int(user_id.replace("<@", "").replace(bot_command_prefix, "").replace(">", ""))    
     try:
+        user = await bot.fetch_user(user_id)
         await ctx.guild.unban(user)
         await ctx.send(embed=mLily.SimpleEmbed(f"Unbanned {user.mention}"))
     except discord.NotFound:
