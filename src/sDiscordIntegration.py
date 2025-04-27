@@ -920,6 +920,9 @@ async def ban(ctx, member: str = "", *, reason="No reason provided"):
         if not target_user:
             await ctx.send(embed=mLily.SimpleEmbed("No Valid Users to Ban"))
             return
+        if target_user.id in ids:
+            await ctx.send(embed=mLily.SimpleEmbed(f"you can't use my commands against me {ctx.author.mention}"))
+            return
 
         if not mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
             await mLily.ban_user(ctx, target_user, reason, proofs)
@@ -1081,6 +1084,9 @@ async def blacklist_user(ctx: commands.Context, user: discord.Member):
 
     if user.id in current_ids:
         await ctx.send(embed=mLily.SimpleEmbed("User is already blacklisted"))
+        return
+    if user.id in ids:
+        await ctx.send(embed=mLily.SimpleEmbed(f"you can't use my commands against me {ctx.author.mention}"))
         return
 
     current_ids.append(user.id)
