@@ -301,72 +301,87 @@ class MyBot(commands.Bot):
         #Receives Message from ShreeSPSV's Server For Stock Updates
         if message.guild.id == 1240215331071594536 and message.channel.id == 1362321135231959112:
             message_id = message.id
-            channel = bot.get_channel(1362321135231959112)
+            source_channel = bot.get_channel(1362321135231959112)
 
-            embeded_string = ""
-            if channel is None:
+            if source_channel is None:
                 return
 
             try:
-                fetched_message = await channel.fetch_message(message_id)
-                if fetched_message.embeds:
-                    for i, embed in enumerate(fetched_message.embeds):           
-                        title = embed.title or "-"
-                        description = embed.description or "-"
-                        
-                        embeded_string += f"Title: {title}"
-                        embeded_string += f"Description: {description}"
-
-                    Title, Fruit_Items =  SPA.StockMessageProcessor(embeded_string)
-                else:
+                fetched_message = await source_channel.fetch_message(message_id)
+                if not fetched_message.embeds:
                     return
             except Exception as e:
+                print(f"Failed to fetch message: {e}")
                 return
 
-            processed_fruits = ""
+            embeded_string = ""
 
+            for embed in fetched_message.embeds:
+                title = embed.title or "-"
+                description = embed.description or "-"
+                embeded_string += f"Title: {title} Description: {description}"
+
+            Title, Fruit_Items = SPA.StockMessageProcessor(embeded_string)
+
+            processed_fruits = ""
             CurrentGoodFruits = []
             stock_counter = 1
+
             for keys, values in Fruit_Items.items():
                 SubEntry_emoji = emoji_data["SubEntries"][0] if stock_counter == 1 else emoji_data["SubEntries"][1]
                 processed_fruits += f"\n{SubEntry_emoji}{emoji_data[keys][0]} **{keys}** {emoji_data['beli'][0]} {values:,}"
+
                 if "normal" in title.lower():
                     if keys in good_fruits:
                         CurrentGoodFruits.append(keys)
                 else:
                     if keys in m_good_fruits:
                         CurrentGoodFruits.append(keys)
+
                 stock_counter += 1
 
-            embed = discord.Embed(title=Title.upper(),
-                            description=f"{processed_fruits}",
-                                    colour=0x4900f5)
-                
-            embed.set_author(name=f"{bot_name.title()} Stock",
-                    icon_url=bot_icon_link_url)
+            stock_embed = discord.Embed(
+                title=Title.upper(),
+                description=f"{processed_fruits}",
+                colour=0x4900f5
+            )
+            stock_embed.set_author(name=f"{bot_name.title()} Stock", icon_url=bot_icon_link_url)
 
-            embed.add_field(name="",
+            stock_embed.add_field(
+                name="",
                 value=f"[{server_name}]({server_invite_link})",
-                inline=False)
-            
-            if "normal" in Title.lower():
-                embed.set_thumbnail(url="https://static.wikia.nocookie.net/roblox-blox-piece/images/b/b6/BloxFruitDealer.png")
-            else:
-                embed.set_thumbnail(url="https://static.wikia.nocookie.net/roblox-blox-piece/images/0/0d/Advanced_Blox_Fruit_Dealer%282%29.png")
-            
-            ctx = await bot.get_context(message)
-            channel_data = load_channel_config(ctx)
-            if "stock_update_channel_id" in channel_data:
-                stock_update_channel_id = channel_data["stock_update_channel_id"]
-                stock_update_channel = bot.get_channel(stock_update_channel_id)
-                stock_message = await stock_update_channel.send(embed=embed)
-                await stock_message.add_reaction("🇼")
-                await stock_message.add_reaction("🇱")
+                inline=False
+            )
 
-                if CurrentGoodFruits != []:
-                    await stock_update_channel.send(f"<@&{stock_ping_role_id}>{', '.join(CurrentGoodFruits)} is in {Title}.  Make sure to buy them")
+            if "normal" in Title.lower():
+                stock_embed.set_thumbnail(url="https://static.wikia.nocookie.net/roblox-blox-piece/images/b/b6/BloxFruitDealer.png")
             else:
-                return        
+                stock_embed.set_thumbnail(url="https://static.wikia.nocookie.net/roblox-blox-piece/images/0/0d/Advanced_Blox_Fruit_Dealer%282%29.png")
+
+            for guild in bot.guilds:
+                try:
+                    channel_data = load_channel_config(None, guild.id, 1)
+
+                    if "stock_update_channel_id" not in channel_data:
+                        continue
+
+                    stock_update_channel_id = channel_data["stock_update_channel_id"]
+                    stock_update_channel = bot.get_channel(stock_update_channel_id)
+
+                    if stock_update_channel is None:
+                        continue
+
+                    stock_message = await stock_update_channel.send(embed=stock_embed)
+                    await stock_message.add_reaction("🇼")
+                    await stock_message.add_reaction("🇱")
+
+                    if CurrentGoodFruits:
+                        await stock_update_channel.send(
+                            f"<@&{stock_ping_role_id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!"
+                        )
+
+                except Exception as e:
+                    print(f"Error posting stock to guild {guild.id}: {e}")        
 
         elif re.search(r"\b(fruit value of|value of)\b", message.content.lower()):
             ctx = await bot.get_context(message)
@@ -979,6 +994,10 @@ async def banlogs(ctx, slice_exp: str = None, member: str = ""):
 
 @bot.hybrid_command(name='vouch', description='Vouch a service handler')
 async def vouch(ctx: commands.Context,  member: discord.Member, note: str = "", received: str = ""):
+    if ctx.author.id not in ids:
+        if ctx.guild.id != 970643838047760384:
+            await ctx.send("Commands Disabled! Due to Server Change")
+            return
     if not member:
         pass
     elif member == ctx.author:
@@ -1248,6 +1267,7 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
             content, embeds = LilyEmbed.ParseAdvancedEmbed(json_data)
             await channel_to_send.send(content=content, embeds=embeds)
             await ctx.send("Embed sent successfully.")
+            await bot.WriteLog(ctx, ctx.author.id, f"Has Sent an Embed to <#{channel_to_send.id}>")
         except Exception as embed_error:
             await ctx.send(f"Parser Failure: {str(embed_error)}")
 
@@ -1451,7 +1471,7 @@ class Channels(str, Enum):
     FruitValues = "FruitValues"
 @bot.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
 async def assign_channel(ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
-    if not ctx.author.id in [ctx.guild.owner.id] + ids:
+    if not ctx.author.id in ids:
         message = await ctx.send("Access Denied")
         await asyncio.sleep(5)
         await message.delete()
@@ -1468,10 +1488,12 @@ async def assign_channel(ctx, bot_feature: Channels, channel_to_assign: discord.
     else:
         await ctx.send(f"Unable to Assign the Channel")
 
-'''
 #ENGAGING BOT COMMANDS (MISCELLANEOUS)
 @bot.command()
-async def waifu(ctx: commands.Context, member: discord.Member=None):
+async def staff_strike(ctx: commands.Context, member: discord.Member=None):
+    if ctx.author.id not in ids + staff_manager_ids:
+        await ctx.send("Permission Denied")
+        return
     random_texts_no_member = ["Here's your beauty", "Here's your cutie", "Here's your sunshine", "Here's your dream", "Here's your spark", "Here's your magic", "Here's your star", "Here's your glow", "Here's your charm", "Here's your smile", "Here's your sparkle", "Here's your love", "Here's your happiness", "Here's your joy", "Here's your smiley face"]
     random_footer_text = ["she's not real, bro","touch grass, not her image","she can't hear you through the screen","you're down bad and we all know it","the waifu won't marry you, sorry","bro said shes different","she's literally a JPEG","did you just meow at her?"]
     requested_response = requests.get("https://api.waifu.pics/sfw/waifu")
@@ -1487,5 +1509,6 @@ async def waifu(ctx: commands.Context, member: discord.Member=None):
             embed = discord.Embed(title=f'{random.choice(random_texts_no_member)} {member.display_name}')
             embed.set_image(url=data['url'])
             embed.set_footer(text=random.choice(random_footer_text))
-            await ctx.send(embed=embed)'''
+            await ctx.send(embed=embed)
+
 bot.run(bot_token)

@@ -167,7 +167,7 @@ def GenerateWORLImage(
                     )
 
                     if "permanent" in fruit_type.lower():
-                        permanent_icon_path = "ui/PermanentIcon.png"
+                        permanent_icon_path = "src/ui/PermanentIcon.png"
                         perm_icon_size = 44
                         permanent_icon = Image.open(permanent_icon_path).convert("RGBA").resize((perm_icon_size, perm_icon_size))
 

@@ -64,16 +64,27 @@ async def save_channel(ctx: commands.Context, channel_name, channel_id):
     with open(config_path, "w") as f:
         json.dump(data, f, indent=4)
 
-def load_channel_config(ctx: commands.Context):
-    config_path = f"storage/{ctx.guild.id}/configs/configs.json"
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    if not os.path.exists(config_path):
-        return {}
+def load_channel_config(ctx: commands.Context, guild_id:int=0, type=0):
+    if type == 0:
+        config_path = f"storage/{ctx.guild.id}/configs/configs.json"
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+        if not os.path.exists(config_path):
+            return {}
 
-    with open(config_path, "r") as f:
-        data = json.load(f)
+        with open(config_path, "r") as f:
+            data = json.load(f)
 
-    return data.get("ChannelConfig", {})
+        return data.get("ChannelConfig", {})
+    else:
+        config_path = f"storage/{guild_id}/configs/configs.json"
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+        if not os.path.exists(config_path):
+            return {}
+
+        with open(config_path, "r") as f:
+            data = json.load(f)
+
+        return data.get("ChannelConfig", {}) 
 
 
 # VERY IMPORTANT TOKEN THAT SHOULD NOT BE SHARED HERE
