@@ -178,7 +178,7 @@ class MyBot(commands.Bot):
                         raise ValueError("Reasoning Failure")
                 except Exception as e:
                     await interaction.edit_original_response(
-                        content=f"Unhandled Exception: {str(e)}"    
+                        content=f"Unhandled Exception: {str(e)}"
                     )
 
     async def MemoryButtonSetup(self, Guild: discord.Guild):
@@ -994,6 +994,9 @@ async def banlogs(ctx, slice_exp: str = None, member: str = ""):
 
 @bot.hybrid_command(name='vouch', description='Vouch a service handler')
 async def vouch(ctx: commands.Context,  member: discord.Member, note: str = "", received: str = ""):
+    if ctx.guild.id != 970643838047760384:
+        await ctx.send("Server Change!")
+        return
     if ctx.author.id not in ids:
         if ctx.guild.id != 970643838047760384:
             await ctx.send("Commands Disabled! Due to Server Change")
@@ -1265,7 +1268,7 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
         
         try:
             content, embeds = LilyEmbed.ParseAdvancedEmbed(json_data)
-            await channel_to_send.send(content=content, embeds=embeds)
+            await channel_to_send.send(embeds=embeds)
             await ctx.send("Embed sent successfully.")
             await bot.WriteLog(ctx, ctx.author.id, f"Has Sent an Embed to <#{channel_to_send.id}>")
         except Exception as embed_error:
