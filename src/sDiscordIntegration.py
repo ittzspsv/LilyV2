@@ -408,22 +408,22 @@ class MyBot(commands.Bot):
                             embed.set_author(name=bot_name,
                             icon_url=bot_icon_link_url)
 
-                            embed.add_field(name=f"{emoji_data["BulletIn"][0]}Physical Value",
-                                            value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['physical_value']}",
+                            embed.add_field(name=f"{emoji_data['BulletIn'][0]}Physical Value",
+                                            value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['physical_value']}",
                                             inline=False)
-                            embed.add_field(name=f"{emoji_data["BulletIn"][0]}Physical Demand",
-                                            value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['physical_demand']}",
+                            embed.add_field(name=f"{emoji_data['BulletIn'][0]}Physical Demand",
+                                            value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['physical_demand']}",
                                             inline=False)
                             if jsonfruitdata.get('permanent_value'):
-                                embed.add_field(name=f"{emoji_data["BulletIn"][0]}Permanent Value",
-                                                value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['permanent_value']}",
+                                embed.add_field(name=f"{emoji_data['BulletIn'][0]}Permanent Value",
+                                                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['permanent_value']}",
                                                 inline=False)
                             if jsonfruitdata.get('permanent_demand'):
-                                embed.add_field(name=f"{emoji_data["BulletIn"][0]}Permanent Demand",
-                                                value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['permanent_demand']}",
+                                embed.add_field(name=f"{emoji_data['BulletIn'][0]}Permanent Demand",
+                                                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['permanent_demand']}",
                                                 inline=False)
-                            embed.add_field(name=f"{emoji_data["BulletIn"][0]}Demand Type",
-                                            value=f"{emoji_data["SubEntries"][1]}{jsonfruitdata['demand_type']}",
+                            embed.add_field(name=f"{emoji_data['BulletIn'][0]}Demand Type",
+                                            value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['demand_type']}",
                                             inline=False)
                             if fruit_value_embed_type == 0:
                                 embed.set_image(url=fruit_img_link)
