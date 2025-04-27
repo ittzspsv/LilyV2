@@ -261,4 +261,5 @@ def GenerateWORLImage(
             anchor="mm"
         )
 
+    img = img.resize((int(img.width * 0.7), int(img.height * 0.7)))
     return img

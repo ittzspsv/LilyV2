@@ -169,16 +169,16 @@ class MyBot(commands.Bot):
                             raise ValueError("Reasoning Failure")
 
                         buffer = io.BytesIO()
-                        image.save(buffer, format="PNG", optimize=True)
+                        image.save(buffer, format="WebP", quality=20, optimize=True)
                         buffer.seek(0)
-                        file = discord.File(fp=buffer, filename="trade_result.png")
+                        file = discord.File(fp=buffer, filename="trade_result.webp")
                         await interaction.edit_original_response(embed=None, content=None, attachments=[file], view=None)
                         self.image_generated = True
                     else:
                         raise ValueError("Reasoning Failure")
                 except Exception as e:
                     await interaction.edit_original_response(
-                        content=f"Unhandled Exception: {str(e)}"
+                        content=f"Unhandled Exception: {str(e)}"    
                     )
 
     async def MemoryButtonSetup(self, Guild: discord.Guild):
@@ -1510,5 +1510,6 @@ async def staff_strike(ctx: commands.Context, member: discord.Member=None):
             embed.set_image(url=data['url'])
             embed.set_footer(text=random.choice(random_footer_text))
             await ctx.send(embed=embed)
+
 
 bot.run(bot_token)

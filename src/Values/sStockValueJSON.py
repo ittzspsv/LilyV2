@@ -183,6 +183,7 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
             return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values,your_fruit_type, their_fruit_type, trade_winorlose="LOSE", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=1, background_type=suggestion)
         else:
             img = Image.open('src/ui/TooManyFruitRequests.png')
+            img.resize((int(img.width * 0.7), int(img.height * 0.7)))
             return img
 
 

@@ -1,7 +1,9 @@
 import json
 import re
 from rapidfuzz import process, fuzz
+import word2number.w2n
 from Algorthims.sTradeFormatAlgorthim import *
+import word2number
 
 
 value_data_path = "src/ValueData.json"
@@ -13,8 +15,14 @@ fruit_set = set(fruit_names)
 
 def extract_trade_details(message):
     message = message.lower()
-    message = re.sub(r'[^\w\s]', '', message)
+    message = re.sub(r'[^\w\s]', ' ', message)
     message_parsed = message.split()
+
+    for i, word in enumerate(message_parsed):
+        try:
+            message_parsed[i] = str(word2number.w2n.word_to_num(word))
+        except ValueError:
+            continue
 
     trade_split_index = message_parsed.index("for") if "for" in message_parsed else -1
     your_message_split = message_parsed[:trade_split_index]

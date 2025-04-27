@@ -6,3 +6,4 @@ rapidfuzz==3.12.2
 pandas
 polars
 pillow
+word2number
