@@ -1500,6 +1500,7 @@ async def assign_channel(ctx, bot_feature: Channels, channel_to_assign: discord.
 
 @bot.command()
 async def staff_strike(ctx: commands.Context, member: discord.Member=None):
+    return
     if ctx.author.id not in ids + staff_manager_ids:
         await ctx.send("Permission Denied")
         return
