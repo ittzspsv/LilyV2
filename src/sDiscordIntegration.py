@@ -1503,6 +1503,7 @@ async def staff_strike(ctx: commands.Context, member: discord.Member=None):
     if ctx.author.id not in ids + staff_manager_ids:
         await ctx.send("Permission Denied")
         return
+    await ctx.send("Strike function is being worked on.  It will be completed soon.  Sorry for the inconvenience caused")
     random_texts_no_member = ["Here's your beauty", "Here's your cutie", "Here's your sunshine", "Here's your dream", "Here's your spark", "Here's your magic", "Here's your star", "Here's your glow", "Here's your charm", "Here's your smile", "Here's your sparkle", "Here's your love", "Here's your happiness", "Here's your joy", "Here's your smiley face"]
     random_footer_text = ["she's not real, bro","touch grass, not her image","she can't hear you through the screen","you're down bad and we all know it","the waifu won't marry you, sorry","bro said shes different","she's literally a JPEG","did you just meow at her?"]
     requested_response = requests.get("https://api.waifu.pics/sfw/waifu")
