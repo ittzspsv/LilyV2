@@ -1497,7 +1497,7 @@ async def assign_channel(ctx, bot_feature: Channels, channel_to_assign: discord.
     else:
         await ctx.send(f"Unable to Assign the Channel")
 
-#ENGAGING BOT COMMANDS (MISCELLANEOUS)
+
 @bot.command()
 async def staff_strike(ctx: commands.Context, member: discord.Member=None):
     if ctx.author.id not in ids + staff_manager_ids:
