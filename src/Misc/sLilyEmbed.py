@@ -104,6 +104,8 @@ def EmbedParser(config_str: str, ctx):
 def ParseAdvancedEmbed(data: dict):
     content = data.get("content") or None
     embeds = []
+    if content:
+        content = re.sub(r'@everyone|@here', '', content)
 
     for embed_data in data.get("embeds", []):
         try:

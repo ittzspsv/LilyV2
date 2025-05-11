@@ -5,7 +5,7 @@ import Moderation.sLilyModeration as mLily
 
 
 from datetime import datetime
-from Config.sBotDetails import *
+import Config.sBotDetails as Config
 from discord.ext import commands
 
 def store_vouch(ctx: commands.Context, member: discord.Member, note: str = "", received: str = "", verified: bool = False):
@@ -71,7 +71,7 @@ def store_vouch(ctx: commands.Context, member: discord.Member, note: str = "", r
     )
 
 
-    embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
+    embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
     embed.set_thumbnail(url=member.avatar.url if member.avatar else "https://example.com/default-avatar.png")
 
     embed.add_field(name="💰 Received", value=f"**{received}**", inline=False)
@@ -81,7 +81,7 @@ def store_vouch(ctx: commands.Context, member: discord.Member, note: str = "", r
     return embed
 
 def verify_servicer(ctx:commands.Context, member_id: int):
-    database = f"storage/{ctx.guild.id}vouches/vouches_database.csv"
+    database = f"storage/{ctx.guild.id}/vouches/vouches_database.csv"
     if not os.path.exists(database):
         print("No vouch records found.")
         return
@@ -115,7 +115,7 @@ def verify_servicer(ctx:commands.Context, member_id: int):
     return mLily.SimpleEmbed(f"Service Provider <@{member_id}> has been verified ✅ ")
 
 def unverify_servicer(ctx: commands.Context, member_id: int):
-    database = f"storage/{ctx.guild.id}vouches/vouches_database.csv"
+    database = f"storage/{ctx.guild.id}/vouches/vouches_database.csv"
     if not os.path.exists(database):
         print("No vouch records found.")
         return
@@ -149,7 +149,7 @@ def unverify_servicer(ctx: commands.Context, member_id: int):
     return mLily.SimpleEmbed(f"Service Provider <@{member_id}> has been Un-Verified. ")
 
 def display_vouch_embed(ctx: commands.Context, member: discord.Member, min=0, max=5):
-    database = f"storage/{ctx.guild.id}vouches/vouches_database.csv"
+    database = f"storage/{ctx.guild.id}/vouches/vouches_database.csv"
     if not os.path.exists(database):
         return discord.Embed(
             title=f"{member.name}'s VOUCHES",
@@ -206,7 +206,7 @@ def display_vouch_embed(ctx: commands.Context, member: discord.Member, min=0, ma
         timestamp=datetime.now()
     )
 
-    embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
+    embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
     embed.set_thumbnail(url=member.avatar.url if member.avatar else "https://example.com/default_avatar.png")
 
     embed.add_field(name="🛠 **Vouches**", value=f"{vouch_count}", inline=True)
@@ -236,7 +236,7 @@ def display_vouch_embed(ctx: commands.Context, member: discord.Member, min=0, ma
     return embed
 
 def delete_vouch(ctx:commands.Context, member_id: int, timestamp_str: str) -> bool:
-    database = f"storage/{ctx.guild.id}vouches/vouches_database.csv"
+    database = f"storage/{ctx.guild.id}/vouches/vouches_database.csv"
     if not os.path.exists(database):
         return False
 

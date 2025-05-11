@@ -1,7 +1,7 @@
 import json
 import os
-import discord
 from discord.ext import commands
+import aiohttp
 
 
 async def load_exceptional_ban_ids(ctx: commands.Context):
@@ -87,7 +87,7 @@ def load_channel_config(ctx: commands.Context, guild_id:int=0, type=0):
         return data.get("ChannelConfig", {}) 
 
 
-# VERY IMPORTANT TOKEN THAT SHOULD NOT BE SHARED HERE
+# VERY IMPORTANT TOKENS THAT SHOULD NOT BE SHARED HERE
 bot_token = ""
 
 # Command prefix for the bot
@@ -118,7 +118,7 @@ if port == 0:
     stock_team_roll_name = "Stock Ping"
 
     limit_Ban_details = {
-        1356187197526638693: 3, #HEAD ADMIN in SHREE_SPSV SERVER
+        1356187197526638693: 9999, #HEAD ADMIN in SHREE_SPSV SERVER
         1348020649444114574: 2,  #STOCK PING in SHREE_SPSV SERVER
         1325145748035207239 : 3 #CREATORS ROLE IN TEXIOVERSE,
     }
@@ -126,6 +126,10 @@ if port == 0:
     trial_moderator_name = "Stock Ping"
 
     service_manager_roll_id = 1356187197526638693
+
+    appeal_server_link = "https://discord.gg/RvkyTxnH6r"
+
+    role_creation_limit = 1
 
 else:
     # PRODUCTION SERVER SETTINGS (BLOXTRADE)
@@ -149,6 +153,10 @@ else:
     service_manager_roll_id = 1333123391875584011 #CURRENTLY HEAD MODERATORS
     giveaway_hoster_role = 1345579694522630205    #USED TO CREATE EMBEDS
 
+    appeal_server_link = "https://discord.gg/CycZg9UmyT"
+
+    role_creation_limit = 1
+
 # Embed colors based on item type
 embed_color_codes = {
     "common": 0xa1a4a5,
@@ -165,6 +173,27 @@ embed_color_codes = {
 ids = [845511381637529641, 999309816914792630, 549777573551276051, 1120025980178796714] #CURRENT USER IDS - [SHREE, TEXIO, ZELY, VOUCH]
 
 
-owner_ids = [549777573551276051, 1120025980178796714, 845511381637529641]  #CURRENT USER IDS - [ZELY, VOUCH]
-trusted_moderator_ids = [1329951007311921212, 895649073082814475, 845511381637529641, 999309816914792630, 1220169032762920965, 869064913535004753, 827775992521031700] #CURRENT USER IDS [KAI, LELOUCH, SHREE, TEXIO, FAMOPLAYS, OBLIVION, SAMURAI]
-staff_manager_ids = [895649073082814475] #CURRENT USER IDS - [LELOUCH]
+owner_ids = [549777573551276051, 1120025980178796714]  #CURRENT USER IDS - [ZELY, VOUCH]
+trusted_moderator_ids = [1329951007311921212, 1369716151210475621, 845511381637529641, 999309816914792630, 1220169032762920965, 869064913535004753, 827775992521031700] #CURRENT USER IDS [KAI, LELOUCH, SHREE, TEXIO, FAMOPLAYS, OBLIVION, SAMURAI]
+staff_manager_ids = [895649073082814475, 1369716151210475621] #CURRENT USER IDS - [LELOUCH] 
+
+async def update_config_data():
+    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, service_manager_roll_id, giveaway_hoster_role
+    url = 'https://pastebin.com/raw/k1iq3qQm'
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            try:
+                text = await response.text()
+                data = json.loads(text)
+
+                ids = data['ids']
+                trusted_moderator_ids = data['trusted_moderator_ids']
+                staff_manager_ids = data['staff_manager_ids']
+                limit_Ban_details = data['limit_ban_details']
+                service_manager_roll_id = data['service_manager_role_id']
+                giveaway_hoster_role = data['giveaway_hoster_role']
+
+                return "Success"
+            except Exception as e:
+                return f'Failure: {e}'

@@ -1,14 +1,12 @@
 import discord
 from Stock.sCurrentStock import *
-from Values.sStockValueJSON import *
 from discord.ext import commands
 from Misc.sFruitImageFetcher import *
-from Config.sBotDetails import *
+import Config.sBotDetails as Config
 import Algorthims.sTradeFormatAlgorthim as TFA
 from datetime import datetime, timedelta
-from discord import SelectOption, Interaction, ui
+from discord import SelectOption, Interaction, ui, Colour, File, utils, Role, Asset 
 from enum import Enum
-from dotenv import load_dotenv
 
 import Algorthims.sFruitDetectionAlgorthimEmoji as FDAE
 import Algorthims.sFruitDetectionAlgorthim as FDA
@@ -17,8 +15,11 @@ import Algorthims.sStockProcessorAlgorthim as SPA
 import Moderation.sLilyModeration as mLily
 import Vouch.sLilyVouches as vLily
 import Misc.sLilyEmbed as LilyEmbed
+import Moderation.sLilyRoleManagement as rLily
+import Management.sLilyStaffManagement as smLily
+import Response.sLilyResponse as aiLily
 
-from Values.sStockValueJSON import *
+import Values.sStockValueJSON as StockValueJSON
 
 import os
 import random
@@ -27,13 +28,14 @@ import io
 import polars as pl
 import json
 import aiohttp
+import pandas as pd
 
     
 import re
 
 #ACCESSING DATA FORMATS
 
-if port == 0:
+if Config.port == 0:
     emoji_data_path = "src/EmojiData.json"
     with open(emoji_data_path, "r", encoding="utf-8") as json_file:
         emoji_data = json.load(json_file)
@@ -57,7 +59,7 @@ else:
             if match:
                 emoji_id_to_name[match.group(2)] = fruit_name.title()
 
-fruit_names = sorted([fruit["name"].lower() for fruit in value_data], key=len, reverse=True)
+fruit_names = sorted([fruit["name"].lower() for fruit in StockValueJSON.value_data], key=len, reverse=True)
 fruit_set = set(fruit_names)
 
 
@@ -68,7 +70,7 @@ class MyBot(commands.Bot):
         intents.members = True
         intents.presences = True 
         intents.guilds = True
-        super().__init__(command_prefix=bot_command_prefix, intents=discord.Intents.all())
+        super().__init__(command_prefix=Config.bot_command_prefix, intents=discord.Intents.all())
 
     async def BotStorageInitialization(self, guild):
         base_path = f"storage/{guild.id}"
@@ -159,7 +161,7 @@ class MyBot(commands.Bot):
 
                     if success:
                         image = await asyncio.to_thread(
-                            j_LorW,
+                            StockValueJSON.j_LorW,
                             self.your_fruits, self.your_types,
                             their_fruits, their_types,
                             1, 1
@@ -297,7 +299,7 @@ class MyBot(commands.Bot):
 
         if message.author == self.user:
               return  
-          
+
         #Receives Message from ShreeSPSV's Server For Stock Updates
         if message.guild.id == 1240215331071594536 and message.channel.id == 1362321135231959112:
             message_id = message.id
@@ -345,11 +347,11 @@ class MyBot(commands.Bot):
                 description=f"{processed_fruits}",
                 colour=0x4900f5
             )
-            stock_embed.set_author(name=f"{bot_name.title()} Stock", icon_url=bot_icon_link_url)
+            stock_embed.set_author(name=f"{Config.bot_name.title()} Stock", icon_url=Config.bot_icon_link_url)
 
             stock_embed.add_field(
                 name="",
-                value=f"[{server_name}]({server_invite_link})",
+                value=f"[{Config.server_name}]({Config.server_invite_link})",
                 inline=False
             )
 
@@ -360,7 +362,7 @@ class MyBot(commands.Bot):
 
             for guild in bot.guilds:
                 try:
-                    channel_data = load_channel_config(None, guild.id, 1)
+                    channel_data = Config.load_channel_config(None, guild.id, 1)
 
                     if "stock_update_channel_id" not in channel_data:
                         continue
@@ -377,7 +379,7 @@ class MyBot(commands.Bot):
 
                     if CurrentGoodFruits:
                         await stock_update_channel.send(
-                            f"<@&{stock_ping_role_id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!"
+                            f"<@&{Config.stock_ping_role_id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!"
                         )
 
                 except Exception as e:
@@ -385,7 +387,7 @@ class MyBot(commands.Bot):
 
         elif re.search(r"\b(fruit value of|value of)\b", message.content.lower()):
             ctx = await bot.get_context(message)
-            channel_data = load_channel_config(ctx)
+            channel_data = Config.load_channel_config(ctx)
             if "fruit_values_channel_id" in channel_data:
                 fruit_values_channel_sid = channel_data["fruit_values_channel_id"]
             else:
@@ -396,17 +398,17 @@ class MyBot(commands.Bot):
                 if match:
                         item_name = match.group(1).strip()
                         item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
-                        item_name = MatchFruitSet(item_name, fruit_names)
+                        item_name = StockValueJSON.MatchFruitSet(item_name, fruit_names)
                         item_name_capital = item_name.title() if item_name else ""
-                        jsonfruitdata = fetch_fruit_details(item_name)
+                        jsonfruitdata = StockValueJSON.fetch_fruit_details(item_name)
                         if isinstance(jsonfruitdata, dict):
                             fruit_img_link = FetchFruitImage(item_name_capital)
                             #await message.channel.send(f"> # {item_name.title()}\n> - **Physical Value**: {jsonfruitdata['physical_value']} \n> - **Physical Demand**: {jsonfruitdata['physical_demand']} \n> - **Physical DemandType **: {jsonfruitdata['demand_type']} \n> - **Permanent Value**: {jsonfruitdata['permanent_value']} \n> - **Permanent Demand**: {jsonfruitdata['permanent_demand']} \n> - **Permanent Demand Type**: {jsonfruitdata['permanent_demand_type']}")
                             embed = discord.Embed(title=f"{item_name.title()}",
-                            colour=embed_color_codes[jsonfruitdata['category']])
+                            colour=Config.embed_color_codes[jsonfruitdata['category']])
 
-                            embed.set_author(name=bot_name,
-                            icon_url=bot_icon_link_url)
+                            embed.set_author(name=Config.bot_name,
+                            icon_url=Config.bot_icon_link_url)
 
                             embed.add_field(name=f"{emoji_data['BulletIn'][0]}Physical Value",
                                             value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['physical_value']}",
@@ -425,13 +427,13 @@ class MyBot(commands.Bot):
                             embed.add_field(name=f"{emoji_data['BulletIn'][0]}Demand Type",
                                             value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['demand_type']}",
                                             inline=False)
-                            if fruit_value_embed_type == 0:
+                            if Config.fruit_value_embed_type == 0:
                                 embed.set_image(url=fruit_img_link)
                             else:
                                 embed.set_thumbnail(url=fruit_img_link)
 
                             embed.add_field(name="",
-                            value=f"[{server_name}]({server_invite_link})",
+                            value=f"[{Config.server_name}]({Config.server_invite_link})",
                             inline=False)
 
                             await message.reply(embed=embed)                    
@@ -448,16 +450,16 @@ class MyBot(commands.Bot):
                 with open("src/Values/valueconfig.logs", "r") as fileptr:
                     Type = int(fileptr.read().strip())
                 if Type == 0:
-                    output_dict = j_LorW(your_fruits, your_fruit_types, their_fruits, their_fruits_types, Type)
+                    output_dict = StockValueJSON.j_LorW(your_fruits, your_fruit_types, their_fruits, their_fruits_types, Type)
                     #await message.channel.send(resultant)
                     if isinstance(output_dict, dict):
 
-                        percentage_calculation = calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
+                        percentage_calculation = StockValueJSON.calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
                     
                         embed = discord.Embed(title=output_dict["TradeConclusion"],description=output_dict["TradeDescription"],color=output_dict["ColorKey"],)
                         embed.set_author(
-                            name=bot_name,
-                            icon_url=bot_icon_link_url
+                            name=Config.bot_name,
+                            icon_url=Config.bot_icon_link_url
                         )
 
                         your_fruit_values = [
@@ -503,11 +505,11 @@ class MyBot(commands.Bot):
 
                         embed.add_field(
                             name="",
-                            value=f"[{server_name}]({server_invite_link})",
+                            value=f"[{Config.server_name}]({Config.server_invite_link})",
                             inline=False
                         )
                         ctx = await bot.get_context(message)
-                        channel_data = load_channel_config(ctx)
+                        channel_data = Config.load_channel_config(ctx)
                         if "w_or_l_channel_id" in channel_data:
                             w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
                         else:
@@ -519,7 +521,7 @@ class MyBot(commands.Bot):
 
                 else:
                     ctx = await bot.get_context(message)
-                    channel_data = load_channel_config(ctx)
+                    channel_data = Config.load_channel_config(ctx)
                     if "w_or_l_channel_id" in channel_data:
                             w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
                     else:
@@ -529,7 +531,7 @@ class MyBot(commands.Bot):
                         status_msg = await message.reply("Thinking...")
 
                         image = await asyncio.to_thread(
-                            j_LorW,
+                            StockValueJSON.j_LorW,
                             your_fruits, your_fruit_types,
                             their_fruits, their_fruits_types,
                             Type
@@ -552,14 +554,14 @@ class MyBot(commands.Bot):
                     Type = int(fileptr.read().strip())
 
             if Type == 0:
-                output_dict = j_LorW(your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess)
+                output_dict = StockValueJSON.j_LorW(your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess)
                 
                 if(isinstance(output_dict, dict)):
-                    percentage_calculation = calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
+                    percentage_calculation = StockValueJSON.calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
                     
                     embed = discord.Embed(title=output_dict["TradeConclusion"],description=output_dict["TradeDescription"],color=output_dict["ColorKey"])
 
-                    embed.set_author(name=bot_name, icon_url=bot_icon_link_url)
+                    embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
 
                     your_fruit_values = [
                         f"- {emoji_data[your_fruit_typess[i].title()][0]} {emoji_data[your_fruitss[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
@@ -604,11 +606,11 @@ class MyBot(commands.Bot):
 
                     embed.add_field(
                         name="",
-                        value=f"[{server_name}]({server_invite_link})",
+                        value=f"[{Config.server_name}]({Config.server_invite_link})",
                         inline=False
                     )
                     ctx = await bot.get_context(message)
-                    channel_data = load_channel_config(ctx)
+                    channel_data = Config.load_channel_config(ctx)
                     if "w_or_l_channel_id" in channel_data:
                             _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
                     else:
@@ -619,7 +621,7 @@ class MyBot(commands.Bot):
 
             else:
                     ctx = await bot.get_context(message)
-                    channel_data = load_channel_config(ctx)
+                    channel_data = Config.load_channel_config(ctx)
                     if "w_or_l_channel_id" in channel_data:
                         _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
                     else:
@@ -629,7 +631,7 @@ class MyBot(commands.Bot):
                         status_msg = await message.reply("Thinking...")
 
                         image = await asyncio.to_thread(
-                            j_LorW,
+                            StockValueJSON.j_LorW,
                             your_fruitss, your_fruit_typess,
                             their_fruitss, their_fruits_typess,
                             Type
@@ -649,7 +651,7 @@ class MyBot(commands.Bot):
         elif TFA.is_valid_trade_suggestor_format(message.content.lower(), fruit_names): 
             your_fruits1, your_fruit_types1, garbage_type, garbage_type1 = FDA.extract_trade_details(message.content)
             ctx = await bot.get_context(message)
-            channel_data = load_channel_config(ctx)
+            channel_data = Config.load_channel_config(ctx)
             _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
             if message.channel == self.get_channel(_w_or_l_channel_sid):
                 view = self.TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
@@ -663,7 +665,7 @@ class MyBot(commands.Bot):
         elif FDAE.is_valid_trade_suggestor_sequence(message.content):
             your_fruits1, your_fruit_types1, their_fruits1, their_fruits_types1 = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
             ctx = await bot.get_context(message)
-            channel_data = load_channel_config(ctx)
+            channel_data = Config.load_channel_config(ctx)
             _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
             if message.channel == self.get_channel(_w_or_l_channel_sid):
                 view = self.TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
@@ -675,7 +677,7 @@ class MyBot(commands.Bot):
                 await message.reply(embed=embed, view=view)
 
         elif "value.update" in message.content.lower():
-            if message.author.id in ids:
+            if message.author.id in Config.ids:
                 user_message = message.content.lower()
                 message_parsed = user_message.split()
 
@@ -704,7 +706,7 @@ class MyBot(commands.Bot):
                     return
 
                 fields["name"] = fields["name"].title()
-                fruit_data = fetch_fruit_details(fields["name"])
+                fruit_data = StockValueJSON.fetch_fruit_details(fields["name"])
 
                 if not fruit_data:
                     await message.channel.send(f"Could not find fruit named **{fields['name']}**.")
@@ -722,7 +724,7 @@ class MyBot(commands.Bot):
                 fields["demand_type"] = fields["demand_type"] or fruit_data.get("demand_type")
                 fields["permanent_demand_type"] = fields["permanent_demand_type"] or fruit_data.get("permanent_demand_type")
 
-                update_fruit_data(
+                StockValueJSON.update_fruit_data(
                     name=fields["name"],
                     physical_value=fields["physical_value"],
                     permanent_value=fields["permanent_value"],
@@ -751,7 +753,7 @@ class MyBot(commands.Bot):
                 await self.WriteLog(ctx, message.author.id, f"Attempted to update **{name}** value without permission!")
 
         elif "update logs" in message.content.lower():
-            if message.author.id in ids + owner_ids:
+            if message.author.id in Config.ids + Config.owner_ids:
 
                 parser = message.content.lower().split()
                 log_min = 0
@@ -812,7 +814,7 @@ class MyBot(commands.Bot):
                         colour=0xfe169d
                     )
                     
-                    embed.set_author(name=f"{bot_name}")
+                    embed.set_author(name=f"{Config.bot_name}")
 
                     for row in df.iter_rows():
                         user_id, timestamp, log_text = row
@@ -831,7 +833,7 @@ class MyBot(commands.Bot):
                 await message.channel.send("You don't have access to use this command!") 
 
         elif "clear logs keeplast" in message.content.lower():
-            if message.author.id in ids:
+            if message.author.id in Config.ids:
                 log_file_path = f"storage/{message.guild.id}/botlogs/logs.csv"
                 parser = message.content.lower().split()
                 
@@ -866,7 +868,7 @@ class MyBot(commands.Bot):
 
         #TEMPORARY FUNCTIONS : WILL BE REMOVED IN THE FUTURE UPDATE
         elif "switch ui mode" in message.content.lower():
-            if message.author.id in ids + owner_ids:
+            if message.author.id in Config.ids + Config.owner_ids:
                 parts = message.content.lower().split()
                 if len(parts) >= 4 and parts[2] == "mode":
                     number = parts[3]
@@ -875,13 +877,33 @@ class MyBot(commands.Bot):
                         await message.reply("Switched Mode!")
 
         elif "assign ban log channel id:" in message.content.lower():
-            if message.author.id in ids + owner_ids:
+            if message.author.id in Config.ids + Config.owner_ids:
                 channel_id = message.content.replace("assign ban log channel id:", "").strip()
                 
                 with open("src/Moderation/logchannelid.log", "w") as file:
                     file.write(str(channel_id))
         
                 await message.channel.send(f"Ban log channel ID set to <#{channel_id}>.")
+    
+        #AUTO RESPONSE
+
+        word_count = len(message.content.split())
+        if word_count > 100:
+            return
+        
+        response_text, channel_id, delete_message, emoji_to_react = aiLily.get_response(message.content)
+        for emoji in emoji_to_react:
+                try:
+                    await message.add_reaction(emoji)
+                except discord.HTTPException as e:
+                    print(f"Failed to add reaction {emoji}: {e}")
+        if response_text and channel_id == message.channel.id:
+            if delete_message.lower() == "false":
+                await message.reply(response_text)
+            else:
+                await message.delete()
+                await message.channel.send(f"{message.author.mention} {response_text}")
+
 
         await bot.process_commands(message)
 
@@ -920,7 +942,7 @@ async def ban(ctx, member: str = "", *, reason="No reason provided"):
         if not target_user:
             await ctx.send(embed=mLily.SimpleEmbed("No Valid Users to Ban"))
             return
-        if target_user.id in ids:
+        if target_user.id in Config.ids:
             await ctx.send(embed=mLily.SimpleEmbed(f"you can't use my commands against me {ctx.author.mention}"))
             return
 
@@ -937,10 +959,10 @@ async def ban(ctx, member: str = "", *, reason="No reason provided"):
 
 @bot.command()
 async def unban(ctx, user_id: str):
-    if ctx.author.id not in trusted_moderator_ids + staff_manager_ids + ids + owner_ids:
+    if ctx.author.id not in Config.trusted_moderator_ids + Config.staff_manager_ids + Config.ids + Config.owner_ids:
         await ctx.send(embed=mLily.SimpleEmbed("You don't have permission to unban!"))
         return
-    user_id = int(user_id.replace("<@", "").replace(bot_command_prefix, "").replace(">", ""))    
+    user_id = int(user_id.replace("<@", "").replace(Config.bot_command_prefix, "").replace(">", ""))    
     try:
         user = await bot.fetch_user(user_id)
         await ctx.guild.unban(user)
@@ -953,7 +975,7 @@ async def unban(ctx, user_id: str):
         await ctx.send(f"Exception Raised: {e}")
 
 @bot.command()
-async def banlogs(ctx, slice_exp: str = None, member: str = ""):
+async def logs(ctx, slice_exp: str = None, member: str = ""):
     try:
         try:
             start, stop = (int(x) if x else 0 for x in slice_exp.split(":"))
@@ -965,7 +987,7 @@ async def banlogs(ctx, slice_exp: str = None, member: str = ""):
             return
 
         accessible_roles = []
-        for keys, values in limit_Ban_details.items():
+        for keys, values in Config.limit_Ban_details.items():
             accessible_roles.append(keys)
 
         if not any(role.id in accessible_roles for role in ctx.author.roles):
@@ -995,12 +1017,39 @@ async def banlogs(ctx, slice_exp: str = None, member: str = ""):
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
 
+@bot.command()
+async def checkbanlog(ctx, member: str = ""):
+    try:
+        accessible_roles = []
+        for keys, values in Config.limit_Ban_details.items():
+            accessible_roles.append(keys)
+
+        if not any(role.id in accessible_roles for role in ctx.author.roles):
+            await ctx.send("Access Denied!", delete_after=5)
+            return
+
+        if not member:
+            await ctx.send("No Member has been passed in!")
+        else:
+            try:
+                await mLily.checklogs(ctx, member)
+            except ValueError:
+                await ctx.send(embed=mLily.SimpleEmbed("Member ID must be a literal"))
+                return
+            except Exception as e:
+                await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch logs for the member: {e}"))
+                return
+
+
+    except Exception as e:
+        await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
+
 @bot.hybrid_command(name='vouch', description='Vouch a service handler')
 async def vouch(ctx: commands.Context,  member: discord.Member, note: str = "", received: str = ""):
-    if ctx.guild.id != 970643838047760384:
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
         return
-    if ctx.author.id not in ids:
+    if ctx.author.id not in Config.ids:
         if ctx.guild.id != 970643838047760384:
             await ctx.send("Commands Disabled! Due to Server Change")
             return
@@ -1029,11 +1078,11 @@ async def verify_service_provider(ctx: commands.Context,  member: discord.Member
     if not member:
         await ctx.send(embed=mLily.SimpleEmbed("No Members Passed in!"))
     else:
-        role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
+        role = discord.utils.get(ctx.author.roles, id=Config.service_manager_roll_id)
 
         if role:
             await ctx.send(embed=vLily.verify_servicer(ctx, member.id))
-        elif ctx.author.id in ids:
+        elif ctx.author.id in Config.ids:
             await ctx.send(embed=vLily.verify_servicer(ctx, member.id))
         else:
             await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
@@ -1043,11 +1092,11 @@ async def unverify_service_provider(ctx: commands.Context,  member: discord.Memb
     if not member:
         await ctx.send(embed=mLily.SimpleEmbed("No Members Passed in!"))
     else:
-        role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
+        role = discord.utils.get(ctx.author.roles, id=Config.service_manager_roll_id)
 
         if role:
             await ctx.send(embed=vLily.unverify_servicer(ctx, member.id))
-        elif ctx.author.id in ids:
+        elif ctx.author.id in Config.ids:
             await ctx.send(embed=vLily.unverify_servicer(ctx, member.id))
         else:
             await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
@@ -1057,7 +1106,7 @@ async def delete_vouch(ctx: commands.Context,  member: discord.Member, timestamp
     if not member:
         await ctx.send(embed=mLily.SimpleEmbed("No Members Passed in!"))
     else:
-        role = discord.utils.get(ctx.author.roles, id=service_manager_roll_id)
+        role = discord.utils.get(ctx.author.roles, id=Config.service_manager_roll_id)
 
         if role:
             success = vLily.delete_vouch(ctx, member.id, timestamp_str)
@@ -1065,7 +1114,7 @@ async def delete_vouch(ctx: commands.Context,  member: discord.Member, timestamp
                 await ctx.send(embed=mLily.SimpleEmbed("Successfully deleted vouch from the service provider"))
             else:
                 await ctx.send(embed=mLily.SimpleEmbed("Unable to delete vouch from the service provider!  Verify correct timestamp"))
-        elif ctx.author.id in ids:
+        elif ctx.author.id in Config.ids:
             success = vLily.delete_vouch(member.id, timestamp_str)
             if success:
                 await ctx.send(embed=mLily.SimpleEmbed("Successfully deleted vouch from the service provider"))
@@ -1077,20 +1126,20 @@ async def delete_vouch(ctx: commands.Context,  member: discord.Member, timestamp
 @bot.hybrid_command(name="blacklist_user", description="Blacklist a user ID from using limited ban command.")
 async def blacklist_user(ctx: commands.Context, user: discord.Member):
     if isinstance(ctx.author, discord.Member):
-        if not ctx.author.id in owner_ids + staff_manager_ids + ids:
+        if not ctx.author.id in Config.owner_ids + Config.staff_manager_ids + Config.ids:
             await ctx.send(embed=mLily.SimpleEmbed("You do not have permission to use this command."))
             return
-    current_ids = await load_exceptional_ban_ids(ctx)
+    current_ids = await Config.load_exceptional_ban_ids(ctx)
 
     if user.id in current_ids:
         await ctx.send(embed=mLily.SimpleEmbed("User is already blacklisted"))
         return
-    if user.id in ids:
+    if user.id in Config.ids:
         await ctx.send(embed=mLily.SimpleEmbed(f"you can't use my commands against me {ctx.author.mention}"))
         return
 
     current_ids.append(user.id)
-    await save_exceptional_ban_ids(ctx, current_ids)
+    await Config.save_exceptional_ban_ids(ctx, current_ids)
 
     await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> Got Blacklisted"))
     await bot.WriteLog(ctx, ctx.author.id, f"has Blacklisted <@{user.id}> from using **Limited Bans**")
@@ -1098,25 +1147,25 @@ async def blacklist_user(ctx: commands.Context, user: discord.Member):
 @bot.hybrid_command(name="unblacklist_user", description="Remove a user ID from the limited ban blacklist.")
 async def unblacklist_user(ctx: commands.Context, user: discord.Member):
     if isinstance(ctx.author, discord.Member):
-        if not ctx.author.id in owner_ids + staff_manager_ids + ids:
+        if not ctx.author.id in Config.owner_ids + Config.staff_manager_ids + Config.ids:
             await ctx.send(embed=mLily.SimpleEmbed("You do not have permission to use this command."))
             return
 
-    current_ids = await load_exceptional_ban_ids(ctx)
+    current_ids = await Config.load_exceptional_ban_ids(ctx)
 
     if user.id not in current_ids:
         await ctx.send(embed=mLily.SimpleEmbed("User is not blacklisted."))
         return
 
     current_ids.remove(user.id)
-    await save_exceptional_ban_ids(ctx, current_ids)
+    await Config.save_exceptional_ban_ids(ctx, current_ids)
 
     await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> has been removed from the blacklist."))
     await bot.WriteLog(ctx, ctx.author.id, f"has removed <@{user.id}> from the **Limited Bans** blacklist.")
 
 @bot.hybrid_command(name="assign_role", description="Assign a role to a user if it's allowed")
 async def assign_role(ctx: commands.Context, user: discord.Member, role: discord.Role):
-    assignable_roles = await load_roles(ctx)
+    assignable_roles = await Config.load_roles(ctx)
     role_id_str = str(role.id)
 
     if role_id_str not in assignable_roles:
@@ -1126,11 +1175,11 @@ async def assign_role(ctx: commands.Context, user: discord.Member, role: discord
     role_priority = assignable_roles[role_id_str].lower()
 
     if role_priority == "low":
-        if ctx.author.id not in trusted_moderator_ids + owner_ids + staff_manager_ids + ids:
+        if ctx.author.id not in Config.trusted_moderator_ids + Config.owner_ids + Config.staff_manager_ids + Config.ids:
             await ctx.reply("You are not allowed to assign role.")
             return
     elif role_priority == "high":
-        if ctx.author.id not in staff_manager_ids + owner_ids:
+        if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids:
             await ctx.reply("You are not allowed to give high priority roles")
             return
     else:
@@ -1141,7 +1190,7 @@ async def assign_role(ctx: commands.Context, user: discord.Member, role: discord
         await ctx.reply(f"{user.display_name} already has the {role.name} role.")
         return
 
-    if role.position >= ctx.author.top_role.position and ctx.author.id not in owner_ids:
+    if role.position >= ctx.author.top_role.position and ctx.author.id not in Config.owner_ids:
         await ctx.reply("You cannot assign a role that is higher than or equal to your highest role.")
         return
 
@@ -1156,7 +1205,7 @@ async def assign_role(ctx: commands.Context, user: discord.Member, role: discord
 
 @bot.hybrid_command(name="unassign_role", description="Remove a role from a user if it's allowed")
 async def unassign_role(ctx: commands.Context, user: discord.Member, role: discord.Role):
-    assignable_roles = await load_roles(ctx)
+    assignable_roles = await Config.load_roles(ctx)
     role_id_str = str(role.id)
 
     if role_id_str not in assignable_roles:
@@ -1166,11 +1215,11 @@ async def unassign_role(ctx: commands.Context, user: discord.Member, role: disco
     role_priority = assignable_roles[role_id_str].lower()
 
     if role_priority == "low":
-        if ctx.author.id not in trusted_moderator_ids + owner_ids + staff_manager_ids + ids:
+        if ctx.author.id not in Config.trusted_moderator_ids + Config.owner_ids + Config.staff_manager_ids + Config.ids:
             await ctx.reply("You are not allowed to remove this role.", ephemeral=True)
             return
     elif role_priority == "high":
-        if ctx.author.id not in staff_manager_ids + owner_ids:
+        if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids:
             await ctx.reply("You are not allowed to remove this high-priority role.", ephemeral=True)
             return
     else:
@@ -1181,7 +1230,7 @@ async def unassign_role(ctx: commands.Context, user: discord.Member, role: disco
         await ctx.reply(f"{user.display_name} does not have the {role.name} role.")
         return
 
-    if role.position >= ctx.author.top_role.position and ctx.author.id not in owner_ids:
+    if role.position >= ctx.author.top_role.position and ctx.author.id not in Config.owner_ids:
         await ctx.reply("You cannot remove a role that is higher than or equal to your highest role.")
         return
     try:
@@ -1199,19 +1248,20 @@ class Priority(str, Enum):
 @bot.hybrid_command(name="make_role_assignable", description="Allows specific users to assign this role")
 async def make_roles_assignable(ctx: commands.Context, role: discord.Role, priority: Priority):
     try:
-        assignable_roles = await load_roles(ctx)
+        assignable_roles = await Config.load_roles(ctx)
     except Exception as e:
         await ctx.reply(f"Failed to load assignable roles: `{e}`")
         return
 
-    if ctx.author.id not in owner_ids:
+    if ctx.author.id not in Config.owner_ids:
+        print(Config.owner_ids)
         await ctx.reply("You are not authorized to use this command.")
         return
 
     try:
         if str(role.id) not in assignable_roles:
             try:
-                await save_roles(ctx, role.id, priority.value)
+                await Config.save_roles(ctx, role.id, priority.value)
                 await ctx.reply(f"Added Role {role.name} to assignables with {priority.value} priority.")
             except Exception as e:
                 await ctx.reply(f"Failed to save role with exception: `{e}`")
@@ -1226,13 +1276,13 @@ async def fetchbanlog(ctx, user: str = None):
         target = ctx.author
     else:
         try:
-            user_id = int(user.replace("<@", "").replace(bot_command_prefix, "").replace(">", ""))
+            user_id = int(user.replace("<@", "").replace(Config.bot_command_prefix, "").replace(">", ""))
             target = await ctx.guild.fetch_member(user_id)
         except (ValueError, discord.NotFound):
             return await ctx.send(embed=mLily.SimpleEmbed("Could not find that user."))
 
-    file_name = f"storage/banlogs/{target.id}-logs.csv"
-    if ctx.author.id not in owner_ids + staff_manager_ids + ids:
+    file_name = f"storage/{ctx.guild.id}/banlogs/{target.id}-logs.csv"
+    if ctx.author.id not in Config.owner_ids + Config.staff_manager_ids + Config.ids:
         await ctx.send(embed=mLily.SimpleEmbed(f"Access Denied for Downloading Source CSV"))
         return
     try:
@@ -1246,8 +1296,8 @@ async def fetchbanlog(ctx, user: str = None):
 @bot.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
 async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChannel, embed_json_config: str = "{}"):
     try:
-        if ctx.author.id not in ids + trusted_moderator_ids + staff_manager_ids:
-            role = ctx.guild.get_role(giveaway_hoster_role)
+        if ctx.author.id not in Config.ids + Config.trusted_moderator_ids + Config.staff_manager_ids:
+            role = ctx.guild.get_role(Config.giveaway_hoster_role)
             if role not in ctx.author.roles:
                 await ctx.send("You are restricted", ephemeral=True)
                 return
@@ -1274,7 +1324,7 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
         
         try:
             content, embeds = LilyEmbed.ParseAdvancedEmbed(json_data)
-            await channel_to_send.send(embeds=embeds)
+            await channel_to_send.send(content=content, embeds=embeds)
             await ctx.send("Embed sent successfully.")
             await bot.WriteLog(ctx, ctx.author.id, f"Has Sent an Embed to <#{channel_to_send.id}>")
         except Exception as embed_error:
@@ -1286,7 +1336,7 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
 @bot.hybrid_command(name="create_formatted_embed", description="Creates a formatted embed with custom buttons using a set of instructions")
 async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link: str = ""):
     ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
-    if ctx.author.id not in owner_ids + staff_manager_ids + trusted_moderator_ids + ids:
+    if ctx.author.id not in Config.owner_ids + Config.staff_manager_ids + Config.trusted_moderator_ids + Config.ids:
         await ctx.send("You are restricted from using this command.", ephemeral=True)
         return
 
@@ -1375,7 +1425,7 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
 @bot.hybrid_command(name="update_formatted_embed", description="Update an existing formatted embed with a new config rule data")
 async def update_formatted_embed(ctx, link: str):
     ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
-    if ctx.author.id not in owner_ids + staff_manager_ids + trusted_moderator_ids + ids:
+    if ctx.author.id not in Config.owner_ids + Config.staff_manager_ids + Config.trusted_moderator_ids + Config.ids:
         await ctx.send("You are restricted to use this command", ephemeral=True)
         return
 
@@ -1480,45 +1530,164 @@ class Channels(str, Enum):
     FruitValues = "FruitValues"
 @bot.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
 async def assign_channel(ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
-    if not ctx.author.id in ids:
+    if not ctx.author.id in Config.ids:
         message = await ctx.send("Access Denied")
         await asyncio.sleep(5)
         await message.delete()
         return
     if bot_feature == Channels.StockUpdate:
-        await save_channel(ctx, "stock_update_channel_id", channel_to_assign.id)
+        await Config.save_channel(ctx, "stock_update_channel_id", channel_to_assign.id)
         await ctx.send(f"Stock Update receives in <#{channel_to_assign.id}>")
     elif bot_feature == Channels.WORL:
-        await save_channel(ctx, "w_or_l_channel_id", channel_to_assign.id)
+        await Config.save_channel(ctx, "w_or_l_channel_id", channel_to_assign.id)
         await ctx.send(f"Win or Loss is Caliberated in <#{channel_to_assign.id}>")
     elif bot_feature == Channels.FruitValues:
-        await save_channel(ctx, "fruit_values_channel_id", channel_to_assign.id)
+        await Config.save_channel(ctx, "fruit_values_channel_id", channel_to_assign.id)
         await ctx.send(f"Fruit Values is Caliberated in <#{channel_to_assign.id}>")
     else:
         await ctx.send(f"Unable to Assign the Channel")
 
-#ENGAGING BOT COMMANDS (MISCELLANEOUS)
+
 @bot.command()
-async def staff_strike(ctx: commands.Context, member: discord.Member=None):
-    if ctx.author.id not in ids + staff_manager_ids:
+async def update_config(ctx: commands.Context):
+    if ctx.author.id not in Config.ids + Config.owner_ids:
+        await ctx.send(embed=mLily.SimpleEmbed(f'Access Denied'))
+        return
+    text = await Config.update_config_data()
+    await ctx.send(embed=mLily.SimpleEmbed(f'Updated bot config with code : {text}'))
+
+''' UNCOMMETED.  NOT IN USE
+@bot.hybrid_command(name="create_role", description="Creates a role with config = LIMITED")
+async def create_role(ctx: commands.Context,name: str,color: str = "",assignable_priority: Priority = Priority.high,position_type: rLily.PositionType = rLily.PositionType.Bottom,role: str = ""):
+    await ctx.defer()
+
+    validated_data, error_embed = await rLily.validate_data(ctx, name, color, position_type, role)
+    if error_embed:
+        await ctx.send(embed=error_embed)
+        return
+
+    try:
+        new_role = await rLily.create_guild_role(ctx,
+            guild=validated_data["guild"],
+            name=name,
+            role_color=validated_data["role_color"],
+            icon_bytes=validated_data["icon_bytes"],
+            position=validated_data["position"],
+            author=ctx.author,
+            assignable_priority=assignable_priority
+        )
+        await ctx.send(embed=mLily.SimpleEmbed(f"Role **{name}** created at position **{validated_data['position']}**"))
+        await bot.WriteLog(ctx, ctx.author.id, f"Role Named <@&{new_role.id}> has been created with priority {assignable_priority}")
+    except discord.Forbidden:
+        await ctx.send(embed=mLily.SimpleEmbed("Missing permissions to create or move the role."))
+    except Exception as e:
+        await ctx.send(embed=mLily.SimpleEmbed(f"Role creation failed: {e}"))
+
+@bot.hybrid_command(name="delete_role", description="deletes a role with config = LIMITED")
+async def delete_role(ctx: commands.Context,id: discord.Role):
+    if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids:
         await ctx.send("Permission Denied")
         return
-    random_texts_no_member = ["Here's your beauty", "Here's your cutie", "Here's your sunshine", "Here's your dream", "Here's your spark", "Here's your magic", "Here's your star", "Here's your glow", "Here's your charm", "Here's your smile", "Here's your sparkle", "Here's your love", "Here's your happiness", "Here's your joy", "Here's your smiley face"]
-    random_footer_text = ["she's not real, bro","touch grass, not her image","she can't hear you through the screen","you're down bad and we all know it","the waifu won't marry you, sorry","bro said shes different","she's literally a JPEG","did you just meow at her?"]
-    requested_response = requests.get("https://api.waifu.pics/sfw/waifu")
-    if requested_response != 200:
-        if not member:
-            data = requested_response.json()
-            embed = discord.Embed(title=f'{random.choice(random_texts_no_member)} {ctx.author.display_name}')
-            embed.set_image(url=data['url'])
-            embed.set_footer(text=random.choice(random_footer_text))
-            await ctx.send(embed=embed)
+    success = await rLily.DeleteRole(ctx, id)
+    if success:
+        await bot.WriteLog(ctx, ctx.author.id, f"Deleted a Role with id {id} ")
+'''
+@bot.command()
+async def staffdata(ctx:commands.Context, id:str):
+    if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
+        await ctx.send("No Permission")
+        return
+    id = id.replace("<@", "").replace(">", "")
+    staff_member = await bot.fetch_user(int(id))
+    await ctx.send(embed=smLily.FetchStaffDetail(staff_member))
+
+@bot.command()
+async def staffs(ctx:commands.Context):
+    if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
+        await ctx.send("No Permission")
+        return
+    await ctx.send(embed=smLily.FetchAllStaffs())
+
+@bot.command()
+async def staffstrike(ctx: commands.Context, id: str, *, reason: str):
+    if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
+        await ctx.send("No Permission")
+        return
+    id = id.replace("<@", "").replace(">", "")
+    await ctx.send(embed=smLily.StrikeStaff(ctx, id, reason))
+
+@bot.command()
+async def strikes(ctx: commands.Context, id: str):
+    if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
+        await ctx.send("No Permission")
+        return
+    id = id.replace("<@", "").replace(">", "")
+    await ctx.send(embed=smLily.ListStrikes(id))
+
+@bot.command()
+async def export_staff_data(ctx: commands.Context):
+    if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
+        await ctx.send("No Permission")
+        return
+    staff_df = smLily.ExportStaffDataAsCSV()
+    csv_buffer = io.StringIO()
+    staff_df.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0)
+
+    await ctx.send("Here is the Source CSV", file=discord.File(csv_buffer, "staff_data.csv"))
+
+@bot.command()
+async def import_staff_data(ctx: commands.Context):
+    if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
+        await ctx.send("No Permission")
+        return
+    if not ctx.message.attachments:
+        await ctx.send("Please attach a .csv file.")
+        return
+
+    attachment = ctx.message.attachments[0]
+    
+    if not attachment.filename.endswith(".csv"):
+        await ctx.send("The file must be a .csv")
+        return
+
+    try:
+        file_bytes = await attachment.read()
+        df = pd.read_csv(io.BytesIO(file_bytes))
+        
+        success = smLily.ImportStaffDataFromCSV(df)
+
+        if success:
+            await ctx.send("Staff data imported successfully.")
         else:
-            data = requested_response.json()
-            embed = discord.Embed(title=f'{random.choice(random_texts_no_member)} {member.display_name}')
-            embed.set_image(url=data['url'])
-            embed.set_footer(text=random.choice(random_footer_text))
-            await ctx.send(embed=embed)
+            await ctx.send("Failed Import")
+    except Exception as e:
+        await ctx.send(f"Exception {e}")
 
+@bot.command()
+async def addstaff(ctx:commands.Context, id:str=""):
+    if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
+        await ctx.send("No Permission")
+        return
+    id = id.replace("<@", "").replace(">", "")
+    staff_member = await ctx.guild.fetch_member(id)
+    await ctx.send("Staff Added Successfully") if smLily.AddStaff(staff_member) else await ctx.send("Failure")
 
-bot.run(bot_token)
+@bot.command()
+async def removestaff(ctx:commands.Context, id:str=""):
+    if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
+        await ctx.send("No Permission")
+        return
+    id = id.replace("<@", "").replace(">", "")
+    staff_member = await ctx.guild.fetch_member(id)
+    await ctx.send("Staff Removed Successfully") if smLily.RemoveStaff(staff_member) else await ctx.send("Failure")
+
+@bot.command()
+async def update_response(ctx:commands.Context, link:str=""):
+    if not ctx.author.id in Config.owner_ids + Config.staff_manager_ids + Config.ids + Config.trusted_moderator_ids:
+        await ctx.send("No Permission")
+    success = aiLily.update_response(link)
+    if success:
+        await ctx.send("Successfully Updated Response")
+
+bot.run(Config.bot_token)

@@ -1,6 +1,6 @@
 import json
 import re
-from Config.sBotDetails import *
+import Config.sBotDetails as Config
 from Algorthims.sTradeFormatAlgorthim import *
 from ui.sWinOrLossImageGenerator import *
 
@@ -169,7 +169,7 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
         
         else:
             output_dict["TradeConclusion"] = f"Fruit Value exceeded for one of the trader"
-            output_dict["TradeDescription"] = f"In Blox fruit you can only trade upto 4 fruits at a time. \n\nIf you wanna trade multiple fruits like that then make sure to use **{server_name}'s Middlemen System** for a **safe** and **trusted multiple trades**.  You can request for a middlemen here <#{middle_men_channel_id}>"
+            output_dict["TradeDescription"] = f"In Blox fruit you can only trade upto 4 fruits at a time. \n\nIf you wanna trade multiple fruits like that then make sure to use **{Config.server_name}'s Middlemen System** for a **safe** and **trusted multiple trades**.  You can request for a middlemen here <#{Config.middle_men_channel_id}>"
             output_dict["ColorKey"] = 0xff0000
 
             return output_dict
