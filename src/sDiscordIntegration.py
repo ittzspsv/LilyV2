@@ -72,6 +72,8 @@ class MyBot(commands.Bot):
         intents.guilds = True
         super().__init__(command_prefix=Config.bot_command_prefix, intents=discord.Intents.all())
 
+
+
     async def BotStorageInitialization(self, guild):
         base_path = f"storage/{guild.id}"
         directories = [
@@ -82,6 +84,7 @@ class MyBot(commands.Bot):
             f"{base_path}/sessions",
             f"{base_path}/stafflogs",
             f"{base_path}/vouches",
+            f"{base_path}/vcmutelogs"
         ]
 
         for directory in directories:
@@ -248,6 +251,11 @@ class MyBot(commands.Bot):
         asyncio.create_task(self.BotInitialize())
 
         await self.tree.sync()
+
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if after.channel and before.channel != after.channel:
+            channel = bot.get_channel(1324581275276935283)
+            await mLily.CheckVoiceMuted(member, channel)
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -1694,4 +1702,37 @@ async def update_response(ctx:commands.Context, link:str=""):
     if success:
         await ctx.send("Successfully Updated Response")
 
+@bot.command()
+async def vmute(ctx: commands.Context, member: str = "", time: str = "", *, reason="No reason provided"):       
+    if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
+        await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
+        return
+    member = member.replace("<@", "").replace(">", "")
+    member_obj = ctx.guild.get_member(int(member))
+    if not member_obj:
+        await ctx.send(embed=mLily.SimpleEmbed("Member not found or not in the server."))
+        return
+    if member in Config.owner_ids + Config.ids + Config.staff_manager_ids:
+        await ctx.send(embed=mLily.SimpleEmbed("You cannot mute owners / higher staffs"))
+        return
+    try:
+        await mLily.VoiceMute(member_obj, time, reason, ctx.channel)
+        await bot.WriteLog(ctx, ctx.author.id, f"Voice Muted {member_obj.mention} for {reason}")
+    except Exception as e:
+        await ctx.send(embed=mLily.SimpleEmbed(f"Error: {e}"))
+
+@bot.command()
+async def vunmute(ctx:commands.Context, member:str=""):
+    if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
+        await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
+        return
+    member = member.replace("<@", "").replace(">", "")
+    member_obj = ctx.guild.get_member(int(member))
+    if not member_obj:
+        await ctx.send(embed=mLily.SimpleEmbed("Member not found or not in the server."))
+        return
+    try:
+        await mLily.VoiceUnmute(member_obj, ctx.channel)
+    except Exception as e:
+        await ctx.send(embed=mLily.SimpleEmbed(f"Error: {e}"))
 bot.run(Config.bot_token)
