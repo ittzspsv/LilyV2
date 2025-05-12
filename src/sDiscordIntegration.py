@@ -1059,19 +1059,23 @@ async def vouch(ctx: commands.Context,  member: discord.Member, note: str = "", 
         await ctx.send(embed=mLily.SimpleEmbed("You cannot vouch yourself!"))
     else:
         account_age = (discord.utils.utcnow() - ctx.author.created_at).days
+        m_account_age = (discord.utils.utcnow() - member.created_at).days
         if account_age < 90:
             await ctx.send(embed=mLily.SimpleEmbed("Your Account is Not Old Enough to Vouch! a Service provider"))
-        else:
-            await ctx.send(embed=vLily.store_vouch(ctx, member, note, received))
-    pass
+            return
+        if m_account_age < 90:
+            await ctx.send(embed=mLily.SimpleEmbed("Service Provider Account should be 3 months old!!"))
+            return 
+        await ctx.send(embed=vLily.store_vouch(ctx, member, note, received))
 
 @bot.hybrid_command(name='show_vouches', description='displays recent 5 vouches for a  service handler')
 async def show_vouches(ctx: commands.Context,  member: discord.Member, min:int = 0, max:int = 3):
     if not member:
-        pass
-    else:
-        await ctx.send(embed=vLily.display_vouch_embed(ctx, member, min, max))
-    pass
+        return
+
+    if max > min + 10:
+        max = min + 10
+    await ctx.send(embed=vLily.display_vouch_embed(ctx, member, min, max))
 
 @bot.hybrid_command(name='verify_service_provider', description='if a service provider is trusted then he can be verified')
 async def verify_service_provider(ctx: commands.Context,  member: discord.Member):
