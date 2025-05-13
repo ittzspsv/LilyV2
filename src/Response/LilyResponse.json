@@ -1,3 +1,22 @@
 [
-    
+    {
+        "prompt": [
+            "hi",
+            "hello"
+        ],
+        "response": [
+            "{<hasrole 1370812141606801510> ? Welcome, VIP user! : Hello {user.name}!}",
+            "{<isuser 845511381637529641> ? Hello, special user! : Hey!}"
+        ],
+        "required_words": [
+            "hi",
+            "hello"
+        ],
+        "neglect_words": [],
+        "channel_to_respond": 1370395716106588241,
+        "delete_message": "False",
+        "emoji_to_react": [
+            ""
+        ]
+    }
 ]

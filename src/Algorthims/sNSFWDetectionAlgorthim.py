@@ -23,6 +23,10 @@ homoglyph_map = {
 }
 ZERO_WIDTH_CHARS = re.compile(r'[\u200B-\u200F\u202A-\u202E\u2060-\u206F]')
 
+def is_regional_indicator_text(text):
+    text = text.replace("️", "")
+    pattern = r'^(?:[\U0001F1E6-\U0001F1FF\u24B6-\u24CF\U0001F170-\U0001F189]|🅰️|🅱️|🆎|🆑|🆒|🆓|🆔|🆕|🆖|🆗|🆘|🆙|🆚|Ⓜ️|🅾️|\s)*$'
+    return re.fullmatch(pattern, text) is not None
 
 def regional_indicator_to_text(text):
     styled_letters = {
@@ -30,24 +34,23 @@ def regional_indicator_to_text(text):
         "🆓": "FREE", "🆔": "ID", "🆕": "NEW", "🆖": "NG", "🆗": "OK",
         "🆘": "SOS", "🆙": "UP", "🆚": "VS", "Ⓜ️": "M", "🅾️": "O"
     }
-    
+
     def convert_match(match):
         char = match.group(0)
-        char = char.replace("️", "") 
+        char = char.replace("️", "")
         if char in styled_letters:
             return styled_letters[char]
         if '\U0001F1E6' <= char <= '\U0001F1FF':
-            unicode_val = ord(char) - 0x1F1E6
-            return chr(unicode_val + ord('A'))
+            return chr(ord(char) - 0x1F1E6 + ord('A'))
         if '\u24B6' <= char <= '\u24CF':
             return chr(ord(char) - 0x24B6 + ord('A'))
         return char
-    
-    text = text.replace("️", "")
-    converted_text = re.sub(r'[\U0001F1E6-\U0001F1FFⒶ-Ⓩ\U0001F170-\U0001F189]', convert_match, text)
-    return converted_text.replace(" ", "")
+    pattern = r'[\U0001F1E6-\U0001F1FF\u24B6-\u24CF\U0001F170-\U0001F189]|🅰️|🅱️|🆎|🆑|🆒|🆓|🆔|🆕|🆖|🆗|🆘|🆙|🆚|Ⓜ️|🅾️'
+
+    return re.sub(pattern, convert_match, text)
 
 def normalize_text(text):
+    text = regional_indicator_to_text(text)
     text = ZERO_WIDTH_CHARS.sub('', text)
     text = unicodedata.normalize('NFKC', text)
     text = ''.join(homoglyph_map.get(char, char) for char in text)

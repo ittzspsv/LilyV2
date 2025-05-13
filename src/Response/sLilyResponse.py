@@ -5,6 +5,8 @@ from rapidfuzz import fuzz
 from functools import lru_cache
 import requests
 
+import Algorthims.sNSFWDetectionAlgorthim as LNSFWDA
+
 
 response_data = []
 
@@ -56,8 +58,9 @@ def FuzzyMatch(target_word, words_set, threshold=70):
     return False
 
 
-@lru_cache(maxsize=1000)
+
 def get_response(input_string):
+    input_string = LNSFWDA.normalize_text(input_string)
     input_string = input_string.strip()
     if not input_string:
         return "", 0, "", ""
@@ -94,5 +97,5 @@ def get_response(input_string):
 
     if best_match:
         return random.choice(best_match["response"]), best_match["channel_to_respond"], best_match['delete_message'], best_match['emoji_to_react']
-
     return "", 0, "", ""
+    

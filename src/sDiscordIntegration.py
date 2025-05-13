@@ -7,6 +7,7 @@ import Algorthims.sTradeFormatAlgorthim as TFA
 from datetime import datetime, timedelta
 from discord import SelectOption, Interaction, ui, Colour, File, utils, Role, Asset 
 from enum import Enum
+from functools import lru_cache
 
 import Algorthims.sFruitDetectionAlgorthimEmoji as FDAE
 import Algorthims.sFruitDetectionAlgorthim as FDA
@@ -29,7 +30,6 @@ import polars as pl
 import json
 import aiohttp
 import pandas as pd
-
     
 import re
 
@@ -302,6 +302,53 @@ class MyBot(commands.Bot):
         active_mods = [member for member in mod_role.members if member.status in (discord.Status.online, discord.Status.idle)]
 
         return random.choice(active_mods) if active_mods else None
+    
+    async def has_role(self, user, role_id):
+        role = discord.utils.get(user.roles, id=int(role_id))
+        return role is not None
+
+    async def is_user(self, user, user_id):
+        return user.id == int(user_id)
+    
+    async def ConditionEvaluator(self, user, condition):
+        match = re.match(r'<(hasrole|isuser) (\d+)> \? (.+) : (.+)', condition)
+        if match:
+            check_type, check_value, true_value, false_value = match.groups()
+
+            if check_type == 'hasrole':
+                if await bot.has_role(user, check_value):
+                    return true_value
+                else:
+                    return false_value
+            elif check_type == 'isuser':
+                if await bot.is_user(user, check_value):
+                    return true_value
+                else:
+                    return false_value
+        return condition
+    
+    async def RespondProcessor(self, message):
+        response_text, channel_id, delete_message, emoji_to_react = aiLily.get_response(message.content)
+
+        if response_text and channel_id == message.channel.id:
+            response_text = re.sub(r'\{user\.name}', message.author.name, response_text)
+
+            conditions = re.findall(r'\{(<(hasrole|isuser) \d+> \? .*? : .*?)\}', response_text)
+            for condition_tuple in conditions:
+                condition = condition_tuple[0]
+                evaluated_value = await bot.ConditionEvaluator(message.author, condition)
+                response_text = response_text.replace(f'{{{condition}}}', evaluated_value)
+
+            if delete_message.lower() == "false":
+                for emoji in emoji_to_react:
+                    try:
+                        await message.add_reaction(emoji)
+                    except discord.HTTPException as e:
+                        print(f"Failed to add reaction {emoji}: {e}")
+                await message.reply(response_text)
+            else:
+                await message.delete()
+                await message.channel.send(f"{message.author.mention} {response_text}")
 
     async def on_message(self, message): 
 
@@ -899,19 +946,10 @@ class MyBot(commands.Bot):
         if word_count > 100:
             return
         
-        response_text, channel_id, delete_message, emoji_to_react = aiLily.get_response(message.content)
-        for emoji in emoji_to_react:
-                try:
-                    await message.add_reaction(emoji)
-                except discord.HTTPException as e:
-                    print(f"Failed to add reaction {emoji}: {e}")
-        if response_text and channel_id == message.channel.id:
-            if delete_message.lower() == "false":
-                await message.reply(response_text)
-            else:
-                await message.delete()
-                await message.channel.send(f"{message.author.mention} {response_text}")
+        response_text_parsing = ["{user.name}", "{server}"]
+        response_conditions = ["{<hasroll > ? hii : you dont have the role yet}", "{<isuser> ? hii : you dont have the role yet}"]
 
+        await bot.RespondProcessor(message)
 
         await bot.process_commands(message)
 
@@ -1696,7 +1734,7 @@ async def removestaff(ctx:commands.Context, id:str=""):
 
 @bot.command()
 async def update_response(ctx:commands.Context):
-    if not ctx.author.id in Config.owner_ids + Config.staff_manager_ids + Config.ids + Config.trusted_moderator_ids:
+    if not ctx.author.id in Config.owner_ids + Config.staff_manager_ids + Config.ids:
         await ctx.send("No Permission")
     success = aiLily.update_response()
     if success:
