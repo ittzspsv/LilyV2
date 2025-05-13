@@ -248,7 +248,7 @@ class MyBot(commands.Bot):
 
     async def on_ready(self):
         print('Logged on as', self.user)   
-        asyncio.create_task(self.BotInitialize())
+        await self.BotInitialize()
 
         await self.tree.sync()
 
@@ -1385,9 +1385,15 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
 
 @bot.hybrid_command(name="create_formatted_embed", description="Creates a formatted embed with custom buttons using a set of instructions")
 async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link: str = ""):
+    await ctx.defer()
+
     ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
+
     if ctx.author.id not in Config.owner_ids + Config.staff_manager_ids + Config.trusted_moderator_ids + Config.ids:
-        await ctx.send("You are restricted from using this command.", ephemeral=True)
+        try:
+            await ctx.send("You are restricted from using this command.", ephemeral=True)
+        except Exception:
+            pass
         return
 
     try:
@@ -1399,7 +1405,7 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
                         return
                     config = await response.text()
             except aiohttp.ClientError as e:
-                await ctx.send(f"Error Fetching Config{str(e)}")
+                await ctx.send(f"Error Fetching Config: {str(e)}")
                 return
 
         try:
@@ -1418,7 +1424,10 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
                 try:
                     await interaction.response.send_message(embed=embed, ephemeral=True)
                 except Exception as e:
-                    await interaction.response.send_message(f"Displaying Embed Failure {str(e)}", ephemeral=True)
+                    try:
+                        await interaction.response.send_message(f"Displaying Embed Failure: {str(e)}", ephemeral=True)
+                    except:
+                        pass
 
             button.callback = callback
             view.add_item(button)
@@ -1436,12 +1445,12 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
                 await ctx.send("Embeds sent successfully.")
             elif buttons:
                 message = await channel_to_send.send(content="Use the buttons to explore the guide:", view=view)
-                await ctx.send("Buttons sent successfully.")
+                await ctx.send("Embeds sent successfully.")
             else:
-                await ctx.send("No embeds or buttons were found in the config. Please check your format.")
+                await ctx.send("No embeds or buttons were found in the config. Please check your format.", ephemeral=True)
                 return
         except Exception as e:
-            await ctx.send(f"Failed to send message to the specified channel: {str(e)}")
+            await ctx.send(f"Failed to send message to the specified channel: {str(e)}", ephemeral=True)
             return
 
         persistent_data = {
@@ -1457,7 +1466,7 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
                     all_views = json.loads(content) if content else []
             else:
                 all_views = []
-        except (json.JSONDecodeError, OSError) as e:
+        except (json.JSONDecodeError, OSError):
             all_views = []
 
         all_views.append(persistent_data)
@@ -1466,17 +1475,25 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
             with open(ButtonSessionMemory, "w") as f:
                 json.dump(all_views, f, indent=4)
         except Exception as e:
-            await ctx.send(f"Failed to save Button Session.  You may have to post this embed again if program got restarted{str(e)}")
-            return
+            try:
+                await ctx.send(f"Failed to save Button Session. You may have to post this embed again if program got restarted: {str(e)}", ephemeral=True)
+            except:
+                pass
 
     except Exception as e:
-        await ctx.send(f"Unhandled Exception: {str(e)}")
+        try:
+            await ctx.send(f"Unhandled Exception: {str(e)}", ephemeral=True)
+        except:
+            pass
 
 @bot.hybrid_command(name="update_formatted_embed", description="Update an existing formatted embed with a new config rule data")
 async def update_formatted_embed(ctx, link: str):
+    await ctx.defer()
+
     ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
+
     if ctx.author.id not in Config.owner_ids + Config.staff_manager_ids + Config.trusted_moderator_ids + Config.ids:
-        await ctx.send("You are restricted to use this command", ephemeral=True)
+        await ctx.send("You are restricted to use this command.", ephemeral=True)
         return
 
     if not os.path.exists(ButtonSessionMemory):
@@ -1487,20 +1504,15 @@ async def update_formatted_embed(ctx, link: str):
         with open(ButtonSessionMemory, "r") as f:
             all_views = json.load(f)
     except json.JSONDecodeError:
-        await ctx.send("Session memory file is corrupted.", ephemeral=True)
+        await ctx.send("Session memory file is corrupted.")
         return
 
     if not all_views:
-        await ctx.send("No saved embed sessions to update.", ephemeral=True)
+        await ctx.send("No saved embed sessions to update.")
         return
 
-    class SessionSelector(ui.View):
-        def __init__(self, ctx, sessions, link):
-            super().__init__(timeout=60)
-            self.ctx = ctx
-            self.sessions = sessions
-            self.link = link
-
+    class SessionSelect(ui.Select):
+        def __init__(self, sessions):
             options = [
                 SelectOption(
                     label=f"Message ID: {s['message_id']}",
@@ -1508,34 +1520,33 @@ async def update_formatted_embed(ctx, link: str):
                     value=str(i)
                 ) for i, s in enumerate(sessions)
             ]
-            self.select = ui.Select(placeholder="Choose Embed Session: ", options=options)
-            self.select.callback = self.select_callback
-            self.add_item(self.select)
+            super().__init__(placeholder="Choose Embed Session to Update", options=options)
 
-        async def select_callback(self, interaction: Interaction):
-            index = int(self.select.values[0])
-            session = self.sessions[index]
+        async def callback(self, interaction: Interaction):
+            index = int(self.values[0])
+            session = all_views[index]
 
-            user = getattr(interaction, "user", None)
-            author = getattr(self.ctx, "author", None)
-
-            channel = bot.get_channel(session["channel_id"]) or await bot.fetch_channel(session["channel_id"])
             try:
+                channel = bot.get_channel(session["channel_id"]) or await bot.fetch_channel(session["channel_id"])
                 message = await channel.fetch_message(session["message_id"])
             except discord.NotFound:
-                await interaction.response.send_message("Seems like the message got deleted", ephemeral=True)
+                await interaction.response.send_message("Message not found. It may have been deleted.", ephemeral=True)
                 return
 
             await interaction.response.defer(ephemeral=True)
 
             async with aiohttp.ClientSession() as session_obj:
-                async with session_obj.get(self.link) as response:
+                async with session_obj.get(link) as response:
                     if response.status != 200:
                         await interaction.followup.send(f"Failed to load new config (status {response.status})", ephemeral=True)
                         return
                     new_config = await response.text()
 
-            new_embeds, new_buttons = LilyEmbed.EmbedParser(new_config, self.ctx)
+            try:
+                new_embeds, new_buttons = LilyEmbed.EmbedParser(new_config, ctx)
+            except Exception as e:
+                await interaction.followup.send(f"Failed to parse new config: {str(e)}", ephemeral=True)
+                return
 
             new_view = ui.View(timeout=None)
             updated_buttons = []
@@ -1543,7 +1554,7 @@ async def update_formatted_embed(ctx, link: str):
             for idx, (button, embed) in enumerate(new_buttons):
                 button.custom_id = f"guide_button_{message.id}_{idx}"
 
-                async def callback(interaction, embed=embed):
+                async def callback(interaction: Interaction, embed=embed):
                     await interaction.response.send_message(embed=embed, ephemeral=True)
 
                 button.callback = callback
@@ -1556,23 +1567,29 @@ async def update_formatted_embed(ctx, link: str):
                     "embed": embed.to_dict()
                 })
 
-            if new_embeds:
-                await message.edit(embeds=new_embeds, view=new_view)
-            elif new_buttons:
-                await message.edit(content="Use the buttons to explore the updated guide:", embeds=[], view=new_view)
-            else:
-                await interaction.response.send_message("Invalid Content in New Config", ephemeral=True)
+            try:
+                if new_embeds:
+                    await message.edit(embeds=new_embeds, view=new_view)
+                elif new_buttons:
+                    await message.edit(content="Use the buttons to explore the updated guide:", embeds=[], view=new_view)
+                else:
+                    await interaction.followup.send("Invalid content in the new config.", ephemeral=True)
+                    return
+            except Exception as e:
+                await interaction.followup.send(f"Failed to update message: {str(e)}", ephemeral=True)
                 return
-
-            self.sessions[index]["buttons"] = updated_buttons
-
+            all_views[index]["buttons"] = updated_buttons
             with open(ButtonSessionMemory, "w") as f:
-                json.dump(self.sessions, f, indent=4)
+                json.dump(all_views, f, indent=4)
 
             await interaction.followup.send("Embed updated successfully.", ephemeral=True)
 
-    view = SessionSelector(ctx, all_views, link)
-    await ctx.send("Select the session you'd like to update:", view=view, ephemeral=True)
+    class SessionSelector(ui.View):
+        def __init__(self, sessions):
+            super().__init__(timeout=60)
+            self.add_item(SessionSelect(sessions))
+
+    await ctx.send("Select the session you'd like to update:", view=SessionSelector(all_views), ephemeral=True)
 
 class Channels(str, Enum):
     StockUpdate = "StockUpdate"
