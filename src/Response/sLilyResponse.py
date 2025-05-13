@@ -24,8 +24,9 @@ def RegexCompile(p):
             return None
     return p
 
-def update_response(url):
+def update_response():
     global response_data
+    url = "https://ittzspsv.github.io/LilyV2-Configs/LilyResponse.json"
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -46,7 +47,7 @@ def update_response(url):
 
 
 
-update_response("https://pastebin.com/raw/2j6Wcirx")    
+update_response()
 
 def FuzzyMatch(target_word, words_set, threshold=70):
     for word in words_set:

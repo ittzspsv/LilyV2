@@ -1695,10 +1695,10 @@ async def removestaff(ctx:commands.Context, id:str=""):
     await ctx.send("Staff Removed Successfully") if smLily.RemoveStaff(staff_member) else await ctx.send("Failure")
 
 @bot.command()
-async def update_response(ctx:commands.Context, link:str=""):
+async def update_response(ctx:commands.Context):
     if not ctx.author.id in Config.owner_ids + Config.staff_manager_ids + Config.ids + Config.trusted_moderator_ids:
         await ctx.send("No Permission")
-    success = aiLily.update_response(link)
+    success = aiLily.update_response()
     if success:
         await ctx.send("Successfully Updated Response")
 
