@@ -45,39 +45,48 @@ def FetchStaffDetail(staff: discord.Member):
         embed = discord.Embed(title="Error", description=str(e), colour=0xf50000)
         return embed
     
+import discord
+import json
+
 def FetchAllStaffs():
     try:
         with open("src/Management/StaffManagement.json", "r") as data:
             staff_data = json.load(data)
-            
 
-            embed = discord.Embed(title="STAFF LIST",
-                      description=f"**Total Count : {len(staff_data)}**", colour=0x3100f5)
+            embed = discord.Embed(
+                title="STAFF LIST",
+                description=f"**Total Count : {len(staff_data)}**",
+                colour=0x3100f5
+            )
 
             roles = {}
             for staff_id, staff_info in staff_data.items():
                 role = staff_info["role"]
                 name = staff_info["name"].title()
-                
+
                 if role not in roles:
                     roles[role] = []
                 roles[role].append(name)
 
             for role, names in roles.items():
+                count = len(names)
                 names_with_bullet = "\n- ".join(names)
                 names_with_bullet = "- " + names_with_bullet if names_with_bullet else ""
 
                 embed.add_field(
-                    name=f"__{role}__",
+                    name=f"__{role}__ ({count})",
                     value=names_with_bullet,
                     inline=False
                 )
 
-
             return embed
 
     except Exception as e:
-        embed = discord.Embed(title="Error", description=str(e), colour=0xf50000)
+        embed = discord.Embed(
+            title="Error",
+            description=str(e),
+            colour=0xf50000
+        )
         return embed
     
 def StrikeStaff(ctx:commands.Context, staff_id: str, reason: str, ):
