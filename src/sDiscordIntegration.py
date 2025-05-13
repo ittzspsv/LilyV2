@@ -956,7 +956,7 @@ class MyBot(commands.Bot):
 bot = MyBot()
 
 @bot.command()
-async def ban(ctx, member: str = "", *, reason="No reason provided"):
+async def ban(ctx:commands.Context, member: str = "", *, reason="No reason provided"):
     proofs = []
     role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
 
@@ -1001,7 +1001,10 @@ async def ban(ctx, member: str = "", *, reason="No reason provided"):
             ))
 
     except Exception as e:
-        await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}"))
+        author_role_ids = [role.id for role in ctx.author.roles]
+        valid_limit_roles = [role_id for role_id in author_role_ids if role_id in Config.limit_Ban_details]
+        if valid_limit_roles:
+            await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}"))
 
 @bot.command()
 async def unban(ctx, user_id: str):
