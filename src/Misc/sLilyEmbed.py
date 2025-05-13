@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 
 
-def EmbedParser(config_str: str, ctx):
+def EmbedParser(config_str: str, ctx:discord.Member):
     embeds_to_display = []
     buttons = []
 
@@ -44,8 +44,8 @@ def EmbedParser(config_str: str, ctx):
                 embed.set_thumbnail(url=thumb_url)
 
         embed.set_author(
-            name=ctx.author.display_name,
-            icon_url=ctx.author.display_avatar.url
+            name=ctx.display_name,
+            icon_url=ctx.display_avatar.url
         )
 
         return embed

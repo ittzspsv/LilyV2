@@ -1384,7 +1384,7 @@ async def create_embed(ctx: commands.Context, channel_to_send: discord.TextChann
         await ctx.send(f"Unhandled Exception: {str(e)}")
 
 @bot.hybrid_command(name="create_formatted_embed", description="Creates a formatted embed with custom buttons using a set of instructions")
-async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link: str = ""):
+async def create_formatted_embed(ctx:commands.Context, channel_to_send: discord.TextChannel, link: str = "", simulate_as:discord.Member=None):
     await ctx.defer()
 
     ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
@@ -1409,7 +1409,10 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
                 return
 
         try:
-            embeds, buttons = LilyEmbed.EmbedParser(config, ctx)
+            if simulate_as == None:
+                embeds, buttons = LilyEmbed.EmbedParser(config, ctx.author)
+            else:
+                embeds, buttons = LilyEmbed.EmbedParser(config, simulate_as)
         except Exception as e:
             await ctx.send(f"Parser Error: {str(e)}")
             return
@@ -1487,7 +1490,7 @@ async def create_formatted_embed(ctx, channel_to_send: discord.TextChannel, link
             pass
 
 @bot.hybrid_command(name="update_formatted_embed", description="Update an existing formatted embed with a new config rule data")
-async def update_formatted_embed(ctx, link: str):
+async def update_formatted_embed(ctx:commands.Context, link: str, simulate_as:discord.Member=None):
     await ctx.defer()
 
     ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
@@ -1543,7 +1546,10 @@ async def update_formatted_embed(ctx, link: str):
                     new_config = await response.text()
 
             try:
-                new_embeds, new_buttons = LilyEmbed.EmbedParser(new_config, ctx)
+                if simulate_as == None:
+                    new_embeds, new_buttons = LilyEmbed.EmbedParser(new_config, ctx.author)
+                else:
+                    new_embeds, new_buttons = LilyEmbed.EmbedParser(new_config, simulate_as)
             except Exception as e:
                 await interaction.followup.send(f"Failed to parse new config: {str(e)}", ephemeral=True)
                 return
