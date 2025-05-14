@@ -73,6 +73,3 @@ def is_nsfw(text, nsfw_set, threshold=96):
     words = [normalize_text(sword) for sword in words]
     
     return any(process.extractOne(word, nsfw_set)[1] >= threshold for word in words)
-
-
-nsfw_set = load_nsfw_words("src/nsfw.json")
