@@ -2,7 +2,7 @@ import discord
 import re
 from datetime import datetime
 
-
+TicketParseRegex = re.compile(r"^ticket-\d+$", re.IGNORECASE)
 def EmbedParser(config_str: str, ctx:discord.Member):
     embeds_to_display = []
     buttons = []
@@ -146,3 +146,46 @@ def ParseAdvancedEmbed(data: dict):
 
     return content, embeds
 
+def ParseTicketEmbed(message: discord.Message):
+    ticket_opener_id = None
+    reason = None
+    reported_user = None
+
+    opener_match = re.search(r'Ticket opener:\s*<@(\d+)>', message.content)
+    if opener_match:
+        ticket_opener_id = int(opener_match.group(1))
+
+    for embed in message.embeds:
+        if embed.description:
+            desc_match = re.search(r'\*\*Describe the scam briefly\*\*\s*```(.+?)```', embed.description, re.DOTALL)
+            desc_match_2 = re.search(r"\*\*What is the server issue you'd like to report\*\*\s*```(.+?)```", embed.description, re.DOTALL)
+            desc_match_3 = re.search(r"\*\*Please provide the name of your giveaway win\*\*\s*```(.+?)```", embed.description, re.DOTALL)
+
+            scammer_match= re.search(r"\*\*Discord Username & ID\*\*\s*```(.+?)```", embed.description, re.DOTALL)
+            if desc_match:
+                if scammer_match:
+                    reported_user = scammer_match.group(1).strip()
+                reason = desc_match.group(1).strip()
+                break
+            if desc_match_2:
+                reason = desc_match_2.group(1).strip()
+                break
+            if desc_match_3:
+                reason = desc_match_3.group(1).strip()
+                break
+
+        for field in embed.fields:
+            if 'describe the scam' in field.name.lower() and field.value:
+                reason = field.value.strip('`').strip()
+                break
+            if "what is the server issue you'd like to report" in field.name.lower() and field.value:
+                reason = field.value.strip('`').strip()
+                break
+            if "please provide the name of your giveaway win" in field.name.lower() and field.value:
+                reason = field.value.strip('`').strip()
+                break
+
+        if reason:
+            break
+
+    return ticket_opener_id, reason, scammer_match

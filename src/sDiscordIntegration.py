@@ -72,8 +72,6 @@ class MyBot(commands.Bot):
         intents.guilds = True
         super().__init__(command_prefix=Config.bot_command_prefix, intents=discord.Intents.all())
 
-
-
     async def BotStorageInitialization(self, guild):
         base_path = f"storage/{guild.id}"
         directories = [
@@ -260,6 +258,26 @@ class MyBot(commands.Bot):
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
 
+    async def on_guild_channel_create(self, channel):
+        feature_cache = open("src/Config/BotFeatures.txt", "r")
+        feature_int = feature_cache.read()
+        if int(feature_int) == 0:
+            return
+        if isinstance(channel, discord.TextChannel):
+            if LilyEmbed.TicketParseRegex.match(channel.name):
+                print(f"Ticket channel created: {channel.name}")
+                try:
+                    await asyncio.sleep(1.5)
+                    async for message in channel.history(oldest_first=False):
+                        if message.author.bot and message.embeds and message.content:
+                            ticket_opener_id, reason, scammer_match = LilyEmbed.ParseTicketEmbed(message)
+                            response_text, channel_id, delete_message, emoji_to_react = aiLily.get_response(reason)
+                            if response_text:
+                                await channel.send(f"<@{ticket_opener_id}> {response_text}")
+
+                except Exception as e:
+                    print(f"Exception : {e}")
+
     async def WriteLog(self, ctx: commands.Context, user_id, log_txt):
         log_file_path = f"storage/{ctx.guild.id}/botlogs/logs.csv"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -328,6 +346,10 @@ class MyBot(commands.Bot):
         return condition
     
     async def RespondProcessor(self, message):
+        feature_cache = open("src/Config/BotFeatures.txt", "r")
+        feature_int = feature_cache.read()
+        if int(feature_int) == 0:
+            return
         response_text, channel_id, delete_message, emoji_to_react = aiLily.get_response(message.content)
 
         if response_text and channel_id == message.channel.id:
@@ -439,6 +461,7 @@ class MyBot(commands.Bot):
 
                 except Exception as e:
                     print(f"Error posting stock to guild {guild.id}: {e}")        
+
 
         elif re.search(r"\b(fruit value of|value of)\b", message.content.lower()):
             ctx = await bot.get_context(message)
@@ -1799,4 +1822,15 @@ async def vunmute(ctx:commands.Context, member:str=""):
         await mLily.VoiceUnmute(member_obj, ctx.channel)
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"Error: {e}"))
+
+@bot.command()
+#feature_cache for Autoresponse, ChannelResponse = 1
+async def set_response_feature(ctx:commands.Context, feature_cache:str=None):
+    if not ctx.author.id in Config.ids + Config.owner_ids:
+        await ctx.send("No Permission!")
+        return
+    with open("src/Config/BotFeatures.txt", "w") as fileptr:
+        fileptr.write(feature_cache)
+        fileptr.close()
+        await ctx.send(embed=mLily.SimpleEmbed(f"AutoResponse Feature set to boolean {feature_cache}"))
 bot.run(Config.bot_token)
