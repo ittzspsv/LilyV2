@@ -1716,6 +1716,31 @@ async def staffstrike(ctx: commands.Context, id: str, *, reason: str):
     await ctx.send(embed=smLily.StrikeStaff(ctx, id, reason))
 
 @bot.command()
+#update cache should be like this <user_id>:<key_name>:<new_value>
+async def update_staff_data(ctx:commands.Context, update_cache:str):
+    if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
+        await ctx.send("No Permission!")
+        return
+    with open("src/Management/StaffManagement.json", "r") as f:
+                data = json.load(f)
+                match = re.match(r"^(\d+):(\w+):(.+)$", update_cache)
+                if match:
+                    user_id, key, new_value = match.groups()
+                    if user_id in data:
+                        if key in data[user_id]:
+                            data[user_id][key] = new_value
+                            await ctx.send(embed=mLily.SimpleEmbed(f"Updated {key} for {user_id} to {new_value}"))
+                        else:
+                            await ctx.send(embed=mLily.SimpleEmbed(f"{key} not found for user {user_id}."))
+                    else:
+                        await ctx.send(embed=mLily.SimpleEmbed(f"{user_id} not found in json source"))
+                        print(f"{user_id} not found in json source")
+                else:
+                    print("Invalid update syntax. Use <user_id>:<key>:<new_value>")
+    with open("src/Management/StaffManagement.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+@bot.command()
 async def strikes(ctx: commands.Context, id: str):
     if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
         await ctx.send("No Permission")
