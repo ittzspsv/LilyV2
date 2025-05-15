@@ -1693,6 +1693,9 @@ async def delete_role(ctx: commands.Context,id: discord.Role):
 '''
 @bot.command()
 async def staffdata(ctx:commands.Context, id:str):
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+        await ctx.send("Server Change!")
+        return
     if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
         await ctx.send("No Permission")
         return
@@ -1702,6 +1705,9 @@ async def staffdata(ctx:commands.Context, id:str):
 
 @bot.command()
 async def staffs(ctx:commands.Context):
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+        await ctx.send("Server Change!")
+        return
     if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
         await ctx.send("No Permission")
         return
@@ -1709,6 +1715,9 @@ async def staffs(ctx:commands.Context):
 
 @bot.command()
 async def staffstrike(ctx: commands.Context, id: str, *, reason: str):
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+        await ctx.send("Server Change!")
+        return
     if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
         await ctx.send("No Permission")
         return
@@ -1718,6 +1727,9 @@ async def staffstrike(ctx: commands.Context, id: str, *, reason: str):
 @bot.command()
 #update cache should be like this <user_id>:<key_name>:<new_value>
 async def update_staff_data(ctx:commands.Context, update_cache:str):
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+        await ctx.send("Server Change!")
+        return
     if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
         await ctx.send("No Permission!")
         return
@@ -1742,6 +1754,9 @@ async def update_staff_data(ctx:commands.Context, update_cache:str):
 
 @bot.command()
 async def strikes(ctx: commands.Context, id: str):
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+        await ctx.send("Server Change!")
+        return
     if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
         await ctx.send("No Permission")
         return
@@ -1750,6 +1765,9 @@ async def strikes(ctx: commands.Context, id: str):
 
 @bot.command()
 async def export_staff_data(ctx: commands.Context):
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+        await ctx.send("Server Change!")
+        return
     if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
         await ctx.send("No Permission")
         return
@@ -1762,6 +1780,9 @@ async def export_staff_data(ctx: commands.Context):
 
 @bot.command()
 async def import_staff_data(ctx: commands.Context):
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+        await ctx.send("Server Change!")
+        return
     if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
         await ctx.send("No Permission")
         return
@@ -1790,6 +1811,9 @@ async def import_staff_data(ctx: commands.Context):
 
 @bot.command()
 async def addstaff(ctx:commands.Context, id:str=""):
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+        await ctx.send("Server Change!")
+        return
     if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
         await ctx.send("No Permission")
         return
@@ -1799,6 +1823,9 @@ async def addstaff(ctx:commands.Context, id:str=""):
 
 @bot.command()
 async def removestaff(ctx:commands.Context, id:str=""):
+    if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+        await ctx.send("Server Change!")
+        return
     if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
         await ctx.send("No Permission")
         return
