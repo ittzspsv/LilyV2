@@ -10,7 +10,7 @@ leet_dict = {
     '6': 'g', '7': 't', '8': 'b', '9': 'g',
     '@': 'a', '€': 'e', '$': 's', '!': 'i', '|': 'l', '£': 'l',
     '+': 't', '(': 'c', '{': 'c', '[': 'c', ')': 'c', '}': 'c', ']': 'c',
-    '¥': 'y', '¢': 'c', '¤': 'o', '^': 'v', '&': 'e', '*': 'x'
+    '¥': 'y', '¢': 'c', '¤': 'o', '^': 'v', '&': 'e', '*': 'x', 
 }
 homoglyph_map = {
     'Ａ': 'A', 'Ｂ': 'B', 'Ｃ': 'C', 'Ｄ': 'D', 'Ｅ': 'E', 'Ｆ': 'F',
@@ -47,6 +47,14 @@ homoglyph_map = {
     'ʎ': 'y',
     'ʞ': 'k',
 }
+
+leet_multi_dict = {
+    '|-|': 'h',
+    '|\\|': 'n',
+    '||': 'u',
+    '|_': 'l',
+    '(_)': 'o',
+}
 ZERO_WIDTH_CHARS = re.compile(r'[\u200B-\u200F\u202A-\u202E\u2060-\u206F]')
 
 def is_regional_indicator_text(text):
@@ -75,17 +83,28 @@ def regional_indicator_to_text(text):
 
     return re.sub(pattern, convert_match, text)
 
+def decode_leet_multi(text):
+    for token, char in leet_multi_dict.items():
+        text = text.replace(token, char)
+    return text
+
+def remove_spaces_in_letter_groups(text):
+    def repl(m):
+        return m.group(0).replace(' ', '')
+    return re.sub(r'(?:[a-zA-Z] )+[a-zA-Z]', repl, text)
 def normalize_text(text):
     text = regional_indicator_to_text(text)
     text = ZERO_WIDTH_CHARS.sub('', text)
     text = unicodedata.normalize('NFKC', text)
     text = ''.join(homoglyph_map.get(char, char) for char in text)
+    text = decode_leet_multi(text)
     text = ''.join(leet_dict.get(char, char) for char in text)
     text = re.sub(r'[^a-zA-Z0-9\s/()]+', '', text)
     text = re.sub(r'(?<=\b[a-zA-Z]) (?=[a-zA-Z]\b)', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
     text = text.lower()
     return text
+
 
 
 

@@ -22,7 +22,6 @@ def RegexCompile(p):
         try:
             return re.compile(pattern)
         except re.error as e:
-            print(f"Regex error: {e} in pattern: {pattern}")
             return None
     return p
 
@@ -39,11 +38,15 @@ def update_response():
     except json.JSONDecodeError as e:
         print(f"JSON Decode error: {e}")
         return False
-    if isinstance(raw_data, dict) and "prompt" in raw_data:
-        raw_data["prompt"] = [RegexCompile(pattern) for pattern in raw_data["prompt"]]
     with open("src/Response/LilyResponse.json", "w", encoding="utf-8") as f:
         json.dump(raw_data, f, ensure_ascii=False, indent=4)
-    response_data = load_json("src/Response/LilyResponse.json")
+    
+    if isinstance(raw_data, list):
+        for entry in raw_data:
+            if "prompt" in entry:
+                entry["prompt"] = [RegexCompile(p) for p in entry["prompt"]]
+
+    response_data = raw_data
 
     return True
 
@@ -51,21 +54,23 @@ def update_response():
 
 update_response()
 
-def FuzzyMatch(target_word, words_set, threshold=70):
+def FuzzyMatch(target_word, words_set, threshold=80):
     for word in words_set:
-        if fuzz.ratio(target_word, word) >= threshold:
+        score = fuzz.ratio(target_word, word)
+        if score >= threshold:
             return True
     return False
 
-
-
 def get_response(input_string):
-    input_string = LNSFWDA.normalize_text(input_string)
-    input_string = input_string.strip()
+    matched = re.match(r"<:(\w+):(\d+)>", input_string)
+    if not matched:
+        input_string = LNSFWDA.normalize_text(input_string)
+        input_string = input_string.strip().lower()
     if not input_string:
         return "", 0, "", ""
 
-    words = set(re.split(r'\s+|[,;?!.-]\s*', input_string.lower()))
+    words = set(word for word in re.split(r'\s+|[,;?!.\-]\s*', input_string) if word)
+
     best_match = None
     best_score = 0
 
@@ -76,16 +81,17 @@ def get_response(input_string):
 
         if any(FuzzyMatch(neg, words) for neg in neglect):
             continue
+
         if required and not all(FuzzyMatch(req, words) for req in required):
             continue
 
         score = 0
         for pattern in compiled_prompts:
             if isinstance(pattern, str):
-                if pattern in words:
+                if FuzzyMatch(pattern, words):
                     score += 1
             elif pattern:
-                matched = any(pattern.fullmatch(word) for word in words)
+                matched = pattern.search(input_string)
                 if not matched:
                     matched = any(FuzzyMatch(pattern.pattern, word) for word in words)
                 if matched:
@@ -96,6 +102,11 @@ def get_response(input_string):
             best_score = score
 
     if best_match:
-        return random.choice(best_match["response"]), best_match["channel_to_respond"], best_match['delete_message'], best_match['emoji_to_react']
+        return (
+            random.choice(best_match["response"]),
+            best_match["channel_to_respond"],
+            best_match["delete_message"],
+            best_match["emoji_to_react"]
+        )
+
     return "", 0, "", ""
-    
