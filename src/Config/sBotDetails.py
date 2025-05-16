@@ -177,7 +177,6 @@ owner_ids = [549777573551276051, 1120025980178796714]  #CURRENT USER IDS - [ZELY
 trusted_moderator_ids = [1329951007311921212, 1369716151210475621, 845511381637529641, 999309816914792630, 1220169032762920965, 869064913535004753, 827775992521031700] #CURRENT USER IDS [KAI, LELOUCH, SHREE, TEXIO, FAMOPLAYS, OBLIVION, SAMURAI]
 staff_manager_ids = [895649073082814475, 1369716151210475621] #CURRENT USER IDS - [LELOUCH] 
 
-''' UNCOMMENTED AS EVERYTHING SHOULD BE STRICTLY CONFIGURED ON SERVER SIDE
 async def update_config_data():
     global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, service_manager_roll_id, giveaway_hoster_role
     url = 'https://pastebin.com/raw/k1iq3qQm'
@@ -198,4 +197,4 @@ async def update_config_data():
                 return "Success"
             except Exception as e:
                 return f'Failure: {e}'
-  '''
+ 
