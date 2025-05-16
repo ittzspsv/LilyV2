@@ -1255,7 +1255,7 @@ async def assign_role(ctx: commands.Context, user: discord.Member, role: discord
             await ctx.reply("You are not allowed to assign role.")
             return
     elif role_priority == "high":
-        if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids:
+        if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
             await ctx.reply("You are not allowed to give high priority roles")
             return
     else:
@@ -1295,7 +1295,7 @@ async def unassign_role(ctx: commands.Context, user: discord.Member, role: disco
             await ctx.reply("You are not allowed to remove this role.", ephemeral=True)
             return
     elif role_priority == "high":
-        if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids:
+        if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
             await ctx.reply("You are not allowed to remove this high-priority role.", ephemeral=True)
             return
     else:
