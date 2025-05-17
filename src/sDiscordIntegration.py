@@ -352,7 +352,7 @@ class MyBot(commands.Bot):
             return
         response_text, channel_id, delete_message, emoji_to_react, medias = aiLily.get_response(message.content)
 
-        if response_text and channel_id == message.channel.id:
+        if response_text and (message.channel.id == channel_id or re.match(r"^ticket-\d{4}$", message.channel.name)):
             response_text = re.sub(r'\{user\.name}', message.author.name, response_text)
 
             conditions = re.findall(r'\{(<(hasrole|isuser) \d+> \? .*? : .*?)\}', response_text)
