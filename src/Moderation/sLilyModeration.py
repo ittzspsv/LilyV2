@@ -204,13 +204,11 @@ async def checklogs(ctx: commands.Context, member: str = ""):
     await ctx.send(embed=SimpleEmbed(f"No ban logs found for user with ID {member_id}."))
 
 def SimpleEmbed(stringformat):
-    embed = discord.Embed(description=stringformat, colour=0x6600ff, timestamp=datetime.now())
-    embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
+    embed = discord.Embed(description=stringformat, colour=0x6600ff)
     return embed
 
 def LogEmbed(user, moderator: discord.Member, reason: str):
     embed = discord.Embed(title="BANNED LOG", colour=0x6600ff, timestamp=datetime.now())
-    embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
 
     user_display = f'**{user.mention}**' if isinstance(user, discord.Member) else f'<@{user.id}>'
 
@@ -319,7 +317,6 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs:list=[])
     except Exception as e:
         await ctx.send(embed=SimpleEmbed(f"Unhandled Exception: {e}"))
 
-
 def MuteParser(duration: str):
     match = re.match(r"(\d+)([smhd])", duration.strip().lower())
     if not match:
@@ -423,7 +420,7 @@ async def VoiceMute(member: discord.Member, mute_duration: str, reason: str, cha
             await member.move_to(None, reason=f"Muted for {reason}")
         
         try:
-            await channel.send(embed=SimpleEmbed(f"Mutee {member.mention} for {mute_duration}. Reason: {reason}."))
+            await channel.send(embed=SimpleEmbed(f"Muted **{member.mention}** for **{mute_duration}**. Reason: **{reason}**."))
         except discord.Forbidden:
             pass
 
