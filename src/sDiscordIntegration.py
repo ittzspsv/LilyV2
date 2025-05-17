@@ -70,7 +70,7 @@ class MyBot(commands.Bot):
         intents.members = True
         intents.presences = True 
         intents.guilds = True
-        super().__init__(command_prefix=Config.bot_command_prefix, intents=discord.Intents.all())
+        super().__init__(command_prefix=Config.bot_command_prefix,help_command=None, intents=discord.Intents.all())
 
     async def BotStorageInitialization(self, guild):
         base_path = f"storage/{guild.id}"
@@ -1905,4 +1905,18 @@ async def set_response_feature(ctx:commands.Context, feature_cache:str=None):
         fileptr.write(feature_cache)
         fileptr.close()
         await ctx.send(embed=mLily.SimpleEmbed(f"AutoResponse Feature set to boolean {feature_cache}"))
+
+@bot.command()
+async def ServerList(ctx:commands.Context):
+    if not ctx.author.id in Config.ids + Config.owner_ids:
+        return
+    if not bot.guilds:
+        await ctx.send("No Servers Fetched")
+        return
+    description = ""
+    for guild in bot.guilds:
+        description += f"**{guild.name}** — Owner: {guild.owner} (USER ID: {guild.owner.id})\n"
+
+    embed = discord.Embed(title="", description=description, color=discord.Color.blue())
+    await ctx.send(embed=embed)
 bot.run(Config.bot_token)   
