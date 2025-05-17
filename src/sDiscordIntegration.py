@@ -350,7 +350,7 @@ class MyBot(commands.Bot):
         feature_int = feature_cache.read()
         if int(feature_int) == 0:
             return
-        response_text, channel_id, delete_message, emoji_to_react = aiLily.get_response(message.content)
+        response_text, channel_id, delete_message, emoji_to_react, medias = aiLily.get_response(message.content)
 
         if response_text and channel_id == message.channel.id:
             response_text = re.sub(r'\{user\.name}', message.author.name, response_text)
@@ -361,16 +361,36 @@ class MyBot(commands.Bot):
                 evaluated_value = await bot.ConditionEvaluator(message.author, condition)
                 response_text = response_text.replace(f'{{{condition}}}', evaluated_value)
 
+            for media in medias:
+                    m_parser = media.split("=")
+                    if "img" in m_parser:
+                        try:
+                            imglink = m_parser[1]
+                        except Exception as e:
+                            imglink = ""
+                    if "gif" in m_parser:
+                        try:
+                            giflink = m_parser[1]
+                        except Exception as e:
+                            giflink = ""
             if delete_message.lower() == "false":
                 for emoji in emoji_to_react:
                     try:
                         await message.add_reaction(emoji)
                     except discord.HTTPException as e:
                         print(f"Failed to add reaction {emoji}: {e}")
-                await message.reply(response_text)
+                await message.reply(f'{response_text}')
+                try:
+                    await message.channel.send(giflink)
+                except:
+                    pass
             else:
                 await message.delete()
                 await message.channel.send(f"{message.author.mention} {response_text}")
+                try:
+                    await message.channel.send(giflink)
+                except:
+                    pass
 
     async def on_message(self, message): 
 

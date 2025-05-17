@@ -67,7 +67,7 @@ def get_response(input_string):
         input_string = LNSFWDA.normalize_text(input_string)
         input_string = input_string.strip().lower()
     if not input_string:
-        return "", 0, "", ""
+        return "", 0, "", "",""
 
     words = set(word for word in re.split(r'\s+|[,;?!.\-]\s*', input_string) if word)
 
@@ -106,7 +106,8 @@ def get_response(input_string):
             random.choice(best_match["response"]),
             best_match["channel_to_respond"],
             best_match["delete_message"],
-            best_match["emoji_to_react"]
+            best_match["emoji_to_react"],
+            best_match["media"]
         )
 
-    return "", 0, "", ""
+    return "", 0, "", "",""
