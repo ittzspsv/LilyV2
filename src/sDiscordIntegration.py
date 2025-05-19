@@ -19,6 +19,10 @@ import Misc.sLilyEmbed as LilyEmbed
 import Moderation.sLilyRoleManagement as rLily
 import Management.sLilyStaffManagement as smLily
 import Response.sLilyResponse as aiLily
+try:
+    import meta_ai_api as MetaAPI
+except:
+    pass
 
 import Values.sStockValueJSON as StockValueJSON
 
@@ -62,7 +66,10 @@ else:
 fruit_names = sorted([fruit["name"].lower() for fruit in StockValueJSON.value_data], key=len, reverse=True)
 fruit_set = set(fruit_names)
 
-
+try:
+    ai = MetaAPI.MetaAI()
+except:
+    pass
 class MyBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all() 
@@ -984,6 +991,17 @@ class MyBot(commands.Bot):
                 await message.channel.send(f"Ban log channel ID set to <#{channel_id}>.")
     
         #AUTO RESPONSE
+        if bot.user in message.mentions:
+            if Config.meta_enable:
+                async with message.channel.typing():
+                    try:
+                        message_content = f"Pings you!" if message.content.lower() == "" else message.content.lower()
+                        message_content = message_content.replace(f"<@{bot.user.id}>", "")
+                        message_content = message_content.strip()
+                        response = ai.prompt(f'[{message.author.name} Speaks with you] {message_content}')
+                        await message.channel.send(response)
+                    except:
+                        pass
 
         word_count = len(message.content.split())
         if word_count > 100:
@@ -1919,4 +1937,5 @@ async def ServerList(ctx:commands.Context):
 
     embed = discord.Embed(title="", description=description, color=discord.Color.blue())
     await ctx.send(embed=embed)
+
 bot.run(Config.bot_token)   

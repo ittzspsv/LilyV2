@@ -7,3 +7,5 @@ pandas
 polars
 pillow
 word2number
+meta_ai_api
+lxml_html_clean

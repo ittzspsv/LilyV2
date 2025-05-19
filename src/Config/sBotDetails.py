@@ -106,6 +106,7 @@ fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
 port = 1 # Currently set to Production Server
+meta_enable = 0 #META-AI CURRENTLY DISABLED
 
 # ENVIRONMENT SETTINGS
 if port == 0:
