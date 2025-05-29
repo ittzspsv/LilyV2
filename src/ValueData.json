@@ -491,7 +491,22 @@
             "Dragon"
         ]
     },
+
     {
+        "name": "Meme",
+        "physical_value": "999,999,999,999",
+        "permanent_value": "999,999,999,999,999",
+        "physical_demand": "77/10",
+        "permanent_demand": "77/10",
+        "demand_type": "Undefined",
+        "permanent_demand_type": "Undefined",
+        "category": "mythical",
+        "aliases": [
+            "Meme"
+        ]
+    },
+
+    {  
         "name": "Fast Boats",
         "physical_value": "120,000,000",
         "permanent_value": "",

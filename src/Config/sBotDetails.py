@@ -106,7 +106,8 @@ fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
 port = 1 # Currently set to Production Server
-meta_enable = 0 #META-AI CURRENTLY DISABLED
+meta_enable = 0
+engagement = 0
 
 # ENVIRONMENT SETTINGS
 if port == 0:
@@ -115,6 +116,7 @@ if port == 0:
     PERM_EMOJI_ID = ["1349449830048731206"]
 
     middle_men_channel_id = 1349351985626878013
+    combo_channel_id = 1376633733997924422
     stock_ping_role_id = "1348020649444114574"
     stock_team_roll_name = "Stock Ping"
 
@@ -127,6 +129,7 @@ if port == 0:
     trial_moderator_name = "Stock Ping"
 
     service_manager_roll_id = 1356187197526638693
+    manager_roll_id = 1356187197526638693 #Head Admin Role
 
     appeal_server_link = "https://discord.gg/RvkyTxnH6r"
 
@@ -138,6 +141,7 @@ else:
     PERM_EMOJI_ID = ["1236412085894905887", "1170178840283316244", "1324867811775877241"]
 
     middle_men_channel_id = 1341106937676304434
+    combo_channel_id = 0
     stock_ping_role_id = "1345555258314588170"
     stock_team_roll_name = "Moderator"
     
@@ -153,6 +157,7 @@ else:
 
     service_manager_roll_id = 1333123391875584011 #CURRENTLY HEAD MODERATORS
     giveaway_hoster_role = 1345579694522630205    #USED TO CREATE EMBEDS
+    manager_roll_id = 1365324107947970700
 
     appeal_server_link = "https://discord.gg/CycZg9UmyT"
 
@@ -177,9 +182,10 @@ ids = [845511381637529641, 999309816914792630, 549777573551276051, 1120025980178
 owner_ids = [549777573551276051, 1120025980178796714]  #CURRENT USER IDS - [ZELY, VOUCH]
 trusted_moderator_ids = [1329951007311921212, 1369716151210475621, 845511381637529641, 999309816914792630, 1220169032762920965, 869064913535004753, 827775992521031700] #CURRENT USER IDS [KAI, LELOUCH, SHREE, TEXIO, FAMOPLAYS, OBLIVION, SAMURAI]
 staff_manager_ids = [895649073082814475, 1369716151210475621] #CURRENT USER IDS - [LELOUCH] 
+staff_manager_role_id = 1365324107947970700
 
 async def update_config_data():
-    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, service_manager_roll_id, giveaway_hoster_role
+    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, service_manager_roll_id, giveaway_hoster_role, combo_channel_id, engagement
     url = 'https://pastebin.com/raw/k1iq3qQm'
 
     async with aiohttp.ClientSession() as session:
@@ -194,6 +200,8 @@ async def update_config_data():
                 limit_Ban_details = data['limit_ban_details']
                 service_manager_roll_id = data['service_manager_role_id']
                 giveaway_hoster_role = data['giveaway_hoster_role']
+                combo_channel_id = data['combo_channel_id']
+                engagement = data['engagement-bool']
 
                 return "Success"
             except Exception as e:

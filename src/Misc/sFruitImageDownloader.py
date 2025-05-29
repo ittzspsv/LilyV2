@@ -4,14 +4,18 @@ import json
 import sFruitImageFetcher as FIF
 
 '''
-with open("ValueData.json", "r") as file:
+items = []
+with open("src/Config/JSONData/FightingStyleData.json", "r") as file:
     value_data = json.load(file)
-    fruit_dict = {fruit["name"] for fruit in value_data}
+    for i, j in value_data.items():
+        inew = i.replace(" ", "_")
+        items.append(inew)
 
-save_directory = "ui/fruit_icons"
+
+save_directory = "src/ui/fighting_styles"
 os.makedirs(save_directory, exist_ok=True)
 
-for fruit in fruit_dict:
+for fruit in items:
     try:
         link = FIF.FetchFruitImage(fruit)
         if link:
@@ -30,13 +34,16 @@ for fruit in fruit_dict:
         else:
             print(f"No link returned for {fruit}")
     except Exception as e:
-        print(f"Error processing {fruit}: {e}")'''
+        print(f"Error processing {fruit}: {e}")
 
-response = requests.get("https://static.wikia.nocookie.net/roblox-blox-piece/images/f/f0/Parrot_Skin.png/")
+
+'''
+'''
+response = requests.get("https://mir-s3-cdn-cf.behance.net/project_modules/fs_webp/ddc87f211393119.682355b86af96.png")
 
 if response.status_code == 200:
     with open("downloaded_image.png", "wb") as file:
         file.write(response.content)
     print("Image downloaded successfully!")
 else:
-    print(f"Failed to download image. Status code: {response.status_code}")
+    print(f"Failed to download image. Status code: {response.status_code}")'''

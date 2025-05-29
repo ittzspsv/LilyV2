@@ -172,8 +172,12 @@ def ImportStaffDataFromCSV(df: pd.DataFrame):
         with open("src/Management/StaffManagement.json", "r") as file:
             staff_data = json.load(file)
 
+        new_staff_data = {}
+        current_ids = set()
+
         for _, row in df.iterrows():
             staff_id = str(row["Staff ID"])
+            current_ids.add(staff_id)
             strikes_json = row.get("Strikes", "[]")
 
             try:
@@ -181,7 +185,7 @@ def ImportStaffDataFromCSV(df: pd.DataFrame):
             except json.JSONDecodeError:
                 strikes = []
 
-            staff_data[staff_id] = {
+            new_staff_data[staff_id] = {
                 "name": row["Name"],
                 "role": row["Role"],
                 "responsibility": row["Responsibility"],
@@ -190,7 +194,7 @@ def ImportStaffDataFromCSV(df: pd.DataFrame):
             }
 
         with open("src/Management/StaffManagement.json", "w") as file:
-            json.dump(staff_data, file, indent=2)
+            json.dump(new_staff_data, file, indent=2)
 
         return True
     except Exception as e:

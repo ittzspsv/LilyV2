@@ -9,6 +9,8 @@ import Algorthims.sNSFWDetectionAlgorthim as LNSFWDA
 
 
 response_data = []
+lily_response_rules = []
+lilyconfig = {}
 
 def load_json(file):
     with open(file, encoding="utf-8") as bot_responses:
@@ -26,7 +28,7 @@ def RegexCompile(p):
     return p
 
 def update_response():
-    global response_data
+    global response_data, lilyconfig, lily_response_rules
     url = "https://ittzspsv.github.io/LilyV2-Configs/LilyResponse.json"
     try:
         response = requests.get(url)
@@ -47,6 +49,8 @@ def update_response():
                 entry["prompt"] = [RegexCompile(p) for p in entry["prompt"]]
 
     response_data = raw_data
+    lily_response_rules = raw_data.get("response-rules", [])
+    lilyconfig = raw_data.get("lily-response-config", {})
 
     return True
 
@@ -54,7 +58,7 @@ def update_response():
 
 update_response()
 
-def FuzzyMatch(target_word, words_set, threshold=80):
+def FuzzyMatch(target_word, words_set, threshold=70):
     for word in words_set:
         score = fuzz.ratio(target_word, word)
         if score >= threshold:
@@ -67,33 +71,37 @@ def get_response(input_string):
         input_string = LNSFWDA.normalize_text(input_string)
         input_string = input_string.strip().lower()
     if not input_string:
-        return "", 0, "", "",""
+        return "", 0, "", "","",""
 
     words = set(word for word in re.split(r'\s+|[,;?!.\-]\s*', input_string) if word)
 
     best_match = None
     best_score = 0
 
-    for response in response_data:
+    for response in lily_response_rules:
         required = response.get("required_words", [])
         neglect = response.get("neglect_words", [])
         compiled_prompts = response.get("prompt", [])
 
-        if any(FuzzyMatch(neg, words) for neg in neglect):
+        if any(FuzzyMatch(neg, words, lilyconfig['string_matching_influence']) for neg in neglect):
             continue
 
-        if required and not all(FuzzyMatch(req, words) for req in required):
-            continue
-
+        if 'lily-syntax-any' in required:
+            filtered = [r for r in required if r != 'lily-syntax-any']
+            if filtered and not any(FuzzyMatch(req, words, lilyconfig['string_matching_influence']) for req in filtered):
+                continue
+        else:
+            if required and not all(FuzzyMatch(req, words, lilyconfig['string_matching_influence']) for req in required):
+                continue
         score = 0
         for pattern in compiled_prompts:
             if isinstance(pattern, str):
-                if FuzzyMatch(pattern, words):
+                if FuzzyMatch(pattern, words, lilyconfig['string_matching_influence']):
                     score += 1
             elif pattern:
                 matched = pattern.search(input_string)
                 if not matched:
-                    matched = any(FuzzyMatch(pattern.pattern, word) for word in words)
+                    matched = any(FuzzyMatch(pattern.pattern, word, lilyconfig['string_matching_influence']) for word in words)
                 if matched:
                     score += 1
 
@@ -107,7 +115,8 @@ def get_response(input_string):
             best_match["channel_to_respond"],
             best_match["delete_message"],
             best_match["emoji_to_react"],
-            best_match["media"]
+            best_match["media"],
+            best_match["whitelist_roles"]
         )
 
-    return "", 0, "", "",""
+    return "", 0, "", "","",""

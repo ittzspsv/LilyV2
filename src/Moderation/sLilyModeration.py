@@ -388,37 +388,44 @@ async def VoiceMute(member: discord.Member, mute_duration: str, reason: str, cha
 
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    
-    CSV_PATH = f"storage/{970643838047760384}/vcmutelogs/logs.csv"
-    
+
     try:
         mute_seconds = MuteParser(mute_duration)
-        
         unmute_time = datetime.now() + timedelta(seconds=mute_seconds)
-        
         unmute_time_str = unmute_time.isoformat()
 
         if not os.path.exists(CSV_PATH):
             df = pl.DataFrame({
-                "user_id": [],
-                "unmute_time": [],
-                "reason": [],
+                "user_id": pl.Series([], dtype=pl.Utf8),
+                "unmute_time": pl.Series([], dtype=pl.Utf8),
+                "reason": pl.Series([], dtype=pl.Utf8),
             })
             df.write_csv(CSV_PATH)
-        
+
         df = pl.read_csv(CSV_PATH, try_parse_dates=True)
-        
-        df = df.vstack(pl.DataFrame({
+
+        df = df.with_columns([
+            pl.col("user_id").cast(pl.Utf8),
+            pl.col("unmute_time").cast(pl.Utf8),
+            pl.col("reason").cast(pl.Utf8),
+        ])
+
+        if df.filter(pl.col("user_id") == str(member.id)).height > 0:
+            await channel.send(embed=SimpleEmbed(f"**{member.mention}** is already muted."))
+            return
+
+        # Add new mute entry
+        new_row = pl.DataFrame({
             "user_id": [str(member.id)],
             "unmute_time": [unmute_time_str],
             "reason": [reason],
-        }))
-        
+        })
+        df = df.vstack(new_row)
         df.write_csv(CSV_PATH)
-        
+
         if member.voice:
             await member.move_to(None, reason=f"Muted for {reason}")
-        
+
         try:
             await channel.send(embed=SimpleEmbed(f"Muted **{member.mention}** for **{mute_duration}**. Reason: **{reason}**."))
         except discord.Forbidden:
@@ -426,7 +433,7 @@ async def VoiceMute(member: discord.Member, mute_duration: str, reason: str, cha
 
     except Exception as e:
         if channel:
-            await channel.send(embed=SimpleEmbed(f"Exception {e}"))
+            await channel.send(embed=SimpleEmbed(f"Exception: `{e}`"))
 
 async def VoiceUnmute(member: discord.Member, channel: discord.TextChannel = None):
     folder_path = f"storage/{970643838047760384}/vcmutelogs"

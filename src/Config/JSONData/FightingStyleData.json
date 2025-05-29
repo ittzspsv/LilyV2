@@ -1,0 +1,14 @@
+{
+  "Combat": [],
+  "Dark Step": [],
+  "Electric": [],
+  "Water Kung Fu": [],
+  "Dragon Breath": [],
+  "Superhuman": [],
+  "Death Step": [],
+  "Sharkman Karate": ["sharkman"],
+  "Electric Claw": ["eclaw", "e-claw", "claw"],
+  "Dragon Talon": ["talon"],
+  "Godhuman": ["gh"],
+  "Sanguine Art": ["sa", "sanguine"]
+}

@@ -1,37 +1,85 @@
-[
-    {
-        "prompt": [
-            "hello"
-        ],
-        "response": [
-            "{<isuser 845511381637529641> ? Hello Developer! : Hello {user.name}!}",
-            "{<isuser 845511381637529641> ? Yoo Developer! : Hey!}"
-        ],
-        "required_words": [
-            "hello"
-        ],
-        "neglect_words": [],
-        "channel_to_respond": 1349753791704072313,
-        "delete_message": "False",
-        "emoji_to_react": [
-            ""
-        ]
+{
+    "lily-response-config": {
+        "string_matching_influence": 70
     },
-    {
-        "prompt": [
-            "re:\\b(?:bro\\s+)?(?:i\\s+)?(?:can'?t|cannot|can\\s*not|am\\s+unable\\s+to|won'?t\\s+be\\s+able\\s+to|unable\\s+to|fail(?:ed|ing)?\\s+to|not\\s+able\\s+to)\\s+(?:trade|send(?:\\s+\\w+){0,5}?\\s+message(?:s)?)\\b"
-        ],
-        "response": [
-            "Get your level to 1 to start trading",
-            "Seems like you got no levels. get levels to chat in trading my guy",
-            "Bro, get some levels to chat in trading"
-        ],
-        "required_words": [],
-        "neglect_words": [],
-        "channel_to_respond": 1349753791704072313,
-        "delete_message": "False",
-        "emoji_to_react": [
-            ""
-        ]
-    }
-]
+    "response-rules": [
+        {
+            "prompt": [
+                "re:\\b(?:can'?t|cannot|can\\s*not|am\\s+unable\\s+to|won'?t\\s+be\\s+able\\s+to|unable\\s+to|fail(?:ed|ing)?\\s+to|not\\s+able\\s+to)\\s+(?:(?:access|acess)\\s+)?(?:trade|trading|send(?:\\s+\\w+){0,5}?\\s+message(?:s)?)\\b"
+            ],
+            "response": [
+                "{<hasrole 1369431473962090659> ? Hey you already got the level and you can trade??? : Get your level to 1 to start using <#1324593527996285039>}",
+                "{<hasrole 1369431473962090659> ? I guess you can trade now. : Seems like you got no levels. get levels to chat in <#1324593527996285039> my guy}",
+                "{<hasrole 1369431473962090659> ? Huh??? you already got levels and have access to trading. : Bro, get some levels to chat in <#1324593527996285039>}"
+            ],
+            "required_words": [],
+            "neglect_words": [],
+            "channel_to_respond": 1324581275276935283,
+            "delete_message": "False",
+            "emoji_to_react": [
+                ""
+            ],
+            "media": [],
+            "whitelist_roles": []
+        },
+        {
+            "prompt": [
+                "re:(?:[a-zA-Z]+|\\d+)?(?:<:point_trade:\\d{19}>|👉)(?:[a-zA-Z]+|\\d+)?",
+                "re:^(.*)❓(.*)$",
+                "re:(?i)\\btrading?\\b(?:\\s+\\w+){1,3}\\s+for\\s+\\w+"
+            ],
+            "response": [
+                "Don't trade in <#1324581275276935283> Use <#1324593527996285039>",
+                "Trading is not allowed in <#1324581275276935283>. Use <#1324593527996285039>",
+                "Hey!.  don't trade here.  Use <#1324593527996285039>"
+            ],
+            "required_words": [],
+            "neglect_words": [],
+            "channel_to_respond": 1324581275276935283,
+            "delete_message": "True",
+            "emoji_to_react": [
+                ""
+            ],
+            "media": [],
+            "whitelist_roles": []
+        },
+        {
+            "prompt": [
+                "nigga"
+            ],
+            "response": [
+                "Flagged"
+            ],
+            "required_words": [
+                "nigga",
+                "lily-syntax-any",
+                "nigger"
+            ],
+            "neglect_words": [],
+            "channel_to_respond": 1370395716106588241,
+            "delete_message": "True",
+            "emoji_to_react": [
+                ""
+            ],
+            "media": [],
+            "whitelist_roles": [
+                1370812141606801510
+            ]
+        },
+        {
+            "prompt": [
+                "hii"
+            ],
+            "response": [
+                "{<hasrole 1356187197526638693> ? Yoo hello : Hello hii}"
+            ],
+            "required_words": [],
+            "neglect_words": [],
+            "channel_to_respond": 1349753791704072313,
+            "delete_message": "False",
+            "emoji_to_react": [],
+            "media": [],
+            "whitelist_roles": []
+        }
+    ]
+}

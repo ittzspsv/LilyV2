@@ -14,11 +14,15 @@ import Algorthims.sFruitDetectionAlgorthim as FDA
 import Algorthims.sFruitSuggestorAlgorthim as FSA
 import Algorthims.sStockProcessorAlgorthim as SPA
 import Moderation.sLilyModeration as mLily
+import Combo.LilyComboManager as LCM
 import Vouch.sLilyVouches as vLily
 import Misc.sLilyEmbed as LilyEmbed
 import Moderation.sLilyRoleManagement as rLily
+import ui.sComboImageGenerator as CIG
 import Management.sLilyStaffManagement as smLily
+import Engagement.LilyEngagement as LE
 import Response.sLilyResponse as aiLily
+import ast
 try:
     import meta_ai_api as MetaAPI
 except:
@@ -82,6 +86,7 @@ class MyBot(commands.Bot):
     async def BotStorageInitialization(self, guild):
         base_path = f"storage/{guild.id}"
         directories = [
+            f"storage/common/Comboes",
             base_path,
             f"{base_path}/banlogs",
             f"{base_path}/botlogs",
@@ -278,12 +283,12 @@ class MyBot(commands.Bot):
                     async for message in channel.history(oldest_first=False):
                         if message.author.bot and message.embeds and message.content:
                             ticket_opener_id, reason, scammer_match = LilyEmbed.ParseTicketEmbed(message)
-                            response_text, channel_id, delete_message, emoji_to_react = aiLily.get_response(reason)
+                            response_text, channel_id, delete_message, emoji_to_react, medias = aiLily.get_response(reason)
                             if response_text:
                                 await channel.send(f"<@{ticket_opener_id}> {response_text}")
 
                 except Exception as e:
-                    print(f"Exception : {e}")
+                    print(f"Exception here: {e}")
 
     async def WriteLog(self, ctx: commands.Context, user_id, log_txt):
         log_file_path = f"storage/{ctx.guild.id}/botlogs/logs.csv"
@@ -357,9 +362,10 @@ class MyBot(commands.Bot):
         feature_int = feature_cache.read()
         if int(feature_int) == 0:
             return
-        response_text, channel_id, delete_message, emoji_to_react, medias = aiLily.get_response(message.content)
-
+        response_text, channel_id, delete_message, emoji_to_react, medias,whitelist_roles = aiLily.get_response(message.content)
         if response_text and (message.channel.id == channel_id or re.match(r"^ticket-\d{4}$", message.channel.name)):
+            if any(role.id in whitelist_roles for role in message.author.roles):
+                return
             response_text = re.sub(r'\{user\.name}', message.author.name, response_text)
 
             conditions = re.findall(r'\{(<(hasrole|isuser) \d+> \? .*? : .*?)\}', response_text)
@@ -390,6 +396,7 @@ class MyBot(commands.Bot):
                 try:
                     await message.channel.send(giflink)
                 except:
+                    print("Except")
                     pass
             else:
                 await message.delete()
@@ -397,7 +404,12 @@ class MyBot(commands.Bot):
                 try:
                     await message.channel.send(giflink)
                 except:
+                    print("Except")
                     pass
+
+    async def isManager(self, ctx:commands.Context):
+        role_id = Config.manager_roll_id 
+        return any(role.id == role_id for role in ctx.author.roles)
 
     async def on_message(self, message): 
 
@@ -490,7 +502,7 @@ class MyBot(commands.Bot):
                     print(f"Error posting stock to guild {guild.id}: {e}")        
 
 
-        elif re.search(r"\b(fruit value of|value of)\b", message.content.lower()):
+        elif re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
             ctx = await bot.get_context(message)
             channel_data = Config.load_channel_config(ctx)
             if "fruit_values_channel_id" in channel_data:
@@ -499,7 +511,7 @@ class MyBot(commands.Bot):
                 return
             fChannel = self.get_channel(fruit_values_channel_sid)
             if message.channel == fChannel:
-                match = re.search(r"\b(?:fruit value of|value of)\s+(.+)", message.content.lower())
+                match = re.search(r"\b(?:fruit value of|value of|value)\s+(.+)", message.content.lower())
                 if match:
                         item_name = match.group(1).strip()
                         item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
@@ -543,6 +555,8 @@ class MyBot(commands.Bot):
 
                             await message.reply(embed=embed)                    
 
+                else:
+                    message.delete()
         elif TFA.is_valid_trade_format(message.content.lower(), fruit_names): 
             lowered_message = message.content.lower()
             match = TFA.is_valid_trade_format(lowered_message, fruit_names)
@@ -990,6 +1004,226 @@ class MyBot(commands.Bot):
         
                 await message.channel.send(f"Ban log channel ID set to <#{channel_id}>.")
     
+        elif LCM.ComboScope(message.content.lower()) != None:
+            try:
+                ctx = await bot.get_context(message)
+                channel_config = Config.load_channel_config(ctx)
+                combo_channel_id = channel_config['combo_channel_id']
+            except:
+                combo_channel_id = 0
+            if not message.channel.id == combo_channel_id:
+                return
+            message_refined = " ".join(line.strip() for line in message.content.splitlines() if line.strip())
+            message_refined = message_refined.lower()
+            result = LCM.ComboScope(message_refined)
+            parsed_build, combo_data = LCM.ComboPatternParser(message_refined)
+            data = (parsed_build, combo_data)
+
+            if result == 'Suggesting':
+                if LCM.ValidComboDataType(data):
+                    cid = LCM.RegisterCombo(str(message.author.id), parsed_build, combo_data)
+                    combo = LCM.ComboLookupByID(cid)
+
+                    id = combo['id']
+                    user_id = combo['user_id']
+                    combo_data = combo['combo_data']
+                    Item_List = {}
+                    if combo.get("Fruit"):
+                        Item_List[combo["Fruit"]] = "fruit_icons"
+                    if combo.get("Sword"):
+                        Item_List[combo["Sword"]] = "sword_icons"
+                    if combo.get("Fighting Style"):
+                        Item_List[combo["Fighting Style"]] = "fighting_styles"
+                    if combo.get("Gun"):
+                        Item_List[combo["Gun"]] = "gun_icons"
+                    Item_Icon_List = []
+                    
+                    for key, value in Item_List.items():
+                        if key and key.strip():
+                            imod = key.replace(" ", "_")
+                            icon = f'src/ui/{value}/{imod}.png'
+                            Item_Icon_List.append(icon)
+
+                    combo_text = ""
+                    #Parsing Combo Texts
+                    for base, nested in ast.literal_eval(combo_data):
+                        combo_ = " ".join(nested)
+                        name_formatted = base.title()
+                        combo_text += f"- **{name_formatted}: {combo_}**\n"
+
+                    img = CIG.CreateBaseBuildIcon(Item_Icon_List)
+                    img_byte_arr = io.BytesIO()
+                    img.save(img_byte_arr, format='PNG')
+                    img_byte_arr.seek(0)
+
+                    embeds = []
+                    imgfile = discord.File(img_byte_arr, filename="image.png")
+                    embed = discord.Embed(title="__BUILD__",colour=0xf5008f)
+
+                    embed.set_author(name=f"{Config.server_name} Combos")
+                    embed.set_image(url="attachment://image.png")
+
+                    embeds.append(embed)
+
+                    divider_text = "<:Divider:1365485335403823134>"
+                    divider_texts = ""
+                    for i in range(0, 22):
+                        divider_texts += divider_text
+
+                    embed = discord.Embed(title=f"__COMBO__",
+                      description=combo_text,
+                      colour=0xf5008f)
+                    
+                    embed.add_field(name="",
+                        value=divider_texts,
+                        inline=False)
+                    
+                    embed.add_field(name="",
+                        value=f"Combo ID : {id} \nCombo By <@{user_id}>",
+                        inline=False)
+                    embed.set_footer(text='This system is still in WIP')
+                    embeds.append(embed)
+
+
+                    await message.reply(content=f'Success! \nHere is The Preview of your combo', file=imgfile, embeds=embeds)
+                else:
+                    await message.reply("Error Paring Combo structure")
+
+            elif result == 'Asking':
+                try:
+                    if parsed_build:
+                        combo = LCM.ComboLookup(message.content.lower())
+                        id = combo['id']
+                        user_id = combo['user_id']
+                        combo_data = combo['combo_data']
+                        Item_List = {}
+                        if combo.get("Fruit"):
+                            Item_List[combo["Fruit"]] = "fruit_icons"
+                        if combo.get("Sword"):
+                            Item_List[combo["Sword"]] = "sword_icons"
+                        if combo.get("Fighting Style"):
+                            Item_List[combo["Fighting Style"]] = "fighting_styles"
+                        if combo.get("Gun"):
+                            Item_List[combo["Gun"]] = "gun_icons"
+                        Item_Icon_List = []
+                        
+                        for key, value in Item_List.items():
+                            if key and key.strip():
+                                imod = key.replace(" ", "_")
+                                icon = f'src/ui/{value}/{imod}.png'
+                                Item_Icon_List.append(icon)
+
+                        combo_text = ""
+                        #Parsing Combo Texts
+                        for base, nested in ast.literal_eval(combo_data):
+                            combo_ = " ".join(nested)
+                            name_formatted = base.title()
+                            combo_text += f"- **{name_formatted}: {combo_}**\n"
+
+                        img = CIG.CreateBaseBuildIcon(Item_Icon_List)
+                        img_byte_arr = io.BytesIO()
+                        img.save(img_byte_arr, format='PNG')
+                        img_byte_arr.seek(0)
+
+                        embeds = []
+                        imgfile = discord.File(img_byte_arr, filename="image.png")
+                        embed = discord.Embed(title="__BUILD__",colour=0xf5008f)
+
+                        embed.set_author(name=f"{Config.server_name} Combos")
+                        embed.set_image(url="attachment://image.png")
+
+                        embeds.append(embed)
+
+                        divider_text = "<:Divider:1365485335403823134>"
+                        divider_texts = ""
+                        for i in range(0, 22):
+                            divider_texts += divider_text
+
+                        embed = discord.Embed(title=f"__COMBO__",
+                        description=combo_text,
+                        colour=0xf5008f)
+                        
+                        embed.add_field(name="",
+                            value=divider_texts,
+                            inline=False)
+                        
+                        embed.add_field(name="",
+                            value=f"Combo ID : {id} \nCombo By <@{user_id}>",
+                            inline=False)
+                        embed.set_footer(text='This system is still in WIP')
+                        embeds.append(embed)
+
+                        await message.reply(file=imgfile, embeds=embeds)
+                except Exception as e:
+                    await message.reply(f"Exception {e}")
+            else:
+                pass    
+        
+        elif "lily" in message.content.lower():
+            if (message.author.id in Config.ids + Config.staff_manager_ids or 1360395431737036900 in [r.id for r in ctx.author.roles]):
+                match = re.match(r"^(lily)\s+(\w+)(?:\s+(<@\d+>))?$", message.content.lower())
+                rparser = re.match(r'lily->(\w+)', message.content.lower())
+                
+                if (match and Config.engagement == 1):
+                    reaction = match.group(2)
+                    mention = match.group(3) 
+
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"https://api.otakugifs.xyz/gif?reaction={reaction}") as response:
+                            if response.status == 200:
+                                responsedata = await response.json()
+                            else:
+                                await message.reply("Failed to fetch GIF.")
+                                return
+                    ReactionMessage = LE.LilyReactions[reaction]
+
+                    if mention:
+                        userid = mention.replace("<@", "").replace(">", "")
+                        user_member = await bot.fetch_user(int(userid))
+                        
+                        member = message.guild.get_member(int(userid))
+                        if member:
+                            display_name = member.display_name
+                        else:
+                            display_name = user_member.global_name or user_member.name
+
+                        reaction_text = ReactionMessage.replace("{name1}", message.author.display_name).replace("{name2}", display_name)
+                    else:
+                        reaction_text = ReactionMessage.replace("{name1}", message.author.display_name).replace("{name2}", "")
+
+                    embed = discord.Embed(title=reaction_text)
+                    embed.set_image(url=responsedata['url'])
+                    await message.delete()
+                    await message.channel.send(embed=embed)
+
+                if (rparser and message.author.id in Config.ids + Config.owner_ids):
+                        if message.reference:
+                            replied_message = await message.channel.fetch_message(message.reference.message_id)
+                            try:
+                                async with message.channel.typing():
+                                    query_overload = ""
+                                    if 'meaning' in rparser.groups():
+                                        query_overload = "asks the meaning of"
+                                    elif 'solve' in rparser.groups():
+                                        query_overload = "asks you to solve the problem"
+                                    elif 'reason' in rparser.groups():
+                                        query_overload = "ask you to provide an appropriate reason for"
+                                    elif 'example' in rparser.groups():
+                                        query_overload = "asks you to provide an example of"
+                                    elif 'explain' in rparser.groups():
+                                       query_overload = "asks you to explain"
+                                    elif 'translate' in rparser.groups():
+                                        query_overload = "asks you to translate"
+                                    elif 'describe' in rparser.groups():
+                                        query_overload = "asks you to describe"
+                                    else:
+                                        query_overload = "Pings you and asks"
+                                    response = ai.prompt(f'[{message.author.name} {query_overload}] {replied_message.content}')
+                                    await message.channel.send(response)
+                            except:
+                                pass
+                        else:
+                            pass
         #AUTO RESPONSE
         if bot.user in message.mentions:
             if Config.meta_enable:
@@ -1015,6 +1249,7 @@ class MyBot(commands.Bot):
         await bot.process_commands(message)
 
 bot = MyBot()
+
 
 @bot.command()
 async def ban(ctx:commands.Context, member: str = "", *, reason="No reason provided"):
@@ -1665,6 +1900,7 @@ class Channels(str, Enum):
     StockUpdate = "StockUpdate"
     WORL = "WORL"
     FruitValues = "FruitValues"
+    Combo = "Combo"
 @bot.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
 async def assign_channel(ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
     if not ctx.author.id in Config.ids:
@@ -1681,13 +1917,15 @@ async def assign_channel(ctx, bot_feature: Channels, channel_to_assign: discord.
     elif bot_feature == Channels.FruitValues:
         await Config.save_channel(ctx, "fruit_values_channel_id", channel_to_assign.id)
         await ctx.send(f"Fruit Values is Caliberated in <#{channel_to_assign.id}>")
+    elif bot_feature == Channels.Combo:
+        await Config.save_channel(ctx, "combo_channel_id", channel_to_assign.id)
+        await ctx.send(f"Combo Channel Set To <#{channel_to_assign.id}>")
     else:
         await ctx.send(f"Unable to Assign the Channel")
 
-
 @bot.command()
 async def update_config(ctx: commands.Context):
-    if ctx.author.id not in Config.ids + Config.owner_ids:
+    if ctx.author.id not in Config.owner_ids + Config.ids:   
         await ctx.send(embed=mLily.SimpleEmbed(f'Access Denied'))
         return
     text = await Config.update_config_data()
@@ -1763,33 +2001,52 @@ async def staffstrike(ctx: commands.Context, id: str, *, reason: str):
     await ctx.send(embed=smLily.StrikeStaff(ctx, id, reason))
 
 @bot.command()
-#update cache should be like this <user_id>:<key_name>:<new_value>
-async def update_staff_data(ctx:commands.Context, update_cache:str):
+async def update_staff_data(ctx: commands.Context, update_cache: str):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
         return
+    
     if ctx.author.id not in Config.staff_manager_ids + Config.owner_ids + Config.ids:
         await ctx.send("No Permission!")
         return
-    with open("src/Management/StaffManagement.json", "r") as f:
-                data = json.load(f)
-                match = re.match(r"^(\d+):(\w+):(.+)$", update_cache)
-                if match:
-                    user_id, key, new_value = match.groups()
-                    if user_id in data:
-                        if key in data[user_id]:
-                            data[user_id][key] = new_value
-                            await ctx.send(embed=mLily.SimpleEmbed(f"Updated {key} for {user_id} to {new_value}"))
-                        else:
-                            await ctx.send(embed=mLily.SimpleEmbed(f"{key} not found for user {user_id}."))
-                    else:
-                        await ctx.send(embed=mLily.SimpleEmbed(f"{user_id} not found in json source"))
-                        print(f"{user_id} not found in json source")
-                else:
-                    print("Invalid update syntax. Use <user_id>:<key>:<new_value>")
-    with open("src/Management/StaffManagement.json", "w") as f:
-        json.dump(data, f, indent=4)
-
+    
+    try:
+        with open("src/Management/StaffManagement.json", "r") as f:
+            data = json.load(f)
+    except Exception as e:
+        await ctx.send(f"Error loading staff data: {e}")
+        return
+    
+    match = re.match(r"^([^:]+):([^:]+):(.+)$", update_cache)
+    if not match:
+        await ctx.send("Invalid update syntax. Use <user_id>:<key>:<new_value>")
+        return
+    
+    user_id, key, new_value = match.groups()
+    
+    if user_id not in data:
+        await ctx.send(embed=mLily.SimpleEmbed(f"User ID {user_id} not found in JSON source."))
+        print(f"{user_id} not found in JSON source")
+        return
+    
+    if key not in data[user_id]:
+        await ctx.send(embed=mLily.SimpleEmbed(f"Key {key} not found for user `{user_id}`."))
+        return
+    
+    old_value = data[user_id][key]
+    data[user_id][key] = new_value
+    
+    try:
+        with open("src/Management/StaffManagement.json", "w") as f:
+            json.dump(data, f, indent=4)
+    except Exception as e:
+        await ctx.send(f"Error saving staff data: {e}")
+        return
+    
+    await ctx.send(embed=mLily.SimpleEmbed(
+        f"Updated {key} for user {user_id} to {new_value}."
+    ))
+    
 @bot.command()
 async def strikes(ctx: commands.Context, id: str):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
@@ -1873,8 +2130,9 @@ async def removestaff(ctx:commands.Context, id:str=""):
 
 @bot.command()
 async def update_response(ctx:commands.Context):
-    if not ctx.author.id in Config.owner_ids + Config.staff_manager_ids + Config.ids:
+    if not ctx.author.id in Config.owner_ids + Config.ids:
         await ctx.send("No Permission")
+        return
     success = aiLily.update_response()
     if success:
         await ctx.send("Successfully Updated Response")
@@ -1925,17 +2183,130 @@ async def set_response_feature(ctx:commands.Context, feature_cache:str=None):
         await ctx.send(embed=mLily.SimpleEmbed(f"AutoResponse Feature set to boolean {feature_cache}"))
 
 @bot.command()
-async def ServerList(ctx:commands.Context):
+async def ServerList(ctx: commands.Context):
     if not ctx.author.id in Config.ids + Config.owner_ids:
         return
     if not bot.guilds:
         await ctx.send("No Servers Fetched")
         return
-    description = ""
-    for guild in bot.guilds:
-        description += f"**{guild.name}** — Owner: {guild.owner} (USER ID: {guild.owner.id})\n"
 
-    embed = discord.Embed(title="", description=description, color=discord.Color.blue())
-    await ctx.send(embed=embed)
+    guilds = bot.guilds
+    chunk_size = 10
+
+    for i in range(0, len(guilds), chunk_size):
+        chunk = guilds[i:i+chunk_size]
+        description = ""
+        for guild in chunk:
+            description += f"**{guild.name}** — Owner: {guild.owner} (USER ID: {guild.owner.id})\n"
+        
+        embed = discord.Embed(
+            title=f"Server List (Page {i//chunk_size + 1}/{(len(guilds) + chunk_size - 1)//chunk_size})",
+            description=description,
+            color=discord.Color.blue()
+        )
+        await ctx.send(embed=embed)
+
+@bot.command()
+async def combo_lookup_by_id(ctx:commands.Context, id:str=""):
+                    try:
+                        combo = LCM.ComboLookupByID(int(id))
+
+                        id = combo['id']
+                        user_id = combo['user_id']
+                        combo_data = combo['combo_data']
+                        Item_List = {}
+                        if combo.get("Fruit"):
+                            Item_List[combo["Fruit"]] = "fruit_icons"
+                        if combo.get("Sword"):
+                            Item_List[combo["Sword"]] = "sword_icons"
+                        if combo.get("Fighting Style"):
+                            Item_List[combo["Fighting Style"]] = "fighting_styles"
+                        if combo.get("Gun"):
+                            Item_List[combo["Gun"]] = "gun_icons"
+                        Item_Icon_List = []
+                        
+                        for key, value in Item_List.items():
+                            if key and key.strip():
+                                imod = key.replace(" ", "_")
+                                icon = f'src/ui/{value}/{imod}.png'
+                                Item_Icon_List.append(icon)
+
+                        combo_text = ""
+                        #Parsing Combo Texts
+                        for base, nested in ast.literal_eval(combo_data):
+                            combo_ = " ".join(nested)
+                            name_formatted = base.title()
+                            combo_text += f"- **{name_formatted}: {combo_}**\n"
+
+                        img = CIG.CreateBaseBuildIcon(Item_Icon_List)
+                        img_byte_arr = io.BytesIO()
+                        img.save(img_byte_arr, format='PNG')
+                        img_byte_arr.seek(0)
+
+                        embeds = []
+                        imgfile = discord.File(img_byte_arr, filename="image.png")
+                        embed = discord.Embed(title="__BUILD__",colour=0xf5008f)
+
+                        embed.set_author(name=f"{Config.server_name} Combos")
+                        embed.set_image(url="attachment://image.png")
+
+                        embeds.append(embed)
+
+                        divider_text = "<:Divider:1365485335403823134>"
+                        divider_texts = ""
+                        for i in range(0, 22):
+                            divider_texts += divider_text
+
+                        embed = discord.Embed(title=f"__COMBO__",
+                        description=combo_text,
+                        colour=0xf5008f)
+                        
+                        embed.add_field(name="",
+                            value=divider_texts,
+                            inline=False)
+                        
+                        embed.add_field(name="",
+                            value=f"Combo ID : {id} \nCombo By <@{user_id}>",
+                            inline=False)
+                        
+                        embeds.append(embed)
+
+
+                        await ctx.send(file=imgfile, embeds=embeds)
+                    except Exception as e:
+                        await ctx.send(e)
+
+@bot.command()
+async def delete_combo_by_id(ctx:commands.Context, id:str=""):
+    if ctx.author.id not in Config.owner_ids + Config.ids + Config.trusted_moderator_ids + Config.staff_manager_ids:
+        await ctx.reply("No Permission")
+        return
+    try:
+        LCM.DeleteComboByID(int(id))
+        await ctx.send("Deleted Successfully")
+    except Exception as e:
+        await ctx.send(e)
+
+@bot.command()
+async def set_ai_value(ctx:commands.Context, bool:int=0):
+    if ctx.author.id not in Config.owner_ids + Config.ids:
+        await ctx.reply("No Permission")
+        return
+    Config.meta_enable = bool
+    await ctx.send(f"Ai Responses set to {bool}")
+
+'''
+@bot.command()
+async def s(ctx:commands.Context):
+    try:
+        name, link = await LE.RandomCharacter()
+        embed = discord.Embed(title=name,
+                        colour=0x00b0f4)
+
+        embed.set_image(url=link)
+
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f'Exception {e}')'''
 
 bot.run(Config.bot_token)   
