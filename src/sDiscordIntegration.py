@@ -396,7 +396,6 @@ class MyBot(commands.Bot):
                 try:
                     await message.channel.send(giflink)
                 except:
-                    print("Except")
                     pass
             else:
                 await message.delete()
@@ -404,7 +403,6 @@ class MyBot(commands.Bot):
                 try:
                     await message.channel.send(giflink)
                 except:
-                    print("Except")
                     pass
 
     async def isManager(self, ctx:commands.Context):
@@ -412,7 +410,6 @@ class MyBot(commands.Bot):
         return any(role.id == role_id for role in ctx.author.roles)
 
     async def on_message(self, message): 
-
         if message.author == self.user:
               return  
 
@@ -501,7 +498,6 @@ class MyBot(commands.Bot):
                 except Exception as e:
                     print(f"Error posting stock to guild {guild.id}: {e}")        
 
-
         elif re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
             ctx = await bot.get_context(message)
             channel_data = Config.load_channel_config(ctx)
@@ -557,6 +553,7 @@ class MyBot(commands.Bot):
 
                 else:
                     message.delete()
+
         elif TFA.is_valid_trade_format(message.content.lower(), fruit_names): 
             lowered_message = message.content.lower()
             match = TFA.is_valid_trade_format(lowered_message, fruit_names)
@@ -795,7 +792,8 @@ class MyBot(commands.Bot):
 
                 await message.reply(embed=embed, view=view)
 
-        elif "value.update" in message.content.lower():
+
+        elif "updatevalue" in message.content.lower():
             if message.author.id in Config.ids:
                 user_message = message.content.lower()
                 message_parsed = user_message.split()
@@ -873,7 +871,6 @@ class MyBot(commands.Bot):
 
         elif "update logs" in message.content.lower():
             if message.author.id in Config.ids + Config.owner_ids:
-
                 parser = message.content.lower().split()
                 log_min = 0
                 log_max = 10
@@ -945,8 +942,10 @@ class MyBot(commands.Bot):
 
                 except Exception as e:
                     logs_string = f"Error reading logs: {str(e)}"
-                
-                await message.channel.send(embed=embed)
+                try:
+                    await message.channel.send(embed=embed)
+                except Exception as e:
+                    print(e)
 
             else:
                 await message.channel.send("You don't have access to use this command!") 
@@ -1244,14 +1243,15 @@ class MyBot(commands.Bot):
         response_text_parsing = ["{user.name}", "{server}"]
         response_conditions = ["{<hasroll > ? hii : you dont have the role yet}", "{<isuser> ? hii : you dont have the role yet}"]
 
+        
         await bot.RespondProcessor(message)
 
-        await bot.process_commands(message)
+        await self.process_commands(message)
 
 bot = MyBot()
 
 
-@bot.command()
+@bot.hybrid_command(name='ban', description='bans a user with config = limited')
 async def ban(ctx:commands.Context, member: str = "", *, reason="No reason provided"):
     proofs = []
     role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
@@ -1285,7 +1285,7 @@ async def ban(ctx:commands.Context, member: str = "", *, reason="No reason provi
             await ctx.send(embed=mLily.SimpleEmbed("No Valid Users to Ban"))
             return
         if target_user.id in Config.ids:
-            await ctx.send(embed=mLily.SimpleEmbed(f"you can't use my commands against me {ctx.author.mention}"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"you can't use my commands against a developer {ctx.author.mention}"))
             return
 
         if not mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
@@ -1302,7 +1302,7 @@ async def ban(ctx:commands.Context, member: str = "", *, reason="No reason provi
         if valid_limit_roles:
             await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}"))
 
-@bot.command()
+@bot.hybrid_command(name='unban', description='unbans a particular user')
 async def unban(ctx, user_id: str):
     if ctx.author.id not in Config.trusted_moderator_ids + Config.staff_manager_ids + Config.ids + Config.owner_ids:
         await ctx.send(embed=mLily.SimpleEmbed("You don't have permission to unban!"))
@@ -1319,7 +1319,7 @@ async def unban(ctx, user_id: str):
     except discord.HTTPException as e:
         await ctx.send(f"Exception Raised: {e}")
 
-@bot.command()
+@bot.hybrid_command(name='logs', description='checks logs for a particular moderator (ban informations)')
 async def logs(ctx, slice_exp: str = None, member: str = ""):
     try:
         try:
@@ -1362,7 +1362,7 @@ async def logs(ctx, slice_exp: str = None, member: str = ""):
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
 
-@bot.command()
+@bot.hybrid_command(name='checkbanlog', description='checks ban log for a particular user')
 async def checkbanlog(ctx, member: str = ""):
     try:
         accessible_roles = []
@@ -1603,7 +1603,6 @@ async def make_roles_assignable(ctx: commands.Context, role: discord.Role, prior
         return
 
     if ctx.author.id not in Config.owner_ids:
-        print(Config.owner_ids)
         await ctx.reply("You are not authorized to use this command.")
         return
 
@@ -1619,7 +1618,7 @@ async def make_roles_assignable(ctx: commands.Context, role: discord.Role, prior
     except Exception as e:
         await ctx.reply(f"Unhandled Exception: `{e}`", ephemeral=True)
 
-@bot.command()
+@bot.hybrid_command(name='fetchbanlog', description='fetches ban log of an user in a .csv format for quick analysis')
 async def fetchbanlog(ctx, user: str = None):
     if user is None:
         target = ctx.author
@@ -1967,7 +1966,7 @@ async def delete_role(ctx: commands.Context,id: discord.Role):
     if success:
         await bot.WriteLog(ctx, ctx.author.id, f"Deleted a Role with id {id} ")
 '''
-@bot.command()
+@bot.hybrid_command(name='staffdata', description='shows data for a particular staff')
 async def staffdata(ctx:commands.Context, id:str):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
@@ -1979,7 +1978,7 @@ async def staffdata(ctx:commands.Context, id:str):
     staff_member = await bot.fetch_user(int(id))
     await ctx.send(embed=smLily.FetchStaffDetail(staff_member))
 
-@bot.command()
+@bot.hybrid_command(name='staffs', description='shows all staff registered name with the count')
 async def staffs(ctx:commands.Context):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
@@ -1989,7 +1988,7 @@ async def staffs(ctx:commands.Context):
         return
     await ctx.send(embed=smLily.FetchAllStaffs())
 
-@bot.command()
+@bot.hybrid_command(name='staffstrike', description='strikes a staff with a specified reason')
 async def staffstrike(ctx: commands.Context, id: str, *, reason: str):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
@@ -2000,7 +1999,7 @@ async def staffstrike(ctx: commands.Context, id: str, *, reason: str):
     id = id.replace("<@", "").replace(">", "")
     await ctx.send(embed=smLily.StrikeStaff(ctx, id, reason))
 
-@bot.command()
+@bot.hybrid_command(name='update_staff_data', description='updates staff data with a specific update_cache')
 async def update_staff_data(ctx: commands.Context, update_cache: str):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
@@ -2047,7 +2046,7 @@ async def update_staff_data(ctx: commands.Context, update_cache: str):
         f"Updated {key} for user {user_id} to {new_value}."
     ))
     
-@bot.command()
+@bot.hybrid_command(name='strikes', description='shows strikes for a concurrent staff')
 async def strikes(ctx: commands.Context, id: str):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
@@ -2058,7 +2057,7 @@ async def strikes(ctx: commands.Context, id: str):
     id = id.replace("<@", "").replace(">", "")
     await ctx.send(embed=smLily.ListStrikes(id))
 
-@bot.command()
+@bot.hybrid_command(name='export_staff_data', description='exports staff data as a .csv file')
 async def export_staff_data(ctx: commands.Context):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
@@ -2073,7 +2072,7 @@ async def export_staff_data(ctx: commands.Context):
 
     await ctx.send("Here is the Source CSV", file=discord.File(csv_buffer, "staff_data.csv"))
 
-@bot.command()
+@bot.hybrid_command(name='import_staff_data', description='imports staff data as a .csv file')
 async def import_staff_data(ctx: commands.Context):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
@@ -2104,7 +2103,7 @@ async def import_staff_data(ctx: commands.Context):
     except Exception as e:
         await ctx.send(f"Exception {e}")
 
-@bot.command()
+@bot.hybrid_command(name='add_staff', description='adds a staff to the data')
 async def addstaff(ctx:commands.Context, id:str=""):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
@@ -2116,7 +2115,7 @@ async def addstaff(ctx:commands.Context, id:str=""):
     staff_member = await ctx.guild.fetch_member(id)
     await ctx.send("Staff Added Successfully") if smLily.AddStaff(staff_member) else await ctx.send("Failure")
 
-@bot.command()
+@bot.hybrid_command(name='remove_staff', description='removes a staff to the data')
 async def removestaff(ctx:commands.Context, id:str=""):
     if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
         await ctx.send("Server Change!")
@@ -2128,7 +2127,7 @@ async def removestaff(ctx:commands.Context, id:str=""):
     staff_member = await ctx.guild.fetch_member(id)
     await ctx.send("Staff Removed Successfully") if smLily.RemoveStaff(staff_member) else await ctx.send("Failure")
 
-@bot.command()
+@bot.hybrid_command(name='update_response', description='updates auto response feature for the bot')
 async def update_response(ctx:commands.Context):
     if not ctx.author.id in Config.owner_ids + Config.ids:
         await ctx.send("No Permission")
@@ -2137,7 +2136,7 @@ async def update_response(ctx:commands.Context):
     if success:
         await ctx.send("Successfully Updated Response")
 
-@bot.command()
+@bot.hybrid_command(name='vmute', description='mutes a user based on voice channels for a particular duration')
 async def vmute(ctx: commands.Context, member: str = "", time: str = "", *, reason="No reason provided"):       
     if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
         await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
@@ -2156,7 +2155,7 @@ async def vmute(ctx: commands.Context, member: str = "", time: str = "", *, reas
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"Error: {e}"))
 
-@bot.command()
+@bot.hybrid_command(name='vunmute', description='unmutes a user')
 async def vunmute(ctx:commands.Context, member:str=""):
     if not 1360395431737036900 in [r.id for r in ctx.author.roles]:
         await ctx.send(embed=mLily.SimpleEmbed("Access Denied!"))
@@ -2171,7 +2170,7 @@ async def vunmute(ctx:commands.Context, member:str=""):
     except Exception as e:
         await ctx.send(embed=mLily.SimpleEmbed(f"Error: {e}"))
 
-@bot.command()
+@bot.hybrid_command(name='set_response_feature', description='sets auto response feature to boolean value 0 and 1')
 #feature_cache for Autoresponse, ChannelResponse = 1
 async def set_response_feature(ctx:commands.Context, feature_cache:str=None):
     if not ctx.author.id in Config.ids + Config.owner_ids:
@@ -2182,7 +2181,7 @@ async def set_response_feature(ctx:commands.Context, feature_cache:str=None):
         fileptr.close()
         await ctx.send(embed=mLily.SimpleEmbed(f"AutoResponse Feature set to boolean {feature_cache}"))
 
-@bot.command()
+@bot.hybrid_command(name='list', description='lists the total number of users in the server')
 async def ServerList(ctx: commands.Context):
     if not ctx.author.id in Config.ids + Config.owner_ids:
         return
@@ -2206,7 +2205,7 @@ async def ServerList(ctx: commands.Context):
         )
         await ctx.send(embed=embed)
 
-@bot.command()
+@bot.hybrid_command(name='combo_lookup_by_id', description='looks for a specific combo, ref=id')
 async def combo_lookup_by_id(ctx:commands.Context, id:str=""):
                     try:
                         combo = LCM.ComboLookupByID(int(id))
@@ -2276,7 +2275,7 @@ async def combo_lookup_by_id(ctx:commands.Context, id:str=""):
                     except Exception as e:
                         await ctx.send(e)
 
-@bot.command()
+@bot.hybrid_command(name='delete_combo_by_id', description='deletes a combo, ref=id')
 async def delete_combo_by_id(ctx:commands.Context, id:str=""):
     if ctx.author.id not in Config.owner_ids + Config.ids + Config.trusted_moderator_ids + Config.staff_manager_ids:
         await ctx.reply("No Permission")
@@ -2287,7 +2286,7 @@ async def delete_combo_by_id(ctx:commands.Context, id:str=""):
     except Exception as e:
         await ctx.send(e)
 
-@bot.command()
+@bot.hybrid_command(name='set_response_ai_value', description='enables ai responses ref=bool')
 async def set_ai_value(ctx:commands.Context, bool:int=0):
     if ctx.author.id not in Config.owner_ids + Config.ids:
         await ctx.reply("No Permission")

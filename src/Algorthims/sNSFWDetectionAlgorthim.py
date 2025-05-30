@@ -103,7 +103,6 @@ def normalize_text(text):
     text = re.sub(r'(?<=\b[a-zA-Z]) (?=[a-zA-Z]\b)', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
     text = text.lower()
-    print(text)
     return text
 
 
