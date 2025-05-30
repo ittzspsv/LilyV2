@@ -491,7 +491,6 @@
             "Dragon"
         ]
     },
-
     {
         "name": "Meme",
         "physical_value": "999,999,999,999",
@@ -505,8 +504,7 @@
             "Meme"
         ]
     },
-
-    {  
+    {
         "name": "Fast Boats",
         "physical_value": "120,000,000",
         "permanent_value": "",

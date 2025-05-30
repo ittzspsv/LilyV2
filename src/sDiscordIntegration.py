@@ -420,7 +420,7 @@ class MyBot(commands.Bot):
 
         #Receives Message from ShreeSPSV's Server For Stock Updates
         if message.guild.id == 1240215331071594536 and message.channel.id == 1362321135231959112:
-            message_id = message.id
+            message_id = message.id 
             source_channel = bot.get_channel(1362321135231959112)
 
             if source_channel is None:
@@ -2320,6 +2320,19 @@ async def clear_botlogs(ctx:commands.Context):
         with open("storage/LilyLogs.txt", 'r+') as f:
             f.truncate(0)
         await ctx.send("Successfully Cleared Logs")
+    except Exception as e:
+        await ctx.send(f"Exception {e}")
+
+@bot.hybrid_command(name='direct_message', description='direct messages using the bot')
+async def dm(ctx, user: discord.User, *, message: str):
+    if not ctx.author.id in Config.ids + Config.owner_ids:
+        await ctx.send("No Permission")
+        return
+    try:
+        await user.send(message)
+        await ctx.send("Sent Successfully")
+    except discord.Forbidden:
+        await ctx.send(f"Exception Type Forbidden {e}")
     except Exception as e:
         await ctx.send(f"Exception {e}")
 
