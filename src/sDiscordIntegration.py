@@ -23,6 +23,8 @@ import Management.sLilyStaffManagement as smLily
 import Engagement.LilyEngagement as LE
 import Response.sLilyResponse as aiLily
 import ast
+import logging
+import traceback
 try:
     import meta_ai_api as MetaAPI
 except:
@@ -41,6 +43,9 @@ import pandas as pd
     
 import re
 
+
+
+logging.basicConfig(filename='storage/LilyLogs.txt', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 #ACCESSING DATA FORMATS
 
 if Config.port == 0:
@@ -2293,6 +2298,30 @@ async def set_ai_value(ctx:commands.Context, bool:int=0):
         return
     Config.meta_enable = bool
     await ctx.send(f"Ai Responses set to {bool}")
+
+@bot.hybrid_command(name='bot_logs', description='gets core bot logs')
+async def botlogs(ctx:commands.Context):
+    if ctx.author.id not in Config.ids + Config.owner_ids:
+        await ctx.send("No Permission")
+        return
+    path = 'storage/LilyLogs.txt' 
+    try:
+        with open(path, 'rb') as f:
+            await ctx.send(file=discord.File(f, filename='LilyLogs.txt'))
+    except Exception as e:
+        await ctx.send(f"Exception {e}")
+
+@bot.hybrid_command(name='clear_bot_logs', description='clears all bot logs')
+async def clear_botlogs(ctx:commands.Context):
+    if ctx.author.id not in Config.ids + Config.owner_ids:
+        await ctx.send("No Permission")
+        return
+    try:
+        with open("storage/LilyLogs.txt", 'r+') as f:
+            f.truncate(0)
+        await ctx.send("Successfully Cleared Logs")
+    except Exception as e:
+        await ctx.send(f"Exception {e}")
 
 '''
 @bot.command()
