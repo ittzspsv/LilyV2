@@ -2329,12 +2329,22 @@ async def dm(ctx, user: discord.User, *, message: str):
         await ctx.send("No Permission")
         return
     try:
-        await user.send(message)
+        embed = discord.Embed(title=f"Message from {ctx.author.name}",description=f"{message}",
+                      colour=0xf500b4)
+        await user.send(embed=embed)
         await ctx.send("Sent Successfully")
     except discord.Forbidden:
         await ctx.send(f"Exception Type Forbidden {e}")
     except Exception as e:
         await ctx.send(f"Exception {e}")
+
+@bot.command()
+async def sync(ctx:commands.Context):
+    if not ctx.author.id in Config.ids + Config.owner_ids:
+        return
+    guild = ctx.guild
+    synced = await bot.tree.sync(guild=guild)
+    await ctx.send(f"Synced {len(synced)} slash commands w.r.t the guild")
 
 '''
 @bot.command()
