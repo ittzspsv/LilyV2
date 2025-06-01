@@ -264,7 +264,8 @@ class MyBot(commands.Bot):
     async def on_ready(self):
         print('Logged on as', self.user)   
         await self.BotInitialize()
-
+        game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        await bot.change_presence(status=discord.Status.idle, activity=game)
         await self.tree.sync()
 
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
@@ -1069,7 +1070,7 @@ class MyBot(commands.Bot):
 
                     embeds.append(embed)
 
-                    divider_text = "<:Divider:1365485335403823134>"
+                    divider_text = "<:divider:1374032878760886342>"
                     divider_texts = ""
                     for i in range(0, 22):
                         divider_texts += divider_text
@@ -1138,7 +1139,7 @@ class MyBot(commands.Bot):
 
                         embeds.append(embed)
 
-                        divider_text = "<:Divider:1365485335403823134>"
+                        divider_text = "<:divider:1374032878760886342>"
                         divider_texts = ""
                         for i in range(0, 22):
                             divider_texts += divider_text
@@ -2256,7 +2257,7 @@ async def combo_lookup_by_id(ctx:commands.Context, id:str=""):
 
                         embeds.append(embed)
 
-                        divider_text = "<:Divider:1365485335403823134>"
+                        divider_text = "<:divider:1374032878760886342>"
                         divider_texts = ""
                         for i in range(0, 22):
                             divider_texts += divider_text
