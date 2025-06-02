@@ -8,16 +8,9 @@
     },
     "869064913535004753": {
         "name": "Oblivion",
-        "role": "Head Moderator",
+        "role": "Manager",
         "responsibility": "NIL",
         "join_date": "03/02/2025",
-        "strikes": []
-    },
-    "827775992521031700": {
-        "name": "Samurai",
-        "role": "Head Moderator",
-        "responsibility": "NIL",
-        "join_date": "19/02/2025",
         "strikes": []
     },
     "845511381637529641": {
@@ -25,9 +18,7 @@
         "role": "Developer",
         "responsibility": "NIL",
         "join_date": "10/01/2025",
-        "strikes": [
-            "Test"
-        ]
+        "strikes": []
     },
     "999309816914792630": {
         "name": "Texio",
@@ -38,14 +29,14 @@
     },
     "1117679980634181732": {
         "name": "JPE",
-        "role": "Senior Moderator",
+        "role": "Head Moderator",
         "responsibility": "NIL",
         "join_date": "10/01/2025",
         "strikes": []
     },
     "1220169032762920965": {
         "name": "Famoplays",
-        "role": "Senior Moderator",
+        "role": "Moderator",
         "responsibility": "NIL",
         "join_date": "29/01/2025",
         "strikes": []
@@ -73,7 +64,7 @@
     },
     "1319246562832158740": {
         "name": "Dimitri",
-        "role": "Senior Moderator",
+        "role": "Moderator",
         "responsibility": "NIL",
         "join_date": "22/03/2025",
         "strikes": []
@@ -125,13 +116,6 @@
         "role": "Moderator",
         "responsibility": "NIL",
         "join_date": "11/03/2025",
-        "strikes": []
-    },
-    "1352597428263456810": {
-        "name": "Gato",
-        "role": "Trial Moderator",
-        "responsibility": "NIL",
-        "join_date": "12/05/2025",
         "strikes": []
     },
     "958065971048906812": {
