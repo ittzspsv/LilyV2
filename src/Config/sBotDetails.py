@@ -102,7 +102,7 @@ server_invite_link = "https://discord.com/invite/bloxtrade"
 fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
-port = 0 # Currently set to Production Server
+port = 1 # Currently set to Production Server
 meta_enable = 0
 engagement = 0
 
