@@ -181,7 +181,7 @@ def StrikeStaff(ctx:commands.Context, staff_id: str, reason: str, ):
             }
             staff_data[staff_id]["strikes"].append(strike)
 
-            with open("src/Management/StaffManagement.json", "w") as data:
+            with open("src/LilyManagement/StaffManagement.json", "w") as data:
                 json.dump(staff_data, data, indent=2)
             embed = discord.Embed(title=f"",description=f'**Successfully Striked Staff <@{staff_id}>**',
                       colour=0xf50000)
