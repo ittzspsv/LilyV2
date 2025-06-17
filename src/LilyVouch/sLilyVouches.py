@@ -1,7 +1,7 @@
 import polars as pl
 import os
 import discord  
-import Moderation.sLilyModeration as mLily
+import LilyModeration.sLilyModeration as mLily
 
 
 from datetime import datetime

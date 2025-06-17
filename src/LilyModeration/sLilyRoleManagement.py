@@ -1,4 +1,4 @@
-import Moderation.sLilyModeration as mLily
+import LilyModeration.sLilyModeration as mLily
 import Config.sBotDetails as Config
 
 

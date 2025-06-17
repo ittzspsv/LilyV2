@@ -8,6 +8,12 @@ import Config.sBotDetails as Config
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
 
+
+async def VerifyVMute(self, bot, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if after.channel and before.channel != after.channel:
+            channel = bot.get_channel(1324581275276935283)
+            await CheckVoiceMuted(member, channel)
+
 def evaluate_log_file(filename):
     if not os.path.exists(filename):
         df = pl.DataFrame({
@@ -303,7 +309,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs:list=[])
 
             log_ban(ctx, ctx.author.id, user_id, reason)
 
-            with open("src/Moderation/logchannelid.log", "r") as file:
+            with open("src/LilyModeration/logchannelid.log", "r") as file:
                 logs_channel_id = file.read().strip()
             log_channel = ctx.guild.get_channel(int(logs_channel_id))
             if log_channel:
@@ -413,8 +419,7 @@ async def VoiceMute(member: discord.Member, mute_duration: str, reason: str, cha
         if df.filter(pl.col("user_id") == str(member.id)).height > 0:
             await channel.send(embed=SimpleEmbed(f"**{member.mention}** is already muted."))
             return
-
-        # Add new mute entry
+        
         new_row = pl.DataFrame({
             "user_id": [str(member.id)],
             "unmute_time": [unmute_time_str],

@@ -1,7 +1,7 @@
 [
     {
         "name": "Rocket",
-        "physical_value": "5,000",
+        "physical_value": "50,000,000",
         "permanent_value": "10,000,000",
         "physical_demand": "1/10",
         "permanent_demand": "1/10",

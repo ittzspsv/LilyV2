@@ -189,3 +189,4 @@ def ParseTicketEmbed(message: discord.Message):
             break
 
     return ticket_opener_id, reason, scammer_match
+

@@ -87,11 +87,8 @@ def load_channel_config(ctx: commands.Context, guild_id:int=0, type=0):
         return data.get("ChannelConfig", {}) 
 
 
-# VERY IMPORTANT TOKENS THAT SHOULD NOT BE SHARED HERE
-bot_token = ""
-
 # Command prefix for the bot
-bot_command_prefix = "?"
+bot_command_prefix = "!"
 
 # Bot display settings
 bot_name = "BloxTrade"
@@ -105,7 +102,7 @@ server_invite_link = "https://discord.com/invite/bloxtrade"
 fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
-port = 1 # Currently set to Production Server
+port = 0 # Currently set to Production Server
 meta_enable = 0
 engagement = 0
 
@@ -115,7 +112,6 @@ if port == 0:
     TRADE_EMOJI_ID = ["1348722170586599465"]
     PERM_EMOJI_ID = ["1349449830048731206"]
 
-    middle_men_channel_id = 1349351985626878013
     combo_channel_id = 1376633733997924422
     stock_ping_role_id = "1348020649444114574"
     stock_team_roll_name = "Stock Ping"
@@ -129,18 +125,22 @@ if port == 0:
     trial_moderator_name = "Stock Ping"
 
     service_manager_roll_id = 1356187197526638693
-    manager_roll_id = 1356187197526638693 #Head Admin Role
 
     appeal_server_link = "https://discord.gg/RvkyTxnH6r"
 
     role_creation_limit = 1
 
+    StaffRoles = [1381715715794534590]
+    TrustedStaffRoles = [1381715790889357393]
+    StaffManagerRoles = [1381715601772511493]
+    DeveloperRoles = [1381715636010618940]
+    OwnerRoles = [1381728367207907418]
+    BlacklistedRoles = [1381715681904558132]
+
 else:
     # PRODUCTION SERVER SETTINGS (BLOXTRADE)
     TRADE_EMOJI_ID = ["1324867813067984986", "1039668628561342504"]
     PERM_EMOJI_ID = ["1236412085894905887", "1170178840283316244", "1324867811775877241"]
-
-    middle_men_channel_id = 1341106937676304434
     combo_channel_id = 0
     stock_ping_role_id = "1345555258314588170"
     stock_team_roll_name = "Moderator"
@@ -157,11 +157,17 @@ else:
 
     service_manager_roll_id = 1333123391875584011 #CURRENTLY HEAD MODERATORS
     giveaway_hoster_role = 1345579694522630205    #USED TO CREATE EMBEDS
-    manager_roll_id = 1365324107947970700
 
     appeal_server_link = "https://discord.gg/CycZg9UmyT"
 
     role_creation_limit = 1
+
+    StaffRoles = [1360395431737036900] # Staff Role
+    TrustedStaffRoles = [1333444259033911306] # Trusted Role
+    StaffManagerRoles = [1365324107947970700] # Staff Manager Roles
+    DeveloperRoles = [1351867043393044551] # Developer Role
+    OwnerRoles = [1324577057228980285] # (+) Role
+    BlacklistedRoles = [1357492900195205130] # Test Blacklisted Role
 
 # Embed colors based on item type
 embed_color_codes = {
@@ -184,9 +190,11 @@ trusted_moderator_ids = [1329951007311921212, 1369716151210475621, 8455113816375
 staff_manager_ids = [895649073082814475, 1369716151210475621] #CURRENT USER IDS - [LELOUCH] 
 staff_manager_role_id = 1365324107947970700
 
+#ROLES
+
 async def update_config_data():
-    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, service_manager_roll_id, giveaway_hoster_role, combo_channel_id, engagement
-    url = 'https://pastebin.com/raw/k1iq3qQm'
+    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles
+    url = 'https://ittzspsv.github.io/LilyV2-Configs/LilyConfig.json'
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -197,12 +205,14 @@ async def update_config_data():
                 ids = data['ids']
                 trusted_moderator_ids = data['trusted_moderator_ids']
                 staff_manager_ids = data['staff_manager_ids']
-                limit_Ban_details = data['limit_ban_details']
-                service_manager_roll_id = data['service_manager_role_id']
-                giveaway_hoster_role = data['giveaway_hoster_role']
-                combo_channel_id = data['combo_channel_id']
-                engagement = data['engagement-bool']
+                limit_Ban_details = {int(k): v for k, v in data['limit_ban_details'].items()}
 
+                StaffRoles = data['Roles']['StaffRoles']
+                TrustedStaffRoles = data['Roles']['TrustedStaffRoles']
+                StaffManagerRoles = data['Roles']['StaffManagerRoles']
+                DeveloperRoles = data['Roles']['DeveloperRoles']
+                OwnerRoles = data['Roles']['OwnerRoles']
+                BlacklistedRoles = data['Roles']['BlacklistedRoles']
                 return "Success"
             except Exception as e:
                 return f'Failure: {e}'

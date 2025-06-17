@@ -25,6 +25,8 @@ def LoadComboData():
         ComboData["Guns"] = json.load(gdata)
     with open("src/Config/JSONData/SwordData.json", "r") as sdata:
         ComboData["Swords"] = json.load(sdata)
+    with open("src/Config/JSONData/MiscData.json", "r") as miscdata:
+        ComboData["MiscData"] = json.load(miscdata)
 
 LoadComboData()
 
@@ -38,7 +40,8 @@ def ComboPatternParser(message: str, threshold=95):
         list(ComboData["Guns"].keys()) +
         list(ComboData["Swords"].keys()) +
         list(ComboData["FightingStyle"].keys()) +
-        list(ComboData["Fruit"].keys())
+        list(ComboData["Fruit"].keys()) +
+        list(ComboData["MiscData"].keys())
     )
     
     known_phrases = sorted(known_phrases, key=lambda p: len(p.split()), reverse=True)
@@ -88,7 +91,8 @@ def ComboPatternParser(message: str, threshold=95):
         "FightingStyle": "Fighting Style",
         "Fruit": "Fruit",
         "Swords": "Sword",
-        "Guns": "Gun"
+        "Guns": "Gun",
+        "MiscData" : "MiscData"
     }
     
     found_categories = set()
@@ -138,27 +142,32 @@ def ComboPatternParser(message: str, threshold=95):
     
     if current_key is not None:
         combo_data.append((current_key, current_values))
-    
     return parsed_build, tuple(combo_data)
 
 def ValidComboDataType(data):
-    d, tuple_of_tuples = data
-
-    if not d or any(not v for v in d.values()):
+    if not isinstance(data, tuple) or len(data) != 2:
         return False
 
-    if not tuple_of_tuples:
+    d, tuple_of_tuples = data
+
+    if not isinstance(d, dict) or not d or any(not v for v in d.values()):
+        return False
+
+    if not isinstance(tuple_of_tuples, tuple) or not tuple_of_tuples:
         return False
 
     for item in tuple_of_tuples:
         if not isinstance(item, tuple) or len(item) != 2:
             return False
+
         key, lst = item
-        if not key or not isinstance(key, str):
+
+        if not isinstance(key, str) or not key:
             return False
-        if not lst or not isinstance(lst, list):
+        if not isinstance(lst, list):
             return False
-        if any(not elem for elem in lst):
+
+        if lst and any(not elem for elem in lst):
             return False
 
     return True

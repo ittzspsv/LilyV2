@@ -35,7 +35,7 @@
             ],
             "required_words": [],
             "neglect_words": [],
-            "channel_to_respond": 1324581275276935283,
+            "channel_to_respond": 1349753791704072313,
             "delete_message": "True",
             "emoji_to_react": [
                 ""
@@ -51,35 +51,43 @@
                 "Flagged"
             ],
             "required_words": [
-                "nigga",
-                "lily-syntax-any",
-                "nigger"
+                "nigga"
             ],
             "neglect_words": [],
-            "channel_to_respond": 1370395716106588241,
+            "channel_to_respond": 1324581275276935283,
             "delete_message": "True",
             "emoji_to_react": [
                 ""
             ],
             "media": [],
             "whitelist_roles": [
-                1370812141606801510
+                1324581125405933619,
+                1351867043393044551,
+                1365324107947970700
             ]
         },
         {
             "prompt": [
-                "hii"
+                "nigger"
             ],
             "response": [
-                "{<hasrole 1356187197526638693> ? Yoo hello : Hello hii}"
+                "Flagged"
             ],
-            "required_words": [],
+            "required_words": [
+                "nigger"
+            ],
             "neglect_words": [],
-            "channel_to_respond": 1349753791704072313,
-            "delete_message": "False",
-            "emoji_to_react": [],
+            "channel_to_respond": 1324581275276935283,
+            "delete_message": "True",
+            "emoji_to_react": [
+                ""
+            ],
             "media": [],
-            "whitelist_roles": []
+            "whitelist_roles": [
+                1324581125405933619,
+                1351867043393044551,
+                1365324107947970700
+            ]
         }
     ]
 }

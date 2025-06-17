@@ -106,8 +106,6 @@ def normalize_text(text):
     return text
 
 
-
-
 def load_nsfw_words(file_path):
     with open(file_path, "r", encoding="utf-8") as file:
         nsfw_words = json.load(file)

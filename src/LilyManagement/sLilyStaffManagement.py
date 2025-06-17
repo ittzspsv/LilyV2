@@ -8,7 +8,7 @@ from discord.ext import commands
 
 def FetchStaffDetail(staff: discord.Member):
     try:
-        with open("src/Management/StaffManagement.json", "r") as data:
+        with open("src/LilyManagement/StaffManagement.json", "r") as data:
             staff_data = json.load(data)
             
             staff_info = staff_data.get(str(staff.id))
@@ -45,12 +45,10 @@ def FetchStaffDetail(staff: discord.Member):
         embed = discord.Embed(title="Error", description=str(e), colour=0xf50000)
         return embed
     
-import discord
-import json
 
 def FetchAllStaffs():
     try:
-        with open("src/Management/StaffManagement.json", "r") as data:
+        with open("src/LilyManagement/StaffManagement.json", "r") as data:
             staff_data = json.load(data)
 
             embed = discord.Embed(
@@ -60,24 +58,39 @@ def FetchAllStaffs():
             )
 
             roles = {}
+            active_moderators = 0
+            loa_moderators = 0
+
             for staff_id, staff_info in staff_data.items():
                 role = staff_info["role"]
-                name = staff_info["name"].title()
+                mention = f"<@{staff_id}>"
 
                 if role not in roles:
                     roles[role] = []
-                roles[role].append(name)
 
-            for role, names in roles.items():
-                count = len(names)
-                names_with_bullet = "\n- ".join(names)
-                names_with_bullet = "- " + names_with_bullet if names_with_bullet else ""
+                roles[role].append(mention)
+
+                if staff_info.get("LOA") is True:
+                    loa_moderators += 1
+                elif staff_info.get("higher_staff") is False and staff_info.get("LOA") is False:
+                    active_moderators += 1
+
+            for role, mentions in roles.items():
+                count = len(mentions)
+                names_with_bullet = "- " + "\n- ".join(mentions)
 
                 embed.add_field(
                     name=f"__{role}__ ({count})",
                     value=names_with_bullet,
                     inline=False
                 )
+
+            analysis_text = f"**Staff Prioritized on Moderation:** {active_moderators}\n**Staffs in LOA:** {loa_moderators}"
+            embed.add_field(
+                name="__ANALYSIS__",
+                value=analysis_text,
+                inline=False
+            )
 
             return embed
 
@@ -89,9 +102,75 @@ def FetchAllStaffs():
         )
         return embed
     
+
+def FetchAllStaffsFiltered(filter_type=None, filter_value=None):
+    try:
+        with open("src/LilyManagement/StaffManagement.json", "r") as data:
+            staff_data = json.load(data)
+
+        staff_list = [(staff_id, info) for staff_id, info in staff_data.items()]
+
+        if filter_type:
+            if filter_type == "role":
+                staff_list = [(sid, info) for sid, info in staff_list if info.get("role") == filter_value]
+            elif filter_type == "LOA":
+                staff_list = [(sid, info) for sid, info in staff_list if info.get("LOA") == bool(filter_value)]
+            elif filter_type == "higher_staff":
+                staff_list = [(sid, info) for sid, info in staff_list if info.get("higher_staff") == bool(filter_value)]
+            elif filter_type == "strikes":
+                staff_list.sort(key=lambda x: len(x[1].get("strikes", [])), reverse=True)
+            elif filter_type == "join_date":
+                from datetime import datetime
+                staff_list.sort(
+                    key=lambda x: datetime.strptime(x[1].get("join_date", "01/01/2099"), "%d/%m/%Y")
+                )
+
+        embed = discord.Embed(
+            title="STAFF LIST",
+            description=f"**Total Count : {len(staff_list)}**",
+            colour=0x3100f5
+        )
+
+        roles = {}
+        active_moderators = 0
+        loa_moderators = 0
+
+        for staff_id, info in staff_list:
+            role = info.get("role", "Unknown")
+            mention = f"<@{staff_id}>"
+
+            if role not in roles:
+                roles[role] = []
+            roles[role].append(mention)
+
+            if info.get("LOA"):
+                loa_moderators += 1
+            elif not info.get("higher_staff", False) and not info.get("LOA"):
+                active_moderators += 1
+
+        for role, mentions in roles.items():
+            embed.add_field(
+                name=f"__{role}__ ({len(mentions)})",
+                value="- " + "\n- ".join(mentions),
+                inline=False
+            )
+
+        analysis = f"**Staff Prioritized on Moderation:** {active_moderators}\n**Staffs in LOA:** {loa_moderators}"
+        embed.add_field(name="__ANALYSIS__", value=analysis, inline=False)
+
+        return embed
+
+    except Exception as e:
+        return discord.Embed(
+            title="Error",
+            description=str(e),
+            colour=0xf50000
+        )
+
+
 def StrikeStaff(ctx:commands.Context, staff_id: str, reason: str, ):
     try:
-        with open("src/Management/StaffManagement.json", "r") as data:
+        with open("src/LilyManagement/StaffManagement.json", "r") as data:
             staff_data = json.load(data)
         
         if staff_id in staff_data:
@@ -118,7 +197,7 @@ def StrikeStaff(ctx:commands.Context, staff_id: str, reason: str, ):
     
 def ListStrikes(staff_id: str):
     try:
-         with open("src/Management/StaffManagement.json", "r") as data:
+         with open("src/LilyManagement/StaffManagement.json", "r") as data:
              staff_data = json.load(data)
              strikes = staff_data[staff_id].get("strikes", [])
 
@@ -143,7 +222,7 @@ def ListStrikes(staff_id: str):
 
 def ExportStaffDataAsCSV():
     try:
-        with open("src/Management/StaffManagement.json", "r") as data:
+        with open("src/LilyManagement/StaffManagement.json", "r") as data:
             staff_data = json.load(data)
         flattened_data = []
 
@@ -157,7 +236,9 @@ def ExportStaffDataAsCSV():
                 "Role": staff_info["role"],
                 "Responsibility": staff_info["responsibility"],
                 "Join Date": staff_info["join_date"],
-                "Strikes": strikes_str
+                "Strikes": strikes_str,
+                "LOA" : staff_info["LOA"],
+                "higher_staff" : staff_info["higher_staff"]
             })
 
 
@@ -169,7 +250,7 @@ def ExportStaffDataAsCSV():
     
 def ImportStaffDataFromCSV(df: pd.DataFrame):
     try:
-        with open("src/Management/StaffManagement.json", "r") as file:
+        with open("src/LilyManagement/StaffManagement.json", "r") as file:
             staff_data = json.load(file)
 
         new_staff_data = {}
@@ -190,19 +271,23 @@ def ImportStaffDataFromCSV(df: pd.DataFrame):
                 "role": row["Role"],
                 "responsibility": row["Responsibility"],
                 "join_date": row["Join Date"],
-                "strikes": strikes
+                "strikes": strikes,
+                "LOA" : row["LOA"],
+                "higher_staff" : row["higher_staff"]
+
             }
 
-        with open("src/Management/StaffManagement.json", "w") as file:
+        with open("src/LilyManagement/StaffManagement.json", "w") as file:
             json.dump(new_staff_data, file, indent=2)
 
         return True
     except Exception as e:
+        print(e)
         return False
 
 def AddStaff(staff: discord.Member):
     try:
-        with open("src/Management/StaffManagement.json", "r") as f:
+        with open("src/LilyManagement/StaffManagement.json", "r") as f:
             data = json.load(f)
 
         if staff.id in data:
@@ -214,7 +299,9 @@ def AddStaff(staff: discord.Member):
             "role": staff.top_role.name,
             "responsibility": "NIL",
             "join_date": datetime.now().strftime("%d/%m/%Y"),
-            "strikes": []
+            "strikes": [],
+            "LOA" : False,
+            "higher_staff" : False
         }
 
         with open("src/Management/StaffManagement.json", "w") as f:
@@ -226,7 +313,7 @@ def AddStaff(staff: discord.Member):
     
 def RemoveStaff(staff: discord.Member):
     try:
-        with open("src/Management/StaffManagement.json", "r") as f:
+        with open("src/LilyManagement/StaffManagement.json", "r") as f:
             data = json.load(f)
 
         staff_id = str(staff.id)
@@ -236,7 +323,7 @@ def RemoveStaff(staff: discord.Member):
 
         del data[staff_id]
 
-        with open("src/Management/StaffManagement.json", "w") as f:
+        with open("src/LilyManagement/StaffManagement.json", "w") as f:
             json.dump(data, f, indent=2)
         return True
     except Exception as e:

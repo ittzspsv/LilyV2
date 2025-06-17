@@ -2,6 +2,14 @@
     "ChannelConfig": {
         "fruit_values_channel_id": 1350503093963456603,
         "stock_update_channel_id": 1324581262413004800,
-        "w_or_l_channel_id": 1350503040616235068
+        "w_or_l_channel_id": 1350503040616235068,
+        "combo_channel_id" : 0
+    },
+
+    "LimitedBanConfig" : {
+        "1333123391875584011" : 20,
+        "1348412603701133506" : 10,  
+        "1324581146272595999" : 5,  
+        "1365324107947970700" : 50 
     }
 }

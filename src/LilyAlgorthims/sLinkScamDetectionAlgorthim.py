@@ -1,6 +1,6 @@
 import unicodedata
 from rapidfuzz import fuzz
-import Algorthims.sTradeFormatAlgorthim as TFA
+import LilyAlgorthims.sTradeFormatAlgorthim as TFA
 import re
 
 HIGH_RISK_WORDS = {

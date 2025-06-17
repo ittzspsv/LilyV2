@@ -2,7 +2,7 @@ import json
 import re
 from rapidfuzz import process, fuzz
 import word2number.w2n
-from Algorthims.sTradeFormatAlgorthim import *
+from LilyAlgorthims.sTradeFormatAlgorthim import *
 import word2number
 
 

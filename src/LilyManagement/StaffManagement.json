@@ -1,0 +1,128 @@
+{
+  "895649073082814475": {
+    "name": "Lelouch",
+    "role": "Manager",
+    "responsibility": "NIL",
+    "join_date": "03/01/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": true
+  },
+  "869064913535004753": {
+    "name": "Oblivion",
+    "role": "Manager",
+    "responsibility": "NIL",
+    "join_date": "03/02/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": true
+  },
+  "845511381637529641": {
+    "name": "Shree",
+    "role": "Developer",
+    "responsibility": "NIL",
+    "join_date": "10/01/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": true
+  },
+  "999309816914792630": {
+    "name": "Texio",
+    "role": "Developer",
+    "responsibility": "NIL",
+    "join_date": "30/01/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": true
+  },
+  "980542450579951690": {
+    "name": "No Life Farmer",
+    "role": "Head Moderator",
+    "responsibility": "NIL",
+    "join_date": "17/03/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": false
+  },
+  "1329951007311921212": {
+    "name": "Kai",
+    "role": "Senior Moderator",
+    "responsibility": "NIL",
+    "join_date": "10/01/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": true
+  },
+  "943247996634677339": {
+    "name": "ZZZ",
+    "role": "Senior Moderator",
+    "responsibility": "NIL",
+    "join_date": "13/02/2025",
+    "strikes": [],
+    "LOA": true,
+    "higher_staff": false
+  },
+  "500819371233378304": {
+    "name": "Dave Bluts #1 Fan",
+    "role": "Moderator",
+    "responsibility": "NIL",
+    "join_date": "10/03/2025",
+    "strikes": [],
+    "LOA": true,
+    "higher_staff": false
+  },
+  "1046463804243984384": {
+    "name": "Zytro",
+    "role": "Trial Moderator",
+    "responsibility": "1/3",
+    "join_date": "24/04/2025",
+    "strikes": [],
+    "LOA": true,
+    "higher_staff": false
+  },
+  "958065971048906812": {
+    "name": "Roach",
+    "role": "Moderator",
+    "responsibility": "NIL",
+    "join_date": "18/5/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": false
+  },
+  "1356696971682910305": {
+    "name": "Alone",
+    "role": "Trial Moderator",
+    "responsibility": "NIL",
+    "join_date": "05/06/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": false
+  },
+  "846291028645642270": {
+    "name": "Sung VIN",
+    "role": "Trial Moderator",
+    "responsibility": "NIL",
+    "join_date": "05/06/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": false
+  },
+  "1087641243808432128": {
+    "name": "Forging Viper",
+    "role": "Trial Moderator",
+    "responsibility": "NIL",
+    "join_date": "05/06/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": false
+  },
+  "1333601834769580136": {
+    "name": "Obito Uchiha",
+    "role": "Trial Moderator",
+    "responsibility": "NIL",
+    "join_date": "16/06/2025",
+    "strikes": [],
+    "LOA": false,
+    "higher_staff": false
+  }
+}

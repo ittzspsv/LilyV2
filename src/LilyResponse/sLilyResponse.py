@@ -5,7 +5,7 @@ from rapidfuzz import fuzz
 from functools import lru_cache
 import requests
 
-import Algorthims.sNSFWDetectionAlgorthim as LNSFWDA
+import LilyAlgorthims.sNSFWDetectionAlgorthim as LNSFWDA
 
 
 response_data = []
@@ -40,21 +40,21 @@ def update_response():
     except json.JSONDecodeError as e:
         print(f"JSON Decode error: {e}")
         return False
-    with open("src/Response/LilyResponse.json", "w", encoding="utf-8") as f:
+    with open("src/LilyResponse/LilyResponse.json", "w", encoding="utf-8") as f:
         json.dump(raw_data, f, ensure_ascii=False, indent=4)
     
-    if isinstance(raw_data, list):
-        for entry in raw_data:
-            if "prompt" in entry:
-                entry["prompt"] = [RegexCompile(p) for p in entry["prompt"]]
+
 
     response_data = raw_data
     lily_response_rules = raw_data.get("response-rules", [])
     lilyconfig = raw_data.get("lily-response-config", {})
 
+    if isinstance(lily_response_rules, list):
+        for entry in lily_response_rules:
+            if "prompt" in entry:
+                entry["prompt"] = [RegexCompile(p) for p in entry["prompt"]]
+
     return True
-
-
 
 update_response()
 

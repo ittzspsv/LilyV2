@@ -1,7 +1,7 @@
 import json
 import re
 import Config.sBotDetails as Config
-from Algorthims.sTradeFormatAlgorthim import *
+from LilyAlgorthims.sTradeFormatAlgorthim import *
 from ui.sWinOrLossImageGenerator import *
 
 from PIL import Image
