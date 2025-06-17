@@ -12,7 +12,7 @@ class LilyVouch(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name='vouch', description='Vouch a service handler')
-    async def vouch(self, ctx: commands.Context,  member: discord.Member, note: str = "", received: str = ""):
+    async def vouch(self, ctx: commands.Context,  member: discord.Member, *,note: str = "", received: str = ""):
         if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
             await ctx.send("Server Change!")
             return
