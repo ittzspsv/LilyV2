@@ -113,7 +113,7 @@ class LilyManagement(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
     @commands.hybrid_command(name='export_staff_data', description='exports staff data as a .csv file')
     async def export_staff_data(self, ctx: commands.Context):
         if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
@@ -126,7 +126,7 @@ class LilyManagement(commands.Cog):
 
         await ctx.send("Here is the Source CSV", file=discord.File(csv_buffer, "staff_data.csv"))
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
     @commands.hybrid_command(name='import_staff_data', description='imports staff data as a .csv file')
     async def import_staff_data(self, ctx: commands.Context):
         if ctx.guild.id not in [970643838047760384, 1240215331071594536]:

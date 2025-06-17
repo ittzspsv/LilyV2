@@ -12,7 +12,7 @@ class LilyVouch(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name='vouch', description='Vouch a service handler')
-    async def vouch(ctx: commands.Context,  member: discord.Member, note: str = "", received: str = ""):
+    async def vouch(self, ctx: commands.Context,  member: discord.Member, note: str = "", received: str = ""):
         if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
             await ctx.send("Server Change!")
             return
@@ -36,7 +36,7 @@ class LilyVouch(commands.Cog):
             await ctx.send(embed=vLily.store_vouch(ctx, member, note, received))
 
     @commands.hybrid_command(name='show_vouches', description='displays recent 5 vouches for a  service handler')
-    async def show_vouches(ctx: commands.Context,  member: discord.Member, min:int = 0, max:int = 3):
+    async def show_vouches(self, ctx: commands.Context,  member: discord.Member, min:int = 0, max:int = 3):
         if not member:
             return
 
@@ -46,7 +46,7 @@ class LilyVouch(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles)
     @commands.hybrid_command(name='verify_service_provider', description='if a service provider is trusted then he can be verified')
-    async def verify_service_provider(ctx: commands.Context,  member: discord.Member):
+    async def verify_service_provider(self, ctx: commands.Context,  member: discord.Member):
         if not member:
             await ctx.send(embed=mLily.SimpleEmbed("No Members Passed in!"))
         else:
@@ -54,7 +54,7 @@ class LilyVouch(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles)
     @commands.hybrid_command(name='unverify_service_provider', description='if a service provider is found to be  fraud after verification then he can be un-verified')
-    async def unverify_service_provider(ctx: commands.Context,  member: discord.Member):
+    async def unverify_service_provider(self, ctx: commands.Context,  member: discord.Member):
         if not member:
             await ctx.send(embed=mLily.SimpleEmbed("No Members Passed in!"))
         else:
@@ -62,7 +62,7 @@ class LilyVouch(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles + Config.TrustedStaffRoles)
     @commands.hybrid_command(name='delete_vouch', description='deletes a vouch from mentioned service provider at a particular timeframe')
-    async def delete_vouch(ctx: commands.Context,  member: discord.Member, timestamp_str: str):
+    async def delete_vouch(self, ctx: commands.Context,  member: discord.Member, timestamp_str: str):
         if not member:
             await ctx.send(embed=mLily.SimpleEmbed("No Members Passed in!"))
         else:
