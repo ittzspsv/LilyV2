@@ -74,8 +74,8 @@ def update_response_raw():
 
     return True
 
-#update_response()
-update_response_raw()
+update_response()
+#update_response_raw()
 
 def FuzzyMatch(target_word, words_set, threshold=70):
     for word in words_set:

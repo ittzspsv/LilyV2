@@ -159,8 +159,8 @@ if port == 0:
     seed_gear_stock_channel_id = 1387001376269144116
     eggstock_channel_id = 1387001376269144116
     cosmeticsstock_channel_id = 1387001376269144116
-    gag_value_calculator_channel_id = 1387570115620372583
-    gag_worl_channel_id = 1387570155646746755
+    gag_value_calculator_channel_id = [1387570115620372583]
+    gag_worl_channel_id = [1387570155646746755]
     weatherupdate_channel_id = 1349753791704072313
 
     #GUILD REFERENCE
@@ -203,8 +203,8 @@ else:
     seed_gear_stock_channel_id = 1387001376269144116
     eggstock_channel_id = 1387001376269144116
     cosmeticsstock_channel_id = 1387001376269144116
-    gag_value_calculator_channel_id = 1349753791704072313
-    gag_worl_channel_id = 1387570155646746755
+    gag_value_calculator_channel_id = [1349753791704072313]
+    gag_worl_channel_id = [1387570155646746755]
     weatherupdate_channel_id = 1349753791704072313
 
     #GUILD REFERENCE

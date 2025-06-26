@@ -150,9 +150,9 @@ class MyBot(commands.Bot):
         await self.BotInitialize()
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
-        #handler = StockWebSocket("wss://websocket.joshlei.com/growagarden?user_id=${encodeURIComponent(834771588157517581)}", bot)
-        #syncio.create_task(handler.run())    
-        #await self.tree.sync()
+        handler = StockWebSocket("wss://websocket.joshlei.com/growagarden?user_id=${encodeURIComponent(834771588157517581)}", bot)
+        asyncio.create_task(handler.run())    
+        await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -226,7 +226,7 @@ class MyBot(commands.Bot):
         if int(feature_int) == 0:
                 return
         response_text, channel_id, delete_message, emoji_to_react, medias,whitelist_roles = aiLily.get_response(message.content)
-        if response_text and (message.channel.id == channel_id or re.match(r"^ticket-\d{4}$", message.channel.name)):
+        if response_text and (message.channel.id in channel_id or re.match(r"^ticket-\d{4}$", message.channel.name)):
             if any(role.id in whitelist_roles for role in message.author.roles):
                 return
             response_text = re.sub(r'\{user\.name}', message.author.name, response_text)
@@ -265,13 +265,13 @@ class MyBot(commands.Bot):
                 await message.channel.send(f"{message.author.mention} {response_text}")
                 try:
                     await message.channel.send(giflink)
-                except:
-                    pass
+                except Exception as e:
+                    print(e)
 
     async def on_message(self, message): 
         if message.author == self.user:
               return         
-
+        
         #TEMPORARY FUNCTIONS : WILL BE REMOVED IN THE FUTURE UPDATE
         elif "switch ui mode" in message.content.lower():
             if message.author.id in Config.ids + Config.owner_ids:
@@ -289,8 +289,10 @@ class MyBot(commands.Bot):
                 with open("src/LilyModeration/logchannelid.log", "w") as file:
                     file.write(str(channel_id))
         
-                await message.channel.send(f"Ban log channel ID set to <#{channel_id}>.")     
-                
+                await message.channel.send(f"Ban log channel ID set to <#{channel_id}>.")  
+
+        await bot.RespondProcessor(message) 
+
         await LBFC.MessageEvaluate(self, bot, message)
 
         await LGAG.MessageEvaluate(self, bot, message)
@@ -303,7 +305,7 @@ class MyBot(commands.Bot):
         response_conditions = ["{<hasroll > ? hii : you dont have the role yet}", "{<isuser> ? hii : you dont have the role yet}"]
 
         
-        await bot.RespondProcessor(message)
+        
         await self.process_commands(message)
 
 bot = MyBot()

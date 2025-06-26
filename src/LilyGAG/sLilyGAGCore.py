@@ -326,7 +326,7 @@ def WORL(message:str=None):
 
 async def MessageEvaluate(self, bot, message):
     #Seeds, Pets, Value
-    if message.channel.id == int(Config.gag_value_calculator_channel_id):
+    if message.channel.id in Config.gag_value_calculator_channel_id:
         try:
             type, Data = ParserType(message.content.lower())
             if type == "SeedType":
@@ -372,7 +372,7 @@ async def MessageEvaluate(self, bot, message):
         except Exception as e:
             await message.delete()  
     
-    elif message.channel.id == int(Config.gag_worl_channel_id):
+    elif message.channel.id in Config.gag_worl_channel_id:
             org_message = await message.reply("Thinking...")
             outcome_data, your_side_items, your_side_values, their_side_items, their_side_values = WORL(message.content.lower())
             if your_side_items and their_side_items:
