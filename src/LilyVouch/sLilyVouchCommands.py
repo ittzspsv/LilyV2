@@ -11,15 +11,9 @@ class LilyVouch(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.cooldown(rate=1, per=160, type=commands.BucketType.user)
     @commands.hybrid_command(name='vouch', description='Vouch a service handler')
     async def vouch(self, ctx: commands.Context,  member: discord.Member, *,note: str = "", received: str = ""):
-        if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
-            await ctx.send("Server Change!")
-            return
-        if ctx.author.id not in Config.ids:
-            if ctx.guild.id != 970643838047760384:
-                await ctx.send("Commands Disabled! Due to Server Change")
-                return
         if not member:
             pass
         elif member == ctx.author:
@@ -35,6 +29,7 @@ class LilyVouch(commands.Cog):
                 return 
             await ctx.send(embed=vLily.store_vouch(ctx, member, note, received))
 
+    @commands.cooldown(rate=1, per=160, type=commands.BucketType.user)
     @commands.hybrid_command(name='show_vouches', description='displays recent 5 vouches for a  service handler')
     async def show_vouches(self, ctx: commands.Context,  member: discord.Member, min:int = 0, max:int = 3):
         if not member:

@@ -1,6 +1,7 @@
 import json
 import websockets
 import Config.sBotDetails as Config
+import discord
 
 class StockWebSocket:
     def __init__(self, url, bot):
@@ -30,8 +31,9 @@ class StockWebSocket:
 
     async def on_close(self, ws, code, msg):
         print(f"SocketClosed: {code}, {msg}")
-
+    
     async def GAGEndPointParser(self, bot, data):
+        guild = bot.get_guild(Config.GUILD_ID)
         data = json.loads(data)
 
         sections = [
@@ -47,6 +49,7 @@ class StockWebSocket:
 
         #SEED STOCK
         seedstock = parsed["seed_stock"]
+        pings = []
         if seedstock:
             longest_name = max(len(item["display_name"]) for item in seedstock)
             formatted_lines = [
@@ -54,7 +57,13 @@ class StockWebSocket:
                 for item in seedstock
             ]
             seedstock_format_string = "\n".join(formatted_lines)
-            await bot.PostStock("SEED STOCK", seedstock_format_string, Config.seed_gear_stock_channel_id)
+            pings = []
+            for items in seedstock:
+                role = discord.utils.get(guild.roles, name=items["display_name"])
+                if role:
+                    pings.append(role.mention)
+
+            await bot.PostStock("SEED STOCK", seedstock_format_string, Config.seed_gear_stock_channel_id, pings)
 
         #GEAR STOCK
         gearstock = parsed["gear_stock"]
@@ -65,7 +74,12 @@ class StockWebSocket:
                 for item in gearstock
             ]
             gearstock_format_string = "\n".join(formatted_lines)
-            await bot.PostStock("GEAR STOCK", gearstock_format_string, Config.seed_gear_stock_channel_id)
+            pings = []
+            for items in gearstock:
+                role = discord.utils.get(guild.roles, name=items["display_name"])
+                if role:
+                    pings.append(role.mention)
+            await bot.PostStock("GEAR STOCK", gearstock_format_string, Config.seed_gear_stock_channel_id, pings)
 
         #EGG STOCK
         eggstock = parsed["egg_stock"]
@@ -87,15 +101,22 @@ class StockWebSocket:
                 for item in cosmeticsshop
             ]
             cosmeticsshop_format_string = "\n".join(formatted_lines)
-            await bot.PostStock("COSMETICS STOCK", cosmeticsshop_format_string, Config.cosmeticsstock_channel_id)
-        print(parsed['weather'])
+            pings = []
+            for items in cosmeticsshop:
+                role = discord.utils.get(guild.roles, name=items["display_name"])
+                if role:
+                    pings.append(role.mention)
+            await bot.PostStock("COSMETICS STOCK", cosmeticsshop_format_string, Config.cosmeticsstock_channel_id, pings)
 
         #WEATHER INFO
+        pings = []
         weatherinfo = parsed["weather"]
         if weatherinfo:
-            active_weather = [w for w in weatherinfo if w.get('active')]
             for w in weatherinfo:
                 if w.get('active'):
                     name = w['weather_name']
-                    await bot.PostStock(name, "", Config.weatherupdate_channel_id)
+                    role = discord.utils.get(guild.roles, name=name)
+                    if role:
+                        pings.append(role.mention)
+                    await bot.PostStock(name, "", Config.weatherupdate_channel_id, pings)
         

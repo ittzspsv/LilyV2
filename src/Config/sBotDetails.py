@@ -163,6 +163,9 @@ if port == 0:
     gag_worl_channel_id = 1387570155646746755
     weatherupdate_channel_id = 1349753791704072313
 
+    #GUILD REFERENCE
+    GUILD_ID = 1240215331071594536
+
 else:
     # PRODUCTION SERVER SETTINGS (BLOXTRADE)
     TRADE_EMOJI_ID = ["1324867813067984986", "1039668628561342504"]
@@ -178,7 +181,8 @@ else:
         1333123391875584011 : 20, #HEAD MODERATOR
         1348412603701133506 : 10,  #SENIOR MODERATOR
         1324581146272595999 : 5,  #MODERATORS
-        1365324107947970700 : 50 #MANAGER
+        1365324107947970700 : 50, #MANAGER
+        1351867043393044551 : 50 #DEVELOPER
     }
 
     service_manager_roll_id = 1333123391875584011 #CURRENTLY HEAD MODERATORS
@@ -201,8 +205,10 @@ else:
     cosmeticsstock_channel_id = 1387001376269144116
     gag_value_calculator_channel_id = 1349753791704072313
     gag_worl_channel_id = 1387570155646746755
-
     weatherupdate_channel_id = 1349753791704072313
+
+    #GUILD REFERENCE
+    GUILD_ID = 0
 
 # Embed colors based on item type
 embed_color_codes = {
@@ -228,7 +234,7 @@ staff_manager_role_id = 1365324107947970700
 #ROLES
 
 async def update_config_data():
-    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles
+    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles,seed_gear_stock_channel_id, eggstock_channel_id,cosmeticsstock_channel_id,gag_value_calculator_channel_id,gag_worl_channel_id,weatherupdate_channel_id,GUILD_ID
     url = 'https://ittzspsv.github.io/LilyV2-Configs/LilyConfig.json'
 
     async with aiohttp.ClientSession() as session:
@@ -248,6 +254,19 @@ async def update_config_data():
                 DeveloperRoles = data['Roles']['DeveloperRoles']
                 OwnerRoles = data['Roles']['OwnerRoles']
                 BlacklistedRoles = data['Roles']['BlacklistedRoles']
+
+                #CHANNELS -- GAG
+                seed_gear_stock_channel_id = data['GAGChannels']['seed_gear_stock_channel_id']
+                eggstock_channel_id = data['GAGChannels']['eggstock_channel_id']
+                cosmeticsstock_channel_id = data['GAGChannels']['cosmeticsstock_channel_id']
+                gag_value_calculator_channel_id = data['GAGChannels']['gag_value_calculator_channel_id']
+                gag_worl_channel_id = data['GAGChannels']['gag_worl_channel_id']
+                weatherupdate_channel_id = data['GAGChannels']['weatherupdate_channel_id']
+
+                #GUILD REFERENCE
+                GUILD_ID = data['Guilds']['GAGGuildID']
+
+
                 return "Success"
             except Exception as e:
                 return f'Failure: {e}'

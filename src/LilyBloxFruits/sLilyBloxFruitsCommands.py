@@ -186,11 +186,9 @@ class LilyBloxFruits(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
-    @commands.hybrid_command(name='modify_combo_config', description='updates the combo config with desired input attached')
-    async def modify_combo_config(self, ctx, file_name: str):
-        dir_path = "src/Config/JSONData"
+    @commands.hybrid_command(name='modify_games_config', description='updates the game config with desired input attached')
+    async def modify_games_config(self, ctx,file_name: str, *,dir_path:str):
         full_path = os.path.join(dir_path, file_name)
         if not os.path.isfile(full_path):
             await ctx.send(f"File {file_name} not found")
@@ -214,5 +212,14 @@ class LilyBloxFruits(commands.Cog):
             await ctx.send(f"Successfully updated Combo Contents")
         except Exception as e:
             await ctx.send(f"Exception {e}")
+    
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @commands.hybrid_command(name='load_combo_data', description='reloads combo data if any changes is done')
+    async def load_combo_data(self, ctx):
+        try:
+            LCM.LoadComboData()
+            await ctx.send("Success!")
+        except Exception as e:
+            await ctx.send(e)
 async def setup(bot):
     await bot.add_cog(LilyBloxFruits(bot))

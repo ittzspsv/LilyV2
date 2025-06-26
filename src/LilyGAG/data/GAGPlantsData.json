@@ -36,7 +36,6 @@
   { "name": "Cursed Fruit",     "weightDivisor": 30,    "baseValue": 25750 },
   { "name": "Mega Mushroom",    "weightDivisor": 70,    "baseValue": 500 },
   { "name": "Cherry Blossom",   "weightDivisor": 3,     "baseValue": 500 },
-  { "name": "Purple Cabbage",   "weightDivisor": 5,     "baseValue": 500 },
   { "name": "Lemon",            "weightDivisor": 1,     "baseValue": 350 },
   { "name": "Pear",             "weightDivisor": 3,     "baseValue": 500 },
   { "name": "Pink Tulip",       "weightDivisor": 0.05,  "baseValue": 850 },
@@ -53,7 +52,6 @@
   { "name": "Starfruit",        "weightDivisor": 3,     "baseValue": 15000 },
   { "name": "Moonglow",         "weightDivisor": 7,     "baseValue": 25000 },
   { "name": "Moon Blossom",     "weightDivisor": 3,     "baseValue": 66666 },
-  { "name": "Crimson Vine",     "weightDivisor": 1,     "baseValue": 1250 },
   { "name": "Moon Melon",       "weightDivisor": 8,     "baseValue": 18000 },
   { "name": "Blood Banana",     "weightDivisor": 1.5,   "baseValue": 6000 },
   { "name": "Celestiberry",     "weightDivisor": 2,     "baseValue": 10000 },
@@ -81,12 +79,9 @@
   { "name": "Bee Balm",        "weightDivisor": 1,     "baseValue": 18000 },
   { "name": "Nectar Thorn",    "weightDivisor": 7,     "baseValue": 44444 },
   { "name": "Suncoil",           "weightDivisor": 10,    "baseValue": 80000 },
-  { "name": "Noble Flower",      "weightDivisor": 5,     "baseValue": 20000 },
   { "name": "Elephant Ears",     "weightDivisor": 15,    "baseValue": 20000 },
-  { "name": "Traveler's Fruit",  "weightDivisor": 2,     "baseValue": 20000 },
   { "name": "Parasol Flower",    "weightDivisor": 2,     "baseValue": 25000 },
   { "name": "Prickly Pear",      "weightDivisor": 3,     "baseValue": 5000 },
   { "name": "Green Apple",       "weightDivisor": 3,     "baseValue": 3500 },
-  { "name": "Loquat",            "weightDivisor": 3,     "baseValue": 5000 },
-  { "name": "Ice Cream Bean",    "weightDivisor": 4,     "baseValue": 4500 }
+  { "name": "Loquat",            "weightDivisor": 3,     "baseValue": 5000 }
 ]

@@ -150,9 +150,9 @@ class MyBot(commands.Bot):
         await self.BotInitialize()
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
-        #handler = StockWebSocket("wss://websocket.joshlei.com/growagarden?user_id=${encodeURIComponent(834771588157517581)}", bot)
-        #asyncio.create_task(handler.run())    
-        #await self.tree.sync()
+        handler = StockWebSocket("wss://websocket.joshlei.com/growagarden?user_id=${encodeURIComponent(834771588157517581)}", bot)
+        asyncio.create_task(handler.run())    
+        await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -190,12 +190,12 @@ class MyBot(commands.Bot):
     async def is_user(self, user, user_id):
         return user.id == int(user_id)  
 
-    async def PostStock(self, stock_type, stock_msg: str, channel_id):
+    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings=[]):
         embed = discord.Embed(title=stock_type,
                       description=stock_msg, colour=0x2b00ff)
         channel = self.get_channel(channel_id)
         try:
-            await channel.send(embed=embed)
+            await channel.send(embed=embed, content=" ".join(pings))
         except:
             return
 

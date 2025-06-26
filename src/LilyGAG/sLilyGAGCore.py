@@ -3,7 +3,8 @@ import os
 import re
 from rapidfuzz import process, fuzz
 import discord
-from discord.ext import commands
+from io import BytesIO
+import ui.sWinOrLossImageGenerator as LilyWORLGen
 try:
     import Config.sBotDetails as Config
 except:
@@ -50,8 +51,31 @@ def price_formatter(value):
         else:
             return str(int(value)) 
 
+def value_parser(value_with_suffix):
+    chars = list(value_with_suffix)
+    num = float(''.join(chars[:-1]))
+    suffix = chars[-1].lower()
+    multiplier = 1
+
+    for s in ('k','m','b','t'):
+        if suffix == s:
+            if s == 'k':
+                multiplier = 10**3
+            elif s == 'm':
+                multiplier = 10**6
+            elif s == 'b':
+                multiplier = 10**9
+            elif s == 't':
+                multiplier = 10**12
+            break
+
+    return int(num * multiplier)
+
 def GAGMessageParser(sentence, threshold=75):
     parser = sentence.split()
+    sheckle_value = re.findall(r'\b(\d+(?:\.\d+)?[kKmMbBtT])\b', sentence)
+    if sheckle_value:
+        return ("Candy Blossom", "", tuple(), "", "", 1, value_parser(sheckle_value[0])), []
     plant_names = [item["name"] for item in Data["PlantsData"]]
     best_match = process.extractOne(sentence, plant_names, scorer=fuzz.partial_ratio)
 
@@ -88,7 +112,7 @@ def GAGMessageParser(sentence, threshold=75):
             fruit_type = fruittype
             break
 
-    return (fruit_name, weight, tuple(mutations_found), fruit_type, quantity), best_match
+    return (fruit_name, weight, tuple(mutations_found), fruit_type, quantity, 0, 0), best_match
 
 def GAGPetMessageParser(sentence, threshold=75):
     parser = sentence.split()
@@ -129,17 +153,22 @@ def ParserType(sentence):
     seed_Data, fuzzresultant = GAGMessageParser(sentence)
     pet_Data, secondary_fuzzresultant = GAGPetMessageParser(sentence)
 
-    if seed_Data[0] != None and (fuzzresultant[1] > secondary_fuzzresultant[1]):
+    if seed_Data[-2] == 1 and seed_Data[-1]:
+        print(seed_Data[-1])
+        return "SeedType", seed_Data
+    elif seed_Data[0] != None and (fuzzresultant[1] > secondary_fuzzresultant[1]):
         return "SeedType", seed_Data
     elif pet_Data['name'] != None and ((fuzzresultant[1] < secondary_fuzzresultant[1])):
-        return "PetType", pet_Data
+        return "PetType", pet_Data,
     else:
         return "None", {}
 
         
 def GAGValue(fruit_data):
     url = "https://api.joshlei.com/v2/growagarden/calculate"
-    name, weight, mutations, variant, quantity = fruit_data
+    name, weight, mutations, variant, quantity, shecklebool, sheckles = fruit_data
+    if shecklebool == 1:
+        return {'value' : int(sheckles), "Name": str(name),"Weight": str(weight),"Variant": str(variant),"Mutation": ",".join(mutations) if mutations else ""}, 1
     params = {
         "Name": str(name),
         "Weight": str(weight),
@@ -153,10 +182,47 @@ def GAGValue(fruit_data):
         return response_data, quantity
     
 def GAGPetValue(pet_data):
+    #-------------------MATH FUNCTION STARTS----------------------#
+    def interpolate(value, in_min, in_max, out_min, out_max):
+        return out_min + (value - in_min) * (out_max - out_min) / (in_max - in_min)
+
+    def age_factor(age):
+        if age <= 39:
+            return interpolate(age, 0, 39, 0.00001, 0.001)
+        elif age <= 55:
+            return interpolate(age, 45, 55, 0.5, 0.5)
+        elif age <= 100:
+            return interpolate(age, 65, 100, 0.95, 1.0)
+        else:
+            return 1.0
+
+    def weight_factor(weight):
+        if weight <= 9:
+            return interpolate(weight, 0, 9, 0.00001, 0.001)
+        elif weight <= 15:
+            return interpolate(weight, 10, 15, 0.75, 0.8)
+        elif weight <= 20:
+            return interpolate(weight, 16, 20, 0.85, 0.95)
+        elif weight <= 30:
+            return interpolate(weight, 21, 30, 0.95, 1.0)
+        else:
+            return 1.0
+
+    def compute_value(min_value, max_value, age, weight):
+        a_factor = age_factor(age)
+        w_factor = weight_factor(weight)
+
+        value = interpolate(a_factor * w_factor, 0, 1, min_value, max_value)
+
+        if age == 100 and weight == 30:
+            value *= interpolate(1, 0, 1, 1.5, 1.7)
+
+        return value
+    #-----------MATH FUNCTION ENDS------------------------#
     try:
         pet_value = Data["PetValueData"][pet_data['name']]
         pet_value = pet_value[0].replace(",", "")
-        return int(pet_value)
+        return compute_value(int(Data["PetValueData"][pet_data['name']][0].replace(",", "")), int(Data["PetValueData"][pet_data['name']][1].replace(",", "")), int(pet_data['age']), float(pet_data['weight']))
     except Exception as e:
         print(e)
         return 0
@@ -210,63 +276,73 @@ def WORL(message:str=None):
     else:
         return {"outcome": "Fair", "percentage": 0.0}, your_side_items, your_side_values, their_side_items, their_side_values
 
-
 async def MessageEvaluate(self, bot, message):
     #Seeds, Pets, Value
     if message.channel.id == int(Config.gag_value_calculator_channel_id):
         try:
-            data, quantity = GAGValue(GAGMessageParser(message.content.lower()))
-            embed = discord.Embed(title=f"VALUE :  {price_formatter(int(data['value']) * quantity)}",
-                        colour=0x1000f5)
+            type, Data = ParserType(message.content.lower())
+            if type == "SeedType":
+                data, quantity = GAGValue(Data)
+                name = Data["Name"].replace(" ", "_")
+                img_path = next((f"src/ui/GAG/{name}.{ext}" for ext in ["png", "webp"] if os.path.exists(f"src/ui/GAG/{name}.{ext}")), None)
+                embed = discord.Embed(title=f"VALUE :  {price_formatter(int(data['value']) * quantity)}",
+                            colour=0x1000f5)
 
-            embed.set_author(name="BloxTrade | Grow a Garden Calculator")
+                embed.set_author(name="BloxTrade")
+                embed.set_thumbnail(url="attachment://image.png")
+                embed.add_field(name="Name",
+                                value=data['Name'],
+                                inline=False)
+                embed.add_field(name="Weight",
+                                value=f"{data['Weight']}kg",
+                                inline=False)
+                embed.add_field(name="Variant",
+                                value=data["Variant"],
+                                inline=False)
+                embed.add_field(name="Mutation",
+                                value=data['Mutation'],
+                                inline=False)
 
-            embed.add_field(name="Name",
-                            value=data['Name'],
-                            inline=False)
-            embed.add_field(name="Weight",
-                            value=f"{data['Weight']}kg",
-                            inline=False)
-            embed.add_field(name="Variant",
-                            value=data["Variant"],
-                            inline=False)
-            embed.add_field(name="Mutation",
-                            value=data['Mutation'],
-                            inline=False)
-
-            await message.reply(embed=embed)
-        except:
-            await message.delete()
+            elif type == "PetType":
+                pet_value = GAGPetValue(Data)
+                name = Data["name"].replace(" ", "_")
+                img_path = next((f"src/ui/GAG/{name}.{ext}" for ext in ["png", "webp"] if os.path.exists(f"src/ui/GAG/{name}.{ext}")), None)
+                embed = discord.Embed(title=f"VALUE :  {price_formatter(int(pet_value) * 1)}",
+                            colour=0x1000f5)
+                embed.set_author(name="BloxTrade")
+                embed.set_thumbnail(url="attachment://image.png")
+                embed.add_field(name="Name",
+                                value=Data['name'],
+                                inline=False)
+                embed.add_field(name="Weight",
+                                value=f"{Data['weight']}kg",
+                                inline=False)
+                embed.add_field(name="Age",
+                                value=f"{Data['age']} yrs old",
+                                inline=False)
+            await message.reply(embed=embed, file=discord.File(img_path, filename="image.png"))
+        except Exception as e:
+            await message.delete()  
+    
     elif message.channel.id == int(Config.gag_worl_channel_id):
-        try:
+            org_message = await message.reply("Thinking...")
             outcome_data, your_side_items, your_side_values, their_side_items, their_side_values = WORL(message.content.lower())
-            your_side_items_string = ""
-            their_side_item_string = ""
+            if your_side_items and their_side_items:
+                your_side_items  = [items.replace(" ", "_").title() for items in your_side_items]
+                their_side_items  = [items.replace(" ", "_").title() for items in their_side_items]
+                winorlossorfair = 0
+                if outcome_data['outcome'] == 'Win':
+                    winorlossorfair = 0
+                elif outcome_data['outcome'] == 'Loss':
+                    winorlossorfair = 1
+                else:
+                    winorlossorfair = 2
+                generated_img = LilyWORLGen.GAGGenerateWORLImage(your_side_items, your_side_values, their_side_items, their_side_values, outcome_data['outcome'].title(), f"Your Trade is an {outcome_data['outcome'].title()}", outcome_data['percentage'], winorlossorfair)
+                img_buffer = BytesIO()
+                generated_img.save(img_buffer, format="PNG")
+                img_buffer.seek(0)
 
-            for items, values in zip(your_side_items, your_side_values):
-                your_side_items_string += f"- {items} : {price_formatter(values)}\n"
-            for items, values in zip(their_side_items, their_side_values):
-                their_side_item_string += f"- {items} : {price_formatter(int(values))}\n"
-            outcome_caliber = ""
-            if outcome_data['outcome'] == 'Loss':
-                outcome_caliber = f"Its an Loss you lose {outcome_data['percentage']}"
-            elif outcome_data['outcome'] == 'Fair':
-                outcome_caliber = f"Its an Fair offer"
-            else:
-                outcome_caliber = f"Its a Win.  You gain {outcome_data['percentage']}%"
+                file = discord.File(img_buffer, filename="trade.png")
 
-            embed = discord.Embed(title=outcome_caliber,
-                        colour=0x5600f5)
-
-            embed.set_author(name="BloxTrade | Grow a garden values")
-
-            embed.add_field(name="Your Items",
-                            value=your_side_items_string,
-                            inline=False)
-            embed.add_field(name="Their Items",
-                            value=their_side_item_string,
-                            inline=False)
-            await message.reply(embed=embed)
-        except:
-            await message.delete()
+                await org_message.edit(content="", attachments=[file])
         

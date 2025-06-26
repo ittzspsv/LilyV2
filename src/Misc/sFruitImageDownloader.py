@@ -5,14 +5,14 @@ import sFruitImageFetcher as FIF
 
 '''
 items = []
-with open("src/Config/JSONData/FightingStyleData.json", "r") as file:
+with open("src/LilyGAG/data/GAGPlantsData.json", "r") as file:
     value_data = json.load(file)
-    for i, j in value_data.items():
-        inew = i.replace(" ", "_")
-        items.append(inew)
+
+    for dictionary in value_data:
+        items.append(dictionary["name"].replace(" ", "_"))
 
 
-save_directory = "src/ui/fighting_styles"
+save_directory = "src/ui/GAG/plants"
 os.makedirs(save_directory, exist_ok=True)
 
 for fruit in items:
@@ -36,14 +36,15 @@ for fruit in items:
     except Exception as e:
         print(f"Error processing {fruit}: {e}")
 
+'''
+'''
+response = requests.get("https://static.wikia.nocookie.net/growagarden/images/7/7a/Queen_bee.png/")
 
-'''
-'''
-response = requests.get("https://mir-s3-cdn-cf.behance.net/project_modules/fs_webp/ddc87f211393119.682355b86af96.png")
 
 if response.status_code == 200:
-    with open("downloaded_image.png", "wb") as file:
+    with open("Queen_Bee.png", "wb") as file:
         file.write(response.content)
     print("Image downloaded successfully!")
 else:
-    print(f"Failed to download image. Status code: {response.status_code}")'''
+    print(f"Failed to download image. Status code: {response.status_code}")
+'''
