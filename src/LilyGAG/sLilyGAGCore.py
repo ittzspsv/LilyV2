@@ -331,7 +331,7 @@ async def MessageEvaluate(self, bot, message):
             type, Data = ParserType(message.content.lower())
             if type == "SeedType":
                 data, quantity = GAGValue(Data)
-                name = Data["Name"].replace(" ", "_")
+                name = Data[0].replace(" ", "_")
                 img_path = next((f"src/ui/GAG/{name}.{ext}" for ext in ["png", "webp"] if os.path.exists(f"src/ui/GAG/{name}.{ext}")), None)
                 embed = discord.Embed(title=f"VALUE :  {price_formatter(int(data['value']) * quantity)}",
                             colour=0x1000f5)
