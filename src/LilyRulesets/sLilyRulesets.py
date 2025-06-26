@@ -15,7 +15,7 @@ def PermissionEvaluator(PermissionType: str = "Role",RoleAllowed=None,RoleBlackl
             raise commands.CheckFailure(f"User Blacklist Exception: User ID {user_id}")
 
         if any(role_id in user_role_ids for role_id in role_blacklisted):
-            raise commands.CheckFailure(f"Role Blacklist Exception: Role ID in blacklist")
+            raise commands.CheckFailure(f"Exception: Missing Permissions : errno 77777")
 
         if PermissionType.lower() == "role":
             if any(role_id in user_role_ids for role_id in role_allowed):
@@ -40,9 +40,14 @@ def PermissionEvaluator(PermissionType: str = "Role",RoleAllowed=None,RoleBlackl
 
     return commands.check(predicate)
 
-def rPermissionEvaluator(ctx,PermissionType: str = "Role",RoleAllowed: list = [],RoleBlacklisted: list = [],UserAllowed: list = [],UserBlacklisted: list = []):
+def rPermissionEvaluator(ctx,PermissionType: str = "Role",RoleAllowed = [],RoleBlacklisted = [],UserAllowed = [],UserBlacklisted = []):
     user_id = ctx.author.id
     user_role_ids = {role.id for role in ctx.author.roles}
+    
+    RoleAllowed = RoleAllowed() if callable(RoleAllowed) else RoleAllowed
+    RoleBlacklisted = RoleBlacklisted() if callable(RoleBlacklisted) else RoleBlacklisted
+    UserAllowed = UserAllowed() if callable(UserAllowed) else UserAllowed
+    UserBlacklisted = UserBlacklisted() if callable(UserBlacklisted) else UserBlacklisted
 
     if user_id in UserBlacklisted:
         return False

@@ -49,7 +49,6 @@ def fetch_all_fruits():
     return value_data
 
 
-
 def calculate_win_loss(my_value, opponent_value, Type=0):
     try:
         my_value = float(my_value)

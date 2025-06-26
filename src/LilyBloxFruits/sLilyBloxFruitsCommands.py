@@ -189,7 +189,7 @@ class LilyBloxFruits(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
     @commands.hybrid_command(name='modify_combo_config', description='updates the combo config with desired input attached')
-    async def modify_combo_config(ctx, file_name: str):
+    async def modify_combo_config(self, ctx, file_name: str):
         dir_path = "src/Config/JSONData"
         full_path = os.path.join(dir_path, file_name)
         if not os.path.isfile(full_path):

@@ -56,7 +56,26 @@ def update_response():
 
     return True
 
-update_response()
+def update_response_raw():
+    global response_data, lilyconfig, lily_response_rules
+    with open("src/LilyResponse/LilyResponse.json", "r", encoding="utf-8") as f:
+        raw_data = json.load(f)
+    
+
+
+    response_data = raw_data
+    lily_response_rules = raw_data.get("response-rules", [])
+    lilyconfig = raw_data.get("lily-response-config", {})
+
+    if isinstance(lily_response_rules, list):
+        for entry in lily_response_rules:
+            if "prompt" in entry:
+                entry["prompt"] = [RegexCompile(p) for p in entry["prompt"]]
+
+    return True
+
+#update_response()
+update_response_raw()
 
 def FuzzyMatch(target_word, words_set, threshold=70):
     for word in words_set:
@@ -71,7 +90,7 @@ def get_response(input_string):
         input_string = LNSFWDA.normalize_text(input_string)
         input_string = input_string.strip().lower()
     if not input_string:
-        return "", 0, "", "","",""
+        return "", 0, "", "", "", ""
 
     words = set(word for word in re.split(r'\s+|[,;?!.\-]\s*', input_string) if word)
 
@@ -81,30 +100,42 @@ def get_response(input_string):
     for response in lily_response_rules:
         required = response.get("required_words", [])
         neglect = response.get("neglect_words", [])
-        compiled_prompts = response.get("prompt", [])
 
         if any(FuzzyMatch(neg, words, lilyconfig['string_matching_influence']) for neg in neglect):
             continue
 
-        if 'lily-syntax-any' in required:
-            filtered = [r for r in required if r != 'lily-syntax-any']
-            if filtered and not any(FuzzyMatch(req, words, lilyconfig['string_matching_influence']) for req in filtered):
-                continue
-        else:
-            if required and not all(FuzzyMatch(req, words, lilyconfig['string_matching_influence']) for req in required):
-                continue
-        score = 0
-        for pattern in compiled_prompts:
-            if isinstance(pattern, str):
-                if FuzzyMatch(pattern, words, lilyconfig['string_matching_influence']):
-                    score += 1
-            elif pattern:
-                matched = pattern.search(input_string)
-                if not matched:
-                    matched = any(FuzzyMatch(pattern.pattern, word, lilyconfig['string_matching_influence']) for word in words)
-                if matched:
-                    score += 1
+        if required and not all(FuzzyMatch(req, words, lilyconfig['string_matching_influence']) for req in required):
+            continue
 
+        compiled_prompts = response.get("prompt", [])
+
+        direct_match = False
+        for pattern in compiled_prompts:
+            if not isinstance(pattern, str): 
+                if pattern.search(input_string): 
+                    direct_match = True
+                    break
+
+        if direct_match:
+            score = 1000
+        else:
+            match_count = 0
+            total_patterns = len(compiled_prompts)
+
+            for pattern in compiled_prompts:
+                if isinstance(pattern, str):
+                    if FuzzyMatch(pattern, words, lilyconfig['string_matching_influence']):
+                        match_count += 1
+                else:
+                    matched = any(FuzzyMatch(pattern.pattern, word, lilyconfig['string_matching_influence'])
+                                  for word in words)
+                    if matched:
+                        match_count += 1
+
+            if total_patterns > 0:
+                if match_count < (total_patterns / 2.0):
+                    continue
+            score = match_count
         if score > best_score:
             best_match = response
             best_score = score
@@ -118,5 +149,4 @@ def get_response(input_string):
             best_match["media"],
             best_match["whitelist_roles"]
         )
-
-    return "", 0, "", "","",""
+    return "", 0, "", "", "", ""

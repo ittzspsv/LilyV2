@@ -10,3 +10,5 @@ word2number
 meta_ai_api
 lxml_html_clean
 flashtext
+websocket-client
+python-dotenv

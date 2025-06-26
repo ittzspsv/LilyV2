@@ -28,11 +28,11 @@ class LilyUtility(commands.Cog):
         role_priority = assignable_roles[role_id_str].lower()
 
         if role_priority == "low":
-            if not rPermissionEvaluator(ctx, RoleAllowed=Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles + Config.TrustedStaffRoles):
+            if not rPermissionEvaluator(ctx, RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles + Config.TrustedStaffRoles):
                     await ctx.reply("You are not allowed to assign role.")
                     return
         elif role_priority == "high":
-            if not rPermissionEvaluator(ctx, RoleAllowed=Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=Config.BlacklistedRoles):
+            if not rPermissionEvaluator(ctx, RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles):
                     await ctx.reply("You are not allowed to give high priority roles")
                     return
         else:
@@ -50,7 +50,7 @@ class LilyUtility(commands.Cog):
         try:
             await user.add_roles(role, reason=f"Assigned by {ctx.author}")
             await ctx.reply(f"Assigned {role.name} to {user.display_name}.")
-            await self.bot.WriteLog(ctx, ctx.author.id, f"Assigned <@&{role.id}> to {user.display_name}.")
+            await LilyLogging.WriteLog(ctx, ctx.author.id, f"Assigned <@&{role.id}> to {user.display_name}.")
         except discord.Forbidden:
             await ctx.reply("I don't have permission to assign that role.")
         except Exception as e:
@@ -69,11 +69,11 @@ class LilyUtility(commands.Cog):
         role_priority = assignable_roles[role_id_str].lower()
 
         if role_priority == "low":
-            if rPermissionEvaluator(RoleAllowed=Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles + Config.TrustedStaffRoles):
+            if not rPermissionEvaluator(ctx, RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles + Config.TrustedStaffRoles):
                 await ctx.reply("You are not allowed to remove this role.", ephemeral=True)
                 return
         elif role_priority == "high":
-            if rPermissionEvaluator(RoleAllowed=Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=Config.BlacklistedRoles):
+            if not rPermissionEvaluator(ctx, RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles):
                 await ctx.reply("You are not allowed to remove this high-priority role.", ephemeral=True)
                 return
         else:
@@ -90,12 +90,11 @@ class LilyUtility(commands.Cog):
         try:
             await user.remove_roles(role, reason=f"Removed by {ctx.author}")
             await ctx.reply(f"Removed {role.name} from {user.display_name}.")
-            await self.bot.WriteLog(ctx, ctx.author.id, f"Removed <@&{role.id}> from {user.display_name}.")
+            await LilyLogging.WriteLog(ctx, ctx.author.id, f"Removed <@&{role.id}> from {user.display_name}.")
         except discord.Forbidden:
             await ctx.reply("I don't have permission to remove that role.")
         except Exception as e:
             await ctx.reply(f"An error occurred: {e}")
-
 
     class Priority(str, Enum):
         low = "low"
@@ -115,11 +114,11 @@ class LilyUtility(commands.Cog):
                     await Config.save_roles(ctx, role.id, priority.value)
                     await ctx.reply(f"Added Role {role.name} to assignables with {priority.value} priority.")
                 except Exception as e:
-                    await ctx.reply(f"Failed to save role with exception: `{e}`")
+                    await ctx.reply(f"Failed to save role with exception: {e}")
             else:
                 await ctx.reply(f"Role {role.name} already exists in assignables.")
         except Exception as e:
-            await ctx.reply(f"Unhandled Exception: `{e}`", ephemeral=True)
+            await ctx.reply(f"Unhandled Exception: {e}", ephemeral=True)
 
 
     ''' UNCOMMENTED NOT IN USE
@@ -190,7 +189,7 @@ class LilyUtility(commands.Cog):
     # MESSAGING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
     @commands.hybrid_command(name='direct_message', description='direct messages using the bot')
-    async def dm(ctx, user: discord.User, *, message: str):
+    async def dm(self, ctx, user: discord.User, message: str): 
         try:
             embed = discord.Embed(title=f"Message from {ctx.author.name}",description=f"{message}",
                         colour=0xf500b4)
@@ -200,7 +199,6 @@ class LilyUtility(commands.Cog):
             await ctx.send(f"Exception Type Forbidden {e}")
         except Exception as e:
             await ctx.send(f"Exception {e}")
-
 
 
     # SLASH COMMAND SYNCING UTILITY
@@ -239,6 +237,14 @@ class LilyUtility(commands.Cog):
             await ctx.send(embed=embed)
             asyncio.sleep(0.5)
 
+
+    #UID UTILITY
+    @commands.hybrid_command(name='id', description='returns the id of a specific usertype')
+    async def id(self, ctx:commands.Context, user:discord.Member=None):
+        if user== None:
+            await ctx.send(ctx.author.id)
+        else:
+            await ctx.send(user.id)
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

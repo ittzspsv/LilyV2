@@ -1,30 +1,14 @@
 {
-    "lily-response-config": {
-        "string_matching_influence": 70
+
+    "lily-response-config" : {
+        "string_matching_influence" : 70
     },
-    "response-rules": [
-        {
-            "prompt": [
-                "re:\\b(?:can'?t|cannot|can\\s*not|am\\s+unable\\s+to|won'?t\\s+be\\s+able\\s+to|unable\\s+to|fail(?:ed|ing)?\\s+to|not\\s+able\\s+to)\\s+(?:(?:access|acess)\\s+)?(?:trade|trading|send(?:\\s+\\w+){0,5}?\\s+message(?:s)?)\\b"
-            ],
-            "response": [
-                "{<hasrole 1369431473962090659> ? Hey you already got the level and you can trade??? : Get your level to 1 to start using <#1324593527996285039>}",
-                "{<hasrole 1369431473962090659> ? I guess you can trade now. : Seems like you got no levels. get levels to chat in <#1324593527996285039> my guy}",
-                "{<hasrole 1369431473962090659> ? Huh??? you already got levels and have access to trading. : Bro, get some levels to chat in <#1324593527996285039>}"
-            ],
-            "required_words": [],
-            "neglect_words": [],
-            "channel_to_respond": 1324581275276935283,
-            "delete_message": "False",
-            "emoji_to_react": [
-                ""
-            ],
-            "media": [],
-            "whitelist_roles": []
-        },
+    
+    "response-rules" : [
         {
             "prompt": [
                 "re:(?:[a-zA-Z]+|\\d+)?(?:<:point_trade:\\d{19}>|👉)(?:[a-zA-Z]+|\\d+)?",
+                "re:(?:[a-zA-Z]+|\\d+)?(?:<:Trade_Emoji_Blox_Fruits:\\d{19}>|👉)(?:[a-zA-Z]+|\\d+)?",
                 "re:^(.*)❓(.*)$",
                 "re:(?i)\\btrading?\\b(?:\\s+\\w+){1,3}\\s+for\\s+\\w+"
             ],
@@ -35,13 +19,13 @@
             ],
             "required_words": [],
             "neglect_words": [],
-            "channel_to_respond": 1349753791704072313,
+            "channel_to_respond": 1324581275276935283,
             "delete_message": "True",
             "emoji_to_react": [
                 ""
             ],
             "media": [],
-            "whitelist_roles": []
+            "whitelist_roles" : []
         },
         {
             "prompt": [
@@ -60,12 +44,9 @@
                 ""
             ],
             "media": [],
-            "whitelist_roles": [
-                1324581125405933619,
-                1351867043393044551,
-                1365324107947970700
-            ]
+            "whitelist_roles" : [1324581125405933619, 1351867043393044551, 1365324107947970700]
         },
+
         {
             "prompt": [
                 "nigger"
@@ -76,18 +57,14 @@
             "required_words": [
                 "nigger"
             ],
-            "neglect_words": [],
+            "neglect_words": ["bigger", "trigger"],
             "channel_to_respond": 1324581275276935283,
             "delete_message": "True",
             "emoji_to_react": [
                 ""
             ],
             "media": [],
-            "whitelist_roles": [
-                1324581125405933619,
-                1351867043393044551,
-                1365324107947970700
-            ]
+            "whitelist_roles" : [1324581125405933619, 1351867043393044551, 1365324107947970700]
         }
     ]
 }

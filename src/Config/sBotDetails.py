@@ -85,10 +85,28 @@ def load_channel_config(ctx: commands.Context, guild_id:int=0, type=0):
             data = json.load(f)
 
         return data.get("ChannelConfig", {}) 
+    
+def load_channel_config_guild_id(guild_id: int, type=0):
+    if guild_id is None:
+        return {}
+
+    if type == 0:
+        config_path = f"storage/{guild_id}/configs/configs.json"
+    else:
+        config_path = f"storage/{guild_id}/configs/configs.json"
+
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+
+    if not os.path.exists(config_path):
+        return {}
+
+    with open(config_path, "r") as f:
+        data = json.load(f)
+    return data.get("ChannelConfig", {})
 
 
 # Command prefix for the bot
-bot_command_prefix = "?"
+bot_command_prefix = "!"
 
 # Bot display settings
 bot_name = "BloxTrade"
@@ -102,7 +120,7 @@ server_invite_link = "https://discord.com/invite/bloxtrade"
 fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
-port = 1 # Currently set to Production Server
+port = 0 # Currently set to Production Server
 meta_enable = 0
 engagement = 0
 
@@ -137,6 +155,14 @@ if port == 0:
     OwnerRoles = [1381728367207907418]
     BlacklistedRoles = [1381715681904558132]
 
+    #CHANNELS -- GAG
+    seed_gear_stock_channel_id = 1387001376269144116
+    eggstock_channel_id = 1387001376269144116
+    cosmeticsstock_channel_id = 1387001376269144116
+    gag_value_calculator_channel_id = 1387570115620372583
+    gag_worl_channel_id = 1387570155646746755
+    weatherupdate_channel_id = 1349753791704072313
+
 else:
     # PRODUCTION SERVER SETTINGS (BLOXTRADE)
     TRADE_EMOJI_ID = ["1324867813067984986", "1039668628561342504"]
@@ -167,7 +193,16 @@ else:
     StaffManagerRoles = [1365324107947970700] # Staff Manager Roles
     DeveloperRoles = [1351867043393044551] # Developer Role
     OwnerRoles = [1324577057228980285] # (+) Role
-    BlacklistedRoles = [1357492900195205130] # Test Blacklisted Role
+    BlacklistedRoles = [1357492900195205130] # Kai Role
+
+    #CHANNELS -- GAG
+    seed_gear_stock_channel_id = 1387001376269144116
+    eggstock_channel_id = 1387001376269144116
+    cosmeticsstock_channel_id = 1387001376269144116
+    gag_value_calculator_channel_id = 1349753791704072313
+    gag_worl_channel_id = 1387570155646746755
+
+    weatherupdate_channel_id = 1349753791704072313
 
 # Embed colors based on item type
 embed_color_codes = {

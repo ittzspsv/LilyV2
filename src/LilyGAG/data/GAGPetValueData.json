@@ -1,0 +1,270 @@
+{
+  "Starfish": [
+    "50,000,000",
+    "stable"
+  ],
+  "Crab": [
+    "50,000,000",
+    "stable"
+  ],
+  "Seagull": [
+    "50,000,000",
+    "stable"
+  ],
+  "Bunny": [
+    "50,000,000",
+    "stable"
+  ],
+  "Dog": [
+    "50,000,000",
+    "stable"
+  ],
+  "Golden Lab": [
+    "50,000,000",
+    "stable"
+  ],
+  "Bee": [
+    "50,000,000",
+    "stable"
+  ],
+  "Black Bunny": [
+    "50,000,000",
+    "stable"
+  ],
+  "Cat": [
+    "50,000,000",
+    "stable"
+  ],
+  "Chicken": [
+    "50,000,000",
+    "stable"
+  ],
+  "deer": [
+    "50,000,000",
+    "stable"
+  ],
+  "Monkey": [
+    "120,000,000",
+    "stable"
+  ],
+  "Orange Tabby": [
+    "120,000,000",
+    "stable"
+  ],
+  "Pig": [
+    "180,000,000",
+    "stable"
+  ],
+  "Rooster": [
+    "50,000,000",
+    "unknown"
+  ],
+  "Spotted Deer": [
+    "50,000,000",
+    "unknown"
+  ],
+  "Flamingo": [
+    "140,000,000",
+    "stable"
+  ],
+  "Toucan": [
+    "250,000,000",
+    "unknown"
+  ],
+  "Sea Turtle": [
+    "10,220,000,000",
+    "unknown"
+  ],
+  "Orangutan": [
+    "1,000,000,000",
+    "unknown"
+  ],
+  "Seal": [
+    "220,000,000",
+    "stable"
+  ],
+  "Honey Bee": [
+    "550,000,000",
+    "stable"
+  ],
+  "Wasp": [
+    "150,000,000",
+    "stable"
+  ],
+  "Hedgehog": [
+    "150,000,000",
+    "unknown"
+  ],
+  "Kiwi": [
+    "130,000,000",
+    "stable"
+  ],
+  "Tarantula Hawk": [
+    "200,000,000",
+    "stable"
+  ],
+  "Turtle": [
+    "100,000,000",
+    "unknown"
+  ],
+  "Petal Bee": [
+    "180,000,000",
+    "stable"
+  ],
+  "Moth": [
+    "900,000,000",
+    "stable"
+  ],
+  "Moon Cat": [
+    "1,000,000,000,000",
+    "stable"
+  ],
+  "Frog": [
+    "50,000,000",
+    "unknown"
+  ],
+  "Mole": [
+    "1,000,000,000",
+    "unknown"
+  ],
+  "Scarlet Macaw": [
+    "4,000,000,000,000",
+    "overpaid"
+  ],
+  "Ostrich": [
+    "250,000,000",
+    "unknown"
+  ],
+  "Cow": [
+    "50,000,000",
+    "unknown"
+  ],
+  "Polar Bear": [
+    "2,500,000,000,000",
+    "stable"
+  ],
+  "Sea Otter": [
+    "150,000,000",
+    "unknown"
+  ],
+  "Silver Monkey": [
+    "1,800,000,000,000",
+    "stable"
+  ],
+  "Panda": [
+    "50,000,000",
+    "unknown"
+  ],
+  "Blood Headhog": [
+    "1,200,000,000,000",
+    "stable"
+  ],
+  "Peacock": [
+    "2,000,000,000,000",
+    "stable"
+  ],
+  "Capybara": [
+    "55,000,000,000,000",
+    "overpaid"
+  ],
+  "Brown Mouse": [
+    "50,000,000",
+    "stable"
+  ],
+  "Chicken Zombie": [
+    "1,500,000,000,000",
+    "overpaid"
+  ],
+  "Blood Kiwi": [
+    "300,000,000,000",
+    "stable"
+  ],
+  "Owl": [
+    "30,000,000,000",
+    "stable"
+  ],
+  "Golden Bee": [
+    "50,000,000",
+    "unknown"
+  ],
+  "Cooked owl": [
+    "100,000,000,000",
+    "stable"
+  ],
+  "Caterpillar": [
+    "300,000,000",
+    "stable"
+  ],
+  "Giant Ant": [
+    "180,000,000",
+    "unknown"
+  ],
+  "Grey Mouse": [
+    "100,000,000",
+    "unknown"
+  ],
+  "Praying Mantis": [
+    "750,000,000",
+    "stable"
+  ],
+  "Red Fox": [
+    "4,000,000,000,000",
+    "stable"
+  ],
+  "Red Giant Ant": [
+    "200,000,000",
+    "unknown"
+  ],
+  "Snail": [
+    "500,000,000",
+    "stable"
+  ],
+  "Squirrel": [
+    "700,000,000",
+    "stable"
+  ],
+  "Bear Bee": [
+    "3,500,000,000,000",
+    "overpaid"
+  ],
+  "Butterfly": [
+    "85,000,000,000,000",
+    "overpaid"
+  ],
+  "Echo Frog": [
+    "500,000,000",
+    "unknown"
+  ],
+  "Pack Bee": [
+    "600,000,000",
+    "stable"
+  ],
+  "Mimic Octopus": [
+    "95,000,000,000,000",
+    "overpaid"
+  ],
+  "Dragonfly": [
+    "70,000,000,000,000",
+    "overpaid"
+  ],
+  "Night Owl": [
+    "500,000,000",
+    "stable"
+  ],
+  "Queen Bee": [
+    "45,000,000,000,000",
+    "overpaid"
+  ],
+  "Blood Owl": [
+    "1,000,000,000",
+    "stable"
+  ],
+  "Raccoon": [
+    "100,000,000,000,000",
+    "overpaid"
+  ],
+  "Disco Bee": [
+    "100,000,000,000,000",
+    "overpaid"
+  ]
+}

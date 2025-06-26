@@ -7,6 +7,8 @@ import LilyModeration.sLilyModeration as mLily
 import Misc.sLilyEmbed as LilyEmbed
 import LilyBloxFruits.sLilyBloxFruitsCore as LBFC
 import LilyResponse.sLilyResponse as aiLily
+import LilyGAG.sLilyGAGCore as LGAG
+from LilyGAG.sLilyGAGStockListeners import StockWebSocket
 import logging
 
 
@@ -39,6 +41,7 @@ class MyBot(commands.Bot):
         await bot.load_extension("LilyBloxFruits.sLilyBloxFruitsCommands")
         await bot.load_extension("Misc.sLilyEmbedCommands")
         await bot.load_extension("LilyResponse.sLilyResponseCommands")
+        await bot.load_extension("LilyGAG.sLilyGAGCommands")
         await bot.tree.sync()
 
     async def BotStorageInitialization(self, guild):
@@ -147,7 +150,9 @@ class MyBot(commands.Bot):
         await self.BotInitialize()
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
-        await self.tree.sync()
+        #handler = StockWebSocket("wss://websocket.joshlei.com/growagarden?user_id=${encodeURIComponent(834771588157517581)}", bot)
+        #asyncio.create_task(handler.run())    
+        #await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -183,8 +188,17 @@ class MyBot(commands.Bot):
         return role is not None
 
     async def is_user(self, user, user_id):
-        return user.id == int(user_id)
-    
+        return user.id == int(user_id)  
+
+    async def PostStock(self, stock_type, stock_msg: str, channel_id):
+        embed = discord.Embed(title=stock_type,
+                      description=stock_msg, colour=0x2b00ff)
+        channel = self.get_channel(channel_id)
+        try:
+            await channel.send(embed=embed)
+        except:
+            return
+
     async def ConditionEvaluator(self, user, condition):
         match = re.match(r'<(hasrole|isuser) (\d+)> \? (.+) : (.+)', condition)
         if match:
@@ -201,12 +215,13 @@ class MyBot(commands.Bot):
                 else:
                     return false_value
         return condition
-    
+
     async def RespondProcessor(self, message):
         try:
             feature_cache = open("src/Config/BotFeatures.txt", "r")
             feature_int = feature_cache.read()
-        except:
+            print(feature_int)
+        except Exception as e:
             feature_int = 0
         if int(feature_int) == 0:
                 return
@@ -278,6 +293,8 @@ class MyBot(commands.Bot):
                 
         await LBFC.MessageEvaluate(self, bot, message)
 
+        await LGAG.MessageEvaluate(self, bot, message)
+
         word_count = len(message.content.split())
         if word_count > 100:
             return
@@ -308,5 +325,4 @@ async def configure(ctx: commands.Context):
     await ctx.send(embed=mLily.SimpleEmbed(f'Updated bot config with code : {text}'))
 
 load_dotenv("token.env")
-token = os.getenv("token")
-bot.run(token)
+bot.run(os.getenv("token"))

@@ -82,7 +82,6 @@ def MatchFruitSet(fruit: str, data: set, threshold=80):
 
     return None
 
-
 def isPermanentMatch(item, threshold=70):
     perm_words = {"perm", "permanent"}
     best_match, score, _ = process.extractOne(item, perm_words, scorer=fuzz.ratio)
@@ -96,7 +95,6 @@ def PermanentMatch(item, threshold=70):
     if score >= threshold:
         return "permanent"
     return None
-
 
 def is_valid_trade_format(message, fruit_names):
     message = message.lower().strip()
@@ -141,7 +139,6 @@ def is_valid_trade_format(message, fruit_names):
 
     return bool(your_fruits) and bool(their_fruits)
 
-
 def is_valid_trade_suggestor_format(message, fruit_names):
     message = message.lower().strip()
 
@@ -182,4 +179,3 @@ def is_valid_trade_suggestor_format(message, fruit_names):
     your_fruits = extract_fruits(clean_your_side)
 
     return bool(your_fruits)
-

@@ -13,7 +13,13 @@
     "role": "Manager",
     "responsibility": "NIL",
     "join_date": "03/02/2025",
-    "strikes": [],
+    "strikes": [
+      {
+        "reason": "He is too lazy",
+        "date": "18/06/2025",
+        "manager": 845511381637529641
+      }
+    ],
     "LOA": false,
     "higher_staff": true
   },
@@ -116,12 +122,18 @@
     "LOA": false,
     "higher_staff": false
   },
-  "1333601834769580136": {
-    "name": "Obito Uchiha",
+  "866707024083025921": {
+    "name": "Scary Guy",
     "role": "Trial Moderator",
     "responsibility": "NIL",
-    "join_date": "16/06/2025",
-    "strikes": [],
+    "join_date": "05/06/2025",
+    "strikes": [
+      {
+        "reason": "Abusing/Trolling with Manage nickname perm",
+        "date": "18/06/2025",
+        "manager": 999309816914792630
+      }
+    ],
     "LOA": false,
     "higher_staff": false
   }
