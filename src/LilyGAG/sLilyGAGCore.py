@@ -4,9 +4,10 @@ import re
 from rapidfuzz import process, fuzz
 import discord
 from io import BytesIO
-import ui.sWinOrLossImageGenerator as LilyWORLGen
+from itertools import combinations, chain
 try:
     import Config.sBotDetails as Config
+    import ui.sWinOrLossImageGenerator as LilyWORLGen
 except:
     pass
 import requests
@@ -73,17 +74,34 @@ def value_parser(value_with_suffix):
 
 def GAGMessageParser(sentence, threshold=75):
     parser = sentence.split()
+
     sheckle_value = re.findall(r'\b(\d+(?:\.\d+)?[kKmMbBtT])\b', sentence)
     if sheckle_value:
         return ("Candy Blossom", "", tuple(), "", "", 1, value_parser(sheckle_value[0])), []
-    plant_names = [item["name"] for item in Data["PlantsData"]]
-    best_match = process.extractOne(sentence, plant_names, scorer=fuzz.partial_ratio)
 
-    fruit_name = best_match[0] if best_match and best_match[1] >= threshold else None
+    plant_names = [item["name"] for item in Data["PlantsData"]]
+    plant_name_map = {name.lower(): name for name in plant_names}
+    plant_candidates = []
+
+    for i in range(len(parser)):
+        for j in range(i + 1, len(parser) + 1):
+            phrase = ' '.join(parser[i:j]).lower()
+            for plant_key in plant_name_map:
+                score = fuzz.ratio(phrase, plant_key)
+                if score >= threshold:
+                    plant_candidates.append((plant_key, score))
+
+    if plant_candidates:
+        plant_candidates.sort(key=lambda x: (x[1], len(x[0])), reverse=True)
+        matched_key = plant_candidates[0][0]
+        best_match = (plant_name_map[matched_key], plant_candidates[0][1])
+    else:
+        best_match = (None, 0)
+
+    fruit_name = best_match[0]
     fruit_data = next((item for item in Data["PlantsData"] if item["name"] == fruit_name), None)
 
     weight_match = re.search(r'(\d+(?:\.\d+)?)\s*kg', sentence, re.IGNORECASE)
-
     if weight_match:
         weight = float(weight_match.group(1))
     elif fruit_data is not None:
@@ -97,7 +115,7 @@ def GAGMessageParser(sentence, threshold=75):
             quantity = int(word)
             break
         except ValueError:
-            quantity = 1
+            continue
 
     mutations_found = []
     for mutation in Data["MutationData"].keys():
@@ -117,14 +135,31 @@ def GAGMessageParser(sentence, threshold=75):
 def GAGPetMessageParser(sentence, threshold=75):
     parser = sentence.split()
     pets = list(Data["PetValueData"].keys())
-    pet_name = process.extractOne(sentence, pets, scorer=fuzz.partial_ratio)
+    pet_name_map = {p.lower(): p for p in pets}
+    pet_candidates = []
+
+    for i in range(len(parser)):
+        for j in range(i + 1, len(parser) + 1):
+            phrase = ' '.join(parser[i:j]).lower()
+            for pet_key in pet_name_map:
+                score = fuzz.ratio(phrase, pet_key)
+                if score >= threshold:
+                    pet_candidates.append((pet_key, score))
+
+    if pet_candidates:
+        pet_candidates.sort(key=lambda x: (x[1], len(x[0])), reverse=True)
+        matched_pet_key = pet_candidates[0][0]
+        pet_name = (pet_name_map[matched_pet_key], pet_candidates[0][1])
+    else:
+        pet_name = (None, 0)
 
     pet_age = 0
-    age_keywords = ["yr", "yrs", "year", "years"]
-
+    age_keywords = ["yr", "yrs", "year", "years", "age"]
     for i, word in enumerate(parser):
+        word_lower = word.lower()
+
         for keyword in age_keywords:
-            if word.lower().endswith(keyword):
+            if word_lower.endswith(keyword):
                 try:
                     pet_age = int(re.sub(r"[a-zA-Z]", "", word))
                     break
@@ -133,18 +168,23 @@ def GAGPetMessageParser(sentence, threshold=75):
                     break
         if pet_age:
             break
-        if word.isdigit() and i + 1 < len(parser) and parser[i + 1].lower() in age_keywords:
-            pet_age = int(word)
-            break
+
+        if word_lower == "age" and i + 1 < len(parser):
+            next_word = parser[i + 1]
+            if next_word.isdigit():
+                pet_age = int(next_word)
+                break
+
+        if word.isdigit() and i + 1 < len(parser):
+            if parser[i + 1].lower() in age_keywords:
+                pet_age = int(word)
+                break
 
     weight_match = re.search(r'(\d+(?:\.\d+)?)\s*kg', sentence, re.IGNORECASE)
-    if weight_match:
-        pet_weight = float(weight_match.group(1))
-    else:
-        pet_weight = 1
+    pet_weight = float(weight_match.group(1)) if weight_match else 1
 
     return {
-        "name": pet_name[0] if pet_name and pet_name[1] >= threshold else None,
+        "name": pet_name[0],
         "age": pet_age,
         "weight": pet_weight
     }, pet_name
@@ -162,8 +202,7 @@ def ParserType(sentence):
         return "PetType", pet_Data,
     else:
         return "None", {}
-
-        
+    
 def GAGValue(fruit_data):
     url = "https://api.joshlei.com/v2/growagarden/calculate"
     name, weight, mutations, variant, quantity, shecklebool, sheckles = fruit_data
@@ -183,28 +222,28 @@ def GAGValue(fruit_data):
     
 def GAGPetValue(pet_data):
     #-------------------MATH FUNCTION STARTS----------------------#
-    def interpolate(value, in_min, in_max, out_min, out_max):
+    def interpolate_nonlinear(value, in_min, in_max, out_min, out_max):
         return out_min + (value - in_min) * (out_max - out_min) / (in_max - in_min)
 
     def age_factor(age):
         if age <= 39:
-            return interpolate(age, 0, 39, 0.00001, 0.001)
+            return interpolate_nonlinear(age, 0, 39, 0.00001, 0.001)
         elif age <= 55:
-            return interpolate(age, 45, 55, 0.5, 0.5)
-        elif age <= 100:
-            return interpolate(age, 65, 100, 0.95, 1.0)
+            return interpolate_nonlinear(age, 45, 55, 0.05, 0.5)
+        elif age <= 65:
+            return interpolate_nonlinear(age, 56, 65, 0.6, 1.0)
         else:
             return 1.0
 
     def weight_factor(weight):
         if weight <= 9:
-            return interpolate(weight, 0, 9, 0.00001, 0.001)
+            return interpolate_nonlinear(weight, 0, 9, 0.00001, 0.001)
         elif weight <= 15:
-            return interpolate(weight, 10, 15, 0.75, 0.8)
+            return interpolate_nonlinear(weight, 10, 15, 0.75, 0.8)
         elif weight <= 20:
-            return interpolate(weight, 16, 20, 0.85, 0.95)
-        elif weight <= 30:
-            return interpolate(weight, 21, 30, 0.95, 1.0)
+            return interpolate_nonlinear(weight, 16, 20, 0.85, 0.95)
+        elif weight <= 25:
+            return interpolate_nonlinear(weight, 21, 25, 0.95, 1.0)
         else:
             return 1.0
 
@@ -212,10 +251,20 @@ def GAGPetValue(pet_data):
         a_factor = age_factor(age)
         w_factor = weight_factor(weight)
 
-        value = interpolate(a_factor * w_factor, 0, 1, min_value, max_value)
+        combined_factor = (a_factor + w_factor) / 2
+        value = interpolate_nonlinear(combined_factor, 0, 1, min_value, max_value)
 
-        if age == 100 and weight == 30:
-            value *= interpolate(1, 0, 1, 1.5, 1.7)
+        age_boost = 0
+        weight_boost = 0
+        if age > 65:
+            age_boost = interpolate_nonlinear(min(age, 100), 65, 100, 0.10, 1.00)
+        if weight > 25:
+            weight_boost = interpolate_nonlinear(min(weight, 35), 25, 35, 0.10, 1.00)
+
+        if age > 65 and weight > 25:
+            value += max_value * 1.5
+        elif age_boost > 0 or weight_boost > 0:
+            value += max_value * max(age_boost, weight_boost)
 
         return value
     #-----------MATH FUNCTION ENDS------------------------#
@@ -224,7 +273,6 @@ def GAGPetValue(pet_data):
         pet_value = pet_value[0].replace(",", "")
         return compute_value(int(Data["PetValueData"][pet_data['name']][0].replace(",", "")), int(Data["PetValueData"][pet_data['name']][1].replace(",", "")), int(pet_data['age']), float(pet_data['weight']))
     except Exception as e:
-        print(e)
         return 0
 
 def WORL(message:str=None):
@@ -337,7 +385,7 @@ async def MessageEvaluate(self, bot, message):
                     winorlossorfair = 1
                 else:
                     winorlossorfair = 2
-                generated_img = LilyWORLGen.GAGGenerateWORLImage(your_side_items, your_side_values, their_side_items, their_side_values, outcome_data['outcome'].title(), f"Your Trade is an {outcome_data['outcome'].title()}", outcome_data['percentage'], winorlossorfair)
+                generated_img = LilyWORLGen.GAGGenerateWORLImage(your_side_items[:4], your_side_values, their_side_items[:4], their_side_values, outcome_data['outcome'].title(), f"Your Trade is an {outcome_data['outcome'].title()}", outcome_data['percentage'], winorlossorfair)
                 img_buffer = BytesIO()
                 generated_img.save(img_buffer, format="PNG")
                 img_buffer.seek(0)
@@ -345,4 +393,3 @@ async def MessageEvaluate(self, bot, message):
                 file = discord.File(img_buffer, filename="trade.png")
 
                 await org_message.edit(content="", attachments=[file])
-        

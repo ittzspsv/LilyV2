@@ -150,9 +150,9 @@ class MyBot(commands.Bot):
         await self.BotInitialize()
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
-        handler = StockWebSocket("wss://websocket.joshlei.com/growagarden?user_id=${encodeURIComponent(834771588157517581)}", bot)
-        asyncio.create_task(handler.run())    
-        await self.tree.sync()
+        #handler = StockWebSocket("wss://websocket.joshlei.com/growagarden?user_id=${encodeURIComponent(834771588157517581)}", bot)
+        #syncio.create_task(handler.run())    
+        #await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
