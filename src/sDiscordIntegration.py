@@ -292,7 +292,7 @@ class MyBot(commands.Bot):
                 await message.channel.send(f"Ban log channel ID set to <#{channel_id}>.")  
 
         await bot.RespondProcessor(message) 
-
+          
         await LBFC.MessageEvaluate(self, bot, message)
 
         await LGAG.MessageEvaluate(self, bot, message)

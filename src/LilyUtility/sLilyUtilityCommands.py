@@ -166,6 +166,8 @@ class LilyUtility(commands.Cog):
         WORL = "WORL"
         FruitValues = "FruitValues"
         Combo = "Combo"
+        GAGValues = "GAGValues"
+        GAGWORL = "GAGWORL"
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
     @commands.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
@@ -182,6 +184,12 @@ class LilyUtility(commands.Cog):
         elif bot_feature == self.Channels.Combo:
             await Config.save_channel(ctx, "combo_channel_id", channel_to_assign.id)
             await ctx.send(f"Combo Channel Set To <#{channel_to_assign.id}>")
+        elif bot_feature == self.Channels.GAGValues:
+            await Config.save_channel(ctx, "gag_values", channel_to_assign.id)
+            await ctx.send(f"GAG Values Channel Set To <#{channel_to_assign.id}>")
+        elif bot_feature == self.Channels.GAGWORL:
+            await Config.save_channel(ctx, "gag_worl", channel_to_assign.id)
+            await ctx.send(f"GAG WORL Channel Set To <#{channel_to_assign.id}>")
         else:
             await ctx.send(f"Unable to Assign the Channel")
 

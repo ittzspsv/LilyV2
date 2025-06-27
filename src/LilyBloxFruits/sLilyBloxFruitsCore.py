@@ -210,7 +210,7 @@ async def MessageEvaluate(self, bot, message):
             ctx = await bot.get_context(message)
             channel_data = Config.load_channel_config(ctx)
             if "fruit_values_channel_id" in channel_data:
-                fruit_values_channel_sid = channel_data["fruit_values_channel_id"]
+                fruit_values_channel_sid = channel_data.get("fruit_values_channel_id", 0)
             else:
                 return
             fChannel = self.get_channel(fruit_values_channel_sid)
@@ -347,7 +347,7 @@ async def MessageEvaluate(self, bot, message):
                     ctx = await bot.get_context(message)
                     channel_data = Config.load_channel_config(ctx)
                     if "w_or_l_channel_id" in channel_data:
-                            w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+                            w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
                     else:
                         return
                     w_or_l_channel = self.get_channel(w_or_l_channel_sid)
@@ -436,7 +436,7 @@ async def MessageEvaluate(self, bot, message):
                     ctx = await bot.get_context(message)
                     channel_data = Config.load_channel_config(ctx)
                     if "w_or_l_channel_id" in channel_data:
-                            _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+                            _w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
                     else:
                         return
                     _w_or_l_channel = self.get_channel(_w_or_l_channel_sid)
@@ -447,7 +447,7 @@ async def MessageEvaluate(self, bot, message):
                     ctx = await bot.get_context(message)
                     channel_data = Config.load_channel_config(ctx)
                     if "w_or_l_channel_id" in channel_data:
-                        _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+                        _w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
                     else:
                         return
                     w_or_l_channel = self.get_channel(_w_or_l_channel_sid)
@@ -490,7 +490,7 @@ async def MessageEvaluate(self, bot, message):
             your_fruits1, your_fruit_types1, their_fruits1, their_fruits_types1 = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
             ctx = await bot.get_context(message)
             channel_data = Config.load_channel_config(ctx)
-            _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+            _w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
             if message.channel == self.get_channel(_w_or_l_channel_sid):
                 view = TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
 
@@ -504,7 +504,7 @@ async def MessageEvaluate(self, bot, message):
                     try:
                         ctx = await bot.get_context(message)
                         channel_config = Config.load_channel_config(ctx)
-                        combo_channel_id = channel_config['combo_channel_id']
+                        combo_channel_id = channel_config.get('combo_channel_id', 0)
                     except:
                         combo_channel_id = 0
                     if not message.channel.id == combo_channel_id:

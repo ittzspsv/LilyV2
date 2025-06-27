@@ -125,7 +125,7 @@ meta_enable = 0
 engagement = 0
 
 # ENVIRONMENT SETTINGS
-if port == 0:
+if port == 1:
     # DEVELOPMENT SERVER SETTINGS
     TRADE_EMOJI_ID = ["1348722170586599465"]
     PERM_EMOJI_ID = ["1349449830048731206"]
@@ -159,8 +159,6 @@ if port == 0:
     seed_gear_stock_channel_id = 1387001376269144116
     eggstock_channel_id = 1387001376269144116
     cosmeticsstock_channel_id = 1387001376269144116
-    gag_value_calculator_channel_id = [1387570115620372583]
-    gag_worl_channel_id = [1387570155646746755]
     weatherupdate_channel_id = 1349753791704072313
 
     #GUILD REFERENCE
@@ -203,8 +201,6 @@ else:
     seed_gear_stock_channel_id = 1387001376269144116
     eggstock_channel_id = 1387001376269144116
     cosmeticsstock_channel_id = 1387001376269144116
-    gag_value_calculator_channel_id = [1349753791704072313]
-    gag_worl_channel_id = [1387570155646746755]
     weatherupdate_channel_id = 1349753791704072313
 
     #GUILD REFERENCE
@@ -234,7 +230,7 @@ staff_manager_role_id = 1365324107947970700
 #ROLES
 
 async def update_config_data():
-    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles,seed_gear_stock_channel_id, eggstock_channel_id,cosmeticsstock_channel_id,gag_value_calculator_channel_id,gag_worl_channel_id,weatherupdate_channel_id,GUILD_ID
+    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles,seed_gear_stock_channel_id, eggstock_channel_id,cosmeticsstock_channel_id,weatherupdate_channel_id,GUILD_ID
     url = 'https://ittzspsv.github.io/LilyV2-Configs/LilyConfig.json'
 
     async with aiohttp.ClientSession() as session:
@@ -259,8 +255,6 @@ async def update_config_data():
                 seed_gear_stock_channel_id = data['GAGChannels']['seed_gear_stock_channel_id']
                 eggstock_channel_id = data['GAGChannels']['eggstock_channel_id']
                 cosmeticsstock_channel_id = data['GAGChannels']['cosmeticsstock_channel_id']
-                gag_value_calculator_channel_id = data['GAGChannels']['gag_value_calculator_channel_id']
-                gag_worl_channel_id = data['GAGChannels']['gag_worl_channel_id']
                 weatherupdate_channel_id = data['GAGChannels']['weatherupdate_channel_id']
 
                 #GUILD REFERENCE

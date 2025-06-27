@@ -325,8 +325,8 @@ def WORL(message:str=None):
         return {"outcome": "Fair", "percentage": 0.0}, your_side_items, your_side_values, their_side_items, their_side_values
 
 async def MessageEvaluate(self, bot, message):
-    #Seeds, Pets, Value
-    if message.channel.id in Config.gag_value_calculator_channel_id:
+    channel_configs = Config.load_channel_config(await bot.get_context(message))
+    if message.channel.id == channel_configs.get('gag_values', 0):
         try:
             type, Data = ParserType(message.content.lower())
             if type == "SeedType":
@@ -372,7 +372,8 @@ async def MessageEvaluate(self, bot, message):
         except Exception as e:
             await message.delete()  
     
-    elif message.channel.id in Config.gag_worl_channel_id:
+    elif message.channel.id == channel_configs.get('gag_worl', 0):
+        try:
             org_message = await message.reply("Thinking...")
             outcome_data, your_side_items, your_side_values, their_side_items, their_side_values = WORL(message.content.lower())
             if your_side_items and their_side_items:
@@ -393,3 +394,6 @@ async def MessageEvaluate(self, bot, message):
                 file = discord.File(img_buffer, filename="trade.png")
 
                 await org_message.edit(content="", attachments=[file])
+        except:
+            await message.delete()
+            await org_message.delete()
