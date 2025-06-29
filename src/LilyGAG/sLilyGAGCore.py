@@ -40,8 +40,6 @@ def UpdateData():
 
 UpdateData()
 
-print(Data['WeatherData'])
-
 def price_formatter(value):
         if value >= 1_000_000_000_000:
             return f"{value / 1_000_000_000_000:.1f}T"
