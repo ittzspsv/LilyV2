@@ -1,0 +1,42 @@
+{
+  "SummerHarvest": [
+    "A lush, seasonal boom where ripe crops flourish under clear skies—yields surge as your garden reaches peak productivity.",
+    "None"
+  ],
+  "Heatwave": [
+    "Intense sunbathers bathe your garden in heat, triggering the **Sundried** mutation",
+    "Sundried"
+  ],
+  "Windy": [
+    "Strong gusts sweep through, causing crops to sway and apply the **Windstruck** mutation",
+    "Windstruck"
+  ],
+  "NightEvent": [
+    "A tranquil moonlit interval lasts ~10 minutes every few hours—crops glow with the **Moonlit** mutation",
+    "Moonlit"
+  ],
+  "MeteorShower": [
+    "Rare meteor rain at night: crashing rocks strike plants for the ultra‑rare **Celestial** mutation",
+    "Celestial"
+  ],
+  "Rain": [
+    "Grey skies open up in a gentle downpour—crops grow 50% faster and often gain the **Wet** mutation",
+    "Wet"
+  ],
+  "MegaHarvest": [
+    "The pinnacle of abundance—every crop in your garden blooms at once, filling baskets and maximizing Sheckles.",
+    "None"
+  ],
+  "Tornado": [
+    "A dramatic twister sweeps the map—plants caught in its funnel gain the **Twisted** mutation",
+    "Twisted"
+  ],
+  "TropicalRain": [
+    "Warm, tropical showers soak through—crops grow 50% faster and may receive **Drenched** (×5) or **Wet** mutations",
+    "Drenched"
+  ],
+  "Thunderstorm": [
+    "Dark clouds and lightning: crops grow 50% faster, often become Wet, and lightning strikes yield the **Shocked** mutation",
+    "Shocked"
+  ]
+}

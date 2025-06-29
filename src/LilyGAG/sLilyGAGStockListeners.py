@@ -1,6 +1,7 @@
 import json
 import websockets
 import Config.sBotDetails as Config
+import LilyGAG.sLilyGAGCore as GAG
 import discord
 
 class StockWebSocket:
@@ -53,13 +54,13 @@ class StockWebSocket:
         if seedstock:
             longest_name = max(len(item["display_name"]) for item in seedstock)
             formatted_lines = [
-                f"{item['display_name']:<{longest_name}}   **{item['quantity']}x**"
+                f"{item['display_name'].title():<{longest_name}}   **{item['quantity']}x**"
                 for item in seedstock
             ]
             seedstock_format_string = "\n".join(formatted_lines)
             pings = []
             for items in seedstock:
-                role = discord.utils.get(guild.roles, name=items["display_name"])
+                role = discord.utils.get(guild.roles, name=items["display_name"].title())
                 if role:
                     pings.append(role.mention)
 
@@ -70,13 +71,13 @@ class StockWebSocket:
         if gearstock:
             longest_name = max(len(item["display_name"]) for item in gearstock)
             formatted_lines = [
-                f"{item['display_name']:<{longest_name}}   **{item['quantity']}x**"
+                f"{item['display_name'].title():<{longest_name}}   **{item['quantity']}x**"
                 for item in gearstock
             ]
             gearstock_format_string = "\n".join(formatted_lines)
             pings = []
             for items in gearstock:
-                role = discord.utils.get(guild.roles, name=items["display_name"])
+                role = discord.utils.get(guild.roles, name=items["display_name"].title())
                 if role:
                     pings.append(role.mention)
             await bot.PostStock("GEAR STOCK", gearstock_format_string, Config.seed_gear_stock_channel_id, pings)
@@ -86,18 +87,23 @@ class StockWebSocket:
         if eggstock:
             longest_name = max(len(item["display_name"]) for item in eggstock)
             formatted_lines = [
-                f"{item['display_name']:<{longest_name}}   **{item['quantity']}x**"
+                f"{item['display_name'].title():<{longest_name}}   **{item['quantity']}x**"
                 for item in eggstock
             ]
+            pings = []
+            for items in eggstock:
+                role = discord.utils.get(guild.roles, name=items["display_name"])
+                if role:
+                    pings.append(role.mention)
             eggstock_format_string = "\n".join(formatted_lines)
-            await bot.PostStock("EGG STOCK", eggstock_format_string, Config.eggstock_channel_id)
+            await bot.PostStock("EGG STOCK", eggstock_format_string, Config.eggstock_channel_id, pings)
 
         #COSMETICS STOCK
         cosmeticsshop = parsed["cosmetic_stock"]
         if cosmeticsshop:
             longest_name = max(len(item["display_name"]) for item in cosmeticsshop)
             formatted_lines = [
-                f"{item['display_name']:<{longest_name}}   **{item['quantity']}x**"
+                f"{item['display_name'].title():<{longest_name}}   **{item['quantity']}x**"
                 for item in cosmeticsshop
             ]
             cosmeticsshop_format_string = "\n".join(formatted_lines)
@@ -115,8 +121,12 @@ class StockWebSocket:
             for w in weatherinfo:
                 if w.get('active'):
                     name = w['weather_name']
+                    weather_data = GAG.Data.get('WeatherData', {}).get(name, ["No description available.", "None"])
+                    description_text = weather_data[0] if weather_data[0] else "No description available."
+                    mutation_text = weather_data[1] if weather_data[1] and weather_data[1] != "None" else "None"
+                    description = f"{description_text}\n**MUTATIONS:** {mutation_text}"
                     role = discord.utils.get(guild.roles, name=name)
                     if role:
                         pings.append(role.mention)
-                    await bot.PostStock(name, "", Config.weatherupdate_channel_id, pings)
+                    await bot.PostStock(name, description, Config.weatherupdate_channel_id, pings)
         

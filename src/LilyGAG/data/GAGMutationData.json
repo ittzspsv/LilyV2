@@ -25,5 +25,7 @@
     "Galactic": 120,
     "Disco": 125,
     "Voidtouched": 135,
-    "Dawnbound": 150
+    "Dawnbound": 150,
+    "Aurora" : 90,
+    "Mystic" : 200
 }

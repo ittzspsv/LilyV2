@@ -199,9 +199,11 @@ async def MessageEvaluate(self, bot, message):
                     await stock_message.add_reaction("🇱")
 
                     if CurrentGoodFruits:
-                        await stock_update_channel.send(
-                            f"<@&{Config.stock_ping_role_id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!"
-                        )
+                        role = discord.utils.get(guild.roles, name='Stock Ping')
+                        if role:
+                            await stock_update_channel.send(
+                                f"<@&{role.id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!"
+                            )
 
                 except Exception as e:
                     print(f"Error posting stock to guild {guild.id}: {e}")        

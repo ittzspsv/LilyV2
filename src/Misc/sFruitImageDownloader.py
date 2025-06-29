@@ -37,14 +37,14 @@ for fruit in items:
         print(f"Error processing {fruit}: {e}")
 
 '''
+
 '''
-response = requests.get("https://static.wikia.nocookie.net/growagarden/images/7/7a/Queen_bee.png/")
+response = requests.get("https://static.wikia.nocookie.net/growagarden/images/e/e8/FennecFoxIcon.png")
 
 
 if response.status_code == 200:
-    with open("Queen_Bee.png", "wb") as file:
+    with open("FennecFox.png", "wb") as file:
         file.write(response.content)
     print("Image downloaded successfully!")
 else:
-    print(f"Failed to download image. Status code: {response.status_code}")
-'''
+    print(f"Failed to download image. Status code: {response.status_code}")'''

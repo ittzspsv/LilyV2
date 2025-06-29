@@ -1,10 +1,8 @@
 {
-
-    "lily-response-config" : {
-        "string_matching_influence" : 70
+    "lily-response-config": {
+        "string_matching_influence": 70
     },
-    
-    "response-rules" : [
+    "response-rules": [
         {
             "prompt": [
                 "re:(?:[a-zA-Z]+|\\d+)?(?:<:point_trade:\\d{19}>|👉)(?:[a-zA-Z]+|\\d+)?",
@@ -19,13 +17,13 @@
             ],
             "required_words": [],
             "neglect_words": [],
-            "channel_to_respond": [1324581275276935283],
+            "channel_to_respond": 1324581275276935283,
             "delete_message": "True",
             "emoji_to_react": [
                 ""
             ],
             "media": [],
-            "whitelist_roles" : []
+            "whitelist_roles": []
         },
         {
             "prompt": [
@@ -38,15 +36,18 @@
                 "nigga"
             ],
             "neglect_words": [],
-            "channel_to_respond": [1353100883356811457],
+            "channel_to_respond": 1324581275276935283,
             "delete_message": "True",
             "emoji_to_react": [
                 ""
             ],
             "media": [],
-            "whitelist_roles" : [1324581125405933619, 1351867043393044551, 1365324107947970700]
+            "whitelist_roles": [
+                1324581125405933619,
+                1351867043393044551,
+                1365324107947970700
+            ]
         },
-
         {
             "prompt": [
                 "nigger"
@@ -58,13 +59,17 @@
                 "nigger"
             ],
             "neglect_words": [],
-            "channel_to_respond": [1353100883356811457],
+            "channel_to_respond": 1324581275276935283,
             "delete_message": "True",
             "emoji_to_react": [
                 ""
             ],
             "media": [],
-            "whitelist_roles" : [1324581125405933619, 1351867043393044551, 1365324107947970700]
+            "whitelist_roles": [
+                1324581125405933619,
+                1351867043393044551,
+                1365324107947970700
+            ]
         }
     ]
 }

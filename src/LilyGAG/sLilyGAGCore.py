@@ -1,10 +1,9 @@
 import json
 import os
 import re
-from rapidfuzz import process, fuzz
+from rapidfuzz import fuzz
 import discord
 from io import BytesIO
-from itertools import combinations, chain
 try:
     import Config.sBotDetails as Config
     import ui.sWinOrLossImageGenerator as LilyWORLGen
@@ -37,8 +36,11 @@ def UpdateData():
     Data["PetValueData"] = DataProcessor("src/LilyGAG/data/GAGPetValueData.json", dict)
     Data["PlantsData"] = DataProcessor("src/LilyGAG/data/GAGPlantsData.json", list)
     Data["FruitType"] = DataProcessor("src/LilyGAG/data/GAGFruitTypeData.json", dict)
+    Data['WeatherData'] = DataProcessor("src/LilyGAG/data/GAGWeatherData.json", dict)
 
 UpdateData()
+
+print(Data['WeatherData'])
 
 def price_formatter(value):
         if value >= 1_000_000_000_000:
@@ -183,10 +185,19 @@ def GAGPetMessageParser(sentence, threshold=75):
     weight_match = re.search(r'(\d+(?:\.\d+)?)\s*kg', sentence, re.IGNORECASE)
     pet_weight = float(weight_match.group(1)) if weight_match else 1
 
+    quantity = 1
+    for word in parser: 
+        try:
+            quantity = int(word)
+            break
+        except ValueError:
+            continue
+
     return {
         "name": pet_name[0],
         "age": pet_age,
-        "weight": pet_weight
+        "weight": pet_weight,
+        "quantity" : quantity
     }, pet_name
 
 def ParserType(sentence):
@@ -202,12 +213,31 @@ def ParserType(sentence):
         return "PetType", pet_Data,
     else:
         return "None", {}
-    
+
 def GAGValue(fruit_data):
     url = "https://api.joshlei.com/v2/growagarden/calculate"
     name, weight, mutations, variant, quantity, shecklebool, sheckles = fruit_data
     if shecklebool == 1:
         return {'value' : int(sheckles), "Name": str(name),"Weight": str(weight),"Variant": str(variant),"Mutation": ",".join(mutations) if mutations else ""}, 1
+
+    
+    for data in Data["PlantsData"]:
+        if data['name'] == name:
+            value_data = data
+
+    Total_Value = value_data.get('baseValue', 1) * ((weight / value_data.get('weightDivisor', 1)) **2) * Data["FruitType"].get(variant, 1.0) * (1 + sum(Data.get("MutationData", {}).get(mutation, 0) for mutation in mutations) - len(mutations))
+
+    params = {
+        "Name": str(name),
+        "Weight": str(weight),
+        "Variant": str(variant),
+        "Mutation": ",".join(mutations) if mutations else "",
+        "value" : Total_Value * quantity
+    }
+
+    return params, quantity
+
+
     params = {
         "Name": str(name),
         "Weight": str(weight),
@@ -270,6 +300,7 @@ def GAGPetValue(pet_data):
     #-----------MATH FUNCTION ENDS------------------------#
     try:
         pet_value = Data["PetValueData"][pet_data['name']]
+        pet_value *= pet_data['quantity']
         pet_value = pet_value[0].replace(",", "")
         return compute_value(int(Data["PetValueData"][pet_data['name']][0].replace(",", "")), int(Data["PetValueData"][pet_data['name']][1].replace(",", "")), int(pet_data['age']), float(pet_data['weight']))
     except Exception as e:
@@ -327,13 +358,13 @@ def WORL(message:str=None):
 async def MessageEvaluate(self, bot, message):
     channel_configs = Config.load_channel_config(await bot.get_context(message))
     if message.channel.id == channel_configs.get('gag_values', 0):
-        try:
+
             type, Data = ParserType(message.content.lower())
             if type == "SeedType":
                 data, quantity = GAGValue(Data)
                 name = Data[0].replace(" ", "_")
                 img_path = next((f"src/ui/GAG/{name}.{ext}" for ext in ["png", "webp"] if os.path.exists(f"src/ui/GAG/{name}.{ext}")), None)
-                embed = discord.Embed(title=f"VALUE :  {price_formatter(int(data['value']) * quantity)}",
+                embed = discord.Embed(title=f"VALUE :  {price_formatter(int(data['value']))}",
                             colour=0x1000f5)
 
                 embed.set_author(name="BloxTrade")
@@ -368,10 +399,12 @@ async def MessageEvaluate(self, bot, message):
                 embed.add_field(name="Age",
                                 value=f"{Data['age']} yrs old",
                                 inline=False)
-            await message.reply(embed=embed, file=discord.File(img_path, filename="image.png"))
-        except Exception as e:
-            await message.delete()  
-    
+            if img_path:
+                await message.reply(embed=embed, file=discord.File(img_path, filename="image.png"))
+            else:
+                await message.reply(embed=embed)
+
+
     elif message.channel.id == channel_configs.get('gag_worl', 0):
         try:
             org_message = await message.reply("Thinking...")

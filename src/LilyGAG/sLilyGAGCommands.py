@@ -41,8 +41,8 @@ class LilyGAG(commands.Cog):
             await ctx.send(f"Exception {e}")
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
-    @commands.hybrid_command(name='upload_img', description='updates the gag image with desired input attached')
-    async def upload_img(self, ctx, file_name: str):
+    @commands.hybrid_command(name='gag_upload_img', description='updates the gag image with desired input attached')
+    async def gag_upload_img(self, ctx, file_name: str):
         if not ctx.message.attachments:
             await ctx.send("Please attach file formats")
             return

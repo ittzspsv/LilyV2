@@ -106,7 +106,7 @@ def load_channel_config_guild_id(guild_id: int, type=0):
 
 
 # Command prefix for the bot
-bot_command_prefix = "!"
+bot_command_prefix = "?"
 
 # Bot display settings
 bot_name = "BloxTrade"
@@ -120,12 +120,12 @@ server_invite_link = "https://discord.com/invite/bloxtrade"
 fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
-port = 0 # Currently set to Production Server
+port = 1 # Currently set to Production Server
 meta_enable = 0
 engagement = 0
 
 # ENVIRONMENT SETTINGS
-if port == 1:
+if port == 0:
     # DEVELOPMENT SERVER SETTINGS
     TRADE_EMOJI_ID = ["1348722170586599465"]
     PERM_EMOJI_ID = ["1349449830048731206"]
@@ -252,13 +252,13 @@ async def update_config_data():
                 BlacklistedRoles = data['Roles']['BlacklistedRoles']
 
                 #CHANNELS -- GAG
-                seed_gear_stock_channel_id = data['GAGChannels']['seed_gear_stock_channel_id']
-                eggstock_channel_id = data['GAGChannels']['eggstock_channel_id']
-                cosmeticsstock_channel_id = data['GAGChannels']['cosmeticsstock_channel_id']
-                weatherupdate_channel_id = data['GAGChannels']['weatherupdate_channel_id']
+                seed_gear_stock_channel_id = int(data['GAGChannels']['seed_gear_stock_channel_id'])
+                eggstock_channel_id = int(data['GAGChannels']['eggstock_channel_id'])
+                cosmeticsstock_channel_id = int(data['GAGChannels']['cosmeticsstock_channel_id'])
+                weatherupdate_channel_id = int(data['GAGChannels']['weatherupdate_channel_id'])
 
                 #GUILD REFERENCE
-                GUILD_ID = data['Guilds']['GAGGuildID']
+                GUILD_ID = int(data['Guilds']['GAGGuildID'])
 
 
                 return "Success"

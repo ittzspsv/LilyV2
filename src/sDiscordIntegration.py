@@ -14,7 +14,7 @@ import logging
 
 import os
 import asyncio
-import polars as pl
+from urllib.parse import quote
 import json
     
 import re
@@ -150,7 +150,7 @@ class MyBot(commands.Bot):
         await self.BotInitialize()
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
-        handler = StockWebSocket("wss://websocket.joshlei.com/growagarden?user_id=${encodeURIComponent(834771588157517581)}", bot)
+        handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden?user_id={quote("834771588157517581")}", bot)
         asyncio.create_task(handler.run())    
         await self.tree.sync()
 
@@ -190,7 +190,7 @@ class MyBot(commands.Bot):
     async def is_user(self, user, user_id):
         return user.id == int(user_id)  
 
-    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings=[]):
+    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings):
         embed = discord.Embed(title=stock_type,
                       description=stock_msg, colour=0x2b00ff)
         channel = self.get_channel(channel_id)

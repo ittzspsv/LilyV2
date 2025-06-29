@@ -26,7 +26,7 @@ def FetchFruitImage(fruit_name):
     if fruit_name_1 in predefined_images:
         return predefined_images[fruit_name_1]
 
-    url = f"https://growagarden.fandom.com/wiki/{fruit_name_1}"
+    url = f"https://blox-fruits.fandom.com/wiki/{fruit_name_1}"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
     }
@@ -45,3 +45,5 @@ def FetchFruitImage(fruit_name):
                 return clean_url
 
     return None
+
+print(FetchFruitImage("Kitsune"))
