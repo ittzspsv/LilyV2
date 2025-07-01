@@ -23,6 +23,9 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 - Lily Grow a Garden : A module dedicated for the current most played game on roblox Grow a garden with highest of 20m active Concurrent Players
 
 
+## BOT - PREVIEW
+![Preview](misc/Collage.png)
+
 ## CURRENTLY USED
 This bot is currently up and running on these servers [mainly designed for those] [no support for multi-servers until now]
 
