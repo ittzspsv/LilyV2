@@ -26,7 +26,7 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 ## CURRENTLY USED
 This bot is currently up and running on these servers [mainly designed for those] [no support for multi-servers until now]
 
-[Blox Trade | Roblox Blox Fruits](discord.gg/bloxtrade)
+[Blox Trade | Roblox Blox Fruits](https://discord.gg/bloxtrade)
 
 # SUPPORT
 Feel free to contact me personally through my discord [shreespsv] if you guys want more games to be added on the discord bot
