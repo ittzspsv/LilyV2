@@ -23,6 +23,15 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 - Lily Grow a Garden : A module dedicated for the current most played game on roblox Grow a garden with highest of 20m active Concurrent Players
 
 
+## MAIN TECH STACK USED
+- Discord.py
+- websocket-client
+- Beautiful Soup (bs4)
+- requests
+- polars
+- pillow
+- rapidfuzz
+
 ## BOT - PREVIEW
 ![Preview](misc/Collage.png)
 
