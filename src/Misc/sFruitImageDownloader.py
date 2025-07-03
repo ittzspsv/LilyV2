@@ -4,15 +4,10 @@ import json
 import sFruitImageFetcher as FIF
 
 '''
-items = []
-with open("src/LilyGAG/data/GAGPlantsData.json", "r") as file:
-    value_data = json.load(file)
-
-    for dictionary in value_data:
-        items.append(dictionary["name"].replace(" ", "_"))
+items = ["Common_Egg", "Common_Summer_Egg", "Uncommon_Egg", "Rare_Egg", "Legendary_Egg", "Mythical_Egg", "Bug_Egg", "Paradise_Egg", "Bee_Egg", "Rare_Summer_Egg"]
 
 
-save_directory = "src/ui/GAG/plants"
+save_directory = "src/ui/GAG"
 os.makedirs(save_directory, exist_ok=True)
 
 for fruit in items:
@@ -39,12 +34,13 @@ for fruit in items:
 '''
 
 '''
-response = requests.get("https://static.wikia.nocookie.net/growagarden/images/e/e8/FennecFoxIcon.png")
+response = requests.get("https://static.wikia.nocookie.net/growagarden/images/5/54/FeijoaIcon.png")
 
 
 if response.status_code == 200:
-    with open("FennecFox.png", "wb") as file:
+    with open("Feijoa.png", "wb") as file:
         file.write(response.content)
     print("Image downloaded successfully!")
 else:
-    print(f"Failed to download image. Status code: {response.status_code}")'''
+    print(f"Failed to download image. Status code: {response.status_code}")
+'''

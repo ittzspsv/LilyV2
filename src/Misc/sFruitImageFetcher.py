@@ -45,5 +45,3 @@ def FetchFruitImage(fruit_name):
                 return clean_url
 
     return None
-
-print(FetchFruitImage("Kitsune"))

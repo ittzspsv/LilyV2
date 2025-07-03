@@ -159,7 +159,8 @@ if port == 0:
     seed_gear_stock_channel_id = 1387001376269144116
     eggstock_channel_id = 1387001376269144116
     cosmeticsstock_channel_id = 1387001376269144116
-    weatherupdate_channel_id = 1349753791704072313
+    eventshop_channel_id = 1387001376269144116
+    weatherupdate_channel_id = 1387001376269144116
 
     #GUILD REFERENCE
     GUILD_ID = 1240215331071594536
@@ -198,13 +199,14 @@ else:
     BlacklistedRoles = [1357492900195205130] # Kai Role
 
     #CHANNELS -- GAG
-    seed_gear_stock_channel_id = 1387001376269144116
-    eggstock_channel_id = 1387001376269144116
-    cosmeticsstock_channel_id = 1387001376269144116
-    weatherupdate_channel_id = 1349753791704072313
+    seed_gear_stock_channel_id = 1389972635403948153
+    eggstock_channel_id = 1389977044733136966
+    cosmeticsstock_channel_id = 1389977261486112869
+    eventshop_channel_id = 1390370838154580200
+    weatherupdate_channel_id = 1389977107244777634
 
     #GUILD REFERENCE
-    GUILD_ID = 0
+    GUILD_ID = 1389970924664786964
 
 # Embed colors based on item type
 embed_color_codes = {
@@ -230,7 +232,7 @@ staff_manager_role_id = 1365324107947970700
 #ROLES
 
 async def update_config_data():
-    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles,seed_gear_stock_channel_id, eggstock_channel_id,cosmeticsstock_channel_id,weatherupdate_channel_id,GUILD_ID
+    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles,seed_gear_stock_channel_id, eggstock_channel_id,cosmeticsstock_channel_id,weatherupdate_channel_id,GUILD_ID, eventshop_channel_id
     url = 'https://ittzspsv.github.io/LilyV2-Configs/LilyConfig.json'
 
     async with aiohttp.ClientSession() as session:
@@ -256,6 +258,7 @@ async def update_config_data():
                 eggstock_channel_id = int(data['GAGChannels']['eggstock_channel_id'])
                 cosmeticsstock_channel_id = int(data['GAGChannels']['cosmeticsstock_channel_id'])
                 weatherupdate_channel_id = int(data['GAGChannels']['weatherupdate_channel_id'])
+                eventshop_channel_id = int(data['GAGChannels']['eventshop_channel_id'])
 
                 #GUILD REFERENCE
                 GUILD_ID = int(data['Guilds']['GAGGuildID'])

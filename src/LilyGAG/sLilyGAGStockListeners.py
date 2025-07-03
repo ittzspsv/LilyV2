@@ -53,17 +53,22 @@ class StockWebSocket:
         pings = []
         if seedstock:
             longest_name = max(len(item["display_name"]) for item in seedstock)
-            formatted_lines = [
-                f"{item['display_name'].title():<{longest_name}}   **{item['quantity']}x**"
-                for item in seedstock
-            ]
-            seedstock_format_string = "\n".join(formatted_lines)
-            pings = []
-            for items in seedstock:
-                role = discord.utils.get(guild.roles, name=items["display_name"].title())
+
+            formatted_lines = []
+            for item in seedstock:
+                display_name = item["display_name"].title()
+                quantity = item["quantity"]
+
+                emoji = discord.utils.get(guild.emojis, name=display_name.replace(" ", "_")) or "❓"
+                role = discord.utils.get(guild.roles, name=display_name)
+
                 if role:
                     pings.append(role.mention)
 
+                line = f"{emoji} {display_name:<{longest_name}}   **{quantity}x**"
+                formatted_lines.append(line)
+
+            seedstock_format_string = "\n".join(formatted_lines)
             await bot.PostStock("SEED STOCK", seedstock_format_string, Config.seed_gear_stock_channel_id, pings)
 
         #GEAR STOCK
@@ -84,19 +89,26 @@ class StockWebSocket:
 
         #EGG STOCK
         eggstock = parsed["egg_stock"]
+        pings = set()
         if eggstock:
             longest_name = max(len(item["display_name"]) for item in eggstock)
-            formatted_lines = [
-                f"{item['display_name'].title():<{longest_name}}   **{item['quantity']}x**"
-                for item in eggstock
-            ]
-            pings = []
-            for items in eggstock:
-                role = discord.utils.get(guild.roles, name=items["display_name"])
+
+            formatted_lines = []
+            for item in eggstock:
+                display_name = item["display_name"].title()
+                quantity = item["quantity"]
+
+                emoji = discord.utils.get(guild.emojis, name=display_name.replace(" ", "_")) or "❓"
+                role = discord.utils.get(guild.roles, name=display_name)
+
                 if role:
-                    pings.append(role.mention)
+                    pings.add(role.mention)
+
+                line = f"{emoji} {display_name:<{longest_name}}   **{quantity}x**"
+                formatted_lines.append(line)
+
             eggstock_format_string = "\n".join(formatted_lines)
-            await bot.PostStock("EGG STOCK", eggstock_format_string, Config.eggstock_channel_id, pings)
+            await bot.PostStock("SEED STOCK", eggstock_format_string, Config.eggstock_channel_id, list(pings))
 
         #COSMETICS STOCK
         cosmeticsshop = parsed["cosmetic_stock"]
@@ -129,4 +141,20 @@ class StockWebSocket:
                     if role:
                         pings.append(role.mention)
                     await bot.PostStock(name, description, Config.weatherupdate_channel_id, pings)
+        pings = ["Event Stock"]
+        event_shop_stock = parsed['eventshop_stock']
+
+        if event_shop_stock:
+            longest_name = max(len(item["display_name"]) for item in event_shop_stock)
+            formatted_lines = [
+                f"{item['display_name'].title():<{longest_name}}   **{item['quantity']}x**"
+                for item in event_shop_stock
+            ]
+            eventshop_format_string = "\n".join(formatted_lines)
+            pings = []
+            for items in event_shop_stock:
+                role = discord.utils.get(guild.roles, name=items["display_name"])
+                if role:
+                    pings.append(role.mention)
+            await bot.PostStock("EVENT STOCK", eventshop_format_string, Config.eventshop_channel_id, pings)
         
