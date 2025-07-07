@@ -3,10 +3,14 @@ import os
 import pytz
 import polars as pl
 import re
+import aiosqlite
 
 import Config.sBotDetails as Config
+from collections import Counter
+import LilyLogging.sLilyLogging as LilyLogging
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
+from discord.utils import utcnow
 
 
 async def VerifyVMute(self, bot, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
@@ -23,191 +27,204 @@ def evaluate_log_file(filename):
         })
         df.write_csv(filename)
 
-def exceeded_ban_limit(ctx:commands.Context, moderator_id, moderator_role_ids):
-    filename = f"storage/{ctx.guild.id}/banlogs/{moderator_id}-logs.csv"
-    if not os.path.exists(filename):
-        return False
-
-    now = datetime.now(pytz.utc)
+async def exceeded_ban_limit(ctx: commands.Context, moderator_id: int, moderator_role_ids: list[int]):
+    now = datetime.now(pytz.utc).isoformat()
+    past_24h = (datetime.now(pytz.utc) - timedelta(hours=24)).isoformat()
 
     try:
-        df = pl.read_csv(filename, try_parse_dates=True)
-        if df.is_empty():
-            return False
-
-        df = df.filter(pl.col("ban_time") >= (now - timedelta(hours=24)))
+        async with LilyLogging.mdb.execute("""
+            SELECT COUNT(*) FROM modlogs
+            WHERE guild_id = ? AND moderator_id = ? AND mod_type = 'ban'
+            AND timestamp >= ?
+        """, (ctx.guild.id, moderator_id, past_24h)) as cursor:
+            result = await cursor.fetchone()
+            recent_ban_count = result[0] if result else 0
 
         max_limit = max([Config.limit_Ban_details.get(role_id, 0) for role_id in moderator_role_ids], default=0)
-        return df.height >= max_limit if max_limit > 0 else False
+        return recent_ban_count >= max_limit if max_limit > 0 else False
 
-    except Exception:
+    except Exception as e:
         return False
 
-def remaining_Ban_time(ctx:commands.Context, moderator_id, moderator_role_ids):
-    filename = f"storage/{ctx.guild.id}/banlogs/{moderator_id}-logs.csv"
-    if not os.path.exists(filename):
-        return None
-
+async def remaining_Ban_time(ctx: commands.Context, moderator_id: int, moderator_role_ids: list[int]):
     now = datetime.now(pytz.utc)
+    past_24h = now - timedelta(hours=24)
 
     try:
-        df = pl.read_csv(filename, try_parse_dates=True)
-        if df.is_empty():
+        async with LilyLogging.mdb.execute("""
+            SELECT timestamp FROM modlogs
+            WHERE guild_id = ? AND moderator_id = ? AND mod_type = 'ban'
+            AND timestamp >= ?
+            ORDER BY timestamp ASC LIMIT 1
+        """, (ctx.guild.id, moderator_id, past_24h.isoformat())) as cursor:
+            row = await cursor.fetchone()
+
+        if not row:
             return None
 
-        df = df.filter(pl.col("ban_time") >= (now - timedelta(hours=24)))
+        oldest_ban_time = datetime.fromisoformat(row[0])
 
         max_limit = max([Config.limit_Ban_details.get(role_id, 0) for role_id in moderator_role_ids], default=0)
-        if max_limit == 0 or df.height < max_limit:
+
+        async with LilyLogging.mdb.execute("""
+            SELECT COUNT(*) FROM modlogs
+            WHERE guild_id = ? AND moderator_id = ? AND mod_type = 'ban'
+            AND timestamp >= ?
+        """, (ctx.guild.id, moderator_id, past_24h.isoformat())) as cursor:
+            count_row = await cursor.fetchone()
+            recent_ban_count = count_row[0] if count_row else 0
+
+        if max_limit == 0 or recent_ban_count < max_limit:
             return None
 
-        oldest_ban = df.select(pl.col("ban_time").min()).item()
-        cooldown_end = oldest_ban + timedelta(hours=24)
-
+        cooldown_end = oldest_ban_time + timedelta(hours=24)
         if cooldown_end > now:
-            time_left = cooldown_end - now
-            hours, remainder = divmod(int(time_left.total_seconds()), 3600)
+            remaining = cooldown_end - now
+            hours, remainder = divmod(int(remaining.total_seconds()), 3600)
             minutes = remainder // 60
             return f"You can ban again in {hours}h {minutes}m"
 
         return None
 
-    except Exception:
+    except Exception as e:
         return None
 
-def remaining_ban_count(ctx:commands.Context, moderator_id, moderator_role_ids):
-    filename = f"storage/{ctx.guild.id}/banlogs/{moderator_id}-logs.csv"
-    if not os.path.exists(filename):
-        return max([Config.limit_Ban_details.get(role_id, 0) for role_id in moderator_role_ids], default=0)
-
+async def remaining_ban_count(ctx: commands.Context, moderator_id, moderator_role_ids):
     now = datetime.now(pytz.utc)
+    past_24h = now - timedelta(hours=24)
 
     try:
-        df = pl.read_csv(filename, try_parse_dates=True)
-        df = df.filter(pl.col("ban_time") >= (now - timedelta(hours=24)))
+        async with LilyLogging.mdb.execute("""
+            SELECT COUNT(*) FROM modlogs
+            WHERE guild_id = ? AND moderator_id = ? AND mod_type = 'ban'
+            AND timestamp >= ?
+        """, (ctx.guild.id, moderator_id, past_24h.isoformat())) as cursor:
+            row = await cursor.fetchone()
+            recent_ban_count = row[0] if row else 0
 
         max_limit = max([Config.limit_Ban_details.get(role_id, 0) for role_id in moderator_role_ids], default=0)
-        return max_limit - df.height if max_limit > 0 else 0
 
-    except Exception:
+        return max(0, max_limit - recent_ban_count) if max_limit > 0 else 0
+
+    except Exception as e:
         return 0
 
-def log_ban(ctx:commands.Context, moderator_id, banned_user_id, reason="No reason provided"):
-    filename = f"storage/{ctx.guild.id}/banlogs/{moderator_id}-logs.csv"
-    now = datetime.now(pytz.utc).isoformat()
+async def display_logs(ctx: commands.Context, moderator_id: int, user: discord.User, slice_expr=None):
+    try:
+        async with LilyLogging.mdb.execute("""
+            SELECT target_user_id, mod_type, reason, timestamp
+            FROM modlogs
+            WHERE guild_id = ? AND moderator_id = ?
+            ORDER BY timestamp DESC
+        """, (ctx.guild.id, moderator_id)) as cursor:
+            rows = await cursor.fetchall()
 
-    new_entry = pl.DataFrame({
-        "banned_user_id": [int(banned_user_id)],
-        "reason": [reason],
-        "ban_time": [now]
-    })
+        if not rows:
+            return SimpleEmbed("No Logs Found For the given user ID")
 
-    file_exists = os.path.exists(filename) and os.path.getsize(filename) > 0
-    if file_exists:
-        existing = pl.read_csv(filename)
-        combined = pl.concat([existing, new_entry])
-    else:
-        combined = new_entry
+        all_logs = [
+            {
+                "target_user_id": row[0],
+                "mod_type": row[1].lower(),
+                "reason": row[2],
+                "timestamp": row[3]
+            }
+            for row in rows
+        ]
 
-    combined.write_csv(filename)
+        mod_type_counts = Counter(log["mod_type"] for log in all_logs)
+        total_logs = len(all_logs)
 
-def display_logs(ctx: commands.Context, user_id, user, slice_expr=None):
-    file_path = f"storage/{ctx.guild.id}/banlogs/{user_id}-logs.csv"
-    if not os.path.exists(file_path):
-        return SimpleEmbed("No Logs Found For the given user id")
+        shown_logs = all_logs[slice_expr] if slice_expr else all_logs
 
-    df = pl.read_csv(file_path, try_parse_dates=True).reverse()
-    total_logs = len(df)
-    if slice_expr is not None:
-        df = df[slice_expr]
-
-    log_dict = df.to_dicts()
-
-    embed = discord.Embed(
-        title="🚫 Ban Logs",
-        description=f"🔨 Moderator: <@{user_id}>",
-        colour=0xe74c3c,
-        timestamp=datetime.now()
-    )
-
-    embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
-    embed.set_thumbnail(url=user.avatar.url if user.avatar else "https://example.com/default_avatar.png")
-
-    embed.add_field(name="📖 Total Logs", value=f"{total_logs}", inline=True)
-    embed.add_field(name="🗓️ Date", value=f"{datetime.now().strftime('%Y-%m-%d')}", inline=True)
-    embed.add_field(name="🕵️‍♂️ Moderator ID", value=f"{user_id}", inline=True)
-
-    embed.add_field(name="", value="**━━━━━━━━━━━━━━━━━━━**", inline=False)
-
-    for index, log_entry in enumerate(log_dict, start=1):
-        ban_timestamp = log_entry['ban_time']
-        if isinstance(ban_timestamp, datetime):
-            dt = ban_timestamp
-        else:
-            try:
-                dt = datetime.fromisoformat(ban_timestamp)
-            except:
-                dt = datetime.strptime(ban_timestamp, "%Y-%m-%d %H:%M:%S")
-
-        formatted_time = dt.strftime("%Y-%m-%d %I:%M:%S %p")
-        timezone = dt.tzinfo if dt.tzinfo else "UTC"
-
-        embed.add_field(
-            name=f"🔹Ban Log #{index}",
-            value=(f"> **👤 User:** <@{log_entry['banned_user_id']}>\n"
-                   f"> **📄 Reason:** {log_entry['reason']}\n"
-                   f"> **⏲️ Time:** {formatted_time} ({timezone})"),
-            inline=False
+        embed = discord.Embed(
+            title="📘 Moderator Logs",
+            description=f"🛡️ Moderator: <@{moderator_id}>",
+            colour=discord.Colour.blurple(),
+            timestamp=datetime.now()
         )
 
-    return embed  
+        embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
+        embed.set_thumbnail(url=user.avatar.url if user.avatar else "https://example.com/default_avatar.png")
+
+        embed.add_field(name="📖 Total Logs", value=str(total_logs), inline=True)
+        embed.add_field(name="🕵️ Moderator ID", value=str(moderator_id), inline=True)
+        embed.add_field(name="🗓️ Date", value=datetime.now().strftime("%Y-%m-%d"), inline=True)
+
+        action_summary = "\n".join(
+            f"🔸 **{action.title()}s**: `{count}`" for action, count in mod_type_counts.items()
+        )
+        embed.add_field(name="📊 Moderation Summary", value=action_summary or "No actions recorded", inline=False)
+
+        embed.add_field(name="", value="**━━━━━━━━━━━━━━━━━━━**", inline=False)
+
+        for index, log in enumerate(shown_logs, start=1):
+            try:
+                dt = datetime.fromisoformat(log["timestamp"])
+            except ValueError:
+                dt = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
+
+            formatted_time = dt.strftime("%Y-%m-%d %I:%M:%S %p")
+            timezone = dt.tzinfo or "UTC"
+
+            embed.add_field(
+                name=f"📌 Log #{index} - {log['mod_type'].title()}",
+                value=(f"> 👤 **User:** <@{log['target_user_id']}>\n"
+                       f"> 📝 **Reason:** {log['reason']}\n"
+                       f"> ⏰ **Time:** {formatted_time} ({timezone})"),
+                inline=False
+            )
+
+        return embed
+
+    except Exception as e:
+        print("Error in display_logs:", e)
+        return SimpleEmbed("Something went wrong while retrieving logs.")
 
 async def checklogs(ctx: commands.Context, member: str = ""):
-    log_folder = f"storage/{ctx.guild.id}/banlogs"
-    log_files = os.listdir(log_folder)
-
     if not member:
         await ctx.send("Please provide a user ID to check logs for.")
         return
 
     try:
         member_id = int(member)
-    except ValueError:
-        await ctx.send("Invalid user ID format.")
+    except ValueError as v:
+        await ctx.send(v)
         return
 
-    for log_file in log_files:
-        if log_file.endswith('-logs.csv'):
-            log_path = os.path.join(log_folder, log_file)
+    try:
+        async with LilyLogging.mdb.execute("""
+            SELECT moderator_id, reason, timestamp
+            FROM modlogs
+            WHERE guild_id = ? AND target_user_id = ? AND mod_type = 'ban'
+            ORDER BY timestamp DESC LIMIT 1
+        """, (ctx.guild.id, member_id)) as cursor:
+            row = await cursor.fetchone()
 
-            try:
-                df = pl.read_csv(log_path)
-            except Exception as e:
-                await ctx.send(f"Failed to read {log_file}: {e}")
-                continue
+        if row:
+            moderator_id, reason, ban_time = row
 
-            user_bans = df.filter(pl.col("banned_user_id") == member_id)
+            embed = discord.Embed(
+                title=f"DISPLAYING BAN LOG FOR USER ID {member_id}",
+                colour=0x0055ff
+            )
 
-            if user_bans.height > 0:
-                latest_ban = user_bans.sort("ban_time", descending=True).row(0)
+            embed.add_field(
+                name="",
+                value=(
+                    f"**Moderator ID : <@{moderator_id}>**\n"
+                    f"**Reason : {reason}**\n\n"
+                    f"**Time: {ban_time}**"
+                ),
+                inline=False
+            )
 
-                banned_user_id = latest_ban[0]
-                reason = latest_ban[1]
-                ban_time = latest_ban[2]
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(embed=SimpleEmbed(f"No ban logs found for user with ID {member_id}."))
 
-                moderator_id = log_file.split("-")[0]
-
-                embed = discord.Embed(title=f"DISPLAYING BAN LOG FOR USER ID {banned_user_id}",
-                      colour=0x0055ff)
-
-                embed.add_field(name=f"",
-                                value=f"**Moderator ID : <@{moderator_id}>**\n**Reason : {reason}**\n\n**Time: {ban_time}**",
-                                inline=False)
-
-                await ctx.send(embed=embed)
-                return
-
-    await ctx.send(embed=SimpleEmbed(f"No ban logs found for user with ID {member_id}."))
+    except Exception as e:
+        await ctx.send(embed=SimpleEmbed(f"Exception {e}"))
 
 def SimpleEmbed(stringformat):
     embed = discord.Embed(description=stringformat, colour=0x6600ff)
@@ -240,89 +257,6 @@ def BanEmbed(moderator: discord.Member, reason, appealLink, server_name):
 
     return embed
 
-async def ban_user(ctx, user_input, reason="No reason provided", proofs:list=[]):
-    except_limit_ban_ids = await Config.load_exceptional_ban_ids(ctx)
-    author_role_ids = [role.id for role in ctx.author.roles]
-    valid_limit_roles = [role_id for role_id in author_role_ids if role_id in Config.limit_Ban_details]
-
-    if ctx.author.id in except_limit_ban_ids:
-        await ctx.send(embed=SimpleEmbed("You Have the role to ban.  But you can't ban.  Maybe you are restricted from using this command"))
-        return
-
-    if not valid_limit_roles:
-        await ctx.send(embed=SimpleEmbed("You don't have permission to perform a limited ban."))
-        return
-
-    try:
-        try:
-            user_id = user_input.id if isinstance(user_input, (discord.User, discord.Member)) else int(user_input)
-        except ValueError:
-            await ctx.send(embed=SimpleEmbed("User ID is Not Valid"))
-            return
-        
-        member_obj = ctx.guild.get_member(user_id)
-
-        if member_obj:
-            target_user = member_obj
-        else:
-            try:
-                target_user = await ctx.bot.fetch_user(user_id)
-            except discord.NotFound:
-                await ctx.send(embed=SimpleEmbed("User not found. Recheck"))
-                return
-            except discord.HTTPException as e:
-                await ctx.send(embed=SimpleEmbed(f"Exception : HTTPException  {e}"))
-                return
-
-        if member_obj:
-            if member_obj.top_role >= ctx.guild.me.top_role:
-                await ctx.send(embed=SimpleEmbed("I cannot ban this user because their role is higher than mine!"))
-                return
-            if member_obj.top_role >= ctx.author.top_role:
-                await ctx.send(embed=SimpleEmbed("I cannot ban a user with a role equal to or higher than yours."))
-                return
-            if member_obj.id == ctx.guild.owner_id:
-                await ctx.send(embed=SimpleEmbed("I cannot ban the server owner!"))
-                return
-            if member_obj.id == ctx.bot.user.id:
-                await ctx.send(embed=SimpleEmbed("You cannot ban me!"))
-                return
-            if member_obj.id == ctx.author.id:
-                await ctx.send(embed=SimpleEmbed("You cannot ban yourself!"))
-                return
-
-        if exceeded_ban_limit(ctx, ctx.author.id, valid_limit_roles):
-            await ctx.send(embed=SimpleEmbed("Cannot ban the user! I'm Sorry But you have exceeded your daily limit"))
-            return
-
-        try:
-            if member_obj:
-                try:
-                    await member_obj.send(embed=BanEmbed(ctx.author, reason, Config.appeal_server_link, ctx.guild.name))
-                except Exception as e:
-                    print(e)
-                await ctx.guild.ban(member_obj, reason=reason)
-            else:
-                await ctx.guild.ban(discord.Object(id=user_id), reason=reason)
-
-            await ctx.send(embed=SimpleEmbed(f"Banned: <@{user_id}> \n**Reason:** {reason}\n **Bans Remaining: **{remaining_ban_count(ctx, ctx.author.id, valid_limit_roles) - 1}"))
-
-            log_ban(ctx, ctx.author.id, user_id, reason)
-
-            with open("src/LilyModeration/logchannelid.log", "r") as file:
-                logs_channel_id = file.read().strip()
-            log_channel = ctx.guild.get_channel(int(logs_channel_id))
-            if log_channel:
-                await log_channel.send(embed=LogEmbed(target_user, ctx.author, reason), files=proofs)
-
-        except discord.HTTPException as e:
-            await ctx.send(embed=SimpleEmbed(f"Failed to ban the user. {e}"))
-        except Exception as e:
-            await ctx.send(embed=SimpleEmbed(f"Unhandled Exception: {e}"))
-
-    except Exception as e:
-        await ctx.send(embed=SimpleEmbed(f"Unhandled Exception: {e}"))
-
 def MuteParser(duration: str):
     match = re.match(r"(\d+)([smhd])", duration.strip().lower())
     if not match:
@@ -338,10 +272,156 @@ def MuteParser(duration: str):
         return value * 3600
     elif unit == "d":
         return value * 86400
-    elif unit == "y":
-        return value * 31536000
     else:
-        raise ValueError(f"Unsupported time unit: {unit}")
+        raise ValueError(f"Unsupported unit: {unit}")
+
+async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = []):
+    except_limit_ban_ids = await Config.load_exceptional_ban_ids(ctx)
+    author_role_ids = [role.id for role in ctx.author.roles]
+    valid_limit_roles = [role_id for role_id in author_role_ids if role_id in Config.limit_Ban_details]
+
+    if ctx.author.id in except_limit_ban_ids:
+        await ctx.send(embed=SimpleEmbed("You are restricted from using this command"))
+        return
+
+    if not valid_limit_roles:
+        await ctx.send(embed=SimpleEmbed("You don't have permission to perform a limited ban."))
+        return
+
+    try:
+        user_id = user_input.id if isinstance(user_input, (discord.User, discord.Member)) else int(user_input)
+    except ValueError:
+        await ctx.send(embed=SimpleEmbed("Not valid user id"))
+        return
+
+    member_obj = ctx.guild.get_member(user_id)
+    if member_obj:
+        target_user = member_obj
+    else:
+        try:
+            target_user = await ctx.bot.fetch_user(user_id)
+        except discord.NotFound:
+            await ctx.send(embed=SimpleEmbed("User not found. "))
+            return
+        except discord.HTTPException as e:
+            await ctx.send(embed=SimpleEmbed(f"Exception: HTTPException {e}"))
+            return
+
+    if member_obj:
+        if member_obj.top_role >= ctx.guild.me.top_role:
+            await ctx.send(embed=SimpleEmbed("I cannot ban this user because their role is higher than mine!"))
+            return
+        if member_obj.top_role >= ctx.author.top_role:
+            await ctx.send(embed=SimpleEmbed("You cannot ban a user with a role equal to or higher than yours."))
+            return
+        if member_obj.id in {ctx.guild.owner_id, ctx.bot.user.id, ctx.author.id}:
+            await ctx.send(embed=SimpleEmbed("You cannot ban the owner, yourself, or me!"))
+            return
+
+    if await exceeded_ban_limit(ctx, ctx.author.id, valid_limit_roles):
+        await ctx.send(embed=SimpleEmbed("Cannot ban the user! You have exceeded your daily limit."))
+        return
+
+    try:
+        if member_obj:
+            try:
+                await member_obj.send(embed=BanEmbed(ctx.author, reason, Config.appeal_server_link, ctx.guild.name))
+            except Exception as e:
+                print("DM failed:", e)
+            await ctx.guild.ban(member_obj, reason=reason)
+        else:
+            await ctx.guild.ban(discord.Object(id=user_id), reason=reason)
+
+        remaining = await remaining_ban_count(ctx, ctx.author.id, valid_limit_roles)
+        await ctx.send(embed=SimpleEmbed(
+            f"Banned: <@{user_id}>\n**Reason:** {reason}\n**Bans Remaining:** {remaining - 1}"
+        ))
+
+        await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "ban", reason)
+
+        try:
+            with open("src/LilyModeration/logchannelid.log", "r") as file:
+                logs_channel_id = int(file.read().strip())
+            log_channel = ctx.guild.get_channel(logs_channel_id)
+            if log_channel:
+                await log_channel.send(embed=LogEmbed(target_user, ctx.author, reason), files=proofs)
+        except Exception as e:
+            print("Error sending to log channel:", e)
+
+    except discord.HTTPException as e:
+        await ctx.send(embed=SimpleEmbed(f"Failed to ban the user. {e}"))
+    except Exception as e:
+        await ctx.send(embed=SimpleEmbed(f"Unhandled Exception: {e}"))
+
+async def mute_user(ctx, user: discord.Member, duration: str, reason: str = "No reason provided"):
+    if user.top_role >= ctx.guild.me.top_role:
+        await ctx.send(embed=SimpleEmbed("I cannot mute this user"))
+        return
+
+    if user.top_role >= ctx.author.top_role:
+        await ctx.send(embed=SimpleEmbed("I cannot mute a user with a role equal to or higher than yours."))
+        return
+
+    if user.id in {ctx.guild.owner_id, ctx.bot.user.id, ctx.author.id}:
+        await ctx.send(embed=SimpleEmbed("Exception!. Stupid action detected errno 77777"))
+        return
+
+    try:
+        seconds = MuteParser(duration)
+        until = utcnow() + timedelta(seconds=seconds)
+
+        try:
+            await user.send(embed=SimpleEmbed(
+                f"You have been muted in **{ctx.guild.name}**\n**Duration:** {duration}\n**Reason:** {reason}"
+            ))
+        except Exception as e:
+            print("DM failed:", e)
+
+        await user.edit(timed_out_until=until, reason=reason)
+
+        await ctx.send(embed=SimpleEmbed(
+            f"Muted: <@{user.id}>\n**Duration:** {duration}\n**Reason:** {reason}"
+        ))
+
+        await LilyLogging.LogModerationAction(ctx, ctx.author.id, user.id, "mute", reason)
+
+        try:
+            with open("src/LilyModeration/logchannelid.log", "r") as file:
+                logs_channel_id = int(file.read().strip())
+            log_channel = ctx.guild.get_channel(logs_channel_id)
+            if log_channel:
+                await log_channel.send(embed=LogEmbed(user, ctx.author, reason + f" | Duration: {duration}"))
+        except Exception as e:
+            print("Error sending to log channel:", e)
+
+    except ValueError as ve:
+        await ctx.send(embed=SimpleEmbed(str(ve)))
+    except discord.HTTPException as e:
+        await ctx.send(embed=SimpleEmbed(f"Failed to mute the user. {e}"))
+    except Exception as e:
+        await ctx.send(embed=SimpleEmbed(f"Exception: {e}"))
+
+async def unmute(ctx, user: discord.Member):
+    if not user.timed_out_until or user.timed_out_until <= discord.utils.utcnow():
+        await ctx.send(embed=SimpleEmbed("That user is not muted currently"))
+        return
+
+    try:
+        await user.edit(timed_out_until=None, reason="Manual unmute by moderator")
+        await ctx.send(embed=SimpleEmbed(f"Unmuted: <@{user.id}>"))
+        try:
+            with open("src/LilyModeration/logchannelid.log", "r") as file:
+                logs_channel_id = int(file.read().strip())
+            log_channel = ctx.guild.get_channel(logs_channel_id)
+            if log_channel:
+                await log_channel.send(embed=LogEmbed(user, ctx.author, "Unmuted manually"))
+        except Exception as e:
+            print("Log channel error:", e)
+
+    except discord.HTTPException as e:
+        await ctx.send(embed=SimpleEmbed(f"Failed to unmute user. {e}"))
+    except Exception as e:
+        await ctx.send(embed=SimpleEmbed(f"Exception: {e}"))
 
 async def CheckVoiceMuted(member: discord.Member, channel: discord.TextChannel):
     folder_path = f"storage/{970643838047760384}/vcmutelogs"
@@ -438,7 +518,7 @@ async def VoiceMute(member: discord.Member, mute_duration: str, reason: str, cha
 
     except Exception as e:
         if channel:
-            await channel.send(embed=SimpleEmbed(f"Exception: `{e}`"))
+            await channel.send(embed=SimpleEmbed(f"Exception: {e}"))
 
 async def VoiceUnmute(member: discord.Member, channel: discord.TextChannel = None):
     folder_path = f"storage/{970643838047760384}/vcmutelogs"

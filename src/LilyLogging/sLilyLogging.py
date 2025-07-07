@@ -1,26 +1,57 @@
 from datetime import datetime
 
 from discord.ext import commands
-import polars as pl
-import os
+import aiosqlite
+import pytz
 
-async def WriteLog(ctx: commands.Context, user_id, log_txt):
-        log_file_path = f"storage/{ctx.guild.id}/botlogs/logs.csv"
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+bdb = None
+mdb = None
 
-        new_log = pl.DataFrame({
-            "user_id": [str(user_id)],
-            "timestamp": [timestamp],
-            "log": [log_txt]
-        })
+async def initialize():
+    global bdb, mdb
+    bdb = await aiosqlite.connect("storage/logs/BotLogs.db")
+    mdb = await aiosqlite.connect("storage/logs/Modlogs.db")
+    await bdb.execute("""
+        CREATE TABLE IF NOT EXISTS botlogs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER,
+            user_id INTEGER,
+            timestamp TEXT,
+            log TEXT
+        )
+    """)
+    await mdb.execute("""
+        CREATE TABLE IF NOT EXISTS modlogs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER,
+            moderator_id INTEGER,
+            target_user_id INTEGER,
+            mod_type TEXT,
+            reason TEXT,
+            timestamp TEXT
+        )
+    """)
+    await bdb.commit()
+    await mdb.commit()
 
-        if os.path.exists(log_file_path):
-            existing_logs = pl.read_csv(log_file_path)
+async def WriteLog(ctx: commands.Context, user_id: int, log_txt: str):
+    global bdb
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            new_log = new_log.cast(existing_logs.schema)
+    await bdb.execute("""
+        INSERT INTO botlogs (guild_id, user_id, timestamp, log)
+        VALUES (?, ?, ?, ?)
+    """, (ctx.guild.id, user_id, timestamp, log_txt))
 
-            updated_logs = pl.concat([existing_logs, new_log], how="vertical")
-        else:
-            updated_logs = new_log
+    await bdb.commit()
 
-        updated_logs.write_csv(log_file_path)
+async def LogModerationAction(ctx: commands.Context, moderator_id: int, target_user_id: int, mod_type: str, reason: str = "No reason provided"):
+    global mdb
+    timestamp = datetime.now(pytz.utc).isoformat()
+
+    await mdb.execute("""
+        INSERT INTO modlogs (guild_id, moderator_id, target_user_id, mod_type, reason, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (ctx.guild.id, moderator_id, target_user_id, mod_type.lower(), reason, timestamp))
+
+    await mdb.commit()

@@ -1,0 +1,42 @@
+{
+    "Configs" : {
+        "Embed" : {
+  "embeds": [
+    {
+      "author": {
+        "name": "BloxTrade Support"
+      },
+      "title": "Support Ticket",
+      "description": "Explore our various ticket options for tailored assistance. Whether it's giveaways, trading, or moderation concerns, we're here to help. Choose the right ticket, and we'll assist you promptly.",
+      "footer": {
+        "text": "Made using LilyV2"
+      }
+    }
+  ]
+},
+        "TicketEmbedFields" : {
+            "Title" : "Support Ticket",
+            "TEmbed" : {
+                "embeds": [
+                    {
+                    "title": "Support Ticket Instructions",
+                    "description": "Thank you for contacting Support\n\n**Benefits of our support team**",
+                    "fields": [
+                        {
+                        "name": "",
+                        "value": "Nothing will be done\nidk why tf u wasting ur time"
+                        }
+                    ]
+                    }
+                ]
+                }
+        },
+        "TicketType" : ["Button", "Create Ticket", "Secondary"],
+        "Channel_To_Spawn" : 1368673986300608583,
+        "ModeratorRoles" : [1370812141606801510]
+    },
+
+    "Modal" : [
+            {"Discord ID | Username of that scammer" : 600, "Please explain what he did" : 600}
+    ]
+}

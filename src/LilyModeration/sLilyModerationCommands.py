@@ -54,12 +54,12 @@ class LilyModeration(commands.Cog):
                 await ctx.send(embed=mLily.SimpleEmbed(f"you can't use my commands against a developer {ctx.author.mention}"))
                 return
 
-            if not mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
+            if not await mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
                 await mLily.ban_user(ctx, target_user, reason, proofs)
             else:
                 await ctx.send(embed=mLily.SimpleEmbed(
                     f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"
-                    f"You can ban in {mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}"
+                    f"You can ban in {await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}"
                 ))
 
         except Exception as e:
@@ -83,6 +83,18 @@ class LilyModeration(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='mute', description='mutes a user with desired input')
+    async def mute(self, ctx:commands.Context, member:discord.Member=None, duration:str="1",*, reason="No reason provided"):
+        await mLily.mute_user(ctx, member, duration, reason)
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='unmute', description='unmutes a user with desired input')
+    async def unmute(self, ctx:commands.Context, member:discord.Member=None):
+        await mLily.unmute(ctx, member)
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='logs', description='checks logs for a particular moderator (ban informations)')
     async def logs(self, ctx, slice_exp: str = None, member: str = ""):
         try:
@@ -98,14 +110,14 @@ class LilyModeration(commands.Cog):
             if not member:
                 try:
                     user = await self.bot.fetch_user(ctx.author.id)
-                    embed = mLily.display_logs(ctx,ctx.author.id, user, slice_expr=slice(start, stop))
+                    embed = await mLily.display_logs(ctx,ctx.author.id, user, slice_expr=slice(start, stop))
                 except Exception as e:
                     await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user or display logs: {e}"))
                     return
             else:
                 try:
                     user = await self.bot.fetch_user(int(member))
-                    embed = mLily.display_logs(ctx, int(member), user, slice_expr=slice(start, stop))
+                    embed = await mLily.display_logs(ctx, int(member), user, slice_expr=slice(start, stop))
                 except ValueError:
                     await ctx.send(embed=mLily.SimpleEmbed("Member ID must be a integer"))
                     return
@@ -138,29 +150,6 @@ class LilyModeration(commands.Cog):
 
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
-
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='fetchbanlog', description='fetches ban log of an user in a .csv format for quick analysis')
-    async def fetchbanlog(self, ctx, user: str = None):
-        if user is None:
-            target = ctx.author
-        else:
-            try:
-                user_id = int(user.replace("<@", "").replace(Config.bot_command_prefix, "").replace(">", ""))
-                target = await ctx.guild.fetch_member(user_id)
-            except (ValueError, discord.NotFound):
-                return await ctx.send(embed=mLily.SimpleEmbed("Could not find that user."))
-
-        file_name = f"storage/{ctx.guild.id}/banlogs/{target.id}-logs.csv"
-        try:
-            with open(file_name, "rb") as f:
-                await ctx.send(file=discord.File(f, filename=file_name))
-        except FileNotFoundError:
-            await ctx.send(embed=mLily.SimpleEmbed(f"No logs found for user {target.mention}."))
-        except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"Excepted Error : {e}."))
-
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles)
     @commands.hybrid_command(name="blacklist_user", description="Blacklist a user ID from using limited ban command.")

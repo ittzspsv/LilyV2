@@ -8,7 +8,11 @@ import Misc.sLilyEmbed as LilyEmbed
 import LilyBloxFruits.sLilyBloxFruitsCore as LBFC
 import LilyResponse.sLilyResponse as aiLily
 import LilyGAG.sLilyGAGCore as LGAG
+import LilyLeveling.sLilyLevelingCore as LilyLeveling
+import LilyLogging.sLilyLogging as LilyLogging
+import LilyTicketTool.LilyTicketToolCore as LilyTTCore
 from LilyGAG.sLilyGAGStockListeners import StockWebSocket
+import ui.sWantedPoster as WP
 import logging
 
 
@@ -42,14 +46,16 @@ class MyBot(commands.Bot):
         await bot.load_extension("Misc.sLilyEmbedCommands")
         await bot.load_extension("LilyResponse.sLilyResponseCommands")
         await bot.load_extension("LilyGAG.sLilyGAGCommands")
-        await bot.tree.sync()
+        await bot.load_extension("LilyTicketTool.LilyTicketToolCommands")
+        await bot.load_extension("LilyLeveling.sLilyLevelingCommands")
+        #await bot.tree.sync()
 
     async def BotStorageInitialization(self, guild):
         base_path = f"storage/{guild.id}"
         directories = [
             f"storage/common/Comboes",
             base_path,
-            f"{base_path}/banlogs",
+            f"{base_path}/modlogs",
             f"{base_path}/botlogs",
             f"{base_path}/configs",
             f"{base_path}/sessions",
@@ -82,8 +88,8 @@ class MyBot(commands.Bot):
 
     async def BotInitialize(self):
         for guild in self.guilds:
-            await self.BotStorageInitialization(guild)
-            await self.MemoryButtonSetup(guild)
+                await self.BotStorageInitialization(guild)
+                await self.MemoryButtonSetup(guild)
 
     async def MemoryButtonSetup(self, Guild: discord.Guild):
         ButtonSessionMemory = f"storage/{Guild.id}/sessions/ButtonSessionMemory.json"
@@ -145,14 +151,19 @@ class MyBot(commands.Bot):
         with open(ButtonSessionMemory, "w") as f:
             json.dump(valid_views, f, indent=4)
 
+    async def ConnectDatabase(self):
+        await LilyLogging.initialize()
+        await LilyLeveling.initialize()
     async def on_ready(self):
         print('Logged on as', self.user)   
         await self.BotInitialize()
+        await LilyTTCore.InitializeView(self)
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
-        handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden?user_id={quote("834771588157517581")}", bot)
-        asyncio.create_task(handler.run())    
-        await self.tree.sync()
+        await self.ConnectDatabase()
+        #handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden?user_id={quote("834771588157517581")}", bot)
+        #asyncio.create_task(handler.run())    
+        #await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -268,44 +279,22 @@ class MyBot(commands.Bot):
                 except Exception as e:
                     print(e)
 
-    async def on_message(self, message): 
+    async def on_message(self, message:discord.Message): 
         if message.author == self.user:
               return         
-        
-        #TEMPORARY FUNCTIONS : WILL BE REMOVED IN THE FUTURE UPDATE
-        elif "switch ui mode" in message.content.lower():
-            if message.author.id in Config.ids + Config.owner_ids:
-                parts = message.content.lower().split()
-                if len(parts) >= 4 and parts[2] == "mode":
-                    number = parts[3]
-                    with open("Values/valueconfig.logs", "w") as fileptr:
-                        fileptr.write(number)
-                        await message.reply("Switched Mode!")
 
-        elif "assign ban log channel id:" in message.content.lower():
-            if message.author.id in Config.ids + Config.owner_ids:
-                channel_id = message.content.replace("assign ban log channel id:", "").strip()
-                
-                with open("src/LilyModeration/logchannelid.log", "w") as file:
-                    file.write(str(channel_id))
-        
-                await message.channel.send(f"Ban log channel ID set to <#{channel_id}>.")  
+        #if message.channel.id in LilyLeveling.config:
+            #await LilyLeveling.LevelProcessor(message)
 
         await bot.RespondProcessor(message) 
           
         await LBFC.MessageEvaluate(self, bot, message)
 
         await LGAG.MessageEvaluate(self, bot, message)
-
-        word_count = len(message.content.split())
-        if word_count > 100:
-            return
         
         response_text_parsing = ["{user.name}", "{server}"]
         response_conditions = ["{<hasroll > ? hii : you dont have the role yet}", "{<isuser> ? hii : you dont have the role yet}"]
-
-        
-        
+       
         await self.process_commands(message)
 
 bot = MyBot()
@@ -318,7 +307,7 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(embed=mLily.SimpleEmbed(f"So fast Try after {error.retry_after:.1f} seconds."))
     else:
-        pass
+        await ctx.send(embed=mLily.SimpleEmbed(f"Exception {error}"))
 
 @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
 @bot.command()

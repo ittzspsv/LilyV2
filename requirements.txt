@@ -12,3 +12,5 @@ lxml_html_clean
 flashtext
 websocket-client
 python-dotenv
+aiosqlite
+Unidecode
