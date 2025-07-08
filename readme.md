@@ -14,6 +14,8 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 - Lily Rulesets : focused on permission allotment
 - Lily Logging : focused on error loggings | debugging
 - Lily Utility : focused based on general purpose
+- Lily Ticketing Tool : Focused on ticket system
+- Lily Leveling | Economy system : Focused on gaining levels / currency
 - Lily Vouch : focused based on vouching
 - Lily Algorthims : focused based on sanitizing a given string to appropriate data
 
@@ -31,6 +33,7 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 - polars
 - pillow
 - rapidfuzz
+- aiosqlite
 
 ## BOT - PREVIEW
 ![Preview](misc/Collage.png)
