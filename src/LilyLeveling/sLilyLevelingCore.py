@@ -182,7 +182,7 @@ async def UpdateProfile(ctx: commands.Context, name: str, role:str,description: 
     except Exception as e:
         await ctx.send(f"Exception: {e}")
 
-async def UpdateProfileFor(ctx: commands.Context, members:discord.Member,name: str, role: str,description: str):
+async def UpdateProfileFor(ctx: commands.Context, members:discord.Member,name: str, role: str,description: str, stamp: str):
     global ldb
     try:
         guild_id = str(ctx.guild.id)
@@ -197,15 +197,15 @@ async def UpdateProfileFor(ctx: commands.Context, members:discord.Member,name: s
 
         if not row:
             await ldb.execute("""
-                INSERT INTO bio (Guild_ID, Name, User_ID, Role,Description)
-                VALUES (?, ?, ?, ?, ?)
-            """, (guild_id, members.name, user_id, "Mortal","Sample Description Here"))
+                INSERT INTO bio (Guild_ID, Name, User_ID, Role,Description, Stamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (guild_id, members.name, user_id, "Mortal","Sample Description Here", None))
 
         await ldb.execute("""
             UPDATE bio
-            SET Name = ?, Description = ?, Role = ?
+            SET Name = ?, Description = ?, Role = ?, Stamp = ?
             WHERE Guild_ID = ? AND User_ID = ?
-        """, (name, description,role, guild_id, user_id))
+        """, (name, description,role,stamp, guild_id, user_id))
 
         await ldb.commit()
         await ctx.send("Success")
@@ -225,7 +225,7 @@ async def FetchProfileDetails(ctx: commands.Context, member: discord.Member = No
             name = ctx.author.name
 
         cursor = await ldb.execute("""
-            SELECT Name, Description, Role
+            SELECT Name, Description, Role, Stamp
             FROM bio
             WHERE Guild_ID = ? AND User_ID = ?
         """, (guild_id, user_id))
@@ -243,9 +243,9 @@ async def FetchProfileDetails(ctx: commands.Context, member: discord.Member = No
 
         if not row:
             await ldb.execute("""
-                INSERT INTO bio (Guild_ID, Name, User_ID, Role, Description)
-                VALUES (?, ?, ?, ?, ?)
-            """, (guild_id, name, user_id, "Mortal", "Sample Description Here"))
+                INSERT INTO bio (Guild_ID, Name, User_ID, Role, Description, Stamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (guild_id, name, user_id, "Mortal", "Sample Description Here", ""))
             await ldb.commit()
 
             if not row1:

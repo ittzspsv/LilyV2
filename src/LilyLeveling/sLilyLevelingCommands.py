@@ -22,8 +22,11 @@ class LilyLeveling(commands.Cog):
                     input_image = ctx.author.display_avatar.url
                 else:
                     input_image = member.display_avatar.url
-                name, description, role, current_level, bounty = await LilyLevelCore.FetchProfileDetails(ctx, member)
-                poster = await PosterGeneration(input_image, name, "", bounty, current_level, description, role)
+                name, description, role, stamp ,current_level, bounty= await LilyLevelCore.FetchProfileDetails(ctx, member)
+                if stamp:
+                    poster = await PosterGeneration(input_image, name, "", bounty, current_level, description, role, True, stamp)
+                else:
+                    poster = await PosterGeneration(input_image, name, "", bounty, current_level, description, role, False, "")
 
                 buffer = io.BytesIO()
                 poster.save(buffer, format="PNG")
@@ -52,10 +55,10 @@ class LilyLeveling(commands.Cog):
         await LilyLevelCore.UpdateProfile(ctx, name, role,description)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    #@PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
     @commands.hybrid_command(name='set_profile_for', description='updates or adds a new profile for a given member')
-    async def set_profile_for(self, ctx:commands.Context, member:discord.Member,name:str, role:str,* ,description:str):
-        await LilyLevelCore.UpdateProfileFor(ctx, member,name,role ,description)
+    async def set_profile_for(self, ctx:commands.Context, member:discord.Member,name:str, role:str,stamp:str,* ,description:str):
+        await LilyLevelCore.UpdateProfileFor(ctx, member,name,role ,description, stamp)
         
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)

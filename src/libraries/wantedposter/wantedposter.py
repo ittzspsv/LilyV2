@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from enum import Enum
 from io import BytesIO
+import ui.StampGenerator as StampGenerator
 from typing import Union, Tuple
 
 from PIL import Image, ImageFont, ImageDraw
@@ -128,7 +129,7 @@ class WantedPoster:
                  full_name_max_length: Union[int, None] = BOUNTY_POSTER_NAME_OPTIMAL_MAX_LENGTH,
                  use_space_sub: bool = True,
                  capture_condition: CaptureCondition = CaptureCondition.DEAD_OR_ALIVE,
-                 effects: list[Effect] = None, stamp: Stamp = None) -> str:
+                 effects: list[Effect] = None, stamp: Stamp = None, stamp_bool: bool=True, stamp_name: str=None) -> str:
 
         # If output path is not specified, use current timestamp in "yyyyMMddHHmmss" format + random uuid
         if output_poster_path is None:
@@ -199,10 +200,10 @@ class WantedPoster:
         belly_component: Image = self.__get_bounty_poster_component(belly, BOUNTY_POSTER_COMPONENT_BELLY)
         new_image.paste(belly_component, (0, BOUNTY_POSTER_BELLY_START_Y), belly_component)
 
-        # Add stamp
-        if stamp is not None:
-            stamp_image = Image.open(STAMP_IMAGE_PATHS[stamp])
-            new_image.paste(stamp_image, (BOUNTY_POSTER_STAMP_START_X, BOUNTY_POSTER_STAMP_START_Y), mask=stamp_image)
+
+        if stamp_bool == True:
+                stamp_image = StampGenerator.create_stamp(stamp_name)
+                new_image.paste(stamp_image, (BOUNTY_POSTER_STAMP_START_X, BOUNTY_POSTER_STAMP_START_Y), mask=stamp_image)
 
         # Add effects
         for effect in effects:

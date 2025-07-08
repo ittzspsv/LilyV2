@@ -7,7 +7,7 @@ import aiohttp
 import io
 
 
-async def PosterGeneration(avatar_url: str, first_name: str, last_name: str, bounty_amount: int, level: int, description: str, role_name: str):
+async def PosterGeneration(avatar_url: str, first_name: str, last_name: str, bounty_amount: int, level: int, description: str, role_name: str, stamp_bool: bool, stamp_name: str):
     role_name = role_name.upper()
     description = description.upper()
     try:
@@ -21,10 +21,10 @@ async def PosterGeneration(avatar_url: str, first_name: str, last_name: str, bou
     except Exception:
         fallback_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'LilyUI.png')
         wanted_poster = WantedPoster(fallback_path, first_name, last_name, bounty_amount)
-        return wanted_poster.generate(should_make_portrait_transparent=True)
+        return wanted_poster.generate(should_make_portrait_transparent=True, stamp_bool=stamp_bool, stamp_name=stamp_name)
 
     wanted_poster = WantedPoster(buffer, first_name, last_name, bounty_amount)
-    base = wanted_poster.generate(should_make_portrait_transparent=True)
+    base = wanted_poster.generate(should_make_portrait_transparent=True, stamp_bool=stamp_bool, stamp_name=stamp_name)
 
     font_path = "src/libraries/wantedposter/assets/fonts/PlayfairDisplay-Bold.ttf"
     font_color = "#4b381e"
