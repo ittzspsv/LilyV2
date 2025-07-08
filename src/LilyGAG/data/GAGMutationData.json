@@ -16,7 +16,7 @@
     "HoneyGlazed": 5,
     "Plasma": 5,
     "Heavenly": 5,
-    "Paradisal": 18,
+    "Paradisal": 100,
     "Cooked": 25,
     "Zombified": 25,
     "Molten": 25,
@@ -27,5 +27,12 @@
     "Voidtouched": 135,
     "Dawnbound": 150,
     "Aurora" : 90,
-    "Mystic" : 200
+    "Mystic" : 200,
+    "Clay" : 3,
+    "Drenched" : 5,
+    "Cloudtouched" : 5,
+    "Wiltproof" : 4,
+    "Fried" : 8,
+    "Amber" : 10,
+    "Meteoric" : 125
 }

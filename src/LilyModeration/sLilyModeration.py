@@ -109,7 +109,7 @@ async def remaining_ban_count(ctx: commands.Context, moderator_id, moderator_rol
     except Exception as e:
         return 0
 
-async def display_logs(ctx: commands.Context, moderator_id: int, user: discord.User, slice_expr=None):
+async def ms(ctx: commands.Context, moderator_id: int, user: discord.User, slice_expr=None):
     try:
         async with LilyLogging.mdb.execute("""
             SELECT target_user_id, mod_type, reason, timestamp
@@ -170,6 +170,77 @@ async def display_logs(ctx: commands.Context, moderator_id: int, user: discord.U
             embed.add_field(
                 name=f"📌 Log #{index} - {log['mod_type'].title()}",
                 value=(f"> 👤 **User:** <@{log['target_user_id']}>\n"
+                       f"> 📝 **Reason:** {log['reason']}\n"
+                       f"> ⏰ **Time:** {formatted_time} ({timezone})"),
+                inline=False
+            )
+
+        return embed
+
+    except Exception as e:
+        print("Error in display_logs:", e)
+        return SimpleEmbed("Something went wrong while retrieving logs.")
+    
+async def mod_logs(ctx: commands.Context, moderator_id: int, user: discord.User, slice_expr=None):
+    try:
+        async with LilyLogging.mdb.execute("""
+            SELECT mod_type, reason, timestamp, moderator_id
+            FROM modlogs
+            WHERE guild_id = ? AND target_user_id = ?
+            ORDER BY timestamp DESC
+        """, (ctx.guild.id, moderator_id)) as cursor:
+            rows = await cursor.fetchall()
+
+        if not rows:
+            return SimpleEmbed("No Logs Found For the given user ID")
+
+        all_logs = [
+            {
+                "moderator_id" : row[3],
+                "mod_type": row[0].lower(),
+                "reason": row[1],
+                "timestamp": row[2]
+            }
+            for row in rows
+        ]
+
+        mod_type_counts = Counter(log["mod_type"] for log in all_logs)
+        total_logs = len(all_logs)
+
+        shown_logs = all_logs[slice_expr] if slice_expr else all_logs
+
+        embed = discord.Embed(
+            title=f"📘 {user.display_name} Mod Logs",
+            description=f"📑 Showing Logs for the user",
+            colour=discord.Colour.blurple(),
+            timestamp=datetime.now()
+        )
+
+        embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
+        embed.set_thumbnail(url=user.avatar.url if user.avatar else "https://example.com/default_avatar.png")
+
+        embed.add_field(name="📖 Total Logs", value=str(total_logs), inline=True)
+        embed.add_field(name="🗓️ Date", value=datetime.now().strftime("%Y-%m-%d"), inline=True)
+
+        action_summary = "\n".join(
+            f"🔸 **{action.title()}s**: `{count}`" for action, count in mod_type_counts.items()
+        )
+        embed.add_field(name="📊 Logs Summary", value=action_summary or "No actions recorded", inline=False)
+
+        embed.add_field(name="", value="**━━━━━━━━━━━━━━━━━━━**", inline=False)
+
+        for index, log in enumerate(shown_logs, start=1):
+            try:
+                dt = datetime.fromisoformat(log["timestamp"])
+            except ValueError:
+                dt = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
+
+            formatted_time = dt.strftime("%Y-%m-%d %I:%M:%S %p")
+            timezone = dt.tzinfo or "UTC"
+
+            embed.add_field(
+                name=f"📌 Log #{index} - {log['mod_type'].title()}",
+                value=(f"> 👤 **Moderator ID:** <@{log['moderator_id']}>\n"
                        f"> 📝 **Reason:** {log['reason']}\n"
                        f"> ⏰ **Time:** {formatted_time} ({timezone})"),
                 inline=False

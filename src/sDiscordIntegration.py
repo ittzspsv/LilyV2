@@ -48,7 +48,7 @@ class MyBot(commands.Bot):
         await bot.load_extension("LilyGAG.sLilyGAGCommands")
         await bot.load_extension("LilyTicketTool.LilyTicketToolCommands")
         await bot.load_extension("LilyLeveling.sLilyLevelingCommands")
-        #await bot.tree.sync()
+        await bot.tree.sync()
 
     async def BotStorageInitialization(self, guild):
         base_path = f"storage/{guild.id}"
@@ -161,9 +161,9 @@ class MyBot(commands.Bot):
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
         await self.ConnectDatabase()
-        #handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden?user_id={quote("834771588157517581")}", bot)
-        #asyncio.create_task(handler.run())    
-        #await self.tree.sync()
+        handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden?user_id={quote("834771588157517581")}", bot)
+        asyncio.create_task(handler.run())    
+        await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -283,8 +283,8 @@ class MyBot(commands.Bot):
         if message.author == self.user:
               return         
 
-        #if message.channel.id in LilyLeveling.config:
-            #await LilyLeveling.LevelProcessor(message)
+        if message.channel.id in LilyLeveling.config['AllowedChannels']:
+            await LilyLeveling.LevelProcessor(message)
 
         await bot.RespondProcessor(message) 
           

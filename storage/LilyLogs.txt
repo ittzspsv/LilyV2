@@ -1,0 +1,8 @@
+2025-07-08 23:15:13,028 - INFO - logging in using static token
+2025-07-08 23:15:16,105 - INFO - Shard ID None has connected to Gateway (Session ID: 9386a8b12318a12ac3f098cf4cc3358d).
+2025-07-08 23:19:33,089 - INFO - logging in using static token
+2025-07-08 23:19:35,841 - INFO - Shard ID None has connected to Gateway (Session ID: 6cf79ba92ad260d6d0e482b6a89876c9).
+2025-07-08 23:55:52,231 - INFO - logging in using static token
+2025-07-08 23:55:55,467 - INFO - Shard ID None has connected to Gateway (Session ID: 293fdd22499c576498aeb92fd4b21827).
+2025-07-08 23:58:25,215 - INFO - logging in using static token
+2025-07-08 23:58:28,825 - INFO - Shard ID None has connected to Gateway (Session ID: 73288f72829d34622290e9d3cad8311c).
