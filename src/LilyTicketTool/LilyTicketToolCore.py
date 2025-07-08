@@ -166,9 +166,44 @@ class BaseModal(discord.ui.Modal):
         else:
             await TicketConstructor(values, self.moderator_roles, interaction, self.field_details)
 
+async def SendTicketLog(guild: discord.Guild, config: dict, *, opener=None, claimer=None, closer=None, modal_data: dict = None):
+    log_channel_id = config.get("LogChannel") or config.get("log_channel")
+    if not log_channel_id:
+        return
+
+    log_channel = guild.get_channel(log_channel_id)
+    if not log_channel:
+        return
+
+    embed = discord.Embed(title="Ticket Log", color=discord.Color.dark_purple())
+
+    if opener:
+        embed.add_field(name="Opened By", value=f"{opener.mention} ({opener.id})", inline=False)
+    if claimer:
+        embed.add_field(name="Claimed By", value=f"{claimer.mention} ({claimer.id})", inline=False)
+    if closer:
+        embed.add_field(name="Closed By", value=f"{closer.mention} ({closer.id})", inline=False)
+
+    if modal_data:
+        description = "\n".join(f"**{k}**: `{v}`" for k, v in modal_data.items())
+        embed.add_field(name="Form Responses", value=description or "None", inline=False)
+
+    embed.set_footer(text="Lily Ticket Handler")
+    embed.timestamp = discord.utils.utcnow()
+
+    try:
+        await log_channel.send(embed=embed)
+    except Exception:
+        pass
+
 async def TicketConstructor(values: dict, moderator_roles: list, interaction: discord.Interaction, field_details: dict):
     guild = interaction.guild
     user = interaction.user
+
+    try:
+        await interaction.response.defer(ephemeral=True)
+    except discord.NotFound:
+        return
 
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(view_channel=False),
@@ -199,14 +234,21 @@ async def TicketConstructor(values: dict, moderator_roles: list, interaction: di
     content, embeds = LilyEmbed.ParseAdvancedEmbed(field_details['TEmbed'])
     embeds.append(embed)
 
+    log_data = {
+        "moderator_roles": moderator_roles,
+        "log_channel": field_details.get("LogChannel")
+    }
+
     class BasicTicketer(discord.ui.View):
         def __init__(self):
             super().__init__(timeout=None)
+            self.claimer = None
 
         @discord.ui.button(label="Claim", style=discord.ButtonStyle.secondary, custom_id="claim")
         async def claim_button(self, interaction: discord.Interaction, button: discord.ui.Button):
             user = interaction.user
             if any(role.id in moderator_roles for role in user.roles):
+                self.claimer = user
                 await interaction.response.send_message(f"{user.mention} has claimed this ticket!", ephemeral=False)
             else:
                 await interaction.response.send_message("You are not allowed to claim the ticket", ephemeral=True)
@@ -216,17 +258,25 @@ async def TicketConstructor(values: dict, moderator_roles: list, interaction: di
             user = interaction.user
             if any(role.id in moderator_roles for role in user.roles):
                 await interaction.response.send_message(f"Ticket has been closed by {user.mention}", ephemeral=False)
+                await SendTicketLog(
+                    guild,
+                    log_data,
+                    opener=interaction.channel.topic and guild.get_member_named(interaction.channel.topic),
+                    claimer=self.claimer,
+                    closer=user,
+                    modal_data=values
+                )
                 await interaction.channel.delete()
             else:
                 await interaction.response.send_message("You are not allowed to close the ticket", ephemeral=True)
 
     view = BasicTicketer()
     await private_channel.send(content=f"{user.mention} your ticket has been created.", embeds=embeds, view=view)
-    await interaction.response.send_message(f"Your ticket has been created: {private_channel.mention}", ephemeral=True)
+    await interaction.followup.send(f"Your ticket has been created: {private_channel.mention}", ephemeral=True)
 
-    save_ticket_channel(private_channel.id, {
-        "moderator_roles": moderator_roles
-    })
+    save_ticket_channel(private_channel.id, log_data)
+    await SendTicketLog(guild, log_data, opener=user, modal_data=values)
+
 
 class ButtonType(discord.ui.View):
     def __init__(self, name: str, type_: str, moderator_roles: list, modal_details: dict, field_details: dict, *, timeout=None):

@@ -29,7 +29,8 @@
                     ]
                     }
                 ]
-                }
+                },
+            "LogChannel": 1370395716106588241
         },
         "TicketType" : ["Button", "Create Ticket", "Secondary"],
         "Channel_To_Spawn" : 1368673986300608583,

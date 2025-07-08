@@ -48,6 +48,7 @@ async def initialize():
         User_ID TEXT NOT NULL,
         Role TEXT NOT NULL,
         Description TEXT DEFAULT "DESCRIPTION HERE",
+        Stamp TEXT DEFAULT "None",
         PRIMARY KEY (Guild_ID, User_ID)
     )
     """)

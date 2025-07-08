@@ -25,7 +25,9 @@
             "Title" : "TF you",
             "TEmbed" : {
                 
-            }
+            },
+
+            "LogChannel": 123456789012345678
         },
         "TicketType" : ["Selector", "Scam Report Ticket", "Abusive Moderator Ticket", "Server issue Ticket"],
         "Channel_To_Spawn" : 1366840025010012321,
