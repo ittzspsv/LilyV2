@@ -598,5 +598,61 @@
         "name": "Lime",
         "baseValue": 1000,
         "weightDivisor": 1
+    },
+
+    {
+        "item_id": "bone_blossom",
+        "name": "Bone Blossom",
+        "baseValue": 180000,
+        "weightDivisor": 2.850
+    },
+
+    {
+        "item_id": "bone_blossom",
+        "name": "Bone Blossom",
+        "baseValue": 180000,
+        "weightDivisor": 2.850
+    },
+
+    {
+        "item_id": "burning_bud",
+        "name": "Burning Bud",
+        "baseValue": 63175,
+        "weightDivisor": 11.400
+    },
+
+    {
+        "item_id": "giant_pinecone",
+        "name": "Giant Pinecone",
+        "baseValue": 64980,
+        "weightDivisor": 5.140
+    },
+
+    {
+        "item_id": "fossillight",
+        "name": "Fossillight",
+        "baseValue": 79420 ,
+        "weightDivisor": 3.790
+    },
+
+    {
+        "item_id": "horned_dinoshroom",
+        "name": "Horned Dinoshroom",
+        "baseValue": 67218,
+        "weightDivisor": 4.940
+    },
+
+    {
+        "item_id": "boneboo",
+        "name": "Boneboo",
+        "baseValue": 131967,
+        "weightDivisor": 14.500
+    },
+
+    {
+        "item_id": "firefly_fern",
+        "name": "Firefly Fern",
+        "baseValue": 65529,
+        "weightDivisor": 4.770
     }
 ]

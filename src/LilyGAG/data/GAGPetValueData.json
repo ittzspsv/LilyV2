@@ -363,5 +363,35 @@
         "1",
         "1",
         "overpaid"
+    ],
+
+    "Raptor": [
+        "1",
+        "1",
+        "overpaid"
+    ],
+
+    "Triceratops": [
+        "1",
+        "1",
+        "overpaid"
+    ],
+    "Stegosaurus": [
+        "1",
+        "1",
+        "overpaid"
+    ],
+
+    "Pterodactyl": [
+        "1",
+        "1",
+        "overpaid"
+    ],
+
+    "Brontosaurus": [
+        "1",
+        "1",
+        "overpaid"
     ]
+
 }

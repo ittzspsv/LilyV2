@@ -156,5 +156,5 @@ class StockWebSocket:
                 role = discord.utils.get(guild.roles, name=items["display_name"])
                 if role:
                     pings.append(role.mention)
-            await bot.PostStock("EVENT STOCK", eventshop_format_string, Config.eventshop_channel_id, pings)
+            await bot.PostStock("EVENT STOCK", eventshop_format_string, Config.eventshop_channel_id, pings) 
         

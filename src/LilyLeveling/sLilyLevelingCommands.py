@@ -55,7 +55,7 @@ class LilyLeveling(commands.Cog):
         await LilyLevelCore.UpdateProfile(ctx, name, role,description)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    #@PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
     @commands.hybrid_command(name='set_profile_for', description='updates or adds a new profile for a given member')
     async def set_profile_for(self, ctx:commands.Context, member:discord.Member,name:str, role:str,stamp:str,* ,description:str):
         await LilyLevelCore.UpdateProfileFor(ctx, member,name,role ,description, stamp)
