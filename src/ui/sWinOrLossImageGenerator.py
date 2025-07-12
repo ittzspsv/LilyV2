@@ -4,17 +4,19 @@ import os
 
 
 def format_value(val):
-    val = int(val)
-    if val >= 1_000_000_000_000:
-            return f"{val / 1_000_000_000_000:.1f}T"
-    elif val >= 1_000_000_000:
-            return f"{val / 1_000_000_000:.1f}B"
-    elif val >= 1_000_000:
-            return f"{val / 1_000_000:.1f}M"
-    elif val >= 1_000:
-            return f"{val / 1_000:.1f}k"
-    else:
-            return str(int(val)) 
+        value = int(val)
+        if value > 100_000_000_000_000:
+            return f"{value / 100_000_000_000_000:.1f}QT"
+        elif value >= 1_000_000_000_000:
+            return f"{value / 1_000_000_000_000:.1f}T"
+        elif value >= 1_000_000_000:
+            return f"{value / 1_000_000_000:.1f}B"
+        elif value >= 1_000_000:
+            return f"{value / 1_000_000:.1f}M"
+        elif value >= 1_000:
+            return f"{value / 1_000:.1f}k"
+        else:
+            return str(int(value)) 
 
 
 def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm"):

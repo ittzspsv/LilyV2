@@ -34,5 +34,12 @@
     "Wiltproof" : 4,
     "Fried" : 8,
     "Amber" : 10,
-    "Meteoric" : 125
+    "Meteoric" : 125,
+    "AncientAmber" : 50,
+    "Ceramic" : 30,
+    "OldAmber" : 20,
+    "Sandy" : 3,
+    "Friendbound" : 70,
+    "Tempestous" : 14,
+    "Infected" : 75
 }

@@ -41,7 +41,9 @@ def UpdateData():
 UpdateData()
 
 def price_formatter(value):
-        if value >= 1_000_000_000_000:
+        if value > 100_000_000_000_000:
+            return f"{value / 100_000_000_000_000:.1f}QT"
+        elif value >= 1_000_000_000_000:
             return f"{value / 1_000_000_000_000:.1f}T"
         elif value >= 1_000_000_000:
             return f"{value / 1_000_000_000:.1f}B"
