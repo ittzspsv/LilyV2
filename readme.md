@@ -38,8 +38,7 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 ## BOT - PREVIEW
 ![Preview](misc/Collage.png)
 
-## LEVELING
-- Based on the famous anime **One Piece**
+## LEVELING (Based on the famous anime __One Piece__)
 ![Preview](misc/wanted.png)
 
 
