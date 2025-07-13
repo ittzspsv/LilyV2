@@ -41,7 +41,6 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 ## LEVELING
 Based on the famous anime **One Piece**
 ![Preview](misc/wanted.png)
-Thanks to wantedposter library for providing a base prototype for me to work on
 
 
 ## CURRENTLY USED
