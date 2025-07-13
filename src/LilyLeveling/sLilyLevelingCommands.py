@@ -20,9 +20,10 @@ class LilyLeveling(commands.Cog):
                 message = await ctx.reply("Thinking......")
                 if not member:
                     input_image = ctx.author.display_avatar.url
+                    name, description, role, stamp ,current_level, bounty= await LilyLevelCore.FetchProfileDetails(ctx, ctx.author)
                 else:
                     input_image = member.display_avatar.url
-                name, description, role, stamp ,current_level, bounty= await LilyLevelCore.FetchProfileDetails(ctx, member)
+                    name, description, role, stamp ,current_level, bounty= await LilyLevelCore.FetchProfileDetails(ctx, member)
                 if stamp:
                     poster = await PosterGeneration(input_image, name, "", bounty, current_level, description, role, True, stamp)
                 else:

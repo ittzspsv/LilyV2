@@ -38,6 +38,12 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 ## BOT - PREVIEW
 ![Preview](misc/Collage.png)
 
+## LEVELING
+Based on the famous anime **One Piece**
+![Preview](misc/wanted.png)
+Thanks to wantedposter library for providing a base prototype for me to work on
+
+
 ## CURRENTLY USED
 This bot is currently up and running on these servers [mainly designed for those] [no support for multi-servers until now]
 
