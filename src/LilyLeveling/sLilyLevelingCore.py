@@ -284,7 +284,7 @@ async def _exp_background_worker(message: discord.Message):
             if row:
                 level, exp_now, max_exp, coins = row
             else:
-                level, exp_now, max_exp, coins = 0, 0, 100, 0
+                level, exp_now, max_exp, coins = 0, 0, 100, 1000
                 await ldb.execute("""
                     INSERT INTO levels (Guild_ID, User_ID, Current_Level, Level_Exp, Max_Level_Exp, Coins)
                     VALUES (?, ?, ?, ?, ?, ?)

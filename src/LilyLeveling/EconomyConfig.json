@@ -1,0 +1,24 @@
+{
+    "Items" : [
+        {
+            "Name" : "Role",
+            "Icon" : "",
+            "Price" : 600000,
+            "Action" : ["Role", 4903285208524859]
+        },
+        {
+            "Name" : "Stamp",
+            "Icon" : "",
+            "Price" : 600000,
+            "Action" : ["Stamp", "Name of the stamp"]
+        },
+        {
+            "Name" : "Level",
+            "Icon" : "",
+            "Price" : 600000,
+            "Action" : ["Level", 10]
+        }
+        
+    ]
+
+}

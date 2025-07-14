@@ -1,42 +1,120 @@
 {
+  "Rain": [
+    "Grey skies open up in a gentle downpour—crops grow 50% faster and often gain the **Wet** mutation",
+    "Wet",
+    "https://static.wikia.nocookie.net/growagarden/images/3/3d/RainIcon.webp"
+  ],
+  "Heatwave": [
+    "Intense sunrays scorch the garden—plants hit by solar beams gain the **Sundried** mutation",
+    "Sundried"
+  ],
   "SummerHarvest": [
     "A lush, seasonal boom where ripe crops flourish under clear skies—yields surge as your garden reaches peak productivity.",
     "None"
   ],
-  "Heatwave": [
-    "Intense sunbathers bathe your garden in heat, triggering the **Sundried** mutation",
-    "Sundried"
+  "Tornado": [
+    "A dramatic twister sweeps the map—plants caught in its funnel gain the **Twisted** mutation",
+    "Twisted",
+    "https://static.wikia.nocookie.net/growagarden/images/9/96/Tornado_Icon.png"
   ],
   "Windy": [
     "Strong gusts sweep through, causing crops to sway and apply the **Windstruck** mutation",
-    "Windstruck"
+    "Windstruck",
+    "https://static.wikia.nocookie.net/growagarden/images/2/2c/Windy1.png"
+  ],
+  "AuroraBorealis": [
+    "Rare shimmering lights dance across the sky—crops glow with the **Aurora** mutation and grow 50% faster",
+    "Aurora",
+    "https://static.wikia.nocookie.net/growagarden/images/b/bd/Aurora_Borealisis.png"
+  ],
+  "TropicalRain": [
+    "Warm, tropical showers soak through—crops grow 50% faster and may receive **Drenched** (×5) or **Wet** mutations",
+    "Drenched",
+    "https://static.wikia.nocookie.net/growagarden/images/a/a2/TropicalRainEventIcon.png"
   ],
   "NightEvent": [
     "A tranquil moonlit interval lasts ~10 minutes every few hours—crops glow with the **Moonlit** mutation",
-    "Moonlit"
+    "Moonlit",
+    "https://static.wikia.nocookie.net/growagarden/images/3/38/NightEventIcon.webp"
   ],
-  "MeteorShower": [
-    "Rare meteor rain at night: crashing rocks strike plants for the ultra‑rare **Celestial** mutation",
-    "Celestial"
-  ],
-  "Rain": [
-    "Grey skies open up in a gentle downpour—crops grow 50% faster and often gain the **Wet** mutation",
-    "Wet"
+  "SunGod": [
+    "A golden deity appears with a radiant aura—sunflowers nearby gain the **Dawnbound** mutation and grow rapidly",
+    "Dawnbound"
   ],
   "MegaHarvest": [
     "The pinnacle of abundance—every crop in your garden blooms at once, filling baskets and maximizing Sheckles.",
     "None"
   ],
-  "Tornado": [
-    "A dramatic twister sweeps the map—plants caught in its funnel gain the **Twisted** mutation",
-    "Twisted"
-  ],
-  "TropicalRain": [
-    "Warm, tropical showers soak through—crops grow 50% faster and may receive **Drenched** (×5) or **Wet** mutations",
-    "Drenched"
+  "Gale": [
+    "A sudden burst of powerful wind sweeps across—random crops get the **Windstruck** mutation with extra force",
+    "Windstruck",
+    "https://static.wikia.nocookie.net/growagarden/images/a/a0/GaleWeather.png"
   ],
   "Thunderstorm": [
     "Dark clouds and lightning: crops grow 50% faster, often become Wet, and lightning strikes yield the **Shocked** mutation",
-    "Shocked"
+    "Shocked",
+    "https://static.wikia.nocookie.net/growagarden/images/6/60/ThunderstormEventIcon.png"
+  ],
+  "BloodMoonEvent": [
+    "The moon glows crimson at night—plants shimmer with the intensifying **Bloodlit** mutation",
+    "Bloodlit",
+    "https://static.wikia.nocookie.net/growagarden/images/3/3a/BloodMoonEventIcon.png"
+  ],
+  "MeteorShower": [
+    "Rare meteor rain at night: crashing rocks strike plants for the ultra‑rare **Celestial** mutation",
+    "Celestial",
+    "https://static.wikia.nocookie.net/growagarden/images/5/5c/ShootingStarsEventIcon.webp"
+  ],
+  "SpaceTravel": [
+    "Rockets soar and gravity loosens—crops grow 75% faster and may gain the **Galactic** mutation amid drifting asteroids",
+    "Galactic",
+    "https://static.wikia.nocookie.net/growagarden/images/4/4e/Space_Travel.png"
+  ],
+  "Disco": [
+    "An electrifying dance party fills the air—fruits pulse to the beat and gain the **Disco** mutation",
+    "Disco",
+    "https://static.wikia.nocookie.net/growagarden/images/d/d0/DiscoEventIcon.webp"
+  ],
+  "DJJhai": [
+    "DJ Jhai spins wild tunes—plants and gardeners dance while random crops receive the **MonsterMash** mutation",
+    "MonsterMash"
+  ],
+  "Blackhole": [
+    "A swirling void rips open overhead—plants are pulled in and gain the **VoidTouched** mutation",
+    "VoidTouched",
+    "https://static.wikia.nocookie.net/growagarden/images/d/d2/BlackholeEventIcon.webp"
+  ],
+  "JandelStorm": [
+    "Jandel appears with thunderous flair—lightning strikes rain down, energizing plants with no specific mutation",
+    "Shocked",
+    "https://static.wikia.nocookie.net/growagarden/images/6/60/ThunderstormEventIcon.png"
+  ],
+  "Sandstorm": [
+    "A desert gale whips grains through the air—crops collect grit and gain the **Sandy** mutation",
+    "Sandy",
+    "https://static.wikia.nocookie.net/growagarden/images/a/a5/Sandyweather.png"
+  ],
+  "DJSandstorm": [
+    "The desert gets a beat—sandstorm meets DJ rhythms as crops edge toward **Ceramic** mutation fusion",
+    "Ceramic"
+  ],
+  "Volcano": [
+    "Molten eruptions shake the earth—lava splashes ignite crops into the **Molten** mutation",
+    "Molten",
+    "https://static.wikia.nocookie.net/growagarden/images/7/74/VolcanoEventIcon.webp"
+  ],
+  "UnderTheSea": [
+    "A flooded wonderland submerges the garden—plants breathe underwater and may gain the **Wet** mutation",
+    "Wet",
+    "https://static.wikia.nocookie.net/growagarden/images/c/c9/BubbleGrowaGarden.png"
+  ],
+  "AlienInvasion": [
+    "UFOs hover and beam down cosmic energy—crops mutate into **Alienlike** forms under the sky lights",
+    "Alienlike",
+    "https://static.wikia.nocookie.net/growagarden/images/3/33/Alien_Invasion.png"
+  ],
+  "JandelLazer": [
+    "Jandel’s eyes blaze lasers across the field—plants char with the **Plasma** mutation",
+    "Plasma"
   ]
 }

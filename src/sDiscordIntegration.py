@@ -201,9 +201,11 @@ class MyBot(commands.Bot):
     async def is_user(self, user, user_id):
         return user.id == int(user_id)  
 
-    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings):
+    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings, img=None):
         embed = discord.Embed(title=stock_type,
                       description=stock_msg, colour=0x2b00ff)
+        if img:
+            embed.set_image(url=img)
         channel = self.get_channel(channel_id)
         try:
             await channel.send(embed=embed, content=" ".join(pings))

@@ -108,7 +108,7 @@ class StockWebSocket:
                 formatted_lines.append(line)
 
             eggstock_format_string = "\n".join(formatted_lines)
-            await bot.PostStock("SEED STOCK", eggstock_format_string, Config.eggstock_channel_id, list(pings))
+            await bot.PostStock("EGG STOCK", eggstock_format_string, Config.eggstock_channel_id, list(pings))
 
         #COSMETICS STOCK
         cosmeticsshop = parsed["cosmetic_stock"]
@@ -131,16 +131,23 @@ class StockWebSocket:
         weatherinfo = parsed["weather"]
         if weatherinfo:
             for w in weatherinfo:
+                print(w['weather_name'])
                 if w.get('active'):
                     name = w['weather_name']
+                    if name == "JoshLei":
+                        return
                     weather_data = GAG.Data.get('WeatherData', {}).get(name, ["No description available.", "None"])
                     description_text = weather_data[0] if weather_data[0] else "No description available."
                     mutation_text = weather_data[1] if weather_data[1] and weather_data[1] != "None" else "None"
+                    try:
+                        img = weather_data[2] 
+                    except:
+                        img = None
                     description = f"{description_text}\n**MUTATIONS:** {mutation_text}"
                     role = discord.utils.get(guild.roles, name=name)
                     if role:
                         pings.append(role.mention)
-                    await bot.PostStock(name, description, Config.weatherupdate_channel_id, pings)
+                    await bot.PostStock(name, description, Config.weatherupdate_channel_id, pings, img)
         pings = ["Event Stock"]
         event_shop_stock = parsed['eventshop_stock']
 
