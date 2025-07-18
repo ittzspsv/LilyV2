@@ -71,20 +71,28 @@ class StockWebSocket:
             seedstock_format_string = "\n".join(formatted_lines)
             await bot.PostStock("SEED STOCK", seedstock_format_string, Config.seed_gear_stock_channel_id, pings)
 
-        #GEAR STOCK
+        # GEAR STOCK
         gearstock = parsed["gear_stock"]
+        pings = []
+
         if gearstock:
             longest_name = max(len(item["display_name"]) for item in gearstock)
-            formatted_lines = [
-                f"{item['display_name'].title():<{longest_name}}   **{item['quantity']}x**"
-                for item in gearstock
-            ]
-            gearstock_format_string = "\n".join(formatted_lines)
-            pings = []
-            for items in gearstock:
-                role = discord.utils.get(guild.roles, name=items["display_name"].title())
+
+            formatted_lines = []
+            for item in gearstock:
+                display_name = item["display_name"].title()
+                quantity = item["quantity"]
+
+                emoji = discord.utils.get(guild.emojis, name=display_name.replace(" ", "_")) or "❓"
+                role = discord.utils.get(guild.roles, name=display_name)
+
                 if role:
                     pings.append(role.mention)
+
+                line = f"{emoji} {display_name:<{longest_name}}   **{quantity}x**"
+                formatted_lines.append(line)
+
+            gearstock_format_string = "\n".join(formatted_lines)
             await bot.PostStock("GEAR STOCK", gearstock_format_string, Config.seed_gear_stock_channel_id, pings)
 
         #EGG STOCK
