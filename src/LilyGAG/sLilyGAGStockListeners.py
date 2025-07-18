@@ -50,8 +50,9 @@ class StockWebSocket:
 
         #SEED STOCK
         seedstock = parsed["seed_stock"]
+        gearstock = parsed["gear_stock"]
         pings = []
-        if seedstock:
+        if seedstock and gearstock:
             longest_name = max(len(item["display_name"]) for item in seedstock)
 
             formatted_lines = []
@@ -69,13 +70,7 @@ class StockWebSocket:
                 formatted_lines.append(line)
 
             seedstock_format_string = "\n".join(formatted_lines)
-            await bot.PostStock("SEED STOCK", seedstock_format_string, Config.seed_gear_stock_channel_id, pings)
 
-        # GEAR STOCK
-        gearstock = parsed["gear_stock"]
-        pings = []
-
-        if gearstock:
             longest_name = max(len(item["display_name"]) for item in gearstock)
 
             formatted_lines = []
@@ -93,7 +88,7 @@ class StockWebSocket:
                 formatted_lines.append(line)
 
             gearstock_format_string = "\n".join(formatted_lines)
-            await bot.PostStock("GEAR STOCK", gearstock_format_string, Config.seed_gear_stock_channel_id, pings)
+            await bot.PostStockAdvanced(seedstock_format_string, gearstock_format_string, Config.seed_gear_stock_channel_id, pings)
 
         #EGG STOCK
         eggstock = parsed["egg_stock"]
@@ -139,7 +134,6 @@ class StockWebSocket:
         weatherinfo = parsed["weather"]
         if weatherinfo:
             for w in weatherinfo:
-                print(w['weather_name'])
                 if w.get('active'):
                     name = w['weather_name']
                     if name == "JoshLei":

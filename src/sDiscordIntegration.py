@@ -35,7 +35,6 @@ class MyBot(commands.Bot):
         intents.guilds = True
         super().__init__(command_prefix=Config.bot_command_prefix,intents=discord.Intents.all())
 
-
     async def setup_hook(self):
         await bot.load_extension("LilyModeration.sLilyModerationCommands")
         await bot.load_extension("LilyVouch.sLilyVouchCommands")
@@ -154,6 +153,7 @@ class MyBot(commands.Bot):
     async def ConnectDatabase(self):
         await LilyLogging.initialize()
         await LilyLeveling.initialize()
+
     async def on_ready(self):
         print('Logged on as', self.user)   
         await self.BotInitialize()
@@ -201,14 +201,32 @@ class MyBot(commands.Bot):
     async def is_user(self, user, user_id):
         return user.id == int(user_id)  
 
-    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings, img=None):
+    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings):
         embed = discord.Embed(title=stock_type,
                       description=stock_msg, colour=0x2b00ff)
-        if img:
-            embed.set_image(url=img)
+        embed.set_author("BloxTrade | Grow a garden Stocks")
+        file = discord.File("src/ui/Border.png", filename="border.png")
+        embed.set_image(url="attachment://border.png")
         channel = self.get_channel(channel_id)
         try:
-            await channel.send(embed=embed, content=" ".join(pings))
+            await channel.send(embed=embed, content=" ".join(pings), file=file)
+        except:
+            return
+        
+    async def PostStockAdvanced(self, seed_stock_msg:str, gear_stock_msg:str, channel_id, pings):
+        embed = discord.Embed(title="STOCK",colour=0x2b00ff)
+        embed.set_author("BloxTrade | Grow a garden Stocks")
+        embed.add_field(name="🌱SEED STOCK",
+                value=seed_stock_msg,
+                inline=True)
+        embed.add_field(name="⚙️GEAR STOCK",
+                        value=gear_stock_msg,
+                        inline=True)
+        file = discord.File("src/ui/Border.png", filename="border.png")
+        embed.set_image(url="attachment://border.png")
+        channel = self.get_channel(channel_id)
+        try:
+            await channel.send(embed=embed, content=" ".join(pings), file=file)
         except:
             return
 
