@@ -219,7 +219,7 @@ class MyBot(commands.Bot):
         embed.add_field(name="🌱SEED STOCK",
                 value=seed_stock_msg,
                 inline=True)
-        embed.add_field(name="⚙️GEAR STOCK",
+        embed.add_field(name="⚙️ GEAR STOCK",
                         value=gear_stock_msg,
                         inline=True)
         file = discord.File("src/ui/Border.png", filename="border.png")

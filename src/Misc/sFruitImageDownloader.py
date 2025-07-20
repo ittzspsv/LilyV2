@@ -4,8 +4,7 @@ import json
 import sFruitImageFetcher as FIF
 
 '''
-items = ["Common_Egg", "Common_Summer_Egg", "Uncommon_Egg", "Rare_Egg", "Legendary_Egg", "Mythical_Egg", "Bug_Egg", "Paradise_Egg", "Bee_Egg", "Rare_Summer_Egg"]
-
+items = ["Zen_Rocks"]
 
 save_directory = "src/ui/GAG"
 os.makedirs(save_directory, exist_ok=True)
@@ -34,13 +33,14 @@ for fruit in items:
 '''
 
 '''
-response = requests.get("https://static.wikia.nocookie.net/growagarden/images/5/54/FeijoaIcon.png")
+response = requests.get("https://static.wikia.nocookie.net/growagarden/images/4/4d/Kitsune_.png")
 
 
 if response.status_code == 200:
-    with open("Feijoa.png", "wb") as file:
+    with open("Kitsune.png", "wb") as file:
         file.write(response.content)
     print("Image downloaded successfully!")
 else:
     print(f"Failed to download image. Status code: {response.status_code}")
+
 '''

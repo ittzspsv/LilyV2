@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from rapidfuzz import fuzz
+from rapidfuzz import fuzz, process
 import discord
 from io import BytesIO
 try:
@@ -37,6 +37,7 @@ def UpdateData():
     Data["PlantsData"] = DataProcessor("src/LilyGAG/data/GAGPlantsData.json", list)
     Data["FruitType"] = DataProcessor("src/LilyGAG/data/GAGFruitTypeData.json", dict)
     Data['WeatherData'] = DataProcessor("src/LilyGAG/data/GAGWeatherData.json", dict)
+    Data['PetMutationData'] = DataProcessor("src/LilyGAG/data/GAGPetMutationData.json", dict)
 
 UpdateData()
 
@@ -139,6 +140,7 @@ def GAGPetMessageParser(sentence, threshold=75):
     pets = list(Data["PetValueData"].keys())
     pet_name_map = {p.lower(): p for p in pets}
     pet_candidates = []
+    pet_mutation = ""
 
     for i in range(len(parser)):
         for j in range(i + 1, len(parser) + 1):
@@ -157,30 +159,39 @@ def GAGPetMessageParser(sentence, threshold=75):
 
     pet_age = 0
     age_keywords = ["yr", "yrs", "year", "years", "age"]
+    parser = [word.strip() for word in parser]  # clean whitespaces
+
     for i, word in enumerate(parser):
         word_lower = word.lower()
 
-        for keyword in age_keywords:
-            if word_lower.endswith(keyword):
-                try:
-                    pet_age = int(re.sub(r"[a-zA-Z]", "", word))
-                    break
-                except ValueError:
-                    pet_age = 1
-                    break
-        if pet_age:
-            break
+        if any(word_lower.endswith(k) for k in age_keywords):
+            try:
+                pet_age = int(re.sub(r"[^\d]", "", word))
+                break
+            except ValueError:
+                pet_age = 1
+                break
 
-        if word_lower == "age" and i + 1 < len(parser):
+        if word.isdigit() and i + 1 < len(parser):
+            next_word = parser[i + 1].lower()
+            if next_word in age_keywords:
+                pet_age = int(word)
+                break
+
+        if word_lower in age_keywords and i + 1 < len(parser):
             next_word = parser[i + 1]
             if next_word.isdigit():
                 pet_age = int(next_word)
                 break
 
-        if word.isdigit() and i + 1 < len(parser):
-            if parser[i + 1].lower() in age_keywords:
+        if re.fullmatch(r"\d+", word) and i > 0:
+            prev_word = parser[i - 1].lower()
+            if prev_word in age_keywords:
                 pet_age = int(word)
                 break
+
+    if pet_age == 0:
+        pet_age = 1
 
     weight_match = re.search(r'(\d+(?:\.\d+)?)\s*kg', sentence, re.IGNORECASE)
     pet_weight = float(weight_match.group(1)) if weight_match else 1
@@ -193,11 +204,17 @@ def GAGPetMessageParser(sentence, threshold=75):
         except ValueError:
             continue
 
+    for petmutation in Data["PetMutationData"].keys():
+        match_score = fuzz.partial_ratio(petmutation.lower(), sentence.lower())
+        if match_score >= 80:
+            pet_mutation = petmutation
+
     return {
         "name": pet_name[0],
         "age": pet_age,
         "weight": pet_weight,
-        "quantity" : quantity
+        "quantity" : quantity,
+        "pet_mutation" : pet_mutation
     }, pet_name
 
 def ParserType(sentence):
@@ -295,8 +312,7 @@ def GAGPetValue(pet_data):
             value += max_value * 1.5
         elif age_boost > 0 or weight_boost > 0:
             value += max_value * max(age_boost, weight_boost)
-
-        return value
+        return value + (value * Data['PetMutationData'][pet_data['pet_mutation']])
     #-----------MATH FUNCTION ENDS------------------------#
     try:
         pet_value = Data["PetValueData"][pet_data['name']]
@@ -304,7 +320,11 @@ def GAGPetValue(pet_data):
         pet_value = pet_value[0].replace(",", "")
         return compute_value(int(Data["PetValueData"][pet_data['name']][0].replace(",", "")), int(Data["PetValueData"][pet_data['name']][1].replace(",", "")), int(pet_data['age']), float(pet_data['weight']))
     except Exception as e:
+        print(e)
         return 0
+
+types, data = ParserType("Raccoon mega 90 age 100 kg")
+print(price_formatter(GAGPetValue(data)))
 
 def WORL(message:str=None):
     splitter = message.split("for")

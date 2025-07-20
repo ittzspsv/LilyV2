@@ -629,8 +629,8 @@
     },
 
     {
-        "item_id": "fossillight",
-        "name": "Fossillight",
+        "item_id": "fossilight",
+        "name": "Fossilight",
         "baseValue": 79420 ,
         "weightDivisor": 3.790
     },
@@ -654,5 +654,60 @@
         "name": "Firefly Fern",
         "baseValue": 65529,
         "weightDivisor": 4.770
+    },
+
+    {
+        "item_id": "monoblooma",
+        "name": "Monoblooma",
+        "baseValue": 19855,
+        "weightDivisor": 0.477
+    },
+    {
+        "item_id": "spiked_mango",
+        "name": "Spiked Mango",
+        "baseValue": 60919,
+        "weightDivisor": 14.250
+    },
+    {
+        "item_id": "taroflower",
+        "name": "Taroflower",
+        "baseValue": 108300,
+        "weightDivisor": 6.640
+    },
+    {
+        "item_id": "soft_sunshine",
+        "name": "Soft Sunshine",
+        "baseValue": 40613,
+        "weightDivisor": 1.900
+    },
+    {
+        "item_id": "serenity",
+        "name": "Serenity",
+        "baseValue": 31588,
+        "weightDivisor": 0.240
+    },
+    {
+        "item_id": "zenflare",
+        "name": "Zenflare",
+        "baseValue": 22563,
+        "weightDivisor": 1.340
+    },
+    {
+        "item_id": "zenrocks",
+        "name": "Zenrocks",
+        "baseValue": 135375,
+        "weightDivisor": 17.100
+    },
+    {
+        "item_id": "hinomai",
+        "name": "Hinomai",
+        "baseValue": 72200,
+        "weightDivisor": 9.500
+    },
+    {
+        "item_id": "maple_apple",
+        "name": "Maple Apple",
+        "baseValue": 51521,
+        "weightDivisor": 2.850
     }
 ]
