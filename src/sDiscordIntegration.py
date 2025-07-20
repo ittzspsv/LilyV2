@@ -13,6 +13,8 @@ import LilyLogging.sLilyLogging as LilyLogging
 import LilyTicketTool.LilyTicketToolCore as LilyTTCore
 from LilyGAG.sLilyGAGStockListeners import StockWebSocket
 import ui.sWantedPoster as WP
+import io
+from PIL import Image
 import logging
 
 
@@ -47,7 +49,7 @@ class MyBot(commands.Bot):
         await bot.load_extension("LilyGAG.sLilyGAGCommands")
         await bot.load_extension("LilyTicketTool.LilyTicketToolCommands")
         await bot.load_extension("LilyLeveling.sLilyLevelingCommands")
-        await bot.tree.sync()
+        #await bot.tree.sync()
 
     async def BotStorageInitialization(self, guild):
         base_path = f"storage/{guild.id}"
@@ -162,8 +164,8 @@ class MyBot(commands.Bot):
         await bot.change_presence(status=discord.Status.idle, activity=game)
         await self.ConnectDatabase()
         handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden?user_id={quote("834771588157517581")}", bot)
-        asyncio.create_task(handler.run())    
-        await self.tree.sync()
+        asyncio.create_task(handler.run())
+        #await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -204,7 +206,7 @@ class MyBot(commands.Bot):
     async def PostStock(self, stock_type, stock_msg: str, channel_id, pings):
         embed = discord.Embed(title=stock_type,
                       description=stock_msg, colour=0x2b00ff)
-        embed.set_author("BloxTrade | Grow a garden Stocks")
+        embed.set_author(name="BloxTrade | Grow a garden Stocks")
         file = discord.File("src/ui/Border.png", filename="border.png")
         embed.set_image(url="attachment://border.png")
         channel = self.get_channel(channel_id)
@@ -215,7 +217,7 @@ class MyBot(commands.Bot):
         
     async def PostStockAdvanced(self, seed_stock_msg:str, gear_stock_msg:str, channel_id, pings):
         embed = discord.Embed(title="STOCK",colour=0x2b00ff)
-        embed.set_author("BloxTrade | Grow a garden Stocks")
+        embed.set_author(name="BloxTrade | Grow a garden Stocks")
         embed.add_field(name="🌱SEED STOCK",
                 value=seed_stock_msg,
                 inline=True)
@@ -227,6 +229,18 @@ class MyBot(commands.Bot):
         channel = self.get_channel(channel_id)
         try:
             await channel.send(embed=embed, content=" ".join(pings), file=file)
+        except:
+            return
+
+    async def PostStockImg(self, img: Image.Image, channel_id, pings,filename="stock.png"):
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        file = discord.File(fp=buffer, filename=filename)
+        channel = self.get_channel(channel_id)
+        try:
+            await channel.send(file=file, content=" ".join(pings))
         except:
             return
 

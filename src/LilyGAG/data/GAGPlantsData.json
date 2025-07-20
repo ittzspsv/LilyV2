@@ -1,713 +1,890 @@
 [
-    {
-        "item_id": "carrot",
-        "name": "Carrot",
-        "baseValue": 20,
-        "weightDivisor": 0.275
-    },
-    {
-        "item_id": "strawberry",
-        "name": "Strawberry",
-        "baseValue": 15,
-        "weightDivisor": 0.3
-    },
-    {
-        "item_id": "blueberry",
-        "name": "Blueberry",
-        "baseValue": 20,
-        "weightDivisor": 0.2
-    },
-    {
-        "item_id": "orange_tulip",
-        "name": "Orange Tulip",
-        "baseValue": 850,
-        "weightDivisor": 0.05
-    },
-    {
-        "item_id": "tomato",
-        "name": "Tomato",
-        "baseValue": 30,
-        "weightDivisor": 0.5
-    },
-    {
-        "item_id": "corn",
-        "name": "Corn",
-        "baseValue": 40,
-        "weightDivisor": 2
-    },
-    {
-        "item_id": "daffodil",
-        "name": "Daffodil",
-        "baseValue": 1000,
-        "weightDivisor": 0.2
-    },
-    {
-        "item_id": "watermelon",
-        "name": "Watermelon",
-        "baseValue": 3000,
-        "weightDivisor": 7
-    },
-    {
-        "item_id": "pumpkin",
-        "name": "Pumpkin",
-        "baseValue": 3400,
-        "weightDivisor": 8
-    },
-    {
-        "item_id": "apple",
-        "name": "Apple",
-        "baseValue": 275,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "bamboo",
-        "name": "Bamboo",
-        "baseValue": 4000,
-        "weightDivisor": 4
-    },
-    {
-        "item_id": "coconut",
-        "name": "Coconut",
-        "baseValue": 400,
-        "weightDivisor": 14
-    },
-    {
-        "item_id": "cactus",
-        "name": "Cactus",
-        "baseValue": 3400,
-        "weightDivisor": 7
-    },
-    {
-        "item_id": "dragon_fruit",
-        "name": "Dragon Fruit",
-        "baseValue": 4750,
-        "weightDivisor": 12
-    },
-    {
-        "item_id": "mango",
-        "name": "Mango",
-        "baseValue": 6500,
-        "weightDivisor": 15
-    },
-    {
-        "item_id": "grape",
-        "name": "Grape",
-        "baseValue": 7850,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "mushroom",
-        "name": "Mushroom",
-        "baseValue": 151000,
-        "weightDivisor": 25
-    },
-    {
-        "item_id": "pepper",
-        "name": "Pepper",
-        "baseValue": 8000,
-        "weightDivisor": 5
-    },
-    {
-        "item_id": "cacao",
-        "name": "Cacao",
-        "baseValue": 12000,
-        "weightDivisor": 8
-    },
-    {
-        "item_id": "beanstalk",
-        "name": "Beanstalk",
-        "baseValue": 28000,
-        "weightDivisor": 10
-    },
-    {
-        "item_id": "ember_lily",
-        "name": "Ember Lily",
-        "baseValue": 66666,
-        "weightDivisor": 12
-    },
-    {
-        "item_id": "sugar_apple",
-        "name": "Sugar Apple",
-        "baseValue": 48000,
-        "weightDivisor": 9
-    },
-    {
-        "item_id": "pineapple",
-        "name": "Pineapple",
-        "baseValue": 2000,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "cauliflower",
-        "name": "Cauliflower",
-        "baseValue": 40,
-        "weightDivisor": 5
-    },
-    {
-        "item_id": "green_apple",
-        "name": "Green Apple",
-        "baseValue": 300,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "banana",
-        "name": "Banana",
-        "baseValue": 2000,
-        "weightDivisor": 1.5
-    },
-    {
-        "item_id": "avocado",
-        "name": "Avocado",
-        "baseValue": 350,
-        "weightDivisor": 6.5
-    },
-    {
-        "item_id": "kiwi",
-        "name": "Kiwi",
-        "baseValue": 2750,
-        "weightDivisor": 5
-    },
-    {
-        "item_id": "bell_pepper",
-        "name": "Bell Pepper",
-        "baseValue": 5500,
-        "weightDivisor": 8
-    },
-    {
-        "item_id": "prickly_pear",
-        "name": "Prickly Pear",
-        "baseValue": 7000,
-        "weightDivisor": 7
-    },
-    {
-        "item_id": "feijoa",
-        "name": "Feijoa",
-        "baseValue": 13000,
-        "weightDivisor": 10
-    },
-    {
-        "item_id": "loquat",
-        "name": "Loquat",
-        "baseValue": 8000,
-        "weightDivisor": 6.5
-    },
-    {
-        "item_id": "wild_carrot",
-        "name": "Wild Carrot",
-        "baseValue": 25000,
-        "weightDivisor": 0.3
-    },
-    {
-        "item_id": "pear",
-        "name": "Pear",
-        "baseValue": 20000,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "cantaloupe",
-        "name": "Cantaloupe",
-        "baseValue": 34000,
-        "weightDivisor": 5.5
-    },
-    {
-        "item_id": "parasol_flower",
-        "name": "Parasol Flower",
-        "baseValue": 200000,
-        "weightDivisor": 6
-    },
-    {
-        "item_id": "rosy_delight",
-        "name": "Rosy Delight",
-        "baseValue": 69000,
-        "weightDivisor": 10
-    },
-    {
-        "item_id": "elephant_ears",
-        "name": "Elephant Ears",
-        "baseValue": 77000,
-        "weightDivisor": 18
-    },
-    {
-        "item_id": "chocolate_carrot",
-        "name": "Chocolate Carrot",
-        "baseValue": 11000,
-        "weightDivisor": 0.275
-    },
-    {
-        "item_id": "red_lollipop",
-        "name": "Red Lollipop",
-        "baseValue": 50000,
-        "weightDivisor": 4
-    },
-    {
-        "item_id": "blue_lollipop",
-        "name": "Blue Lollipop",
-        "baseValue": 50000,
-        "weightDivisor": 1
-    },
-    {
-        "item_id": "candy_sunflower",
-        "name": "Candy Sunflower",
-        "baseValue": 80000,
-        "weightDivisor": 1.5
-    },
-    {
-        "item_id": "easter_egg",
-        "name": "Easter Egg",
-        "baseValue": 2500,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "candy_blossom",
-        "name": "Candy Blossom",
-        "baseValue": 100000,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "peach",
-        "name": "Peach",
-        "baseValue": 300,
-        "weightDivisor": 2
-    },
-    {
-        "item_id": "raspberry",
-        "name": "Raspberry",
-        "baseValue": 100,
-        "weightDivisor": 0.75
-    },
-    {
-        "item_id": "papaya",
-        "name": "Papaya",
-        "baseValue": 1000,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "banana",
-        "name": "Banana",
-        "baseValue": 1750,
-        "weightDivisor": 1.5
-    },
-    {
-        "item_id": "passionfruit",
-        "name": "Passionfruit",
-        "baseValue": 3550,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "soul_fruit",
-        "name": "Soul Fruit",
-        "baseValue": 7750,
-        "weightDivisor": 25
-    },
-    {
-        "item_id": "cursed_fruit",
-        "name": "Cursed Fruit",
-        "baseValue": 25750,
-        "weightDivisor": 30
-    },
-    {
-        "item_id": "mega_mushroom",
-        "name": "Mega Mushroom",
-        "baseValue": 500,
-        "weightDivisor": 70
-    },
-    {
-        "item_id": "cherry_blossom",
-        "name": "Cherry Blossom",
-        "baseValue": 500,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "purple_cabbage",
-        "name": "Purple Cabbage",
-        "baseValue": 500,
-        "weightDivisor": 5
-    },
-    {
-        "item_id": "lemon",
-        "name": "Lemon",
-        "baseValue": 350,
-        "weightDivisor": 1
-    },
-    {
-        "item_id": "pink_tulip",
-        "name": "Pink Tulip",
-        "baseValue": 850,
-        "weightDivisor": 0.05
-    },
-    {
-        "item_id": "cranberry",
-        "name": "Cranberry",
-        "baseValue": 3500,
-        "weightDivisor": 1
-    },
-    {
-        "item_id": "durian",
-        "name": "Durian",
-        "baseValue": 7500,
-        "weightDivisor": 8
-    },
-    {
-        "item_id": "eggplant",
-        "name": "Eggplant",
-        "baseValue": 12000,
-        "weightDivisor": 5
-    },
-    {
-        "item_id": "lotus",
-        "name": "Lotus",
-        "baseValue": 35000,
-        "weightDivisor": 20
-    },
-    {
-        "item_id": "venus_fly_trap",
-        "name": "Venus Fly Trap",
-        "baseValue": 85000,
-        "weightDivisor": 10
-    },
-    {
-        "item_id": "nightshade",
-        "name": "Nightshade",
-        "baseValue": 3500,
-        "weightDivisor": 0.5
-    },
-    {
-        "item_id": "glowshroom",
-        "name": "Glowshroom",
-        "baseValue": 300,
-        "weightDivisor": 0.75
-    },
-    {
-        "item_id": "mint",
-        "name": "Mint",
-        "baseValue": 5250,
-        "weightDivisor": 1
-    },
-    {
-        "item_id": "moonflower",
-        "name": "Moonflower",
-        "baseValue": 9500,
-        "weightDivisor": 2
-    },
-    {
-        "item_id": "starfruit",
-        "name": "Starfruit",
-        "baseValue": 15000,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "moonglow",
-        "name": "Moonglow",
-        "baseValue": 25000,
-        "weightDivisor": 7
-    },
-    {
-        "item_id": "moon_blossom",
-        "name": "Moon Blossom",
-        "baseValue": 66666,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "crimson_vine",
-        "name": "Crimson Vine",
-        "baseValue": 1250,
-        "weightDivisor": 1
-    },
-    {
-        "item_id": "moon_melon",
-        "name": "Moon Melon",
-        "baseValue": 18000,
-        "weightDivisor": 8
-    },
-    {
-        "item_id": "blood_banana",
-        "name": "Blood Banana",
-        "baseValue": 6000,
-        "weightDivisor": 1.5
-    },
-    {
-        "item_id": "celestiberry",
-        "name": "Celestiberry",
-        "baseValue": 10000,
-        "weightDivisor": 2
-    },
-    {
-        "item_id": "moon_mango",
-        "name": "Moon Mango",
-        "baseValue": 50000,
-        "weightDivisor": 15
-    },
-    {
-        "item_id": "rose",
-        "name": "Rose",
-        "baseValue": 5000,
-        "weightDivisor": 1
-    },
-    {
-        "item_id": "foxglove",
-        "name": "Foxglove",
-        "baseValue": 20000,
-        "weightDivisor": 2
-    },
-    {
-        "item_id": "lilac",
-        "name": "Lilac",
-        "baseValue": 35000,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "pink_lily",
-        "name": "Pink Lily",
-        "baseValue": 65000,
-        "weightDivisor": 6
-    },
-    {
-        "item_id": "purple_dahlia",
-        "name": "Purple Dahlia",
-        "baseValue": 75000,
-        "weightDivisor": 12
-    },
-    {
-        "item_id": "sunflower",
-        "name": "Sunflower",
-        "baseValue": 160000,
-        "weightDivisor": 16.5
-    },
-    {
-        "item_id": "lavender",
-        "name": "Lavender",
-        "baseValue": 25000,
-        "weightDivisor": 0.275
-    },
-    {
-        "item_id": "nectarshade",
-        "name": "Nectarshade",
-        "baseValue": 50000,
-        "weightDivisor": 0.8
-    },
-    {
-        "item_id": "nectarine",
-        "name": "Nectarine",
-        "baseValue": 48000,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "hive_fruit",
-        "name": "Hive Fruit",
-        "baseValue": 62000,
-        "weightDivisor": 8
-    },
-    {
-        "item_id": "manuka_flower",
-        "name": "Manuka Flower",
-        "baseValue": 25000,
-        "weightDivisor": 0.3
-    },
-    {
-        "item_id": "dandelion",
-        "name": "Dandelion",
-        "baseValue": 50000,
-        "weightDivisor": 4
-    },
-    {
-        "item_id": "lumira",
-        "name": "Lumira",
-        "baseValue": 85000,
-        "weightDivisor": 6
-    },
-    {
-        "item_id": "honeysuckle",
-        "name": "Honeysuckle",
-        "baseValue": 100000,
-        "weightDivisor": 12
-    },
-    {
-        "item_id": "crocus",
-        "name": "Crocus",
-        "baseValue": 30000,
-        "weightDivisor": 0.275
-    },
-    {
-        "item_id": "succulent",
-        "name": "Succulent",
-        "baseValue": 25000,
-        "weightDivisor": 5
-    },
-    {
-        "item_id": "violet_corn",
-        "name": "Violet Corn",
-        "baseValue": 50000,
-        "weightDivisor": 3
-    },
-    {
-        "item_id": "bendboo",
-        "name": "Bendboo",
-        "baseValue": 155000,
-        "weightDivisor": 18
-    },
-    {
-        "item_id": "cocovine",
-        "name": "Cocovine",
-        "baseValue": 66666,
-        "weightDivisor": 14
-    },
-    {
-        "item_id": "dragon_pepper",
-        "name": "Dragon Pepper",
-        "baseValue": 88888,
-        "weightDivisor": 6
-    },
-    {
-        "item_id": "bee_balm",
-        "name": "Bee Balm",
-        "baseValue": 18000,
-        "weightDivisor": 1
-    },
-    {
-        "item_id": "nectar_thorn",
-        "name": "Nectar Thorn",
-        "baseValue": 44444,
-        "weightDivisor": 7
-    },
-    {
-        "item_id": "suncoil",
-        "name": "Suncoil",
-        "baseValue": 80000,
-        "weightDivisor": 10
-    },
-    {
-        "item_id": "noble_flower",
-        "name": "Noble Flower",
-        "baseValue": 20000,
-        "weightDivisor": 5
-    },
-    {
-        "item_id": "traveler's_fruit",
-        "name": "Traveler's Fruit",
-        "baseValue": 20000,
-        "weightDivisor": 2
-    },
-    {
-        "item_id": "ice_cream_bean",
-        "name": "Ice Cream Bean",
-        "baseValue": 4500,
-        "weightDivisor": 4
-    },
-    {
-        "item_id": "lime",
-        "name": "Lime",
-        "baseValue": 1000,
-        "weightDivisor": 1
-    },
-
-    {
-        "item_id": "bone_blossom",
-        "name": "Bone Blossom",
-        "baseValue": 180000,
-        "weightDivisor": 2.850
-    },
-
-    {
-        "item_id": "bone_blossom",
-        "name": "Bone Blossom",
-        "baseValue": 180000,
-        "weightDivisor": 2.850
-    },
-
-    {
-        "item_id": "burning_bud",
-        "name": "Burning Bud",
-        "baseValue": 63175,
-        "weightDivisor": 11.400
-    },
-
-    {
-        "item_id": "giant_pinecone",
-        "name": "Giant Pinecone",
-        "baseValue": 64980,
-        "weightDivisor": 5.140
-    },
-
-    {
-        "item_id": "fossilight",
-        "name": "Fossilight",
-        "baseValue": 79420 ,
-        "weightDivisor": 3.790
-    },
-
-    {
-        "item_id": "horned_dinoshroom",
-        "name": "Horned Dinoshroom",
-        "baseValue": 67218,
-        "weightDivisor": 4.940
-    },
-
-    {
-        "item_id": "boneboo",
-        "name": "Boneboo",
-        "baseValue": 131967,
-        "weightDivisor": 14.500
-    },
-
-    {
-        "item_id": "firefly_fern",
-        "name": "Firefly Fern",
-        "baseValue": 65529,
-        "weightDivisor": 4.770
-    },
-
-    {
-        "item_id": "monoblooma",
-        "name": "Monoblooma",
-        "baseValue": 19855,
-        "weightDivisor": 0.477
-    },
-    {
-        "item_id": "spiked_mango",
-        "name": "Spiked Mango",
-        "baseValue": 60919,
-        "weightDivisor": 14.250
-    },
-    {
-        "item_id": "taroflower",
-        "name": "Taroflower",
-        "baseValue": 108300,
-        "weightDivisor": 6.640
-    },
-    {
-        "item_id": "soft_sunshine",
-        "name": "Soft Sunshine",
-        "baseValue": 40613,
-        "weightDivisor": 1.900
-    },
-    {
-        "item_id": "serenity",
-        "name": "Serenity",
-        "baseValue": 31588,
-        "weightDivisor": 0.240
-    },
-    {
-        "item_id": "zenflare",
-        "name": "Zenflare",
-        "baseValue": 22563,
-        "weightDivisor": 1.340
-    },
-    {
-        "item_id": "zenrocks",
-        "name": "Zenrocks",
-        "baseValue": 135375,
-        "weightDivisor": 17.100
-    },
-    {
-        "item_id": "hinomai",
-        "name": "Hinomai",
-        "baseValue": 72200,
-        "weightDivisor": 9.500
-    },
-    {
-        "item_id": "maple_apple",
-        "name": "Maple Apple",
-        "baseValue": 51521,
-        "weightDivisor": 2.850
-    }
+  {
+    "item_id": "carrot",
+    "name": "Carrot",
+    "baseValue": 20,
+    "weightDivisor": 0.275,
+    "rarity": "Common",
+    "buyingprice": "10"
+  },
+  {
+    "item_id": "strawberry",
+    "name": "Strawberry",
+    "baseValue": 15,
+    "weightDivisor": 0.3,
+    "rarity": "Common",
+    "buyingprice": "50"
+  },
+  {
+    "item_id": "blueberry",
+    "name": "Blueberry",
+    "baseValue": 20,
+    "weightDivisor": 0.2,
+    "rarity": "Uncommon",
+    "buyingprice": "400"
+  },
+  {
+    "item_id": "orange_tulip",
+    "name": "Orange Tulip",
+    "baseValue": 850,
+    "weightDivisor": 0.05,
+    "rarity": "Uncommon",
+    "buyingprice": "600"
+  },
+  {
+    "item_id": "tomato",
+    "name": "Tomato",
+    "baseValue": 30,
+    "weightDivisor": 0.5,
+    "rarity": "Rare",
+    "buyingprice": "800"
+  },
+  {
+    "item_id": "corn",
+    "name": "Corn",
+    "baseValue": 40,
+    "weightDivisor": 2,
+    "rarity": "Rare",
+    "buyingprice": "1300"
+  },
+  {
+    "item_id": "daffodil",
+    "name": "Daffodil",
+    "baseValue": 1000,
+    "weightDivisor": 0.2,
+    "rarity": "Rare",
+    "buyingprice": "1000"
+  },
+  {
+    "item_id": "watermelon",
+    "name": "Watermelon",
+    "baseValue": 3000,
+    "weightDivisor": 7,
+    "rarity": "Legendary",
+    "buyingprice": "2500"
+  },
+  {
+    "item_id": "pumpkin",
+    "name": "Pumpkin",
+    "baseValue": 3400,
+    "weightDivisor": 8,
+    "rarity": "Legendary",
+    "buyingprice": "3000"
+  },
+  {
+    "item_id": "apple",
+    "name": "Apple",
+    "baseValue": 275,
+    "weightDivisor": 3,
+    "rarity": "Legendary",
+    "buyingprice": "3250"
+  },
+  {
+    "item_id": "bamboo",
+    "name": "Bamboo",
+    "baseValue": 4000,
+    "weightDivisor": 4,
+    "rarity": "Legendary",
+    "buyingprice": "4000"
+  },
+  {
+    "item_id": "coconut",
+    "name": "Coconut",
+    "baseValue": 400,
+    "weightDivisor": 14,
+    "rarity": "Mythical",
+    "buyingprice": "6000"
+  },
+  {
+    "item_id": "cactus",
+    "name": "Cactus",
+    "baseValue": 3400,
+    "weightDivisor": 7,
+    "rarity": "Mythical",
+    "buyingprice": "15000"
+  },
+  {
+    "item_id": "dragon_fruit",
+    "name": "Dragon Fruit",
+    "baseValue": 4750,
+    "weightDivisor": 12,
+    "rarity": "Mythical",
+    "buyingprice": "50000"
+  },
+  {
+    "item_id": "mango",
+    "name": "Mango",
+    "baseValue": 6500,
+    "weightDivisor": 15,
+    "rarity": "Mythical",
+    "buyingprice": "100000"
+  },
+  {
+    "item_id": "grape",
+    "name": "Grape",
+    "baseValue": 7850,
+    "weightDivisor": 3,
+    "rarity": "Divine",
+    "buyingprice": "850000"
+  },
+  {
+    "item_id": "mushroom",
+    "name": "Mushroom",
+    "baseValue": 151000,
+    "weightDivisor": 25,
+    "rarity": "Divine",
+    "buyingprice": "150000"
+  },
+  {
+    "item_id": "pepper",
+    "name": "Pepper",
+    "baseValue": 8000,
+    "weightDivisor": 5,
+    "rarity": "Divine",
+    "buyingprice": "1000000"
+  },
+  {
+    "item_id": "cacao",
+    "name": "Cacao",
+    "baseValue": 12000,
+    "weightDivisor": 8,
+    "rarity": "Divine",
+    "buyingprice": "2500000"
+  },
+  {
+    "item_id": "beanstalk",
+    "name": "Beanstalk",
+    "baseValue": 28000,
+    "weightDivisor": 10,
+    "rarity": "Prismatic",
+    "buyingprice": "10000000"
+  },
+  {
+    "item_id": "ember_lily",
+    "name": "Ember Lily",
+    "baseValue": 66666,
+    "weightDivisor": 12,
+    "rarity": "Prismatic",
+    "buyingprice": "15000000"
+  },
+  {
+    "item_id": "sugar_apple",
+    "name": "Sugar Apple",
+    "baseValue": 48000,
+    "weightDivisor": 9,
+    "rarity": "Prismatic",
+    "buyingprice": "25000000"
+  },
+  {
+    "item_id": "pineapple",
+    "name": "Pineapple",
+    "baseValue": 2000,
+    "weightDivisor": 3,
+    "rarity": "Mythical",
+    "buyingprice": "7500"
+  },
+  {
+    "item_id": "cauliflower",
+    "name": "Cauliflower",
+    "baseValue": 40,
+    "weightDivisor": 5,
+    "rarity": "Rare",
+    "buyingprice": "1300"
+  },
+  {
+    "item_id": "green_apple",
+    "name": "Green Apple",
+    "baseValue": 300,
+    "weightDivisor": 3,
+    "rarity": "Legendary",
+    "buyingprice": "3500"
+  },
+  {
+    "item_id": "banana",
+    "name": "Banana",
+    "baseValue": 2000,
+    "weightDivisor": 1.5,
+    "rarity": "Legendary",
+    "buyingprice": "7000"
+  },
+  {
+    "item_id": "avocado",
+    "name": "Avocado",
+    "baseValue": 350,
+    "weightDivisor": 6.5,
+    "rarity": "Legendary",
+    "buyingprice": "5000"
+  },
+  {
+    "item_id": "kiwi",
+    "name": "Kiwi",
+    "baseValue": 2750,
+    "weightDivisor": 5,
+    "rarity": "Mythical",
+    "buyingprice": "10000"
+  },
+  {
+    "item_id": "bell_pepper",
+    "name": "Bell Pepper",
+    "baseValue": 5500,
+    "weightDivisor": 8,
+    "rarity": "Mythical",
+    "buyingprice": "55000"
+  },
+  {
+    "item_id": "prickly_pear",
+    "name": "Prickly Pear",
+    "baseValue": 7000,
+    "weightDivisor": 7,
+    "rarity": "Mythical",
+    "buyingprice": "555000"
+  },
+  {
+    "item_id": "feijoa",
+    "name": "Feijoa",
+    "baseValue": 13000,
+    "weightDivisor": 10,
+    "rarity": "Divine",
+    "buyingprice": "2750000"
+  },
+  {
+    "item_id": "loquat",
+    "name": "Loquat",
+    "baseValue": 8000,
+    "weightDivisor": 6.5,
+    "rarity": "Divine",
+    "buyingprice": "900000"
+  },
+  {
+    "item_id": "wild_carrot",
+    "name": "Wild Carrot",
+    "baseValue": 25000,
+    "weightDivisor": 0.3,
+    "rarity": "Uncommon",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "pear",
+    "name": "Pear",
+    "baseValue": 20000,
+    "weightDivisor": 3,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "cantaloupe",
+    "name": "Cantaloupe",
+    "baseValue": 34000,
+    "weightDivisor": 5.5,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "parasol_flower",
+    "name": "Parasol Flower",
+    "baseValue": 200000,
+    "weightDivisor": 6,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "rosy_delight",
+    "name": "Rosy Delight",
+    "baseValue": 69000,
+    "weightDivisor": 10,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "elephant_ears",
+    "name": "Elephant Ears",
+    "baseValue": 77000,
+    "weightDivisor": 18,
+    "rarity": "Prismatic",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "chocolate_carrot",
+    "name": "Chocolate Carrot",
+    "baseValue": 11000,
+    "weightDivisor": 0.275,
+    "rarity": "Common",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "red_lollipop",
+    "name": "Red Lollipop",
+    "baseValue": 50000,
+    "weightDivisor": 4,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "candy_sunflower",
+    "name": "Candy Sunflower",
+    "baseValue": 80000,
+    "weightDivisor": 1.5,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "easter_egg",
+    "name": "Easter Egg",
+    "baseValue": 2500,
+    "weightDivisor": 3,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "candy_blossom",
+    "name": "Candy Blossom",
+    "baseValue": 100000,
+    "weightDivisor": 3,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "peach",
+    "name": "Peach",
+    "baseValue": 300,
+    "weightDivisor": 2,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "raspberry",
+    "name": "Raspberry",
+    "baseValue": 100,
+    "weightDivisor": 0.75,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "papaya",
+    "name": "Papaya",
+    "baseValue": 1000,
+    "weightDivisor": 3,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "banana",
+    "name": "Banana",
+    "baseValue": 1750,
+    "weightDivisor": 1.5,
+    "rarity": "Legendary",
+    "buyingprice": "7000"
+  },
+  {
+    "item_id": "passionfruit",
+    "name": "Passionfruit",
+    "baseValue": 3550,
+    "weightDivisor": 3,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "soul_fruit",
+    "name": "Soul Fruit",
+    "baseValue": 7750,
+    "weightDivisor": 25,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "cursed_fruit",
+    "name": "Cursed Fruit",
+    "baseValue": 25750,
+    "weightDivisor": 30,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "cherry_blossom",
+    "name": "Cherry Blossom",
+    "baseValue": 500,
+    "weightDivisor": 3,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "lemon",
+    "name": "Lemon",
+    "baseValue": 350,
+    "weightDivisor": 1,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "cranberry",
+    "name": "Cranberry",
+    "baseValue": 3500,
+    "weightDivisor": 1,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "durian",
+    "name": "Durian",
+    "baseValue": 7500,
+    "weightDivisor": 8,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "eggplant",
+    "name": "Eggplant",
+    "baseValue": 12000,
+    "weightDivisor": 5,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "lotus",
+    "name": "Lotus",
+    "baseValue": 35000,
+    "weightDivisor": 20,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "venus_fly_trap",
+    "name": "Venus Fly Trap",
+    "baseValue": 85000,
+    "weightDivisor": 10,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "nightshade",
+    "name": "Nightshade",
+    "baseValue": 3500,
+    "weightDivisor": 0.5,
+    "rarity": "Uncommon",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "glowshroom",
+    "name": "Glowshroom",
+    "baseValue": 300,
+    "weightDivisor": 0.75,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "mint",
+    "name": "Mint",
+    "baseValue": 5250,
+    "weightDivisor": 1,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "moonflower",
+    "name": "Moonflower",
+    "baseValue": 9500,
+    "weightDivisor": 2,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "starfruit",
+    "name": "Starfruit",
+    "baseValue": 15000,
+    "weightDivisor": 3,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "moonglow",
+    "name": "Moonglow",
+    "baseValue": 25000,
+    "weightDivisor": 7,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "moon_blossom",
+    "name": "Moon Blossom",
+    "baseValue": 66666,
+    "weightDivisor": 3,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "crimson_vine",
+    "name": "Crimson Vine",
+    "baseValue": 1250,
+    "weightDivisor": 1,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "moon_melon",
+    "name": "Moon Melon",
+    "baseValue": 18000,
+    "weightDivisor": 8,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "blood_banana",
+    "name": "Blood Banana",
+    "baseValue": 6000,
+    "weightDivisor": 1.5,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "celestiberry",
+    "name": "Celestiberry",
+    "baseValue": 10000,
+    "weightDivisor": 2,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "moon_mango",
+    "name": "Moon Mango",
+    "baseValue": 50000,
+    "weightDivisor": 15,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "rose",
+    "name": "Rose",
+    "baseValue": 5000,
+    "weightDivisor": 1,
+    "rarity": "Uncommon",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "foxglove",
+    "name": "Foxglove",
+    "baseValue": 20000,
+    "weightDivisor": 2,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "lilac",
+    "name": "Lilac",
+    "baseValue": 35000,
+    "weightDivisor": 3,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "pink_lily",
+    "name": "Pink Lily",
+    "baseValue": 65000,
+    "weightDivisor": 6,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "purple_dahlia",
+    "name": "Purple Dahlia",
+    "baseValue": 75000,
+    "weightDivisor": 12,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "sunflower",
+    "name": "Sunflower",
+    "baseValue": 160000,
+    "weightDivisor": 16.5,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "lavender",
+    "name": "Lavender",
+    "baseValue": 25000,
+    "weightDivisor": 0.275,
+    "rarity": "Uncommon",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "nectarshade",
+    "name": "Nectarshade",
+    "baseValue": 50000,
+    "weightDivisor": 0.8,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "nectarine",
+    "name": "Nectarine",
+    "baseValue": 48000,
+    "weightDivisor": 3,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "hive_fruit",
+    "name": "Hive Fruit",
+    "baseValue": 62000,
+    "weightDivisor": 8,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "manuka_flower",
+    "name": "Manuka Flower",
+    "baseValue": 25000,
+    "weightDivisor": 0.3,
+    "rarity": "Uncommon",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "dandelion",
+    "name": "Dandelion",
+    "baseValue": 50000,
+    "weightDivisor": 4,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "lumira",
+    "name": "Lumira",
+    "baseValue": 85000,
+    "weightDivisor": 6,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "honeysuckle",
+    "name": "Honeysuckle",
+    "baseValue": 100000,
+    "weightDivisor": 12,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "crocus",
+    "name": "Crocus",
+    "baseValue": 30000,
+    "weightDivisor": 0.275,
+    "rarity": "Uncommon",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "succulent",
+    "name": "Succulent",
+    "baseValue": 25000,
+    "weightDivisor": 5,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "violet_corn",
+    "name": "Violet Corn",
+    "baseValue": 50000,
+    "weightDivisor": 3,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "bendboo",
+    "name": "Bendboo",
+    "baseValue": 155000,
+    "weightDivisor": 18,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "cocovine",
+    "name": "Cocovine",
+    "baseValue": 66666,
+    "weightDivisor": 14,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "dragon_pepper",
+    "name": "Dragon Pepper",
+    "baseValue": 88888,
+    "weightDivisor": 6,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "bee_balm",
+    "name": "Bee Balm",
+    "baseValue": 18000,
+    "weightDivisor": 1,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "nectar_thorn",
+    "name": "Nectar Thorn",
+    "baseValue": 44444,
+    "weightDivisor": 7,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "suncoil",
+    "name": "Suncoil",
+    "baseValue": 80000,
+    "weightDivisor": 10,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "noble_flower",
+    "name": "Noble Flower",
+    "baseValue": 20000,
+    "weightDivisor": 5,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "traveler's_fruit",
+    "name": "Traveler's Fruit",
+    "baseValue": 20000,
+    "weightDivisor": 2,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "ice_cream_bean",
+    "name": "Ice Cream Bean",
+    "baseValue": 4500,
+    "weightDivisor": 4,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "lime",
+    "name": "Lime",
+    "baseValue": 1000,
+    "weightDivisor": 1,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "bone_blossom",
+    "name": "Bone Blossom",
+    "baseValue": 180000,
+    "weightDivisor": 2.85,
+    "rarity": "Transcendent",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "bone_blossom",
+    "name": "Bone Blossom",
+    "baseValue": 180000,
+    "weightDivisor": 2.85,
+    "rarity": "Transcendent",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "burning_bud",
+    "name": "Burning Bud",
+    "baseValue": 63175,
+    "weightDivisor": 11.4,
+    "rarity": "Prismatic",
+    "buyingprice": "40000000"
+  },
+  {
+    "item_id": "giant_pinecone",
+    "name": "Giant Pinecone",
+    "baseValue": 64980,
+    "weightDivisor": 5.14,
+    "rarity": "Prismatic",
+    "buyingprice": "55000000"
+  },
+  {
+    "item_id": "fossilight",
+    "name": "Fossilight",
+    "baseValue": 79420,
+    "weightDivisor": 3.79,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "horned_dinoshroom",
+    "name": "Horned Dinoshroom",
+    "baseValue": 67218,
+    "weightDivisor": 4.94,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "boneboo",
+    "name": "Boneboo",
+    "baseValue": 131967,
+    "weightDivisor": 14.5,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "firefly_fern",
+    "name": "Firefly Fern",
+    "baseValue": 65529,
+    "weightDivisor": 4.77,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "monoblooma",
+    "name": "Monoblooma",
+    "baseValue": 19855,
+    "weightDivisor": 0.477,
+    "rarity": "Uncommon",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "spiked_mango",
+    "name": "Spiked Mango",
+    "baseValue": 60919,
+    "weightDivisor": 14.25,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000"
+  },
+  {
+    "item_id": "soft_sunshine",
+    "name": "Soft Sunshine",
+    "baseValue": 40613,
+    "weightDivisor": 1.9,
+    "rarity": "Legendary",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "serenity",
+    "name": "Serenity",
+    "baseValue": 31588,
+    "weightDivisor": 0.24,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000"
+  },
+  {
+    "item_id": "zenflare",
+    "name": "Zenflare",
+    "baseValue": 22563,
+    "weightDivisor": 1.34,
+    "rarity": "Rare",
+    "buyingprice": "100000000000000"
+  },
+  {
+    "item_id": "hinomai",
+    "name": "Hinomai",
+    "baseValue": 72200,
+    "weightDivisor": 9.5,
+    "rarity": "Mythical",
+    "buyingprice": "100000000000000000"
+  },
+  {
+    "item_id": "maple_apple",
+    "name": "Maple Apple",
+    "baseValue": 51521,
+    "weightDivisor": 2.85,
+    "rarity": "Divine",
+    "buyingprice": "100000000000000000"
+  }
 ]

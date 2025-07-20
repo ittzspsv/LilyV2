@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from rapidfuzz import fuzz, process
+from rapidfuzz import fuzz
 import discord
 from io import BytesIO
 try:
@@ -30,6 +30,7 @@ def DataProcessor(filename, expected_type):
         except json.JSONDecodeError:
             return [] if expected_type == list else {}
 
+
 def UpdateData():
     global Data
     Data["MutationData"] = DataProcessor("src/LilyGAG/data/GAGMutationData.json", dict)
@@ -38,8 +39,11 @@ def UpdateData():
     Data["FruitType"] = DataProcessor("src/LilyGAG/data/GAGFruitTypeData.json", dict)
     Data['WeatherData'] = DataProcessor("src/LilyGAG/data/GAGWeatherData.json", dict)
     Data['PetMutationData'] = DataProcessor("src/LilyGAG/data/GAGPetMutationData.json", dict)
+    Data['EggData'] = DataProcessor("src/LilyGAG/data/GAGEggData.json", dict)
+    Data['GearData'] = DataProcessor("src/LilyGAG/data/GAGGearData.json", dict)
 
 UpdateData()
+
 
 def price_formatter(value):
         if value > 100_000_000_000_000:
@@ -54,6 +58,7 @@ def price_formatter(value):
             return f"{value / 1_000:.1f}k"
         else:
             return str(int(value)) 
+
 
 def value_parser(value_with_suffix):
     chars = list(value_with_suffix)
@@ -322,9 +327,6 @@ def GAGPetValue(pet_data):
     except Exception as e:
         print(e)
         return 0
-
-types, data = ParserType("Raccoon mega 90 age 100 kg")
-print(price_formatter(GAGPetValue(data)))
 
 def WORL(message:str=None):
     splitter = message.split("for")

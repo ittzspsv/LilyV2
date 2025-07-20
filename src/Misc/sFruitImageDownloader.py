@@ -3,8 +3,11 @@ import os
 import json
 import sFruitImageFetcher as FIF
 
+
+
+
 '''
-items = ["Zen_Rocks"]
+items = []
 
 save_directory = "src/ui/GAG"
 os.makedirs(save_directory, exist_ok=True)
