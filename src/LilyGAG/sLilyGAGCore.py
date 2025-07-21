@@ -80,7 +80,7 @@ def value_parser(value_with_suffix):
 
     return int(num * multiplier)
 
-def GAGMessageParser(sentence, threshold=75):
+def GAGMessageParser(sentence, threshold=80):
     parser = sentence.split()
 
     sheckle_value = re.findall(r'\b(\d+(?:\.\d+)?[kKmMbBtT])\b', sentence)
@@ -169,31 +169,33 @@ def GAGPetMessageParser(sentence, threshold=75):
     for i, word in enumerate(parser):
         word_lower = word.lower()
 
-        if any(word_lower.endswith(k) for k in age_keywords):
-            try:
-                pet_age = int(re.sub(r"[^\d]", "", word))
-                break
-            except ValueError:
-                pet_age = 1
+        # Case: '50age' or 'age50'
+        if any(word_lower.endswith(k) or word_lower.startswith(k) for k in age_keywords):
+            digits = re.findall(r"\d+", word)
+            if digits:
+                pet_age = int(digits[0])
                 break
 
+        # Case: '50 age'
         if word.isdigit() and i + 1 < len(parser):
-            next_word = parser[i + 1].lower()
+            next_word = parser[i + 1].lower().strip(":= ")
             if next_word in age_keywords:
                 pet_age = int(word)
                 break
 
-        if word_lower in age_keywords and i + 1 < len(parser):
+        # Case: 'age 50'
+        if word_lower.strip(":= ") in age_keywords and i + 1 < len(parser):
             next_word = parser[i + 1]
             if next_word.isdigit():
                 pet_age = int(next_word)
                 break
 
-        if re.fullmatch(r"\d+", word) and i > 0:
-            prev_word = parser[i - 1].lower()
-            if prev_word in age_keywords:
-                pet_age = int(word)
+        # Case: 'age is 50'
+        if word_lower.strip(":= ") in age_keywords and i + 2 < len(parser):
+            if parser[i + 1].lower() in {"is", "was"} and parser[i + 2].isdigit():
+                pet_age = int(parser[i + 2])
                 break
+
 
     if pet_age == 0:
         pet_age = 1
@@ -317,16 +319,16 @@ def GAGPetValue(pet_data):
             value += max_value * 1.5
         elif age_boost > 0 or weight_boost > 0:
             value += max_value * max(age_boost, weight_boost)
-        return value + (value * Data['PetMutationData'][pet_data['pet_mutation']])
+        if pet_data['pet_mutation']:
+            return value + (value * Data['PetMutationData'][pet_data['pet_mutation']])
+        else:
+            return value
     #-----------MATH FUNCTION ENDS------------------------#
-    try:
-        pet_value = Data["PetValueData"][pet_data['name']]
-        pet_value *= pet_data['quantity']
-        pet_value = pet_value[0].replace(",", "")
-        return compute_value(int(Data["PetValueData"][pet_data['name']][0].replace(",", "")), int(Data["PetValueData"][pet_data['name']][1].replace(",", "")), int(pet_data['age']), float(pet_data['weight']))
-    except Exception as e:
-        print(e)
-        return 0
+
+    pet_value = Data["PetValueData"][pet_data['name']]
+    pet_value *= pet_data['quantity']
+    pet_value = pet_value[0].replace(",", "")
+    return compute_value(int(Data["PetValueData"][pet_data['name']][0].replace(",", "")), int(Data["PetValueData"][pet_data['name']][1].replace(",", "")), int(pet_data['age']), float(pet_data['weight']))
 
 def WORL(message:str=None):
     splitter = message.split("for")

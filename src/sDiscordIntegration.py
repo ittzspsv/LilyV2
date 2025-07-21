@@ -165,7 +165,7 @@ class MyBot(commands.Bot):
         await self.ConnectDatabase()
         handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden?user_id={quote("834771588157517581")}", bot)
         asyncio.create_task(handler.run())
-        #await self.tree.sync()
+        await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())

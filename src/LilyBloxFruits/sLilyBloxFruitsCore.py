@@ -478,7 +478,7 @@ async def MessageEvaluate(self, bot, message):
             your_fruits1, your_fruit_types1, garbage_type, garbage_type1 = FDA.extract_trade_details(message.content)
             ctx = await bot.get_context(message)
             channel_data = Config.load_channel_config(ctx)
-            _w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
+            _w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
             if message.channel == self.get_channel(_w_or_l_channel_sid):
                 view = TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
 
