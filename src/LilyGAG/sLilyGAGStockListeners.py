@@ -3,35 +3,58 @@ import websockets
 import Config.sBotDetails as Config
 import LilyGAG.sLilyGAGCore as GAG
 import discord
+import asyncio
 
 class StockWebSocket:
     def __init__(self, url, bot):
         self.url = url
         self.bot = bot
+        self.ws = None
+        self.reconnect_interval = 5
+        self.headers = {
+            'jstudio-key': 'js_00961849285706f4d951a6a8627748fde695ba0f8c1ff58034058fb3337c2e6c'
+        }
 
     async def run(self):
-        try:
-            async with websockets.connect(self.url) as ws:
-                await self.on_open(ws)
-                async for message in ws:
-                    await self.on_message(ws, message)
+        while True:
+            try:
+                print(f"Connecting to Api ...")
+                self.ws = await websockets.connect(self.url, extra_headers=self.headers)
+                await self.on_open(self.ws)
 
-        except websockets.exceptions.ConnectionClosed as e:
-            await self.on_close(ws, e.code, e.reason)
-        except Exception as e:
-            await self.on_error(ws, e)
+                pong_waiter = asyncio.create_task(self.ping_loop())
+                async for message in self.ws:
+                    await self.on_message(self.ws, message)
+
+            except websockets.exceptions.ConnectionClosed as e:
+                await self.on_close(self.ws, e.code, e.reason)
+            except Exception as e:
+                await self.on_error(self.ws, e)
+            finally:
+                print(f"Reconnecting in {self.reconnect_interval} seconds...")
+                await asyncio.sleep(self.reconnect_interval)
+
+    async def ping_loop(self):
+        while self.ws and self.ws.open:
+            try:
+                await self.ws.ping()
+                print("Ping sent.")
+                await asyncio.sleep(25)
+            except Exception as e:
+                print("Ping error:", e)
+                break
 
     async def on_open(self, ws):
-        print("Socket Opened")
+        print("WebSocket connected.")
 
     async def on_message(self, ws, message):
         await self.GAGEndPointParser(self.bot, message)
 
     async def on_error(self, ws, error):
-        print("Throwed an Error:", error)
+        print("WebSocket error:", error)
 
-    async def on_close(self, ws, code, msg):
-        print(f"SocketClosed: {code}, {msg}")
+    async def on_close(self, ws, code, reason):
+        print(f"WebSocket closed. Code: {code}, Reason: {reason}")
     
     async def GAGEndPointParser(self, bot, data):
         guild = bot.get_guild(Config.GUILD_ID)
