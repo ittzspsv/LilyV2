@@ -163,7 +163,7 @@ class MyBot(commands.Bot):
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
         await self.ConnectDatabase()
-        handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden?user_id={quote("834771588157517581")}", bot)
+        handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
         asyncio.create_task(handler.run())
         await self.tree.sync()
 
@@ -203,7 +203,7 @@ class MyBot(commands.Bot):
     async def is_user(self, user, user_id):
         return user.id == int(user_id)  
 
-    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings):
+    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings, img=None):
         embed = discord.Embed(title=stock_type,
                       description=stock_msg, colour=0x2b00ff)
         embed.set_author(name="BloxTrade | Grow a garden Stocks")
