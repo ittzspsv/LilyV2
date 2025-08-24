@@ -1,8 +1,8 @@
-beautifulsoup4==4.12.2
-requests==2.32.3
-pytz==2025.1
-discord.py==2.5.2
-rapidfuzz==3.12.2
+beautifulsoup4
+requests
+pytz
+discord.py
+rapidfuzz
 pandas
 polars
 pillow
