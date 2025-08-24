@@ -1,133 +1,128 @@
 import json
 import discord
-import Config.sBotDetails as Config
+import aiosqlite
 import pandas as pd
+import asyncio
+import ast
+import Misc.sLilyComponentV2 as CS2
 
 from datetime import datetime
 from discord.ext import commands
 
-def FetchStaffDetail(staff: discord.Member):
+sdb = None
+
+async def initialize():
+    global sdb
+    sdb = await aiosqlite.connect("storage/management/staff_management.db")
+
+async def run_query(ctx: commands.Context, query: str):
     try:
-        with open("src/LilyManagement/StaffManagement.json", "r") as data:
-            staff_data = json.load(data)
-            
-            staff_info = staff_data.get(str(staff.id))
+        cursor = await sdb.execute(query)
 
-            if not staff_info:
-                raise ValueError("Staff data not found.")
+        try:
+            rows = await cursor.fetchall()
+            columns = [description[0] for description in cursor.description] if cursor.description else []
+        except Exception:
+            rows = None
+            columns = []
 
-            start_date = datetime.strptime(staff_info['join_date'], "%d/%m/%Y")
-            current_date = datetime.today()
+        await sdb.commit()
 
-            years = current_date.year - start_date.year
-            months = current_date.month - start_date.month
-            days = current_date.day - start_date.day
+        if rows:
+            chunk_size = 5
 
-            if days < 0:
-                months -= 1
-                days += 30
-            if months < 0:
-                years -= 1
-                months += 12
+            col_widths = []
+            for i, col in enumerate(columns):
+                max_len = max(len(str(row[i])) for row in rows) if rows else 0
+                col_widths.append(max(len(col), max_len))
 
-            embed = discord.Embed(title=staff_info['name'].title(), colour=0xf50000)
+            header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
+            separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
 
-            embed.add_field(name="Role", value=staff_info['role'], inline=False)
-            embed.add_field(name="Responsibilities", value=staff_info['responsibility'], inline=False)
-            embed.add_field(name="Join Date", value=staff_info['join_date'], inline=False)
-            embed.add_field(name="Evaluated Experience In Server", 
-                            value=f"{years} years {months} months {days} days", inline=False)
-            embed.add_field(name="Strike Count", value=f"{len(staff_info['strikes'])}", inline=False)
-            embed.set_thumbnail(url=staff.avatar.url)
-
-            return embed
-    except Exception as e:
-        embed = discord.Embed(title="Error", description=str(e), colour=0xf50000)
-        return embed
-    
-
-def FetchAllStaffs():
-    try:
-        with open("src/LilyManagement/StaffManagement.json", "r") as data:
-            staff_data = json.load(data)
-
-            embed = discord.Embed(
-                title="STAFF LIST",
-                description=f"**Total Count : {len(staff_data)}**",
-                colour=0x3100f5
-            )
-
-            roles = {}
-            active_moderators = 0
-            loa_moderators = 0
-
-            for staff_id, staff_info in staff_data.items():
-                role = staff_info["role"]
-                mention = f"<@{staff_id}>"
-
-                if role not in roles:
-                    roles[role] = []
-
-                roles[role].append(mention)
-
-                if staff_info.get("LOA") is True:
-                    loa_moderators += 1
-                elif staff_info.get("higher_staff") is False and staff_info.get("LOA") is False:
-                    active_moderators += 1
-
-            for role, mentions in roles.items():
-                count = len(mentions)
-                names_with_bullet = "- " + "\n- ".join(mentions)
-
-                embed.add_field(
-                    name=f"__{role}__ ({count})",
-                    value=names_with_bullet,
-                    inline=False
-                )
-
-            analysis_text = f"**Staff Prioritized on Moderation:** {active_moderators}\n**Staffs in LOA:** {loa_moderators}"
-            embed.add_field(
-                name="__ANALYSIS__",
-                value=analysis_text,
-                inline=False
-            )
-
-            return embed
+            for i in range(0, len(rows), chunk_size):
+                chunk = rows[i:i+chunk_size]
+                lines = []
+                for row in chunk:
+                    line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
+                    lines.append(line)
+                table = "\n".join([header, separator] + lines)
+                await ctx.send(f"```\n{table}\n```")
+                await asyncio.sleep(0.5)
+        else:
+            await ctx.send("Execution Successful")
 
     except Exception as e:
-        embed = discord.Embed(
-            title="Error",
-            description=str(e),
-            colour=0xf50000
+        await ctx.send(f"Error: `{type(e).__name__}: {e}`")
+
+async def FetchStaffDetail(staff: discord.Member):
+    try:
+        resultant = await sdb.execute(
+            "SELECT name, role, responsibility, join_date, strikes FROM staff_data WHERE staff_id = ?",
+            (staff.id,)
         )
-        return embed
-    
+        row = await resultant.fetchone()
 
-def FetchAllStaffsFiltered(filter_type=None, filter_value=None):
+        if not row:
+            raise ValueError("Staff data not found in database.")
+
+        name, role, responsibility, join_date, strikes = row
+
+        start_date = datetime.strptime(join_date, "%d/%m/%Y")
+        current_date = datetime.today()
+
+        years = current_date.year - start_date.year
+        months = current_date.month - start_date.month
+        days = current_date.day - start_date.day
+
+        if days < 0:
+            months -= 1
+            days += 30
+        if months < 0:
+            years -= 1
+            months += 12
+
+        if isinstance(strikes, str):
+            try:
+                strikes_list = json.loads(strikes)  # JSON string
+                strike_count = len(strikes_list)
+            except json.JSONDecodeError:
+                strike_count = int(strikes) if strikes.isdigit() else 0
+        elif isinstance(strikes, int):
+            strike_count = strikes
+        else:
+            strike_count = 0
+        view = CS2.StaffDataComponent(name, role, responsibility, join_date, f"{years} years {months} months {days} days", strike_count, staff.avatar.url)
+        '''
+        embed = discord.Embed(title=name.title(), colour=0xf50000)
+        embed.add_field(name="Role", value=role, inline=False)
+        embed.add_field(name="Responsibilities", value=responsibility, inline=False)
+        embed.add_field(name="Join Date", value=join_date, inline=False)
+        embed.add_field(
+            name="Evaluated Experience In Server",
+            value=f"{years} years {months} months {days} days",
+            inline=False
+        )
+        embed.add_field(name="Strike Count", value=strike_count, inline=False)
+        embed.set_thumbnail(url=staff.avatar.url)
+        '''
+        return view
+
+    except Exception as e:
+        return CS2.EmptyView()
+
+async def FetchAllStaffs():
     try:
-        with open("src/LilyManagement/StaffManagement.json", "r") as data:
-            staff_data = json.load(data)
+        async with sdb.execute(
+            "SELECT staff_id, role, LOA, higher_staff FROM staff_data"
+        ) as cursor:
+            rows = await cursor.fetchall()
 
-        staff_list = [(staff_id, info) for staff_id, info in staff_data.items()]
-
-        if filter_type:
-            if filter_type == "role":
-                staff_list = [(sid, info) for sid, info in staff_list if info.get("role") == filter_value]
-            elif filter_type == "LOA":
-                staff_list = [(sid, info) for sid, info in staff_list if info.get("LOA") == bool(filter_value)]
-            elif filter_type == "higher_staff":
-                staff_list = [(sid, info) for sid, info in staff_list if info.get("higher_staff") == bool(filter_value)]
-            elif filter_type == "strikes":
-                staff_list.sort(key=lambda x: len(x[1].get("strikes", [])), reverse=True)
-            elif filter_type == "join_date":
-                from datetime import datetime
-                staff_list.sort(
-                    key=lambda x: datetime.strptime(x[1].get("join_date", "01/01/2099"), "%d/%m/%Y")
-                )
+        if not rows:
+            raise ValueError("No staff data found in database.")
 
         embed = discord.Embed(
             title="STAFF LIST",
-            description=f"**Total Count : {len(staff_list)}**",
+            description=f"**Total Count : {len(rows)}**",
             colour=0x3100f5
         )
 
@@ -135,197 +130,120 @@ def FetchAllStaffsFiltered(filter_type=None, filter_value=None):
         active_moderators = 0
         loa_moderators = 0
 
-        for staff_id, info in staff_list:
-            role = info.get("role", "Unknown")
+        for staff_id, role, loa, higher_staff in rows:
             mention = f"<@{staff_id}>"
 
             if role not in roles:
                 roles[role] = []
             roles[role].append(mention)
 
-            if info.get("LOA"):
+            if loa:
                 loa_moderators += 1
-            elif not info.get("higher_staff", False) and not info.get("LOA"):
+            elif not higher_staff and not loa:
                 active_moderators += 1
 
+        role_priority = ("")
         for role, mentions in roles.items():
+            count = len(mentions)
+            names_with_bullet = "- " + "\n- ".join(mentions)
             embed.add_field(
-                name=f"__{role}__ ({len(mentions)})",
-                value="- " + "\n- ".join(mentions),
+                name=f"__{role}__ ({count})",
+                value=names_with_bullet,
                 inline=False
             )
 
-        analysis = f"**Staff Prioritized on Moderation:** {active_moderators}\n**Staffs in LOA:** {loa_moderators}"
-        embed.add_field(name="__ANALYSIS__", value=analysis, inline=False)
+        analysis_text = (
+            f"**Staff Prioritized on Moderation:** {active_moderators}\n"
+            f"**Staffs in LOA:** {loa_moderators}"
+        )
+        embed.add_field(
+            name="__ANALYSIS__",
+            value=analysis_text,
+            inline=False
+        )
+
+        return embed
+
+    except Exception as e:
+        return discord.Embed(title="Error", description=str(e), colour=0xf50000)
+
+async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
+    try:
+        cursor_strikes = await sdb.execute(
+            "SELECT strikes FROM staff_data WHERE staff_id = ?", 
+            (staff_id,)
+        )
+        values = await cursor_strikes.fetchall()
+
+        if not values:
+            embed = discord.Embed(
+                title="Staff Member Not Found",
+                colour=0xf50000
+            )
+            return embed
+        strike_data = ast.literal_eval(values[0][0])
+
+        strike = {
+            "reason": reason,
+            "date": datetime.today().strftime("%d/%m/%Y"),
+            "manager": ctx.author.id
+        }
+        strike_data.append(strike)
+
+        await sdb.execute(
+            "UPDATE staff_data SET strikes = ? WHERE staff_id = ?", 
+            (str(strike_data), staff_id)
+        )
+        await sdb.commit()
+
+        embed = discord.Embed(
+            description=f"**Successfully Striked Staff <@{staff_id}>**",
+            colour=0xf50000
+        )
+        return embed
+
+    except Exception as e:
+        embed = discord.Embed(
+            title=f"Exception: {e}",
+            colour=0xf50000
+        )
+        return embed
+    
+async def ListStrikes(staff_id: str):
+    try:
+        async with sdb.execute("SELECT strikes FROM staff_data WHERE staff_id = ?", (staff_id,)) as cursor:
+            row = await cursor.fetchone()
+
+        if not row:
+            return discord.Embed(
+                title="Staff Member Not Found",
+                description=f"No data found for <@{staff_id}>",
+                colour=0xf50000
+            )
+
+        strikes = ast.literal_eval(row[0]) if row[0] else []
+
+        embed = discord.Embed(
+            title="Strikes",
+            description=f"Showing for <@{staff_id}>",
+            colour=0xf50000
+        )
+
+        for idx, strike in enumerate(strikes, start=1):
+            embed.add_field(
+                name=f"Strike {idx}",
+                value=(
+                    f"**Reason     : {strike['reason']}**\n"
+                    f"**Date       : {strike['date']}**\n"
+                    f"**Manager    : <@{strike['manager']}>**"
+                ),
+                inline=False
+            )
 
         return embed
 
     except Exception as e:
         return discord.Embed(
-            title="Error",
-            description=str(e),
+            title=f"Exception : {e}",
             colour=0xf50000
         )
-
-
-def StrikeStaff(ctx:commands.Context, staff_id: str, reason: str, ):
-    try:
-        with open("src/LilyManagement/StaffManagement.json", "r") as data:
-            staff_data = json.load(data)
-        
-        if staff_id in staff_data:
-            strike = {
-                "reason": reason,
-                "date": datetime.today().strftime("%d/%m/%Y"),
-                "manager": ctx.author.id
-            }
-            staff_data[staff_id]["strikes"].append(strike)
-
-            with open("src/LilyManagement/StaffManagement.json", "w") as data:
-                json.dump(staff_data, data, indent=2)
-            embed = discord.Embed(title=f"",description=f'**Successfully Striked Staff <@{staff_id}>**',
-                      colour=0xf50000)
-            return embed
-        else:
-            embed = discord.Embed(title="Staff Member Not Found",
-                      colour=0xf50000)
-            return embed
-    except Exception as e:
-        embed = discord.Embed(title=f"Exception : {e}",
-                      colour=0xf50000)
-        return embed
-    
-def ListStrikes(staff_id: str):
-    try:
-         with open("src/LilyManagement/StaffManagement.json", "r") as data:
-             staff_data = json.load(data)
-             strikes = staff_data[staff_id].get("strikes", [])
-
-             embed = discord.Embed(title="Strikes",
-                        description=f"Showing for <@{staff_id}>",
-                        colour=0xf50000)
-             j = 1
-             for i in strikes:
-                embed.add_field(name="Strike 1",
-                value=f"**Reason     : {i['reason']} **\n**Date          : {i['date']}**\n**Manager  : <@{i['manager']}>**",
-                inline=False)
-
-                j += 1
-
-             return embed
-                       
-
-    except Exception as e:
-        embed = discord.Embed(title=f"Exception : {e}",
-                      colour=0xf50000)
-        return embed
-
-def ExportStaffDataAsCSV():
-    try:
-        with open("src/LilyManagement/StaffManagement.json", "r") as data:
-            staff_data = json.load(data)
-        flattened_data = []
-
-        for staff_id, staff_info in staff_data.items():
-            strikes = staff_info["strikes"]
-            strikes_str = json.dumps(strikes) if strikes else "[]"
-
-            flattened_data.append({
-                "Staff ID": staff_id,
-                "Name": staff_info["name"],
-                "Role": staff_info["role"],
-                "Responsibility": staff_info["responsibility"],
-                "Join Date": staff_info["join_date"],
-                "Strikes": strikes_str,
-                "LOA" : staff_info["LOA"],
-                "higher_staff" : staff_info["higher_staff"]
-            })
-
-
-        df = pd.DataFrame(flattened_data)
-
-        return df
-    except Exception as e:
-        return pd.DataFrame()
-    
-def ImportStaffDataFromCSV(df: pd.DataFrame):
-    try:
-        with open("src/LilyManagement/StaffManagement.json", "r") as file:
-            staff_data = json.load(file)
-
-        new_staff_data = {}
-        current_ids = set()
-
-        for _, row in df.iterrows():
-            staff_id = str(row["Staff ID"])
-            current_ids.add(staff_id)
-            strikes_json = row.get("Strikes", "[]")
-
-            try:
-                strikes = json.loads(strikes_json) if isinstance(strikes_json, str) else strikes_json
-            except json.JSONDecodeError:
-                strikes = []
-
-            new_staff_data[staff_id] = {
-                "name": row["Name"],
-                "role": row["Role"],
-                "responsibility": row["Responsibility"],
-                "join_date": row["Join Date"],
-                "strikes": strikes,
-                "LOA" : row["LOA"],
-                "higher_staff" : row["higher_staff"]
-
-            }
-
-        with open("src/LilyManagement/StaffManagement.json", "w") as file:
-            json.dump(new_staff_data, file, indent=2)
-
-        return True
-    except Exception as e:
-        print(e)
-        return False
-
-def AddStaff(staff: discord.Member):
-    try:
-        with open("src/LilyManagement/StaffManagement.json", "r") as f:
-            data = json.load(f)
-
-        if staff.id in data:
-            print("Staff id in data")
-            return False
-
-        data[staff.id] = {
-            "name": staff.display_name,
-            "role": staff.top_role.name,
-            "responsibility": "NIL",
-            "join_date": datetime.now().strftime("%d/%m/%Y"),
-            "strikes": [],
-            "LOA" : False,
-            "higher_staff" : False
-        }
-
-        with open("src/Management/StaffManagement.json", "w") as f:
-            json.dump(data, f, indent=2)
-        return True
-    except Exception as e:
-        print(e)
-        return False
-    
-def RemoveStaff(staff: discord.Member):
-    try:
-        with open("src/LilyManagement/StaffManagement.json", "r") as f:
-            data = json.load(f)
-
-        staff_id = str(staff.id)
-        if staff_id not in data:
-            print("Staff id not in data")
-            return False
-
-        del data[staff_id]
-
-        with open("src/LilyManagement/StaffManagement.json", "w") as f:
-            json.dump(data, f, indent=2)
-        return True
-    except Exception as e:
-        print(e)
-        return False

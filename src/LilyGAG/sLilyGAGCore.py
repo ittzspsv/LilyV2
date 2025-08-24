@@ -7,6 +7,7 @@ from io import BytesIO
 try:
     import Config.sBotDetails as Config
     import ui.sWinOrLossImageGenerator as LilyWORLGen
+    import Misc.sLilyComponentV2 as CV2
 except:
     pass
 import requests
@@ -29,7 +30,6 @@ def DataProcessor(filename, expected_type):
                 return [] if expected_type == list else {}
         except json.JSONDecodeError:
             return [] if expected_type == list else {}
-
 
 def UpdateData():
     global Data
@@ -58,7 +58,6 @@ def price_formatter(value):
             return f"{value / 1_000:.1f}k"
         else:
             return str(int(value)) 
-
 
 def value_parser(value_with_suffix):
     chars = list(value_with_suffix)
@@ -330,6 +329,15 @@ def GAGPetValue(pet_data):
     pet_value = pet_value[0].replace(",", "")
     return compute_value(int(Data["PetValueData"][pet_data['name']][0].replace(",", "")), int(Data["PetValueData"][pet_data['name']][1].replace(",", "")), int(pet_data['age']), float(pet_data['weight']))
 
+def PetWeightChart(age: int, weight: float, max_age: int = 100):
+    weight_chart = []
+    
+    for a in range(1, max_age + 1):
+        estimated_weight = weight / (age + 10) * (a + 10)
+        weight_chart.append(round(estimated_weight, 2))
+    
+    return weight_chart
+
 def WORL(message:str=None):
     splitter = message.split("for")
     your_side = splitter[0]
@@ -405,28 +413,36 @@ async def MessageEvaluate(self, bot, message):
                 embed.add_field(name="Mutation",
                                 value=data['Mutation'],
                                 inline=False)
+                
+                view = CV2.GAGFruitValueComponent(price_formatter(int(data['value'])), f"{data['Weight']}kg", data["Variant"], data['Name'],data['Mutation'], "attachment://image.png")
 
             elif type == "PetType":
                 pet_value = GAGPetValue(Data)
                 name = Data["name"].replace(" ", "_")
                 img_path = next((f"src/ui/GAG/{name}.{ext}" for ext in ["png", "webp"] if os.path.exists(f"src/ui/GAG/{name}.{ext}")), None)
-                embed = discord.Embed(title=f"VALUE :  {price_formatter(int(pet_value) * 1)}",
-                            colour=0x1000f5)
-                embed.set_author(name="BloxTrade")
-                embed.set_thumbnail(url="attachment://image.png")
-                embed.add_field(name="Name",
-                                value=Data['name'],
-                                inline=False)
-                embed.add_field(name="Weight",
-                                value=f"{Data['weight']}kg",
-                                inline=False)
-                embed.add_field(name="Age",
-                                value=f"{Data['age']} yrs old",
-                                inline=False)
+                classification = ""
+                classification_mapping = {
+                    "Small": (0.7, 1.4),
+                    "Normal": (1.4, 3.9),
+                    "Semi Huge": (3.9, 4.9),
+                    "Huge": (4.9, 7.9),
+                    "Titanic": (7.9, 8.9),
+                    "Godly": (8.9, 11)
+                }
+
+            value = float(PetWeightChart(int(Data['age']), int(Data['weight']))[0])
+            print(value)
+            for category, (low, high) in classification_mapping.items():
+                if low <= value < high:
+                    classification = category
+                    break
+            print(classification)
+
+            view = CV2.GAGPetValueComponent(price_formatter(int(pet_value) * 1), f'{Data['weight']} kg', f'{Data['age']}', Data['name'], "attachment://image.png", Data['pet_mutation'], classification)
             if img_path:
-                await message.reply(embed=embed, file=discord.File(img_path, filename="image.png"))
+                await message.reply(view=view, file=discord.File(img_path, filename="image.png"))
             else:
-                await message.reply(embed=embed)
+                await message.reply(view=view)
 
 
     elif message.channel.id == channel_configs.get('gag_worl', 0):

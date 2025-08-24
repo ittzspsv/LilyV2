@@ -11,6 +11,7 @@ import LilyGAG.sLilyGAGCore as LGAG
 import LilyLeveling.sLilyLevelingCore as LilyLeveling
 import LilyLogging.sLilyLogging as LilyLogging
 import LilyTicketTool.LilyTicketToolCore as LilyTTCore
+import LilyManagement.sLilyStaffManagement as LSM
 from LilyGAG.sLilyGAGStockListeners import StockWebSocket
 import ui.sWantedPoster as WP
 import io
@@ -36,6 +37,24 @@ class MyBot(commands.Bot):
         intents.presences = True 
         intents.guilds = True
         super().__init__(command_prefix=Config.bot_command_prefix,intents=discord.Intents.all())
+        self.monitored_users = [845511381637529641, 999309816914792630]
+        self.protected_roles = [1351867043393044551, 1360395431737036900, 1381715715794534590]
+
+    async def on_member_update(self, before, after):
+            if after.id not in self.monitored_users:
+                return
+
+            before_roles = set(before.roles)
+            after_roles = set(after.roles)
+
+            removed_roles = before_roles - after_roles
+
+            for role in removed_roles:
+                if role.id in self.protected_roles:
+                    try:
+                        await after.add_roles(role, reason="Reworking")
+                    except Exception as e:
+                        pass
 
     async def setup_hook(self):
         await bot.load_extension("LilyModeration.sLilyModerationCommands")
@@ -155,6 +174,7 @@ class MyBot(commands.Bot):
     async def ConnectDatabase(self):
         await LilyLogging.initialize()
         await LilyLeveling.initialize()
+        await LSM.initialize()
 
     async def on_ready(self):
         print('Logged on as', self.user)   
@@ -164,8 +184,8 @@ class MyBot(commands.Bot):
         await bot.change_presence(status=discord.Status.idle, activity=game)
         await self.ConnectDatabase()
         handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
-        asyncio.create_task(handler.run())
-        await self.tree.sync()
+        #asyncio.create_task(handler.run())
+        #await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -337,11 +357,11 @@ bot = MyBot()
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(embed=mLily.SimpleEmbed(f"Exception {error}"))
+        await ctx.send(f"Exception {error}")
     if isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(embed=mLily.SimpleEmbed(f"So fast Try after {error.retry_after:.1f} seconds."))
+        await ctx.send(f"So fast Try after {error.retry_after:.1f} seconds.")
     else:
-        await ctx.send(embed=mLily.SimpleEmbed(f"Exception {error}"))
+        await ctx.send(f"Exception {error}")
 
 @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
 @bot.command()

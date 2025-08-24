@@ -7,7 +7,7 @@ import sFruitImageFetcher as FIF
 
 
 '''
-items = []
+items = ["Dairy_Cow", "Bacon_Pig", "Jackalope", "Hotdog_Daschund", "Golem", "Lobster_Thermidor", "Golden_Goose", "French_Fry_Ferret", "Junkbot", "Mochi_Mouse", "Spaghetti_Sloth", "Gorilla_Chef", "Mizuchi", "Sushi_Bear"]
 
 save_directory = "src/ui/GAG"
 os.makedirs(save_directory, exist_ok=True)

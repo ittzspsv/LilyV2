@@ -2,7 +2,7 @@ from discord.ext import commands
 
 
 def PermissionEvaluator(PermissionType: str = "Role",RoleAllowed=None,RoleBlacklisted=None,UserAllowed=None,UserBlacklisted=None):
-    def predicate(ctx):
+    def predicate(ctx:commands.Context):
         user_id = ctx.author.id
         user_role_ids = {role.id for role in ctx.author.roles}
 
@@ -10,6 +10,10 @@ def PermissionEvaluator(PermissionType: str = "Role",RoleAllowed=None,RoleBlackl
         role_blacklisted = RoleBlacklisted() if callable(RoleBlacklisted) else RoleBlacklisted or []
         user_allowed = UserAllowed() if callable(UserAllowed) else UserAllowed or []
         user_blacklisted = UserBlacklisted() if callable(UserBlacklisted) else UserBlacklisted or []
+
+        if ctx.author.id == ctx.guild.owner_id:
+            return True
+
 
         if user_id in user_blacklisted:
             raise commands.CheckFailure(f"User Blacklist Exception: User ID {user_id}")
@@ -48,6 +52,9 @@ def rPermissionEvaluator(ctx,PermissionType: str = "Role",RoleAllowed = [],RoleB
     RoleBlacklisted = RoleBlacklisted() if callable(RoleBlacklisted) else RoleBlacklisted
     UserAllowed = UserAllowed() if callable(UserAllowed) else UserAllowed
     UserBlacklisted = UserBlacklisted() if callable(UserBlacklisted) else UserBlacklisted
+
+    if ctx.author.id == ctx.guild.owner_id:
+        return True
 
     if user_id in UserBlacklisted:
         return False

@@ -120,7 +120,7 @@ server_invite_link = "https://discord.com/invite/bloxtrade"
 fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
-port = 1 # Currently set to Production Server
+port = 0 # Currently set to Production Server
 meta_enable = 0
 engagement = 0
 
@@ -199,12 +199,12 @@ else:
 
     role_creation_limit = 1
 
-    StaffRoles = [1360395431737036900, 1389986714159808552] # Staff Role
-    TrustedStaffRoles = [1333444259033911306, 1390347661936165057, 1390347777959264328] # Trusted Role
-    StaffManagerRoles = [1365324107947970700, 1389986618320093236] # Staff Manager Roles
-    DeveloperRoles = [1351867043393044551, 1389986591208116335] # Developer Role
-    OwnerRoles = [1324577057228980285, 1389986702075891884, 1351867043393044551, 1389986591208116335] # (+) Role
-    BlacklistedRoles = [1357492900195205130, 1389986579610730617]
+    StaffRoles = [1360395431737036900] # Staff Role
+    TrustedStaffRoles = [1333444259033911306] # Trusted Role
+    StaffManagerRoles = [1365324107947970700, 1406660357757468846] # Staff Manager Roles
+    DeveloperRoles = [1351867043393044551] # Developer Role
+    OwnerRoles = [1324577057228980285, 1351867043393044551] # (+) Role
+    BlacklistedRoles = [1357492900195205130]
 
     #CHANNELS -- GAG
     seed_gear_stock_channel_id = 1389972635403948153
@@ -214,7 +214,7 @@ else:
     weatherupdate_channel_id = 1389977107244777634
 
     #GUILD REFERENCE
-    GUILD_ID = 1389970924664786964
+    GUILD_ID = 970643838047760384
 
 # Embed colors based on item type
 embed_color_codes = {
