@@ -17,7 +17,7 @@
             ],
             "required_words": [],
             "neglect_words": [],
-            "channel_to_respond": 1324581275276935283,
+            "channel_to_respond": [1324581275276935283],
             "delete_message": "True",
             "emoji_to_react": [
                 ""
@@ -36,7 +36,7 @@
                 "nigga"
             ],
             "neglect_words": [],
-            "channel_to_respond": 1324581275276935283,
+            "channel_to_respond": [1349753820053508186],
             "delete_message": "True",
             "emoji_to_react": [
                 ""
@@ -59,7 +59,7 @@
                 "nigger"
             ],
             "neglect_words": [],
-            "channel_to_respond": 1324581275276935283,
+            "channel_to_respond": [1349753820053508186],
             "delete_message": "True",
             "emoji_to_react": [
                 ""

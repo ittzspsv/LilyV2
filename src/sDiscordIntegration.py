@@ -184,8 +184,8 @@ class MyBot(commands.Bot):
         await bot.change_presence(status=discord.Status.idle, activity=game)
         await self.ConnectDatabase()
         handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
-        #asyncio.create_task(handler.run())
-        #await self.tree.sync()
+        asyncio.create_task(handler.run())
+        await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())

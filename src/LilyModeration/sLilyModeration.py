@@ -186,7 +186,7 @@ async def mod_logs(ctx: commands.Context, moderator_id: int, user: discord.User,
         async with LilyLogging.mdb.execute("""
             SELECT mod_type, reason, timestamp, moderator_id
             FROM modlogs
-            WHERE guild_id = ? AND target_user_id = ?
+            WHERE guild_id != ? AND target_user_id = ?
             ORDER BY timestamp DESC
         """, (ctx.guild.id, moderator_id)) as cursor:
             rows = await cursor.fetchall()

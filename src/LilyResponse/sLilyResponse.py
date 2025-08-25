@@ -17,7 +17,6 @@ def load_json(file):
         print(f"Loaded '{file}' successfully!")
         return json.load(bot_responses)
 
-
 def RegexCompile(p):
     if isinstance(p, str) and p.startswith("re:"):
         pattern = p[3:]

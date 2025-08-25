@@ -19,7 +19,6 @@ import asyncio
 import io
 import ast
 
-
 if Config.port == 0:
     emoji_data_path = "src/EmojiData.json"
     with open(emoji_data_path, "r", encoding="utf-8") as json_file:
@@ -46,7 +45,6 @@ else:
 
 fruit_names = sorted([fruit["name"].lower() for fruit in StockValueJSON.value_data], key=len, reverse=True)
 fruit_set = set(fruit_names)
-
 
 class TradeSuggestorWindow(discord.ui.View):
             def __init__(self, bot, user, your_fruits, your_types):
@@ -122,9 +120,9 @@ class TradeSuggestorWindow(discord.ui.View):
                     )
 
 async def MessageEvaluate(self, bot, message):
-        if message.guild.id == 1240215331071594536 and message.channel.id == 1362321135231959112:
+        if message.guild.id == 1099482621161001113 and message.channel.id == 1409330087337398322:
             message_id = message.id 
-            source_channel = bot.get_channel(1362321135231959112)
+            source_channel = bot.get_channel(1409330087337398322)
 
             if source_channel is None:
                 return

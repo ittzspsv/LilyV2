@@ -14,7 +14,6 @@ class LilyModeration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
     @PermissionEvaluator(RoleAllowed=lambda: list(Config.limit_Ban_details.keys()))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ban', description='bans a user with config = limited')
@@ -220,23 +219,6 @@ class LilyModeration(commands.Cog):
 
         await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> has been removed from the blacklist."))
         await LilyLogging.WriteLog(ctx, ctx.author.id, f"has removed <@{user.id}> from the **Limited Bans** blacklist.")
-
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
-    @commands.hybrid_command(name="vmute", description="mutes a user specific to voice channel only")
-    async def vmute(self, ctx:commands.Context, user:discord.Member, timeframe:str="10", *, reason:str=""):
-        try:
-            await mLily.VoiceMute(user, timeframe, reason, ctx.channel)
-        except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"Exception {e}"))
-        
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
-    @commands.hybrid_command(name="vunmute", description="unmutes a user specific to voice channel only")
-    async def vunmute(self, ctx:commands.Context, user:discord.Member):
-        try:
-            await mLily.VoiceUnmute(user, ctx.channel)
-        except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"Exception {e}"))
-
 
 async def setup(bot):
     await bot.add_cog(LilyModeration(bot))

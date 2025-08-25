@@ -92,7 +92,7 @@ def remove_spaces_in_letter_groups(text):
     def repl(m):
         return m.group(0).replace(' ', '')
     return re.sub(r'(?:[a-zA-Z] )+[a-zA-Z]', repl, text)
-def normalize_text(text):
+def normalize_text(text, eval_type=1):
     text = regional_indicator_to_text(text)
     text = ZERO_WIDTH_CHARS.sub('', text)
     text = unicodedata.normalize('NFKC', text)

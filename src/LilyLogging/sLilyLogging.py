@@ -34,6 +34,7 @@ async def initialize():
     await bdb.commit()
     await mdb.commit()
 
+
 async def WriteLog(ctx: commands.Context, user_id: int, log_txt: str):
     global bdb
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

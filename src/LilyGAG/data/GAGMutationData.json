@@ -50,5 +50,18 @@
     "Jackpot" : 77,
     "Touchdown" : 125,
     "Equinox" : 165,
-    "Subzero" : 50
+    "Subzero" : 50,
+    "Brainrot" : 100,
+    "CorruptChakra" : 15,
+    "HarmonisedChakra" : 35,
+    "HarmonisedFoxFireChakra" : 195,
+    "Fortune" : 50,
+    "Cyclonic" : 50,
+    "Maelstrom" : 100,
+    "Warped" : 75,
+    "Junkshock" : 45,
+    "Lightcycle" : 50,
+    "Blitzshock" : 50,
+    "Sliced" : 50,
+    "Beanbound" : 100
 }
