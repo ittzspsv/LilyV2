@@ -4,19 +4,31 @@ import os
 
 
 def format_value(val):
-        value = int(val)
-        if value > 100_000_000_000_000:
-            return f"{value / 100_000_000_000_000:.1f}QT"
-        elif value >= 1_000_000_000_000:
-            return f"{value / 1_000_000_000_000:.1f}T"
-        elif value >= 1_000_000_000:
-            return f"{value / 1_000_000_000:.1f}B"
-        elif value >= 1_000_000:
-            return f"{value / 1_000_000:.1f}M"
-        elif value >= 1_000:
-            return f"{value / 1_000:.1f}k"
-        else:
-            return str(int(value)) 
+    value = int(val)
+    if value >= 1_000_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000_000:.1f}DX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000:.1f}NX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000:.1f}OX"
+    elif value >= 1_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000:.1f}SPX"
+    elif value >= 1_000_000_000_000_000_000_000: 
+        return f"{value / 1_000_000_000_000_000_000_000:.1f}SX"
+    elif value >= 1_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000:.1f}QI"
+    elif value >= 1_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000:.1f}QT"
+    elif value >= 1_000_000_000_000: 
+        return f"{value / 1_000_000_000_000:.1f}T"
+    elif value >= 1_000_000_000:  
+        return f"{value / 1_000_000_000:.1f}B"
+    elif value >= 1_000_000:  
+        return f"{value / 1_000_000:.1f}M"
+    elif value >= 1_000:  
+        return f"{value / 1_000:.1f}k"
+    else:
+        return str(value)
 
 
 def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm"):
