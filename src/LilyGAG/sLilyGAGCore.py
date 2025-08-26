@@ -432,8 +432,8 @@ async def MessageEvaluate(self, bot, message):
                 pet_value = GAGPetValue(Data)
                 name = Data["name"].replace(" ", "_")
                 img_path = next((f"src/ui/GAG/{name}.{ext}" for ext in ["png", "webp"] if os.path.exists(f"src/ui/GAG/{name}.{ext}")), None)
-                classification = ""
-                classification_mapping = {
+            classification = ""
+            classification_mapping = {
                     "Small": (0.7, 1.4),
                     "Normal": (1.4, 3.9),
                     "Semi Huge": (3.9, 4.9),
@@ -448,7 +448,6 @@ async def MessageEvaluate(self, bot, message):
                 if low <= value < high:
                     classification = category
                     break
-            print(classification)
 
             view = CV2.GAGPetValueComponent(price_formatter(int(pet_value) * 1), f'{Data['weight']} kg', f'{Data['age']}', Data['name'], "attachment://image.png", Data['pet_mutation'], classification)
             if img_path:
