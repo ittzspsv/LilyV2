@@ -120,7 +120,7 @@ server_invite_link = "https://discord.com/invite/bloxtrade"
 fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
-port = 0 # Currently set to Production Server
+port = 1 # Currently set to Production Server
 meta_enable = 0
 engagement = 0
 
@@ -151,6 +151,7 @@ if port == 0:
     StaffRoles = [1381715715794534590]
     TrustedStaffRoles = [1381715790889357393]
     StaffManagerRoles = [1381715601772511493]
+    MiddlemanRoles = [1409603178692870234]
     DeveloperRoles = [1381715636010618940]
     OwnerRoles = [1381728367207907418]
     BlacklistedRoles = [1381715681904558132]
@@ -197,9 +198,10 @@ else:
 
     StaffRoles = [1360395431737036900] # Staff Role
     TrustedStaffRoles = [1333444259033911306] # Trusted Role
-    StaffManagerRoles = [1365324107947970700, 1406660357757468846] # Staff Manager Roles
+    StaffManagerRoles = [1406660357757468846] # Staff Manager Roles
     DeveloperRoles = [1351867043393044551] # Developer Role
     OwnerRoles = [1324577057228980285, 1351867043393044551] # (+) Role
+    MiddlemanRoles = [1341082575183020063]
     BlacklistedRoles = [1357492900195205130]
 
     #CHANNELS -- GAG
@@ -236,7 +238,7 @@ staff_manager_role_id = 1365324107947970700
 #ROLES
 
 async def update_config_data():
-    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles,seed_gear_stock_channel_id, eggstock_channel_id,cosmeticsstock_channel_id,weatherupdate_channel_id,GUILD_ID, eventshop_channel_id
+    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles,seed_gear_stock_channel_id, eggstock_channel_id,cosmeticsstock_channel_id,weatherupdate_channel_id,GUILD_ID, eventshop_channel_id, MiddlemanRoles
     url = 'https://ittzspsv.github.io/LilyV2-Configs/LilyConfig.json'
 
     async with aiohttp.ClientSession() as session:
@@ -256,6 +258,7 @@ async def update_config_data():
                 DeveloperRoles = data['Roles']['DeveloperRoles']
                 OwnerRoles = data['Roles']['OwnerRoles']
                 BlacklistedRoles = data['Roles']['BlacklistedRoles']
+                MiddlemanRoles = data['Roles']['MiddlemanRoles']
 
                 #CHANNELS -- GAG
                 seed_gear_stock_channel_id = int(data['GAGChannels']['seed_gear_stock_channel_id'])

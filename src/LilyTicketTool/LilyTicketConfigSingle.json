@@ -30,11 +30,11 @@
                     }
                 ]
                 },
-            "LogChannel": 1370395716106588241
+            "LogChannel": 1356223694388723792
         },
         "TicketType" : ["Button", "Create Ticket", "Secondary"],
-        "Channel_To_Spawn" : 1368673986300608583,
-        "ModeratorRoles" : [1370812141606801510]
+        "Channel_To_Spawn" : 1349753791704072313,
+        "ModeratorRoles" : [1381715790889357393]
     },
 
     "Modal" : [

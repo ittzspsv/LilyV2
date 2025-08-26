@@ -68,7 +68,8 @@ class MyBot(commands.Bot):
         await bot.load_extension("LilyGAG.sLilyGAGCommands")
         await bot.load_extension("LilyTicketTool.LilyTicketToolCommands")
         await bot.load_extension("LilyLeveling.sLilyLevelingCommands")
-        #await bot.tree.sync()
+        #await bot.load_extension("LilyMiddleman.sLilyMiddlemanCommands")
+        await bot.tree.sync()
 
     async def BotStorageInitialization(self, guild):
         base_path = f"storage/{guild.id}"

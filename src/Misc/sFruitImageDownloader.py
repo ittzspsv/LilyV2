@@ -36,11 +36,11 @@ for fruit in items:
 '''
 
 '''
-response = requests.get("https://static.wikia.nocookie.net/growagarden/images/4/4d/Kitsune_.png")
+response = requests.get("https://bloxfruitsvalues.com/_next/image?url=https%3A%2F%2Fi.postimg.cc%2FMKcKbW5Z%2FGreen-Lightning.png&w=1920&q=95")
 
 
 if response.status_code == 200:
-    with open("Kitsune.png", "wb") as file:
+    with open("Green Lightning.png", "wb") as file:
         file.write(response.content)
     print("Image downloaded successfully!")
 else:

@@ -662,5 +662,44 @@
             "Eagle Chromatic",
             "Parrot Skin"
         ]
+    },
+    {
+        "name": "Yellow Lightning",
+        "physical_value": "420,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "",
+        "permanent_demand_type": "",
+        "category": "limited",
+        "aliases": [
+            "Yellow Rumble"
+        ]
+    },
+    {
+        "name": "Purple Lightning",
+        "physical_value": "750,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "",
+        "permanent_demand_type": "",
+        "category": "limited",
+        "aliases": [
+            "Purple Rumble"
+        ]
+    },
+    {
+        "name": "Green Lightning",
+        "physical_value": "210,000,000",
+        "permanent_value": "",
+        "physical_demand": "10/10",
+        "permanent_demand": "",
+        "demand_type": "",
+        "permanent_demand_type": "",
+        "category": "limited",
+        "aliases": [
+            "Green Rumble"
+        ]
     }
 ]

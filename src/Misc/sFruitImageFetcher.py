@@ -17,7 +17,10 @@ predefined_images = {
     "Permanent Dragon Token": "https://static.wikia.nocookie.net/roblox-blox-piece/images/2/29/Dragon_Token_%28Permanent%29.png/",
     "Fruit Storage"  : "https://static.wikia.nocookie.net/roblox-blox-piece/images/6/6a/BadgeFruitStorage.png",
     "Trex" : "https://static.wikia.nocookie.net/roblox-blox-piece/images/e/ea/T-RexFruit.png",
-    "Parrot Chromatic" : "https://static.wikia.nocookie.net/roblox-blox-piece/images/f/f0/Parrot_Skin.png/"
+    "Parrot Chromatic" : "https://static.wikia.nocookie.net/roblox-blox-piece/images/f/f0/Parrot_Skin.png/",
+    "Yellow Lightning" : "https://bloxfruitsvalues.com/_next/image?url=https%3A%2F%2Fi.postimg.cc%2FcLwx2XPV%2FYellow-Lightning.png&w=1920&q=95",
+    "Purple Lightning" : "https://bloxfruitsvalues.com/_next/image?url=https%3A%2F%2Fi.postimg.cc%2Fd0FsYGYD%2FPurple-Lightning.png&w=1920&q=95",
+    "Green Lightning" : "https://bloxfruitsvalues.com/_next/image?url=https%3A%2F%2Fi.postimg.cc%2FMKcKbW5Z%2FGreen-Lightning.png&w=1920&q=95"
 }
 
 def FetchFruitImage(fruit_name):

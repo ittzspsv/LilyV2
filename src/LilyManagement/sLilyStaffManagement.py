@@ -4,7 +4,10 @@ import aiosqlite
 import pandas as pd
 import asyncio
 import ast
-import Misc.sLilyComponentV2 as CS2
+try:
+    import Misc.sLilyComponentV2 as CS2
+except:
+    pass
 
 from datetime import datetime
 from discord.ext import commands
