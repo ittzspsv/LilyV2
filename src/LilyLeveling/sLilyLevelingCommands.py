@@ -27,7 +27,7 @@ class LilyLeveling(commands.Cog):
                 if stamp:
                     poster = await PosterGeneration(input_image, name, "", bounty, current_level, description, role, True, stamp)
                 else:
-                    poster = await PosterGeneration(input_image, name, "", bounty, current_level, description, role, False, "")
+                    poster = await PosterGeneration(input_image, name, "", bounty, current_level, description, role, False, None)
 
                 buffer = io.BytesIO()
                 poster.save(buffer, format="PNG")
@@ -58,7 +58,7 @@ class LilyLeveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
     @commands.hybrid_command(name='set_profile_for', description='updates or adds a new profile for a given member')
-    async def set_profile_for(self, ctx:commands.Context, member:discord.Member,name:str, role:str,stamp:str,* ,description:str):
+    async def set_profile_for(self, ctx:commands.Context, member:discord.Member=None,name:str=None, role:str=None,* ,description:str=None, stamp:str=None):
         await LilyLevelCore.UpdateProfileFor(ctx, member,name,role ,description, stamp)
         
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

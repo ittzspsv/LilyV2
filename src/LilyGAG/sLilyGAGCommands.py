@@ -6,6 +6,8 @@ import Config.sBotDetails as Config
 import json
 import os
 import LilyGAG.sLilyGAGCore as GAGCore
+import Config.sValueConfig as VC
+import Misc.sFruitImageDownloader as FID
 
 
 class LilyGAG(commands.Cog):
@@ -102,6 +104,32 @@ class LilyGAG(commands.Cog):
                         inline=False)
 
         await ctx.send(embed=embed)
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @commands.hybrid_command(name='update_image_gag', description='reloads combo data if any changes is done')
+    async def UpdateImageGAG(self, ctx: commands.Context, name: str="", type:str="pet"):
+            if type.lower() not in ["pet", "plant"]:
+                await ctx.send("Invalid type! Choose pet or plant.")
+                return
+            if type.lower() == 'pet':
+                cursor = await VC.vdb.execute(
+                    "SELECT icon_url FROM GAG_PetValue WHERE PetName = ?", 
+                    (name,)
+                )
+            else:
+                cursor = await VC.vdb.execute(
+                    "SELECT icon_url FROM GAG_PlantsData WHERE name = ?", 
+                    (name,)
+                )
+            row = await cursor.fetchone()
+            await cursor.close()
+
+            if row:
+                url = row[0]
+                await FID.DownloadImage(name, "src/ui/GAG", url, 1)
+                await ctx.send(f"Image '{name}' updated successfully!")
+            else:
+                await ctx.send("Row Not Found Exception")
 
 async def setup(bot):
     await bot.add_cog(LilyGAG(bot))

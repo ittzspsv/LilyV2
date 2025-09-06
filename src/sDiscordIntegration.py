@@ -10,9 +10,11 @@ import LilyResponse.sLilyResponse as aiLily
 import LilyGAG.sLilyGAGCore as LGAG
 import LilyLeveling.sLilyLevelingCore as LilyLeveling
 import LilyLogging.sLilyLogging as LilyLogging
+import Config.sValueConfig as ValueConfig
 import LilyTicketTool.LilyTicketToolCore as LilyTTCore
 import LilyManagement.sLilyStaffManagement as LSM
 from LilyGAG.sLilyGAGStockListeners import StockWebSocket
+import LilyGAG.sLilyGAGCore as GAG
 import ui.sWantedPoster as WP
 import io
 from PIL import Image
@@ -176,6 +178,7 @@ class MyBot(commands.Bot):
         await LilyLogging.initialize()
         await LilyLeveling.initialize()
         await LSM.initialize()
+        await ValueConfig.initialize()
 
     async def on_ready(self):
         print('Logged on as', self.user)   
@@ -184,8 +187,8 @@ class MyBot(commands.Bot):
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
         await self.ConnectDatabase()
-        handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
-        asyncio.create_task(handler.run())
+        #handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
+        #asyncio.create_task(handler.run())
         await self.tree.sync()
 
     async def on_guild_join(self, guild):
@@ -225,6 +228,7 @@ class MyBot(commands.Bot):
         return user.id == int(user_id)  
 
     async def PostStock(self, stock_type, stock_msg: str, channel_id, pings, img=None):
+        return
         embed = discord.Embed(title=stock_type,
                       description=stock_msg, colour=0x2b00ff)
         embed.set_author(name="BloxTrade | Grow a garden Stocks")
@@ -237,6 +241,7 @@ class MyBot(commands.Bot):
             return
         
     async def PostStockAdvanced(self, seed_stock_msg:str, gear_stock_msg:str, channel_id, pings):
+        return
         embed = discord.Embed(title="STOCK",colour=0x2b00ff)
         embed.set_author(name="BloxTrade | Grow a garden Stocks")
         embed.add_field(name="🌱SEED STOCK",
@@ -252,16 +257,11 @@ class MyBot(commands.Bot):
             await channel.send(embed=embed, content=" ".join(pings), file=file)
         except:
             return
-
-    async def PostStockImg(self, img: Image.Image, channel_id, pings,filename="stock.png"):
-        buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
-        buffer.seek(0)
-
-        file = discord.File(fp=buffer, filename=filename)
+        
+    async def PostCV2View(self, View, channel_id):
         channel = self.get_channel(channel_id)
         try:
-            await channel.send(file=file, content=" ".join(pings))
+            await channel.send(view=View, file=discord.File("src/ui/Border.png", filename="border.png"))
         except:
             return
 
@@ -371,4 +371,5 @@ async def configure(ctx: commands.Context):
     await ctx.send(embed=mLily.SimpleEmbed(f'Updated bot config with code : {text}'))
 
 load_dotenv("token.env")
+
 bot.run(os.getenv("token"))

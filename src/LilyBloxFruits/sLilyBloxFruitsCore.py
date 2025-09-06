@@ -1,6 +1,6 @@
 import discord
 
-
+import Config.sValueConfig as VC
 import LilyAlgorthims.sFruitDetectionAlgorthimEmoji as FDAE
 import LilyAlgorthims.sFruitDetectionAlgorthim as FDA
 import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
@@ -11,11 +11,11 @@ import LilyAlgorthims.sTradeFormatAlgorthim as TFA
 from Stock.sCurrentStock import *
 import Values.sStockValueJSON as StockValueJSON
 from Misc.sFruitImageFetcher import *
+import Misc.sLilyComponentV2 as CV2
 import ui.sComboImageGenerator as CIG
 
 import re
 import json
-import asyncio
 import io
 import ast
 
@@ -43,8 +43,6 @@ else:
             if match:
                 emoji_id_to_name[match.group(2)] = fruit_name.title()
 
-fruit_names = sorted([fruit["name"].lower() for fruit in StockValueJSON.value_data], key=len, reverse=True)
-fruit_set = set(fruit_names)
 
 class TradeSuggestorWindow(discord.ui.View):
             def __init__(self, bot, user, your_fruits, your_types):
@@ -89,15 +87,14 @@ class TradeSuggestorWindow(discord.ui.View):
                 await interaction.response.edit_message(embed=None, content="Reasoning.....", attachments=[], view=None)
 
                 try:
-                    their_fruits, their_types, success = FSA.trade_suggestor(
+                    their_fruits, their_types, success = await FSA.trade_suggestor(
                         self.your_fruits, self.your_types,
                         self.include_permanent,
                         self.include_gamepass
                     )
 
                     if success:
-                        image = await asyncio.to_thread(
-                            StockValueJSON.j_LorW,
+                        image = await StockValueJSON.j_LorW(
                             self.your_fruits, self.your_types,
                             their_fruits, their_types,
                             1, 1
@@ -120,9 +117,9 @@ class TradeSuggestorWindow(discord.ui.View):
                     )
 
 async def MessageEvaluate(self, bot, message):
-        if message.guild.id == 1099482621161001113 and message.channel.id == 1409330087337398322:
-            message_id = message.id 
-            source_channel = bot.get_channel(1409330087337398322)
+        if message.guild.id == 1240215331071594536 and message.channel.id == 1362321135231959112:
+            message_id = 1407484713005744240
+            source_channel = bot.get_channel(1362321135231959112)
 
             if source_channel is None:
                 return
@@ -143,15 +140,11 @@ async def MessageEvaluate(self, bot, message):
                 embeded_string += f"Title: {title} Description: {description}"
 
             Title, Fruit_Items = SPA.StockMessageProcessor(embeded_string)
+            view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
 
-            processed_fruits = ""
             CurrentGoodFruits = []
-            stock_counter = 1
 
             for keys, values in Fruit_Items.items():
-                SubEntry_emoji = emoji_data["SubEntries"][0] if stock_counter == 1 else emoji_data["SubEntries"][1]
-                processed_fruits += f"\n{SubEntry_emoji}{emoji_data[keys][0]} **{keys}** {emoji_data['beli'][0]} {values:,}"
-
                 if "normal" in title.lower():
                     if keys in good_fruits:
                         CurrentGoodFruits.append(keys)
@@ -159,30 +152,9 @@ async def MessageEvaluate(self, bot, message):
                     if keys in m_good_fruits:
                         CurrentGoodFruits.append(keys)
 
-                stock_counter += 1
-
-            stock_embed = discord.Embed(
-                title=Title.upper(),
-                description=f"{processed_fruits}",
-                colour=0x4900f5
-            )
-            stock_embed.set_author(name=f"{Config.bot_name.title()} Stock", icon_url=Config.bot_icon_link_url)
-
-            stock_embed.add_field(
-                name="",
-                value=f"[{Config.server_name}]({Config.server_invite_link})",
-                inline=False
-            )
-
-            if "normal" in Title.lower():
-                stock_embed.set_thumbnail(url="https://static.wikia.nocookie.net/roblox-blox-piece/images/b/b6/BloxFruitDealer.png")
-            else:
-                stock_embed.set_thumbnail(url="https://static.wikia.nocookie.net/roblox-blox-piece/images/0/0d/Advanced_Blox_Fruit_Dealer%282%29.png")
-
             for guild in bot.guilds:
                 try:
                     channel_data = Config.load_channel_config(None, guild.id, 1)
-
                     if "stock_update_channel_id" not in channel_data:
                         continue
 
@@ -191,8 +163,7 @@ async def MessageEvaluate(self, bot, message):
 
                     if stock_update_channel is None:
                         continue
-
-                    stock_message = await stock_update_channel.send(embed=stock_embed)
+                    stock_message = await stock_update_channel.send(view=view, file=discord.File("src/ui/Border.png", filename="border.png"))
                     await stock_message.add_reaction("🇼")
                     await stock_message.add_reaction("🇱")
 
@@ -209,68 +180,95 @@ async def MessageEvaluate(self, bot, message):
         elif re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
             ctx = await bot.get_context(message)
             channel_data = Config.load_channel_config(ctx)
-            if "fruit_values_channel_id" in channel_data:
-                fruit_values_channel_sid = channel_data.get("fruit_values_channel_id", 0)
-            else:
+            fruit_values_channel_sid = channel_data.get("fruit_values_channel_id", 0)
+            if not fruit_values_channel_sid:
                 return
+
             fChannel = self.get_channel(fruit_values_channel_sid)
-            if message.channel == fChannel:
-                match = re.search(r"\b(?:fruit value of|value of|value)\s+(.+)", message.content.lower())
-                if match:
-                        item_name = match.group(1).strip()
-                        item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
-                        item_name = StockValueJSON.MatchFruitSet(item_name, fruit_names)
-                        item_name_capital = item_name.title() if item_name else ""
-                        jsonfruitdata = StockValueJSON.fetch_fruit_details(item_name)
-                        if isinstance(jsonfruitdata, dict):
-                            fruit_img_link = FetchFruitImage(item_name_capital)
-                            #await message.channel.send(f"> # {item_name.title()}\n> - **Physical Value**: {jsonfruitdata['physical_value']} \n> - **Physical Demand**: {jsonfruitdata['physical_demand']} \n> - **Physical DemandType **: {jsonfruitdata['demand_type']} \n> - **Permanent Value**: {jsonfruitdata['permanent_value']} \n> - **Permanent Demand**: {jsonfruitdata['permanent_demand']} \n> - **Permanent Demand Type**: {jsonfruitdata['permanent_demand_type']}")
-                            embed = discord.Embed(title=f"{item_name.title()}",
-                            colour=Config.embed_color_codes[jsonfruitdata['category']])
+            if message.channel != fChannel:
+                return
 
-                            embed.set_author(name=Config.bot_name,
-                            icon_url=Config.bot_icon_link_url)
+            match = re.search(r"\b(?:fruit value of|value of|value)\s+(.+)", message.content.lower())
+            if not match:
+                await message.delete()
+                return
 
-                            embed.add_field(name=f"{emoji_data['BulletIn'][0]}Physical Value",
-                                            value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['physical_value']}",
-                                            inline=False)
-                            embed.add_field(name=f"{emoji_data['BulletIn'][0]}Physical Demand",
-                                            value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['physical_demand']}",
-                                            inline=False)
-                            if jsonfruitdata.get('permanent_value'):
-                                embed.add_field(name=f"{emoji_data['BulletIn'][0]}Permanent Value",
-                                                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['permanent_value']}",
-                                                inline=False)
-                            if jsonfruitdata.get('permanent_demand'):
-                                embed.add_field(name=f"{emoji_data['BulletIn'][0]}Permanent Demand",
-                                                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['permanent_demand']}",
-                                                inline=False)
-                            embed.add_field(name=f"{emoji_data['BulletIn'][0]}Demand Type",
-                                            value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['demand_type']}",
-                                            inline=False)
-                            if Config.fruit_value_embed_type == 0:
-                                embed.set_image(url=fruit_img_link)
-                            else:
-                                embed.set_thumbnail(url=fruit_img_link)
+            item_name = match.group(1).strip()
+            item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
 
-                            embed.add_field(name="",
-                            value=f"[{Config.server_name}]({Config.server_invite_link})",
-                            inline=False)
+            cursor = await VC.vdb.execute("SELECT name FROM BF_ItemValues")
+            rows = await cursor.fetchall()
+            fruit_names = [row[0].lower() for row in rows]
+            fruit_names = sorted(fruit_names, key=len, reverse=True)
+            fruit_set = set(fruit_names)
 
-                            await message.reply(embed=embed)                    
+            fruit_names, alias_map = await StockValueJSON.get_all_fruit_names()
+            item_name = await StockValueJSON.MatchFruitSet(item_name, fruit_set, alias_map)
+            item_name_capital = item_name.title() if item_name else ""
 
-                else:
-                    message.delete()
+            jsonfruitdata = await StockValueJSON.fetch_fruit_details(item_name)
+            if not isinstance(jsonfruitdata, dict):
+                await message.delete()
+                return
 
-        elif TFA.is_valid_trade_format(message.content.lower(), fruit_names): 
+            embed = discord.Embed(
+                title=f"{item_name_capital}",
+                colour=Config.embed_color_codes.get(jsonfruitdata.get('category'), 0xFFFFFF)
+            )
+            embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
+
+            embed.add_field(
+                name=f"{emoji_data['BulletIn'][0]}Physical Value",
+                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['physical_value']:,}",
+                inline=False
+            )
+            embed.add_field(
+                name=f"{emoji_data['BulletIn'][0]}Physical Demand",
+                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['physical_demand']}",
+                inline=False
+            )
+
+            if jsonfruitdata.get('permanent_value') is not None:
+                embed.add_field(
+                    name=f"{emoji_data['BulletIn'][0]}Permanent Value",
+                    value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['permanent_value']:,}",
+                    inline=False
+                )
+            if jsonfruitdata.get('permanent_demand'):
+                embed.add_field(
+                    name=f"{emoji_data['BulletIn'][0]}Permanent Demand",
+                    value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['permanent_demand']}",
+                    inline=False
+                )
+
+            embed.add_field(
+                name=f"{emoji_data['BulletIn'][0]}Demand Type",
+                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['demand_type']}",
+                inline=False
+            )
+
+            if Config.fruit_value_embed_type == 0:
+                embed.set_image(url=rows[1])
+            else:
+                embed.set_thumbnail(url=jsonfruitdata['icon_url'])
+
+            embed.add_field(
+                name="",
+                value=f"[{Config.server_name}]({Config.server_invite_link})",
+                inline=False
+            )
+
+            await message.reply(embed=embed)
+
+        elif await TFA.is_valid_trade_format(message.content.lower()): 
             lowered_message = message.content.lower()
-            match = TFA.is_valid_trade_format(lowered_message, fruit_names)
+            match = await TFA.is_valid_trade_format(lowered_message)
             if match:
                 your_fruits = []
                 your_fruit_types=[]
                 their_fruits = []
                 their_fruits_types=[]
-                your_fruits, your_fruit_types, their_fruits, their_fruits_types = FDA.extract_trade_details(message.content)
+                your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDA.extract_trade_details(message.content)
                 with open("src/Values/valueconfig.logs", "r") as fileptr:
                     Type = int(fileptr.read().strip())
                 if Type == 0:
@@ -354,8 +352,7 @@ async def MessageEvaluate(self, bot, message):
                     if message.channel == w_or_l_channel:
                         status_msg = await message.reply("Thinking...")
 
-                        image = await asyncio.to_thread(
-                            StockValueJSON.j_LorW,
+                        image = await StockValueJSON.j_LorW(
                             your_fruits, your_fruit_types,
                             their_fruits, their_fruits_types,
                             Type
@@ -372,108 +369,8 @@ async def MessageEvaluate(self, bot, message):
                         file = discord.File(fp=buffer, filename="trade_result.png")
                         await status_msg.edit(content=None, attachments=[file])
 
-        elif FDAE.is_valid_trade_sequence(message.content, emoji_id_to_name):   
-            your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
-            with open("src/Values/valueconfig.logs", "r") as fileptr:
-                    Type = int(fileptr.read().strip())
-
-            if Type == 0:
-                output_dict = StockValueJSON.j_LorW(your_fruitss, your_fruit_typess, their_fruitss, their_fruits_typess)
-                
-                if(isinstance(output_dict, dict)):
-                    percentage_calculation = StockValueJSON.calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
-                    
-                    embed = discord.Embed(title=output_dict["TradeConclusion"],description=output_dict["TradeDescription"],color=output_dict["ColorKey"])
-
-                    embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
-
-                    your_fruit_values = [
-                        f"- {emoji_data[your_fruit_typess[i].title()][0]} {emoji_data[your_fruitss[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
-                        for i in range(min(len(your_fruit_typess), len(your_fruitss), len(output_dict["Your_IndividualValues"])))
-                    ]
-
-                    their_fruit_values = [
-                        f"- {emoji_data[their_fruits_typess[i].title()][0]} {emoji_data[their_fruitss[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
-                        for i in range(min(len(their_fruits_typess), len(their_fruitss), len(output_dict["Their_IndividualValues"])))
-                    ]
-
-                    embed.add_field(
-                        name="**Your Fruits & Values**",
-                        value="\n".join(your_fruit_values) if your_fruit_values else "*No fruits offered*",
-                        inline=True
-                    )
-
-                    embed.add_field(
-                        name="**Their Fruits & Values**",
-                        value="\n".join(their_fruit_values) if their_fruit_values else "*No fruits offered*",
-                        inline=True
-                    )
-
-                    embed.add_field(
-                        name="**Your Total Value:**",
-                        value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_TotalValue'])}**" if output_dict['Your_TotalValue'] else "*No values available*",
-                        inline=False
-                    )
-
-                    embed.add_field(
-                        name="**Their Total Value:**",
-                        value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_TotalValue'])}**" if output_dict['Their_TotalValue'] else "*No values available*",
-                        inline=False
-                    )
-
-                    if percentage_calculation != "Invalid input. Please enter numerical values.":
-                        embed.add_field(
-                            name=f"**Trade Balance:** {percentage_calculation}",
-                            value="",
-                            inline=False
-                        )
-
-                    embed.add_field(
-                        name="",
-                        value=f"[{Config.server_name}]({Config.server_invite_link})",
-                        inline=False
-                    )
-                    ctx = await bot.get_context(message)
-                    channel_data = Config.load_channel_config(ctx)
-                    if "w_or_l_channel_id" in channel_data:
-                            _w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
-                    else:
-                        return
-                    _w_or_l_channel = self.get_channel(_w_or_l_channel_sid)
-                    if message.channel == _w_or_l_channel:
-                        await message.reply(embed=embed) 
-
-            else:
-                    ctx = await bot.get_context(message)
-                    channel_data = Config.load_channel_config(ctx)
-                    if "w_or_l_channel_id" in channel_data:
-                        _w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
-                    else:
-                        return
-                    w_or_l_channel = self.get_channel(_w_or_l_channel_sid)
-                    if message.channel == w_or_l_channel:
-                        status_msg = await message.reply("Thinking...")
-
-                        image = await asyncio.to_thread(
-                            StockValueJSON.j_LorW,
-                            your_fruitss, your_fruit_typess,
-                            their_fruitss, their_fruits_typess,
-                            Type
-                        )
-
-                        if image is None:
-                            await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
-                            return
-
-                        buffer = io.BytesIO()
-                        image.save(buffer, format="PNG", optimize=True)
-                        buffer.seek(0)
-
-                        file = discord.File(fp=buffer, filename="trade_result.png")
-                        await status_msg.edit(content=None, attachments=[file])
-
-        elif TFA.is_valid_trade_suggestor_format(message.content.lower(), fruit_names): 
-            your_fruits1, your_fruit_types1, garbage_type, garbage_type1 = FDA.extract_trade_details(message.content)
+        elif await TFA.is_valid_trade_suggestor_format(message.content.lower()): 
+            your_fruits1, your_fruit_types1, garbage_type, garbage_type1 = await FDA.extract_trade_details(message.content)
             ctx = await bot.get_context(message)
             channel_data = Config.load_channel_config(ctx)
             _w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
@@ -486,7 +383,7 @@ async def MessageEvaluate(self, bot, message):
 
                 await message.reply(embed=embed, view=view)
 
-        elif FDAE.is_valid_trade_suggestor_sequence(message.content):
+        elif FDAE.is_valid_trade_suggestor_sequence(message.content.lower()):
             your_fruits1, your_fruit_types1, their_fruits1, their_fruits_types1 = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
             ctx = await bot.get_context(message)
             channel_data = Config.load_channel_config(ctx)
@@ -654,3 +551,4 @@ async def MessageEvaluate(self, bot, message):
                             await message.reply(f"Exception {e}")
                     else:
                         pass
+

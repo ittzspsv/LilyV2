@@ -1,14 +1,8 @@
 from LilyRulesets.sLilyRulesets import PermissionEvaluator, rPermissionEvaluator
 
-
-import discord
 import LilyManagement.sLilyStaffManagement as smLily
 import LilyModeration.sLilyModeration as mLily
 import Config.sBotDetails as Config
-import re
-import json
-import io
-import pandas as pd
 
 from discord.ext import commands
 
@@ -65,7 +59,7 @@ class LilyManagement(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles + Config.StaffManagerRoles)
     @commands.hybrid_command(name='run_query', description='runs arbitrary query')
-    async def run_query(self, ctx: commands.Context, *, query: str):
+    async def run_staff_query(self, ctx: commands.Context, *, query: str):
         await smLily.run_query(ctx, query)
 
 async def setup(bot):

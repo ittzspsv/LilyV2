@@ -7,6 +7,8 @@ import Combo.LilyComboManager as LCM
 import Config.sBotDetails as Config
 
 import ui.sComboImageGenerator as CIG
+import Config.sValueConfig as VC
+import Misc.sFruitImageDownloader as FID
 
 import discord
 import ast
@@ -98,68 +100,6 @@ class LilyBloxFruits(commands.Cog):
             await ctx.send(e)
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
-    @commands.hybrid_command(name='updatevalue', description='updates the given fruit value with str:cache')
-    async def update_value(self, ctx: commands.Context, *, update_cache: str = ""):
-        user_message = update_cache.lower()
-        message_parsed = user_message.split()
-
-        fields = {
-            "name": None,
-            "physical_value": None,
-            "permanent_value": None,
-            "physical_demand": None,
-            "permanent_demand": None,
-            "demand_type": None,
-            "permanent_demand_type": None
-        }
-
-        current_key = None
-        for word in message_parsed:
-            if word in fields:
-                current_key = word
-                fields[current_key] = ""
-            elif current_key is not None:
-                if fields[current_key]:
-                    fields[current_key] += " "
-                fields[current_key] += word
-
-        if not fields["name"] or not fields["name"].strip():
-            await ctx.send("Name is required for update.")
-            return
-
-        fields["name"] = fields["name"].title()
-        fruit_data = StockValueJSON.fetch_fruit_details(fields["name"])
-
-        if not fruit_data:
-            await ctx.send(f"Could not find fruit named **{fields['name']}**.")
-            return
-
-        if fields["demand_type"]:
-            fields["demand_type"] = fields["demand_type"].title()
-        if fields["permanent_demand_type"]:
-            fields["permanent_demand_type"] = fields["permanent_demand_type"].title()
-
-        fields["physical_value"] = fields["physical_value"] or fruit_data.get("physical_value")
-        fields["permanent_value"] = fields["permanent_value"] or fruit_data.get("permanent_value")
-        fields["physical_demand"] = fields["physical_demand"] or fruit_data.get("physical_demand")
-        fields["permanent_demand"] = fields["permanent_demand"] or fruit_data.get("permanent_demand")
-        fields["demand_type"] = fields["demand_type"] or fruit_data.get("demand_type")
-        fields["permanent_demand_type"] = fields["permanent_demand_type"] or fruit_data.get("permanent_demand_type")
-
-        StockValueJSON.update_fruit_data(
-            name=fields["name"],
-            physical_value=fields["physical_value"],
-            permanent_value=fields["permanent_value"],
-            physical_demand=fields["physical_demand"],
-            permanent_demand=fields["permanent_demand"],
-            demand_type=fields["demand_type"],
-            permanent_demand_type=fields["permanent_demand_type"]
-        )
-
-        await ctx.send(f"Updated value for **{fields['name']}**")
-        await LilyLogging.WriteLog(ctx, ctx.author.id, f"Updated {fields['name']} values.")
-
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
     @commands.hybrid_command(name='fetch_combo_file', description='updates the given fruit value with str:cache')
     async def fetch_combo_file(self, ctx: commands.Context):
         file_path = "storage/common/Comboes/Comboes.csv"
@@ -185,33 +125,6 @@ class LilyBloxFruits(commands.Cog):
             await ctx.send(f"CSV File Replaced.")
         except Exception as e:
             await ctx.send(f"Exception {e}")
-
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
-    @commands.hybrid_command(name='modify_games_config', description='updates the game config with desired input attached')
-    async def modify_games_config(self, ctx,file_name: str, *,dir_path:str):
-        full_path = os.path.join(dir_path, file_name)
-        if not os.path.isfile(full_path):
-            await ctx.send(f"File {file_name} not found")
-            return
-        if not ctx.message.attachments:
-            await ctx.send("Please attach a .json file to replace the contents.")
-            return
-
-        attachment = ctx.message.attachments[0]
-        if not attachment.filename.endswith(".json"):
-            await ctx.send("Invalid file formatter.")
-            return
-
-        try:
-            data = await attachment.read()
-            new_content = json.loads(data.decode())
-
-            with open(full_path, "w", encoding="utf-8") as f:
-                json.dump(new_content, f, indent=4)
-
-            await ctx.send(f"Successfully updated Combo Contents")
-        except Exception as e:
-            await ctx.send(f"Exception {e}")
     
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
     @commands.hybrid_command(name='load_combo_data', description='reloads combo data if any changes is done')
@@ -221,5 +134,23 @@ class LilyBloxFruits(commands.Cog):
             await ctx.send("Success!")
         except Exception as e:
             await ctx.send(e)
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @commands.hybrid_command(name='update_image_blox_fruits', description='reloads combo data if any changes is done')
+    async def UpdateImageBloxFruits(self, ctx: commands.Context, name: str=""):
+            cursor = await VC.vdb.execute(
+                "SELECT icon_url FROM BF_ItemValues WHERE name = ?", 
+                (name,)
+            )
+            row = await cursor.fetchone()
+            await cursor.close()
+
+            if row:
+                url = row[0]
+                await FID.DownloadImage(name, "src/ui/fruit_icons", url)
+                await ctx.send(f"Image '{name}' updated successfully!")
+            else:
+                await ctx.send("Row Not Found Exception")
+
 async def setup(bot):
     await bot.add_cog(LilyBloxFruits(bot))

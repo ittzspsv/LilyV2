@@ -1,13 +1,13 @@
 import requests
+import aiohttp
+import Misc.sFruitImageFetcher as FIF
 import os
-import json
-import sFruitImageFetcher as FIF
 
 
 
 
 '''
-items = ["Dairy_Cow", "Bacon_Pig", "Jackalope", "Hotdog_Daschund", "Golem", "Lobster_Thermidor", "Golden_Goose", "French_Fry_Ferret", "Junkbot", "Mochi_Mouse", "Spaghetti_Sloth", "Gorilla_Chef", "Mizuchi", "Sushi_Bear"]
+items = ["T-Rex", "Spinosaurus"]
 
 save_directory = "src/ui/GAG"
 os.makedirs(save_directory, exist_ok=True)
@@ -34,7 +34,6 @@ for fruit in items:
         print(f"Error processing {fruit}: {e}")
 
 '''
-
 '''
 response = requests.get("https://bloxfruitsvalues.com/_next/image?url=https%3A%2F%2Fi.postimg.cc%2FMKcKbW5Z%2FGreen-Lightning.png&w=1920&q=95")
 
@@ -47,3 +46,19 @@ else:
     print(f"Failed to download image. Status code: {response.status_code}")
 
 '''
+
+async def DownloadImage(name, dir, url, name_type=0):
+    os.makedirs(dir, exist_ok=True)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.read()
+                filename = f"{name.replace(' ', '_')}.png" if name_type == 1 else f"{name}.png"
+                filepath = os.path.join(dir, filename)
+
+                with open(filepath, "wb") as file:
+                    file.write(data)
+                return True
+            else:
+                return False

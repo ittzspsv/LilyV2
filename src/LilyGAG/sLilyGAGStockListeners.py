@@ -4,6 +4,7 @@ import Config.sBotDetails as Config
 import LilyGAG.sLilyGAGCore as GAG
 import discord
 import asyncio
+import Misc.sLilyComponentV2 as CV2
 
 class StockWebSocket:
     def __init__(self, url, bot):
@@ -12,7 +13,7 @@ class StockWebSocket:
         self.ws = None
         self.reconnect_interval = 5
         self.headers = {
-            'jstudio-key': 'js_00961849285706f4d951a6a8627748fde695ba0f8c1ff58034058fb3337c2e6c'
+            'jstudio-key': 'js_27705665c75f87322866d14423c114a7595c0f24151a407e5befc22c1f6841af'
         }
 
     async def run(self):
@@ -74,83 +75,55 @@ class StockWebSocket:
         #SEED STOCK
         seedstock = parsed["seed_stock"]
         gearstock = parsed["gear_stock"]
-        pings = []
+        seed_pings = []
+        gear_pings = []
         if seedstock and gearstock:
             longest_name = max(len(item["display_name"]) for item in seedstock)
 
             formatted_lines = []
             for item in seedstock:
                 display_name = item["display_name"].title()
-                quantity = item["quantity"]
-
-                emoji = discord.utils.get(guild.emojis, name=display_name.replace(" ", "_")) or "❓"
                 role = discord.utils.get(guild.roles, name=display_name)
 
                 if role:
-                    pings.append(role.mention)
+                    seed_pings.append(role.mention)
 
-                line = f"{emoji} {display_name:<{longest_name}}   **{quantity}x**"
-                formatted_lines.append(line)
-
-            seedstock_format_string = "\n".join(formatted_lines)
-
-            longest_name = max(len(item["display_name"]) for item in gearstock)
-
-            formatted_lines = []
             for item in gearstock:
                 display_name = item["display_name"].title()
-                quantity = item["quantity"]
 
-                emoji = discord.utils.get(guild.emojis, name=display_name.replace(" ", "_")) or "❓"
                 role = discord.utils.get(guild.roles, name=display_name)
 
                 if role:
-                    pings.append(role.mention)
-
-                line = f"{emoji} {display_name:<{longest_name}}   **{quantity}x**"
-                formatted_lines.append(line)
-
-            gearstock_format_string = "\n".join(formatted_lines)
-            await bot.PostStockAdvanced(seedstock_format_string, gearstock_format_string, Config.seed_gear_stock_channel_id, pings)
+                    gear_pings.append(role.mention)
+            seed_view = CV2.GAGStockComponent("🌱Seed Stock", seedstock, seed_pings)
+            gear_view = CV2.GAGStockComponent("⚙️Gear Stock", gearstock, gear_pings)
+            await bot.PostCV2View(seed_view, Config.seed_gear_stock_channel_id)
+            await bot.PostCV2View(gear_view, Config.seed_gear_stock_channel_id)
 
         #EGG STOCK
         eggstock = parsed["egg_stock"]
-        pings = set()
+        egg_pings = set()
         if eggstock:
-            longest_name = max(len(item["display_name"]) for item in eggstock)
-
-            formatted_lines = []
             for item in eggstock:
                 display_name = item["display_name"].title()
-                quantity = item["quantity"]
 
-                emoji = discord.utils.get(guild.emojis, name=display_name.replace(" ", "_")) or "❓"
                 role = discord.utils.get(guild.roles, name=display_name)
 
                 if role:
-                    pings.add(role.mention)
-
-                line = f"{emoji} {display_name:<{longest_name}}   **{quantity}x**"
-                formatted_lines.append(line)
-
-            eggstock_format_string = "\n".join(formatted_lines)
-            await bot.PostStock("EGG STOCK", eggstock_format_string, Config.eggstock_channel_id, list(pings))
+                    egg_pings.add(role.mention)
+            egg_view = CV2.GAGStockComponent("🥚Egg Stock", eggstock, egg_pings)
+            await bot.PostCV2View(egg_view, Config.eggstock_channel_id)
 
         #COSMETICS STOCK
         cosmeticsshop = parsed["cosmetic_stock"]
         if cosmeticsshop:
-            longest_name = max(len(item["display_name"]) for item in cosmeticsshop)
-            formatted_lines = [
-                f"{item['display_name'].title():<{longest_name}}   **{item['quantity']}x**"
-                for item in cosmeticsshop
-            ]
-            cosmeticsshop_format_string = "\n".join(formatted_lines)
-            pings = []
+            cosmetic_pings = []
             for items in cosmeticsshop:
                 role = discord.utils.get(guild.roles, name=items["display_name"])
                 if role:
-                    pings.append(role.mention)
-            await bot.PostStock("COSMETICS STOCK", cosmeticsshop_format_string, Config.cosmeticsstock_channel_id, pings)
+                    cosmetic_pings.append(role.mention)
+            cos_View = CV2.GAGStockComponent("📦Cosmetics Stock", cosmeticsshop, cosmetic_pings)
+            await bot.PostCV2View(cos_View, Config.cosmeticsstock_channel_id)
 
         #WEATHER INFO
         pings = []

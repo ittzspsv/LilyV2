@@ -9,19 +9,21 @@ def generate_gradient_text(text, font, size, gradient_start, gradient_end):
     bbox = font.getbbox(text)
     text_width = bbox[2] - bbox[0]
     text_height = bbox[3] - bbox[1]
-    x = (size[0] - text_width) // 2
-    y = (size[1] - text_height) // 2
+
+    # Corrected centering
+    x = (size[0] - text_width) // 2 - bbox[0]
+    y = (size[1] - text_height) // 2 - bbox[1]
 
     text_draw.text((x, y), text, fill=255, font=font)
 
     gradient_array = np.zeros((size[1], size[0], 4), dtype=np.uint8)
-    for y in range(size[1]):
-        ratio = y / size[1]
+    for yy in range(size[1]):
+        ratio = yy / size[1]
         r = int(gradient_start[0] * (1 - ratio) + gradient_end[0] * ratio)
         g = int(gradient_start[1] * (1 - ratio) + gradient_end[1] * ratio)
         b = int(gradient_start[2] * (1 - ratio) + gradient_end[2] * ratio)
         a = int(gradient_start[3] * (1 - ratio) + gradient_end[3] * ratio)
-        gradient_array[y, :, :] = [r, g, b, a]
+        gradient_array[yy, :, :] = [r, g, b, a]
 
     gradient_img = Image.fromarray(gradient_array, mode='RGBA')
     text_colored = Image.new("RGBA", size, (255, 255, 255, 0))
@@ -31,11 +33,17 @@ def generate_gradient_text(text, font, size, gradient_start, gradient_end):
 
 
 def fit_font_size(text, font_path, max_width, max_height, start_size=200):
+    words = text.split()
+    # If text has 4 or more words, we allow more aggressive fitting
+    scale_factor = 1.15 if len(words) >= 4 else 1.0  
+
     for font_size in range(start_size, 10, -2):
         font = ImageFont.truetype(font_path, font_size)
         bbox = font.getbbox(text)
         w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        if w <= max_width and h <= max_height:
+
+        # Apply scale factor to fill more space for longer text
+        if w * scale_factor <= max_width and h * scale_factor <= max_height:
             return font
     raise ValueError("Text too large to fit in stamp")
 

@@ -201,7 +201,7 @@ class WantedPoster:
         new_image.paste(belly_component, (0, BOUNTY_POSTER_BELLY_START_Y), belly_component)
 
 
-        if stamp_bool == True:
+        if stamp_bool == True and stamp_name:
                 stamp_image = StampGenerator.create_stamp(stamp_name)
                 new_image.paste(stamp_image, (BOUNTY_POSTER_STAMP_START_X, BOUNTY_POSTER_STAMP_START_Y), mask=stamp_image)
 

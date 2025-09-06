@@ -18,3 +18,5 @@ message = """Title: **Current Normal Stock
 
 <:clock:1182328726185312336> Stock Changes in: <t:1745020856:R>"""
 
+print(StockMessageProcessor(message))
+

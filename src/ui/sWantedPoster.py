@@ -8,8 +8,8 @@ import io
 
 
 async def PosterGeneration(avatar_url: str, first_name: str, last_name: str, bounty_amount: int, level: int, description: str, role_name: str, stamp_bool: bool, stamp_name: str):
-    role_name = role_name.upper()
-    description = description.upper()
+    role_name = role_name.upper() if role_name else "UNKNOWN"
+    description = description.upper() if description else "UNKNOWN"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(avatar_url) as resp:

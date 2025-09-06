@@ -1,10 +1,13 @@
 from LilyRulesets.sLilyRulesets import PermissionEvaluator, rPermissionEvaluator
 import LilyLogging.sLilyLogging as LilyLogging
 import LilyModeration.sLilyRoleManagement as rLily
+import LilyLeveling.sLilyLevelingCore as LLC
 import LilyModeration.sLilyModeration as mLily
+import Config.sValueConfig as VC
 
 import discord
 from discord.ext import commands
+
 import Config.sBotDetails as Config
 from enum import Enum
 
@@ -245,7 +248,6 @@ class LilyUtility(commands.Cog):
             await ctx.send(embed=embed)
             asyncio.sleep(0.5)
 
-
     #UID UTILITY
     @commands.hybrid_command(name='id', description='returns the id of a specific usertype')
     async def id(self, ctx:commands.Context, user:discord.Member=None):
@@ -253,6 +255,93 @@ class LilyUtility(commands.Cog):
             await ctx.send(ctx.author.id)
         else:
             await ctx.send(user.id)
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @commands.hybrid_command(name='run_value_query', description='executes arbitary query for the database ValueData.')
+    async def run_value_query(self, ctx:commands.Context, *, query: str):
+            try:
+                cursor = await VC.vdb.execute(query)
+
+                try:
+                    rows = await cursor.fetchall()
+                    columns = [description[0] for description in cursor.description] if cursor.description else []
+                except Exception:
+                    rows = None
+                    columns = []
+
+                await VC.vdb.commit()
+
+                if rows:
+                    chunk_size = 5
+
+                    col_widths = []
+                    for i, col in enumerate(columns):
+                        max_len = max(len(str(row[i])) for row in rows) if rows else 0
+                        col_widths.append(max(len(col), max_len))
+
+                    header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
+                    separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
+
+                    for i in range(0, len(rows), chunk_size):
+                        chunk = rows[i:i+chunk_size]
+                        lines = []
+                        for row in chunk:
+                            line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
+                            lines.append(line)
+                        table = "\n".join([header, separator] + lines)
+                        await ctx.send(f"```\n{table}\n```")
+                        await asyncio.sleep(0.5)
+                else:
+                    await ctx.send("Execution Successful")
+
+            except Exception as e:
+                await ctx.send(f"Error: `{type(e).__name__}: {e}`")
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @commands.hybrid_command(name='run_levels_query', description='executes arbitary query for the database Levels.')
+    async def run_levels_query(self, ctx: commands.Context, *, query: str):
+        try:
+            cursor = await LLC.ldb.execute(query)
+
+            try:
+                rows = await cursor.fetchall()
+                columns = [description[0] for description in cursor.description] if cursor.description else []
+            except Exception:
+                rows = None
+                columns = []
+
+            await VC.vdb.commit()
+
+            if rows:
+                max_rows = 30  # cap for safety
+                total_rows = len(rows)
+                rows = rows[:max_rows]
+
+                col_widths = []
+                for i, col in enumerate(columns):
+                    max_len = max(len(str(row[i])) for row in rows) if rows else 0
+                    col_widths.append(max(len(col), max_len))
+
+                header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
+                separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
+
+                lines = []
+                for row in rows:
+                    line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
+                    lines.append(line)
+
+                table = "\n".join([header, separator] + lines)
+
+                if total_rows > max_rows:
+                    table += f"\n... and {total_rows - max_rows} more rows not shown."
+
+                await ctx.send(f"```\n{table}\n```")
+
+            else:
+                await ctx.send("Execution Successful")
+
+        except Exception as e:
+            await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

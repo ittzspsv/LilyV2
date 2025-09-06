@@ -1,36 +1,60 @@
-import json
 import random
-
-with open("src/ValueData.json", "r") as f:
-    raw_fruit_data = json.load(f)
-
-fruit_data = raw_fruit_data[:-2]
+import Config.sValueConfig as VC
 
 def parse_value(val):
-    return int(val.replace(",", "")) if val else 0
+    if val is None:
+        return 0
+    if isinstance(val, str):
+        return int(val.replace(",", ""))
+    return int(val)
 
-def build_candidate_pool(user_fruits, suggest_permanent, suggest_gamepass):
+async def get_fruit_value(fruit_name, value_type="physical"):
+    cursor = await VC.vdb.execute(
+        f"SELECT {value_type}_value FROM BF_ItemValues WHERE LOWER(name) = ?",
+        (fruit_name.lower(),)
+    )
+    row = await cursor.fetchone()
+    await cursor.close()
+    return parse_value(row[0]) if row else 0
+
+async def fetch_all_fruits():
+    cursor = await VC.vdb.execute(
+        "SELECT name, category, physical_value, permanent_value FROM BF_ItemValues"
+    )
+    rows = await cursor.fetchall()
+    await cursor.close()
+    fruits = []
+    for row in rows:
+        fruits.append({
+            "name": row[0],
+            "category": row[1],
+            "physical_value": row[2] or 0,
+            "permanent_value": row[3] or 0
+        })
+    return fruits
+
+async def build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=False):
     pool = []
-    for fruit in fruit_data:
-        name = fruit["name"]
-        category = fruit["category"]
-
+    cursor = await VC.vdb.execute(
+        "SELECT name, category, physical_value, permanent_value FROM BF_ItemValues"
+    )
+    async for name, category, physical_value, permanent_value in cursor:
         if name in user_fruits or category == "limited":
             continue
 
-        if category == "gamepass" and suggest_gamepass:
-            val = parse_value(fruit["physical_value"])
-            if val > 0:
-                pool.append((name, "physical", val, "gamepass"))
+        phys_val = parse_value(physical_value)
+        perm_val = parse_value(permanent_value)
+
+        if category == "gamepass" and suggest_gamepass and phys_val > 0:
+            pool.append((name, "physical", phys_val, "gamepass"))
 
         elif category != "gamepass":
-            perm_val = parse_value(fruit["permanent_value"])
-            phys_val = parse_value(fruit["physical_value"])
-
             if suggest_permanent and perm_val > 0:
                 pool.append((name, "permanent", perm_val, "fruit"))
             if phys_val > 0:
                 pool.append((name, "physical", phys_val, "fruit"))
+
+    await cursor.close()
     return pool
 
 def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_attempts=15000, max_gamepass=2):
@@ -79,21 +103,17 @@ def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_a
 
     return best_valid or []
 
-def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_gamepass=False):
+async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_gamepass=False):
     total_value = 0
 
     for name, ftype in zip(user_fruits, fruit_types):
-        for fruit in fruit_data:
-            if fruit["name"] == name:
-                val = parse_value(fruit.get(f"{ftype.lower()}_value", "0"))
-                total_value += val
-                break
+        total_value += await get_fruit_value(name, ftype.lower())
 
-    pool = build_candidate_pool(user_fruits, suggest_permanent, suggest_gamepass)
+    pool = await build_candidate_pool(user_fruits, suggest_permanent, suggest_gamepass)
     suggestion = generate_suggestion(pool, total_value)
 
     if not suggestion:
-        pool = build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=True)
+        pool = await build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=True)
         suggestion = generate_suggestion(pool, total_value)
 
     if not suggestion:

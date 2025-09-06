@@ -1,8 +1,1287 @@
-2025-07-08 23:15:13,028 - INFO - logging in using static token
-2025-07-08 23:15:16,105 - INFO - Shard ID None has connected to Gateway (Session ID: 9386a8b12318a12ac3f098cf4cc3358d).
-2025-07-08 23:19:33,089 - INFO - logging in using static token
-2025-07-08 23:19:35,841 - INFO - Shard ID None has connected to Gateway (Session ID: 6cf79ba92ad260d6d0e482b6a89876c9).
-2025-07-08 23:55:52,231 - INFO - logging in using static token
-2025-07-08 23:55:55,467 - INFO - Shard ID None has connected to Gateway (Session ID: 293fdd22499c576498aeb92fd4b21827).
-2025-07-08 23:58:25,215 - INFO - logging in using static token
-2025-07-08 23:58:28,825 - INFO - Shard ID None has connected to Gateway (Session ID: 73288f72829d34622290e9d3cad8311c).
+2025-07-28 04:01:49,027 - INFO - logging in using static token
+2025-07-28 04:01:53,385 - INFO - Shard ID None has connected to Gateway (Session ID: 8141ba59c7c901c9b9da55ad5343bcdb).
+2025-07-31 01:36:16,326 - INFO - logging in using static token
+2025-07-31 01:36:20,345 - INFO - Shard ID None has connected to Gateway (Session ID: d02a46fa1a289dc9912c0660e1d3f3ea).
+2025-07-31 01:37:56,223 - INFO - logging in using static token
+2025-07-31 01:37:58,946 - INFO - Shard ID None has connected to Gateway (Session ID: 08671b47904d5c8387a4e2b8309e4665).
+2025-07-31 01:38:44,729 - INFO - logging in using static token
+2025-07-31 01:38:47,151 - INFO - Shard ID None has connected to Gateway (Session ID: 2f7f3b1994ab175fc73f98bcd87d812a).
+2025-07-31 01:40:08,863 - INFO - logging in using static token
+2025-07-31 01:40:11,885 - INFO - Shard ID None has connected to Gateway (Session ID: f60e73ab13d64f73628983fcc684becb).
+2025-08-02 21:33:00,242 - INFO - logging in using static token
+2025-08-02 21:33:05,700 - INFO - Shard ID None has connected to Gateway (Session ID: 05cfbd0a1f558d74fba91033b7f7c6a8).
+2025-08-21 19:52:46,950 - INFO - logging in using static token
+2025-08-21 19:52:50,642 - INFO - Shard ID None has connected to Gateway (Session ID: 43d377370493ff52c1f1c3d8a8fe7215).
+2025-08-23 00:52:02,346 - INFO - logging in using static token
+2025-08-23 00:52:04,994 - INFO - Shard ID None has connected to Gateway (Session ID: 06a7a3374d0e4c652999dbef4f8cd01f).
+2025-08-23 00:54:49,574 - INFO - logging in using static token
+2025-08-23 00:54:51,980 - INFO - Shard ID None has connected to Gateway (Session ID: b49d2cba47a7a96aca74de466813a8e4).
+2025-08-23 00:58:47,570 - INFO - logging in using static token
+2025-08-23 00:58:49,998 - INFO - Shard ID None has connected to Gateway (Session ID: ccb245ec073cb2f479a545d8355f6b98).
+2025-08-23 00:59:29,483 - INFO - logging in using static token
+2025-08-23 00:59:32,075 - INFO - Shard ID None has connected to Gateway (Session ID: 456c22554e22e471befb3c9e2ca42889).
+2025-08-23 01:01:39,007 - INFO - logging in using static token
+2025-08-23 01:01:41,978 - INFO - Shard ID None has connected to Gateway (Session ID: 2f73a471c1104b1b9ff597794a475578).
+2025-08-23 01:02:14,671 - INFO - logging in using static token
+2025-08-23 01:02:17,251 - INFO - Shard ID None has connected to Gateway (Session ID: af315d00f6a8da7dec88bdf47d0b5b1c).
+2025-08-23 01:04:29,697 - INFO - Shard ID None has successfully RESUMED session af315d00f6a8da7dec88bdf47d0b5b1c.
+2025-08-23 01:08:22,925 - INFO - logging in using static token
+2025-08-23 01:08:25,734 - INFO - Shard ID None has connected to Gateway (Session ID: 4cf42571e8f666ce65f0b7211b203203).
+2025-08-24 18:10:38,013 - INFO - logging in using static token
+2025-08-24 18:10:40,658 - INFO - Shard ID None has connected to Gateway (Session ID: 7637efa8ec88ddb39d3e7f9bb26ddc70).
+2025-08-24 18:35:43,062 - INFO - logging in using static token
+2025-08-24 18:35:45,806 - INFO - Shard ID None has connected to Gateway (Session ID: 3a922bafcf568577040475a2aa6315a4).
+2025-08-24 18:42:38,613 - INFO - logging in using static token
+2025-08-24 18:42:41,700 - INFO - Shard ID None has connected to Gateway (Session ID: c73873c85b5d4487aa0857cf8cbbe5b7).
+2025-08-24 18:45:35,521 - INFO - logging in using static token
+2025-08-24 18:45:38,496 - INFO - Shard ID None has connected to Gateway (Session ID: bc3dc18391fe7cb6994eafb375f169b0).
+2025-08-24 18:46:30,765 - INFO - logging in using static token
+2025-08-24 18:46:32,797 - INFO - Shard ID None has connected to Gateway (Session ID: 0f3b670eff8687f898f9d98b7bf10d18).
+2025-08-24 18:47:04,849 - INFO - logging in using static token
+2025-08-24 18:47:07,465 - INFO - Shard ID None has connected to Gateway (Session ID: 7fb4c7d16be82b6d7a29743e25b7610f).
+2025-08-24 18:48:56,000 - INFO - logging in using static token
+2025-08-24 18:48:58,512 - INFO - Shard ID None has connected to Gateway (Session ID: 8ba71b4128d3278d68791994eba1540e).
+2025-08-24 19:25:39,959 - INFO - logging in using static token
+2025-08-24 19:25:44,186 - INFO - Shard ID None has connected to Gateway (Session ID: 4a37b7d00f36650765fcf0764b7fa68f).
+2025-08-24 19:27:54,893 - INFO - logging in using static token
+2025-08-24 19:27:57,292 - INFO - Shard ID None has connected to Gateway (Session ID: 9284cda45a920ae4a3d96e1c2c054906).
+2025-08-24 19:44:31,125 - INFO - logging in using static token
+2025-08-24 19:44:34,211 - INFO - Shard ID None has connected to Gateway (Session ID: bcab6c90b4513fd95cd599c2d59fa43b).
+2025-08-24 19:46:01,211 - INFO - logging in using static token
+2025-08-24 19:46:04,063 - INFO - Shard ID None has connected to Gateway (Session ID: 14bf41489e9d6c8a82b18ff03e4a9b36).
+2025-08-24 19:46:11,880 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 346, in on_command_error
+    await ctx.send(embed=mLily.SimpleEmbed(f"Exception {error}"))
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-24 19:47:33,504 - INFO - logging in using static token
+2025-08-24 19:47:35,819 - INFO - Shard ID None has connected to Gateway (Session ID: c12232df7188a6642a6a3afa10027c87).
+2025-08-24 19:47:43,704 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 346, in on_command_error
+    await ctx.send(embed=mLily.SimpleEmbed(f"Exception {error}"))
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-24 19:50:09,268 - INFO - logging in using static token
+2025-08-24 19:50:12,137 - INFO - Shard ID None has connected to Gateway (Session ID: 88581363b9011193057ae1f777896874).
+2025-08-24 19:50:25,129 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 346, in on_command_error
+    await ctx.send(embed=mLily.SimpleEmbed(f"Exception {error}"))
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-24 19:51:43,851 - INFO - logging in using static token
+2025-08-24 19:51:46,631 - INFO - Shard ID None has connected to Gateway (Session ID: 5b97eb1e789796fd972cc7c8571c2609).
+2025-08-24 19:51:58,891 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 346, in on_command_error
+    await ctx.send(embed=mLily.SimpleEmbed(f"Exception {error}"))
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-24 19:52:44,570 - INFO - logging in using static token
+2025-08-24 19:52:47,168 - INFO - Shard ID None has connected to Gateway (Session ID: dc8d83448648ced9c9c95e99f0d522c9).
+2025-08-24 19:53:19,479 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 346, in on_command_error
+    await ctx.send(embed=mLily.SimpleEmbed(f"Exception {error}"))
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-24 19:53:50,425 - INFO - logging in using static token
+2025-08-24 19:53:52,699 - INFO - Shard ID None has connected to Gateway (Session ID: 8ce562a878a61e585d61cebbd5d21cd8).
+2025-08-24 19:54:00,903 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 346, in on_command_error
+    await ctx.send(f"Exception {error}")
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-24 19:54:10,133 - INFO - logging in using static token
+2025-08-24 19:54:13,140 - INFO - Shard ID None has connected to Gateway (Session ID: c9c5df285fa62cfd6f98672a90b89c78).
+2025-08-24 19:54:48,519 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 346, in on_command_error
+    await ctx.send(f"Exception {error}")
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-24 19:55:32,904 - INFO - logging in using static token
+2025-08-24 19:55:35,736 - INFO - Shard ID None has connected to Gateway (Session ID: dece98ca7e1d91ec65f8807600dcfc4d).
+2025-08-24 19:58:23,555 - INFO - logging in using static token
+2025-08-24 19:58:26,119 - INFO - Shard ID None has connected to Gateway (Session ID: 2b46660c2a4a00689a9808cca8ca6c0b).
+2025-08-24 19:59:38,494 - INFO - logging in using static token
+2025-08-24 19:59:40,911 - INFO - Shard ID None has connected to Gateway (Session ID: 90bdc96ac4c51a9c2d665e5fc5ec3463).
+2025-08-24 20:02:36,564 - INFO - logging in using static token
+2025-08-24 20:02:40,733 - INFO - Shard ID None has connected to Gateway (Session ID: c4089df46ee963dd59f5f29b1724f595).
+2025-08-24 20:03:29,152 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 346, in on_command_error
+    await ctx.send(f"Exception {error}")
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-24 20:06:14,592 - INFO - logging in using static token
+2025-08-24 20:06:16,685 - INFO - Shard ID None has connected to Gateway (Session ID: 515daa65ea1d0c08543445757fa5731d).
+2025-08-24 20:13:07,326 - INFO - logging in using static token
+2025-08-24 20:13:09,967 - INFO - Shard ID None has connected to Gateway (Session ID: dcb484dd48ad52a7ad54484583fa2d4b).
+2025-08-24 20:20:09,018 - INFO - logging in using static token
+2025-08-24 20:20:11,256 - INFO - Shard ID None has connected to Gateway (Session ID: 6f6c70f2a8099da0b486ad52b6ca5229).
+2025-08-24 20:21:07,528 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 329, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 417, in MessageEvaluate
+    view = CV2.GAGFruitValueComponent(price_formatter(int(data['value'])), f"{data['Weight']}kg", data["Variant"], data['Mutation'], "attachment://image.png")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: GAGFruitValueComponent.__init__() missing 1 required positional argument: 'link'
+2025-08-24 20:23:09,624 - INFO - logging in using static token
+2025-08-24 20:23:12,138 - INFO - Shard ID None has connected to Gateway (Session ID: a009d099007980b338ba04465a775216).
+2025-08-24 20:31:37,313 - INFO - logging in using static token
+2025-08-24 20:31:39,597 - INFO - Shard ID None has connected to Gateway (Session ID: 8ff976c16f1516e0f53dfa01ff1a9c06).
+2025-08-24 20:41:41,355 - INFO - logging in using static token
+2025-08-24 20:41:43,707 - INFO - Shard ID None has connected to Gateway (Session ID: 71aafeb3426b591037aa08ee0b479af7).
+2025-08-24 20:41:54,125 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 329, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 436, in MessageEvaluate
+    view = CV2.GAGPetValueComponent(price_formatter(int(pet_value) * 1), f'{Data['weight']}kg', f'{Data['age']}', Data['name'], "attachment://image.png", data['pet_mutation'], "Normal")
+                                                                                                                                                          ^^^^
+UnboundLocalError: cannot access local variable 'data' where it is not associated with a value
+2025-08-24 20:42:11,710 - INFO - logging in using static token
+2025-08-24 20:42:13,730 - INFO - Shard ID None has connected to Gateway (Session ID: d6ee81a9d5a9dfec4b77114fe033d13f).
+2025-08-24 20:51:54,844 - INFO - logging in using static token
+2025-08-24 20:51:57,501 - INFO - Shard ID None has connected to Gateway (Session ID: a3214faf81ab4263167e0043d573e707).
+2025-08-24 20:52:01,995 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 329, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 425, in MessageEvaluate
+    "Small" : range(0.7, 0.8),
+              ^^^^^^^^^^^^^^^
+TypeError: 'float' object cannot be interpreted as an integer
+2025-08-24 20:53:34,901 - INFO - logging in using static token
+2025-08-24 20:53:36,959 - INFO - Shard ID None has connected to Gateway (Session ID: 65c30c5362b0dd4365cc0a91d864f1f5).
+2025-08-24 20:53:44,127 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 329, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 433, in MessageEvaluate
+    value = PetWeightChart(int(Data['Weight']), int(Data['age']))[0]
+                               ~~~~^^^^^^^^^^
+KeyError: 'Weight'
+2025-08-24 20:54:04,549 - INFO - logging in using static token
+2025-08-24 20:54:06,653 - INFO - Shard ID None has connected to Gateway (Session ID: d56fde752edad97a39c00dde86a587df).
+2025-08-24 20:56:54,314 - INFO - logging in using static token
+2025-08-24 20:56:56,439 - INFO - Shard ID None has connected to Gateway (Session ID: c3205bdcdad8ce47da39daf05efa32bb).
+2025-08-24 20:58:20,539 - INFO - logging in using static token
+2025-08-24 20:58:22,857 - INFO - Shard ID None has connected to Gateway (Session ID: cda74ce39f9b975a26a17eeb298a9bc7).
+2025-08-24 20:59:14,894 - INFO - logging in using static token
+2025-08-24 20:59:17,031 - INFO - Shard ID None has connected to Gateway (Session ID: 42a4bea85ed940bf4f7b0f21a38d4137).
+2025-08-24 21:09:49,388 - INFO - logging in using static token
+2025-08-24 21:09:51,783 - INFO - Shard ID None has connected to Gateway (Session ID: bf970c24f5980e55f517c663b2a35bf6).
+2025-08-24 21:10:39,964 - INFO - logging in using static token
+2025-08-24 21:10:41,975 - INFO - Shard ID None has connected to Gateway (Session ID: 20edd8284ad42021f3b4b3119d9885f3).
+2025-08-24 21:14:11,078 - INFO - logging in using static token
+2025-08-24 21:14:13,389 - INFO - Shard ID None has connected to Gateway (Session ID: 5a7a6996cb448830039cf27e876e451f).
+2025-08-24 21:15:05,337 - INFO - logging in using static token
+2025-08-24 21:15:07,674 - INFO - Shard ID None has connected to Gateway (Session ID: 82217e4bcf5e277bf8bdcbd52b9e10fd).
+2025-08-24 21:29:44,059 - INFO - logging in using static token
+2025-08-24 21:29:46,639 - INFO - Shard ID None has connected to Gateway (Session ID: 8b3e432829c662ede313bea4a264d4be).
+2025-08-24 21:45:52,826 - INFO - logging in using static token
+2025-08-24 21:45:55,201 - INFO - Shard ID None has connected to Gateway (Session ID: 8fc56933021dc27f570f7be4bdea28a4).
+2025-08-24 21:47:36,781 - INFO - logging in using static token
+2025-08-24 21:47:39,017 - INFO - Shard ID None has connected to Gateway (Session ID: a76bc2893d4d12e20792c0b9318a65de).
+2025-08-24 21:48:37,796 - INFO - logging in using static token
+2025-08-24 21:48:40,478 - INFO - Shard ID None has connected to Gateway (Session ID: e951570f50caefb48871acb09f97fdd2).
+2025-08-24 21:50:45,730 - INFO - logging in using static token
+2025-08-24 21:50:47,751 - INFO - Shard ID None has connected to Gateway (Session ID: b37d544b27ef36abd3cb4d6bee891b6e).
+2025-08-24 22:03:06,651 - INFO - logging in using static token
+2025-08-24 22:03:09,376 - INFO - Shard ID None has connected to Gateway (Session ID: a701afa300f7310c41e39035846fdd9a).
+2025-08-24 23:16:27,839 - INFO - logging in using static token
+2025-08-24 23:16:30,543 - INFO - Shard ID None has connected to Gateway (Session ID: b155e9214b2518e1240b75e4fe2dd55e).
+2025-08-24 23:17:05,863 - INFO - logging in using static token
+2025-08-24 23:17:07,857 - INFO - Shard ID None has connected to Gateway (Session ID: 890ff3ccd366c897567d7668c0fc812c).
+2025-08-24 23:56:24,950 - INFO - logging in using static token
+2025-08-24 23:56:27,178 - INFO - Shard ID None has connected to Gateway (Session ID: 29747f7f970e8a467889f27f1d181b61).
+2025-08-24 23:57:08,583 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 347, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 420, in MessageEvaluate
+    pet_value = GAGPetValue(Data)
+                ^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 328, in GAGPetValue
+    pet_value *= pet_data['quantity']
+MemoryError
+2025-08-24 23:58:42,948 - INFO - logging in using static token
+2025-08-24 23:58:45,035 - INFO - Shard ID None has connected to Gateway (Session ID: fd7e3046111a4416d05225041733698d).
+2025-08-25 19:54:44,332 - INFO - logging in using static token
+2025-08-25 19:54:47,261 - INFO - Shard ID None has connected to Gateway (Session ID: cd57cb2a49c5e85d24ab3fee8a3e1436).
+2025-08-25 19:56:54,936 - INFO - logging in using static token
+2025-08-25 19:56:58,057 - INFO - Shard ID None has connected to Gateway (Session ID: ab9aa27f8400bfe143ae6c830aa5829e).
+2025-08-25 20:24:07,835 - INFO - logging in using static token
+2025-08-25 20:24:11,969 - INFO - Shard ID None has connected to Gateway (Session ID: 705cdcab7091761701e6ae0afbf96b14).
+2025-08-25 20:25:34,921 - INFO - logging in using static token
+2025-08-25 20:25:37,064 - INFO - Shard ID None has connected to Gateway (Session ID: 08efac45fb7f1370817bc44f3195a8c2).
+2025-08-25 20:30:45,771 - INFO - logging in using static token
+2025-08-25 20:32:03,291 - INFO - logging in using static token
+2025-08-25 20:32:06,479 - INFO - Shard ID None has connected to Gateway (Session ID: 66e2a80c36dc00fb518fc809a25e2c98).
+2025-08-25 20:34:43,719 - INFO - logging in using static token
+2025-08-25 20:34:46,952 - INFO - Shard ID None has connected to Gateway (Session ID: b599b28f419fdd3527931585d4bd924d).
+2025-08-25 22:09:43,236 - INFO - logging in using static token
+2025-08-25 22:10:07,467 - INFO - Shard ID None has connected to Gateway (Session ID: 77e9088cb24b7c4744fdef27511ad9e7).
+2025-08-25 22:12:09,320 - INFO - logging in using static token
+2025-08-25 22:12:27,906 - INFO - Shard ID None has connected to Gateway (Session ID: 3afe761dd04f6a51271524a8040ddbe7).
+2025-08-25 22:28:57,998 - INFO - logging in using static token
+2025-08-25 22:29:02,015 - INFO - Shard ID None has connected to Gateway (Session ID: 199e680f1a45dddf1a8a0fdc45f7aff3).
+2025-08-25 22:33:04,004 - INFO - logging in using static token
+2025-08-25 22:33:08,249 - INFO - Shard ID None has connected to Gateway (Session ID: 45bafceddb1bb9b07716a8b46e4f2ddc).
+2025-08-25 23:36:48,028 - INFO - logging in using static token
+2025-08-25 23:36:52,334 - INFO - Shard ID None has connected to Gateway (Session ID: 8b4ea311cb326c7dd36503b06687c475).
+2025-08-25 23:50:25,583 - INFO - logging in using static token
+2025-08-25 23:50:28,783 - INFO - Shard ID None has connected to Gateway (Session ID: 8b3a1b674a4061ad53d680e1d011508a).
+2025-08-25 23:53:39,093 - INFO - logging in using static token
+2025-08-25 23:53:42,186 - INFO - Shard ID None has connected to Gateway (Session ID: 4eca91e912f8f3dadb5e0cd63fe0f1ad).
+2025-08-25 23:54:12,262 - ERROR - Ignoring exception in view <MiddlemanButtons timeout=None children=3> for item <Button style=<ButtonStyle.success: 3> url=None disabled=False label='Claim' emoji=None row=None sku_id=None id=None>
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ui\view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyMiddleman\sLilyMiddlemanCore.py", line 41, in claim
+    if not any(role in interaction.user.roles for role in self.middleman_roles):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyMiddleman\sLilyMiddlemanCore.py", line 41, in <genexpr>
+    if not any(role in interaction.user.roles for role in self.middleman_roles):
+                       ^^^^^^^^^^^^^^^^
+AttributeError: 'Button' object has no attribute 'user'
+2025-08-25 23:56:50,185 - INFO - logging in using static token
+2025-08-25 23:56:54,202 - INFO - Shard ID None has connected to Gateway (Session ID: efdcf23ae8aeff84ce96448450ebaba6).
+2025-08-25 23:59:59,385 - INFO - logging in using static token
+2025-08-26 00:00:03,153 - INFO - Shard ID None has connected to Gateway (Session ID: d18bc9e32406a5baeceffaaadd6057da).
+2025-08-26 00:01:25,381 - INFO - logging in using static token
+2025-08-26 00:01:29,547 - INFO - Shard ID None has connected to Gateway (Session ID: ccfc8a295835df858bae520b9d16d5ae).
+2025-08-26 00:03:29,158 - INFO - logging in using static token
+2025-08-26 00:03:33,689 - INFO - Shard ID None has connected to Gateway (Session ID: 89defc053ea81a3068adba325bb6f6e5).
+2025-08-26 00:04:05,081 - ERROR - Ignoring exception in view <MiddlemanButtons timeout=None children=3> for item <Button style=<ButtonStyle.success: 3> url=None disabled=False label='Claim' emoji=None row=None sku_id=None id=None>
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ui\view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyMiddleman\sLilyMiddlemanCore.py", line 56, in claim
+    if not any(role in interaction.user.roles for role in self.middleman_roles):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyMiddleman\sLilyMiddlemanCore.py", line 56, in <genexpr>
+    if not any(role in interaction.user.roles for role in self.middleman_roles):
+                       ^^^^^^^^^^^^^^^^
+AttributeError: 'Button' object has no attribute 'user'
+2025-08-26 00:04:17,069 - ERROR - Ignoring exception in view <MiddlemanButtons timeout=None children=3> for item <Button style=<ButtonStyle.danger: 4> url=None disabled=False label='Reject' emoji=None row=None sku_id=None id=None>
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ui\view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyMiddleman\sLilyMiddlemanCore.py", line 76, in reject
+    if not any(role in interaction.user.roles for role in self.hr_roles):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyMiddleman\sLilyMiddlemanCore.py", line 76, in <genexpr>
+    if not any(role in interaction.user.roles for role in self.hr_roles):
+                       ^^^^^^^^^^^^^^^^
+AttributeError: 'Button' object has no attribute 'user'
+2025-08-26 00:05:56,395 - INFO - logging in using static token
+2025-08-26 00:06:00,562 - INFO - Shard ID None has connected to Gateway (Session ID: 0cdcd657ebc7d4b7e003eef399090476).
+2025-08-26 00:10:32,919 - INFO - logging in using static token
+2025-08-26 00:10:40,933 - INFO - Shard ID None has connected to Gateway (Session ID: b8d38df532209b60cb656b27cf6d1a41).
+2025-08-26 00:11:27,292 - ERROR - Ignoring exception in view <MiddlemanButtons timeout=None children=3> for item <Button style=<ButtonStyle.success: 3> url=None disabled=False label='Claim' emoji=None row=None sku_id=None id=None>
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ui\view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyMiddleman\sLilyMiddlemanCore.py", line 56, in claim
+    if not any(role in interaction.user.roles for role in self.middleman_roles):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyMiddleman\sLilyMiddlemanCore.py", line 56, in <genexpr>
+    if not any(role in interaction.user.roles for role in self.middleman_roles):
+                       ^^^^^^^^^^^^^^^^
+AttributeError: 'Button' object has no attribute 'user'
+2025-08-26 00:12:52,572 - INFO - logging in using static token
+2025-08-26 00:12:58,425 - INFO - Shard ID None has connected to Gateway (Session ID: 4e4dfd9163f154cc3a863b133dee5663).
+2025-08-26 00:13:25,415 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 365, in on_command_error
+    await ctx.send(f"Exception {error}")
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-26 00:14:49,275 - INFO - logging in using static token
+2025-08-26 00:15:16,538 - INFO - logging in using static token
+2025-08-26 00:15:19,109 - INFO - Shard ID None has connected to Gateway (Session ID: be6e200acae4d3531683767404b1e192).
+2025-08-26 00:22:41,360 - INFO - logging in using static token
+2025-08-26 00:22:44,157 - INFO - Shard ID None has connected to Gateway (Session ID: ba7912ec3568b0fdf204bc7ddb4b1999).
+2025-08-26 00:25:13,595 - INFO - logging in using static token
+2025-08-26 00:25:21,564 - INFO - Shard ID None has connected to Gateway (Session ID: 3300d9aa45982cd094733dd3e4832d2d).
+2025-08-26 00:26:19,562 - INFO - logging in using static token
+2025-08-26 00:26:24,318 - INFO - Shard ID None has connected to Gateway (Session ID: 63d538d4a6ab32b9f8286c89bb093181).
+2025-08-26 00:28:27,703 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 365, in on_command_error
+    await ctx.send(f"Exception {error}")
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-26 00:44:47,390 - INFO - logging in using static token
+2025-08-26 00:44:51,003 - INFO - Shard ID None has connected to Gateway (Session ID: b7df2bed849f88c67a7b8a68753be4cf).
+2025-08-26 17:43:05,609 - INFO - logging in using static token
+2025-08-26 17:43:11,236 - INFO - Shard ID None has connected to Gateway (Session ID: 79549be26eb6871b17c3e016002c0b56).
+2025-08-26 17:52:27,841 - INFO - logging in using static token
+2025-08-26 17:52:31,084 - INFO - Shard ID None has connected to Gateway (Session ID: 240464f82208ccd49b0473c96bbd3fca).
+2025-08-26 22:24:09,245 - INFO - logging in using static token
+2025-08-26 22:24:39,487 - INFO - logging in using static token
+2025-08-26 22:25:08,984 - INFO - logging in using static token
+2025-08-26 22:26:02,224 - INFO - logging in using static token
+2025-08-26 22:26:15,502 - INFO - Shard ID None has connected to Gateway (Session ID: 2054bb5f2790cf9f75f11ca539f981b0).
+2025-08-26 22:27:49,638 - INFO - logging in using static token
+2025-08-26 22:27:56,264 - INFO - Shard ID None has connected to Gateway (Session ID: a4ac644ad26da92291d06e1af4b24cc0).
+2025-08-26 22:31:55,049 - INFO - logging in using static token
+2025-08-26 22:31:58,292 - INFO - Shard ID None has connected to Gateway (Session ID: 6d1f12406fc2cd79a9b10cc9505504ca).
+2025-08-26 22:34:51,452 - INFO - logging in using static token
+2025-08-26 22:34:55,519 - INFO - Shard ID None has connected to Gateway (Session ID: d599d06ca40aca20e3523480407f35b6).
+2025-08-26 22:35:35,998 - INFO - logging in using static token
+2025-08-26 22:36:23,172 - INFO - logging in using static token
+2025-08-26 22:36:25,673 - INFO - Shard ID None has connected to Gateway (Session ID: d3068b3754671a3da0d7d94a7608d5d5).
+2025-08-26 22:38:10,764 - INFO - logging in using static token
+2025-08-26 22:38:13,427 - INFO - Shard ID None has connected to Gateway (Session ID: 109425c2f62844da078bf4c5e6384e59).
+2025-08-26 22:43:23,530 - INFO - logging in using static token
+2025-08-26 22:43:26,833 - INFO - Shard ID None has connected to Gateway (Session ID: 215f32e5552f677c0a955add41e4f271).
+2025-08-26 22:44:40,112 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 365, in on_command_error
+    await ctx.send(f"Exception {error}")
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\context.py", line 1151, in send
+    response = await self.interaction.response.send_message(**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\interactions.py", line 1054, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-08-26 22:44:57,966 - INFO - logging in using static token
+2025-08-26 22:45:05,287 - INFO - Shard ID None has connected to Gateway (Session ID: b90ccdbd77d7d3fc908ec4b98c416afb).
+2025-08-28 00:54:29,868 - INFO - logging in using static token
+2025-08-28 00:54:33,398 - INFO - Shard ID None has connected to Gateway (Session ID: dcdc440bffef16c2bfc0cbc42c1bf4d0).
+2025-08-28 00:55:40,992 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 445, in MessageEvaluate
+    value = float(PetWeightChart(int(Data['age']), int(Data['weight']))[0])
+                                     ~~~~^^^^^^^
+TypeError: tuple indices must be integers or slices, not str
+2025-08-28 00:57:10,155 - INFO - logging in using static token
+2025-08-28 00:57:12,983 - INFO - Shard ID None has connected to Gateway (Session ID: eafedfb9f7ffde4f151b37a0f3f7d62e).
+2025-08-28 00:58:01,341 - INFO - logging in using static token
+2025-08-28 00:58:04,459 - INFO - Shard ID None has connected to Gateway (Session ID: 46c2b51b2bdda4275baa52c3d6abefec).
+2025-08-31 02:37:19,164 - INFO - logging in using static token
+2025-08-31 02:37:23,404 - INFO - Shard ID None has connected to Gateway (Session ID: 9e5f3f37aed993cbf514da2c7410123b).
+2025-08-31 02:42:53,106 - INFO - logging in using static token
+2025-08-31 02:42:56,244 - INFO - Shard ID None has connected to Gateway (Session ID: de47de9b27b25a0ebc9352297b68646c).
+2025-08-31 02:43:40,741 - INFO - logging in using static token
+2025-08-31 02:44:39,704 - INFO - logging in using static token
+2025-08-31 02:44:41,929 - INFO - Shard ID None has connected to Gateway (Session ID: 3d356be135b861735941c4adecde2e06).
+2025-08-31 02:55:42,075 - INFO - logging in using static token
+2025-08-31 02:55:44,015 - INFO - Shard ID None has connected to Gateway (Session ID: df587abd1e1685cfd357f4b5ca116033).
+2025-08-31 03:03:26,477 - INFO - logging in using static token
+2025-08-31 03:03:28,499 - INFO - Shard ID None has connected to Gateway (Session ID: 47c82cfb1d68dd0a4ca6ef92901b5c57).
+2025-08-31 03:04:26,316 - INFO - logging in using static token
+2025-08-31 03:04:28,421 - INFO - Shard ID None has connected to Gateway (Session ID: 9858e756f936f887d03e498c32a9a65c).
+2025-08-31 03:06:52,499 - INFO - logging in using static token
+2025-08-31 03:06:54,283 - INFO - Shard ID None has connected to Gateway (Session ID: 39c2262e134877c48dc469dec6431b16).
+2025-08-31 04:17:22,662 - INFO - logging in using static token
+2025-08-31 04:17:24,989 - INFO - Shard ID None has connected to Gateway (Session ID: 9084de4d7c64b68906e1467deef7673c).
+2025-08-31 04:27:11,040 - INFO - logging in using static token
+2025-08-31 04:27:13,086 - INFO - Shard ID None has connected to Gateway (Session ID: 843badd2621682784518abf168f457b1).
+2025-08-31 04:28:29,231 - INFO - logging in using static token
+2025-08-31 04:28:31,102 - INFO - Shard ID None has connected to Gateway (Session ID: d37f31971d2202aaf442b10af9553caa).
+2025-08-31 04:31:04,740 - INFO - logging in using static token
+2025-08-31 04:31:06,615 - INFO - Shard ID None has connected to Gateway (Session ID: 5299f00ab63cd15cb9feace3aafc28c4).
+2025-09-01 19:57:58,473 - INFO - logging in using static token
+2025-09-01 19:58:03,987 - INFO - Shard ID None has connected to Gateway (Session ID: 6dd470504e4671c434b6eef7cb8c8a3f).
+2025-09-01 19:58:39,424 - INFO - logging in using static token
+2025-09-01 19:58:43,368 - INFO - Shard ID None has connected to Gateway (Session ID: 8cc687e5c1717084e9b9711e740ea5be).
+2025-09-01 19:59:50,411 - INFO - logging in using static token
+2025-09-01 19:59:53,800 - INFO - Shard ID None has connected to Gateway (Session ID: 5122521da455564295120baa825f148e).
+2025-09-01 19:59:58,617 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 224, in MessageEvaluate
+    jsonfruitdata = await StockValueJSON.fetch_fruit_details(item_name)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Values\sStockValueJSON.py", line 36, in fetch_fruit_details
+    cursor = await VC.vdb.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+                                 ^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 73, in _conn
+    raise ValueError("no active connection")
+ValueError: no active connection
+2025-09-01 20:00:46,176 - INFO - logging in using static token
+2025-09-01 20:00:52,003 - INFO - Shard ID None has connected to Gateway (Session ID: ee6ba944b3e1c145b0692d1cdbf01a38).
+2025-09-01 20:01:24,295 - INFO - logging in using static token
+2025-09-01 20:01:27,190 - INFO - Shard ID None has connected to Gateway (Session ID: 3343debec55e42bfe91d9adf1dc868d3).
+2025-09-01 20:01:37,940 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 229, in MessageEvaluate
+    colour=Config.embed_color_codes[jsonfruitdata['category']])
+                                    ~~~~~~~~~~~~~^^^^^^^^^^^^
+KeyError: 'category'
+2025-09-01 20:04:15,047 - INFO - logging in using static token
+2025-09-01 20:04:21,604 - INFO - Shard ID None has connected to Gateway (Session ID: 16d6eb12533835b3c508eb676c8781d8).
+2025-09-01 20:06:44,278 - INFO - logging in using static token
+2025-09-01 20:06:49,468 - INFO - Shard ID None has connected to Gateway (Session ID: 9da7575bcc707fc505e2e6f9cef6f7df).
+2025-09-01 20:10:26,542 - INFO - logging in using static token
+2025-09-01 20:10:34,212 - INFO - Shard ID None has connected to Gateway (Session ID: 9e72d83e8a21b648088e5e97393f1cf9).
+2025-09-01 20:12:33,710 - INFO - logging in using static token
+2025-09-01 20:12:36,415 - INFO - Shard ID None has connected to Gateway (Session ID: dfe8e2df5b08cf26dffc196772f88a36).
+2025-09-01 20:19:34,829 - INFO - logging in using static token
+2025-09-01 20:19:37,232 - INFO - Shard ID None has connected to Gateway (Session ID: 5e8b68ae8f19b8c4d1bcf0bcb0c0baf2).
+2025-09-01 21:04:11,889 - INFO - logging in using static token
+2025-09-01 21:04:14,273 - INFO - Shard ID None has connected to Gateway (Session ID: eb66fda3d814766670306e900edadadd).
+2025-09-01 21:04:21,752 - INFO - logging in using static token
+2025-09-01 21:04:24,620 - INFO - Shard ID None has connected to Gateway (Session ID: 67a1ee7329d17eef672b56ea4b140f12).
+2025-09-01 21:04:57,288 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 233, in MessageEvaluate
+    item_name_capital = item_name.title() if item_name else ""
+                        ^^^^^^^^^^^^^^^
+AttributeError: 'coroutine' object has no attribute 'title'
+2025-09-01 21:05:24,957 - INFO - logging in using static token
+2025-09-01 21:05:27,331 - INFO - Shard ID None has connected to Gateway (Session ID: 024fb21644c90b8eb14e12c4f2968ead).
+2025-09-01 21:05:32,046 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 233, in MessageEvaluate
+    item_name_capital = item_name.title() if item_name else ""
+                        ^^^^^^^^^^^^^^^
+AttributeError: 'coroutine' object has no attribute 'title'
+2025-09-01 21:08:17,183 - INFO - logging in using static token
+2025-09-01 21:08:19,453 - INFO - Shard ID None has connected to Gateway (Session ID: 91d64b59c690772097549d55611b19b1).
+2025-09-01 21:08:48,859 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 291, in MessageEvaluate
+    elif await TFA.is_valid_trade_format(message.content.lower(), fruit_names):
+                                                                 ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'fruit_names' where it is not associated with a value
+2025-09-01 21:10:00,753 - INFO - logging in using static token
+2025-09-01 21:10:03,395 - INFO - Shard ID None has connected to Gateway (Session ID: 572cf704c44d9beb3f8c331a74e17bc3).
+2025-09-01 21:10:15,644 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 291, in MessageEvaluate
+    elif await TFA.is_valid_trade_format(message.content.lower(), fruit_names):
+                                                                 ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'fruit_names' where it is not associated with a value
+2025-09-01 21:10:55,402 - INFO - logging in using static token
+2025-09-01 21:10:57,469 - INFO - Shard ID None has connected to Gateway (Session ID: a796aaadb11714b8e807199af44bfe2e).
+2025-09-01 21:11:02,166 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 291, in MessageEvaluate
+    elif await TFA.is_valid_trade_format(message.content.lower()):
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sTradeFormatAlgorthim.py", line 132, in is_valid_trade_format
+    your_fruits = await extract_fruits(clean_your_side)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sTradeFormatAlgorthim.py", line 122, in extract_fruits
+    matched_fruit = await MatchFruitSet(possible_fruit, get_all_fruit_names())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sTradeFormatAlgorthim.py", line 72, in MatchFruitSet
+    all_names = set(data)
+                ^^^^^^^^^
+TypeError: 'coroutine' object is not iterable
+2025-09-01 21:11:34,668 - INFO - logging in using static token
+2025-09-01 21:11:36,897 - INFO - Shard ID None has connected to Gateway (Session ID: db9a9cb8bc2fc770034bed1815252ccf).
+2025-09-01 21:11:40,873 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 291, in MessageEvaluate
+    elif await TFA.is_valid_trade_format(message.content.lower()):
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sTradeFormatAlgorthim.py", line 132, in is_valid_trade_format
+    your_fruits = await extract_fruits(clean_your_side)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sTradeFormatAlgorthim.py", line 122, in extract_fruits
+    matched_fruit = await MatchFruitSet(possible_fruit, await get_all_fruit_names())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sTradeFormatAlgorthim.py", line 72, in MatchFruitSet
+    all_names = set(data)
+                ^^^^^^^^^
+TypeError: unhashable type: 'set'
+2025-09-01 21:13:55,080 - INFO - logging in using static token
+2025-09-01 21:13:57,100 - INFO - Shard ID None has connected to Gateway (Session ID: 5d3b2e506082e34d0b78a9b8a0fc61f8).
+2025-09-01 21:14:01,501 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 291, in MessageEvaluate
+    elif await TFA.is_valid_trade_format(message.content.lower()):
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sTradeFormatAlgorthim.py", line 135, in is_valid_trade_format
+    their_fruits = await extract_fruits(clean_their_side)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sTradeFormatAlgorthim.py", line 124, in extract_fruits
+    matched_fruit = await MatchFruitSet(possible_fruit, fruit_names, alias_map)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sTradeFormatAlgorthim.py", line 92, in MatchFruitSet
+    if score >= threshold:
+       ^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'float' and 'dict'
+2025-09-01 21:15:33,078 - INFO - logging in using static token
+2025-09-01 21:15:35,224 - INFO - Shard ID None has connected to Gateway (Session ID: 74d21692b310a6470f7e3eb6b86fa4f0).
+2025-09-01 21:15:44,792 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 293, in MessageEvaluate
+    match = await TFA.is_valid_trade_format(lowered_message, fruit_names)
+                                                             ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'fruit_names' where it is not associated with a value
+2025-09-01 21:16:14,069 - INFO - logging in using static token
+2025-09-01 21:16:16,229 - INFO - Shard ID None has connected to Gateway (Session ID: 01ae6517c17e88b93249fc0a5799d349).
+2025-09-01 21:16:22,312 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 299, in MessageEvaluate
+    your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDA.extract_trade_details(message.content)
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sFruitDetectionAlgorthim.py", line 64, in extract_trade_details
+    your_fruits, your_fruit_type = await extract_fruits(your_message_split)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyAlgorthims\sFruitDetectionAlgorthim.py", line 40, in extract_fruits
+    matched_fruit = await TFA.MatchFruitSet(' '.join(message_split[i:i + len(fruit.split())]), fruit_set)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: MatchFruitSet() missing 1 required positional argument: 'alias_map'
+2025-09-01 21:17:36,843 - INFO - logging in using static token
+2025-09-01 21:17:39,032 - INFO - Shard ID None has connected to Gateway (Session ID: caa81b8b447c6819a2ea5036ed84eadd).
+2025-09-01 21:17:51,901 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 383, in MessageEvaluate
+    image = await asyncio.to_thread(
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\asyncio\threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Values\sStockValueJSON.py", line 185, in j_LorW
+    return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values,your_fruit_type, their_fruit_type, trade_winorlose="FAIR", trade_conclusion="YOUR TRADE IS FAIR", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=2, background_type=suggestion)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\ui\sWinOrLossImageGenerator.py", line 213, in GenerateWORLImage
+    paste_fruits(your_fruits, your_coords, your_values, your_fruit_types)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\ui\sWinOrLossImageGenerator.py", line 161, in paste_fruits
+    val = values[i]
+          ~~~~~~^^^
+IndexError: list index out of range
+2025-09-01 21:20:32,468 - INFO - logging in using static token
+2025-09-01 21:20:35,974 - INFO - logging in using static token
+2025-09-01 21:20:38,856 - INFO - Shard ID None has connected to Gateway (Session ID: b520063db56b9e5a02496b0224d2a32f).
+2025-09-01 21:20:50,674 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 383, in MessageEvaluate
+    image = await StockValueJSON.j_LorW(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Values\sStockValueJSON.py", line 105, in j_LorW
+    refined_value = ydata[value_key].replace(",", "")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'int' object has no attribute 'replace'
+2025-09-01 21:21:27,672 - INFO - logging in using static token
+2025-09-01 21:21:29,860 - INFO - Shard ID None has connected to Gateway (Session ID: b279eab7753ecc799e7d706ce724e492).
+2025-09-01 21:21:34,076 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 383, in MessageEvaluate
+    image = await StockValueJSON.j_LorW(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Values\sStockValueJSON.py", line 106, in j_LorW
+    refined_value = ydata[value_key].replace(",", "")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'int' object has no attribute 'replace'
+2025-09-01 21:22:35,062 - INFO - logging in using static token
+2025-09-01 21:22:37,200 - INFO - Shard ID None has connected to Gateway (Session ID: 222e4871206844a021d7995d910ce59d).
+2025-09-01 21:22:44,697 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 383, in MessageEvaluate
+    image = await StockValueJSON.j_LorW(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Values\sStockValueJSON.py", line 186, in j_LorW
+    return GenerateWORLImage(your_fruits, your_fruit_individual_values, their_fruits, their_fruit_individual_values,your_fruit_type, their_fruit_type, trade_winorlose="LOSE", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=calculate_win_loss(total_value_of_your_fruit, total_value_of_their_fruit, Type=1), winorloseorfair=1, background_type=suggestion)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\ui\sWinOrLossImageGenerator.py", line 214, in GenerateWORLImage
+    paste_fruits(their_fruits, their_coords, their_values, their_fruit_types)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\ui\sWinOrLossImageGenerator.py", line 161, in paste_fruits
+    val = values[i]
+          ~~~~~~^^^
+IndexError: list index out of range
+2025-09-01 21:23:23,468 - INFO - logging in using static token
+2025-09-01 21:23:25,524 - INFO - Shard ID None has connected to Gateway (Session ID: f3d4069bbb0fa9e33ea5770d311cc570).
+2025-09-01 21:25:50,486 - INFO - logging in using static token
+2025-09-01 21:25:52,847 - INFO - Shard ID None has connected to Gateway (Session ID: 834e8d1654297022d41259ad7f3bc1b8).
+2025-09-01 21:27:38,600 - INFO - logging in using static token
+2025-09-01 21:27:40,848 - INFO - Shard ID None has connected to Gateway (Session ID: b5b78d0d13894d38c639b2760ae723d4).
+2025-09-01 21:42:03,533 - INFO - logging in using static token
+2025-09-01 21:42:06,485 - INFO - Shard ID None has connected to Gateway (Session ID: 084a8da9a8920283617857e46fbec075).
+2025-09-01 21:42:16,149 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 231, in MessageEvaluate
+    item_name = await StockValueJSON.MatchFruitSet(item_name, fruit_set)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: MatchFruitSet() missing 1 required positional argument: 'alias_map'
+2025-09-01 21:43:50,319 - INFO - logging in using static token
+2025-09-01 21:43:53,963 - INFO - Shard ID None has connected to Gateway (Session ID: 5b06f4be0c55b1f4222ffba0c820ea89).
+2025-09-01 21:43:58,955 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 235, in MessageEvaluate
+    jsonfruitdata = await StockValueJSON.fetch_fruit_details(item_name)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Values\sStockValueJSON.py", line 37, in fetch_fruit_details
+    (fruit_name.lower(),)
+     ^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'lower'
+2025-09-01 22:01:15,730 - INFO - logging in using static token
+2025-09-01 22:01:47,558 - INFO - logging in using static token
+2025-09-01 22:01:52,561 - INFO - Shard ID None has connected to Gateway (Session ID: 0ccc91c9b6c991fe13708fa681949955).
+2025-09-01 22:02:01,876 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 237, in MessageEvaluate
+    jsonfruitdata = await StockValueJSON.fetch_fruit_details(item_name)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Values\sStockValueJSON.py", line 37, in fetch_fruit_details
+    (fruit_name.lower(),)
+     ^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'lower'
+2025-09-01 22:02:55,158 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 237, in MessageEvaluate
+    jsonfruitdata = await StockValueJSON.fetch_fruit_details(item_name)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Values\sStockValueJSON.py", line 37, in fetch_fruit_details
+    (fruit_name.lower(),)
+     ^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'lower'
+2025-09-01 22:04:35,842 - INFO - logging in using static token
+2025-09-01 22:04:38,576 - INFO - Shard ID None has connected to Gateway (Session ID: 29d7a13b67354a3f214154e77934f9e6).
+2025-09-01 22:06:34,104 - INFO - logging in using static token
+2025-09-01 22:06:36,191 - INFO - Shard ID None has connected to Gateway (Session ID: 371e5d13a17f31f752e026e4efb15af3).
+2025-09-01 22:06:44,980 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 287, in MessageEvaluate
+    await message.reply(embed=embed)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\message.py", line 1883, in reply
+    return await self.channel.send(content, reference=self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\abc.py", line 1717, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In embeds.0.thumbnail.url: Not a well formed URL.
+2025-09-01 22:07:40,250 - INFO - logging in using static token
+2025-09-01 22:07:42,697 - INFO - Shard ID None has connected to Gateway (Session ID: 1cfb0fb253b47a8634eaaa5f585bb32a).
+2025-09-01 22:09:52,589 - INFO - logging in using static token
+2025-09-01 22:09:55,142 - INFO - Shard ID None has connected to Gateway (Session ID: e90d4f5d693f1cf8b9100ed6e8081872).
+2025-09-01 22:10:01,928 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 287, in MessageEvaluate
+    await message.reply(embed=embed)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\message.py", line 1883, in reply
+    return await self.channel.send(content, reference=self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\abc.py", line 1717, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In embeds.0.thumbnail.url: Not a well formed URL.
+2025-09-01 22:10:40,131 - INFO - logging in using static token
+2025-09-01 22:10:42,840 - INFO - Shard ID None has connected to Gateway (Session ID: a804025a0dcff45b9aa12a75a6390328).
+2025-09-01 22:10:48,062 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 288, in MessageEvaluate
+    await message.reply(embed=embed)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\message.py", line 1883, in reply
+    return await self.channel.send(content, reference=self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\abc.py", line 1717, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In embeds.0.thumbnail.url: Not a well formed URL.
+2025-09-01 22:11:13,121 - INFO - logging in using static token
+2025-09-01 22:11:15,191 - INFO - Shard ID None has connected to Gateway (Session ID: 1906c6eebc046921b492aac612503a85).
+2025-09-01 22:35:08,556 - INFO - logging in using static token
+2025-09-01 22:35:11,008 - INFO - Shard ID None has connected to Gateway (Session ID: 637fe567bc7ab6b0fb52e29c94b8bd21).
+2025-09-01 22:35:26,744 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 235, in MessageEvaluate
+    jsonfruitdata = await StockValueJSON.fetch_fruit_details(item_name)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Values\sStockValueJSON.py", line 37, in fetch_fruit_details
+    (fruit_name.lower(),)
+     ^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'lower'
+2025-09-01 22:37:04,179 - INFO - logging in using static token
+2025-09-01 22:37:06,555 - INFO - Shard ID None has connected to Gateway (Session ID: d509ec00d87f1e276b493aeb7aa9295f).
+2025-09-01 22:45:28,407 - INFO - logging in using static token
+2025-09-01 22:45:30,782 - INFO - Shard ID None has connected to Gateway (Session ID: ee1c7b8298f48e60f4a0eb8bd44ccb11).
+2025-09-01 22:48:03,479 - INFO - logging in using static token
+2025-09-01 22:48:05,713 - INFO - Shard ID None has connected to Gateway (Session ID: 0669cf555b4df258d925cd4cbc9a0e7b).
+2025-09-01 23:07:38,517 - INFO - logging in using static token
+2025-09-01 23:08:38,922 - INFO - logging in using static token
+2025-09-01 23:09:35,266 - INFO - logging in using static token
+2025-09-01 23:10:17,267 - INFO - logging in using static token
+2025-09-01 23:10:22,586 - INFO - Shard ID None has connected to Gateway (Session ID: 63d88e1a64eaf1661b0fa5861edb3031).
+2025-09-01 23:12:22,552 - INFO - logging in using static token
+2025-09-01 23:12:25,899 - INFO - Shard ID None has connected to Gateway (Session ID: 8a16122bdccfc0d902ead814252e6cba).
+2025-09-04 00:00:30,037 - INFO - logging in using static token
+2025-09-04 00:00:34,423 - INFO - Shard ID None has connected to Gateway (Session ID: 9c4312a4ecbca2b52c28d7eb652d31d1).
+2025-09-04 00:03:29,013 - INFO - logging in using static token
+2025-09-04 00:03:32,506 - INFO - Shard ID None has connected to Gateway (Session ID: 06236b6a4461d1e4c39f627b5adc9553).
+2025-09-04 00:05:59,870 - INFO - logging in using static token
+2025-09-04 00:06:03,458 - INFO - Shard ID None has connected to Gateway (Session ID: 934c6c376864e6398dc6cc35faa80b09).
+2025-09-04 00:08:58,719 - INFO - logging in using static token
+2025-09-04 00:09:02,374 - INFO - Shard ID None has connected to Gateway (Session ID: 8b9705eccaff777ba95069e67287dea8).
+2025-09-04 00:10:59,252 - INFO - logging in using static token
+2025-09-04 00:11:02,864 - INFO - Shard ID None has connected to Gateway (Session ID: 127a9e961efab9d8de7bbc2aec9c3696).
+2025-09-04 00:11:47,421 - INFO - logging in using static token
+2025-09-04 00:12:33,014 - INFO - Shard ID None has connected to Gateway (Session ID: c2fc2e5a4abc589795c9a2daeeb92dfd).
+2025-09-04 00:28:17,532 - INFO - logging in using static token
+2025-09-04 00:28:21,141 - INFO - Shard ID None has connected to Gateway (Session ID: 56a97eb2eed7c2430bcff6c0f9f9ba3e).
+2025-09-04 00:32:32,079 - INFO - logging in using static token
+2025-09-04 00:32:36,294 - INFO - Shard ID None has connected to Gateway (Session ID: efcb8dc8c60fecef35c358f6f8c04344).
+2025-09-04 00:48:43,890 - INFO - logging in using static token
+2025-09-04 00:49:05,389 - INFO - Shard ID None has connected to Gateway (Session ID: 6037ead65c2a8f8d734d2da378dc7baf).
+2025-09-04 00:55:24,952 - INFO - logging in using static token
+2025-09-04 00:55:32,605 - INFO - Shard ID None has connected to Gateway (Session ID: 331abe8da2ac5de7e5b6ebdb863f73f5).
+2025-09-04 00:56:09,377 - INFO - logging in using static token
+2025-09-04 00:57:21,773 - INFO - logging in using static token
+2025-09-04 00:57:25,717 - INFO - Shard ID None has connected to Gateway (Session ID: b24cf17881532aa82246c8bad61adbcd).
+2025-09-04 01:08:13,009 - INFO - logging in using static token
+2025-09-04 01:08:21,217 - INFO - Shard ID None has connected to Gateway (Session ID: e07e6ea5dad63e62df066b6a795a9396).
+2025-09-04 01:09:20,082 - INFO - logging in using static token
+2025-09-04 01:09:38,137 - INFO - logging in using static token
+2025-09-04 01:10:27,120 - INFO - Shard ID None has connected to Gateway (Session ID: 0a1e7fb1e27617b65cfdc5e6436bf721).
+2025-09-04 01:22:34,860 - INFO - logging in using static token
+2025-09-04 01:22:41,156 - INFO - Shard ID None has connected to Gateway (Session ID: 5562190237b5d43d54d0da75480ddc7f).
+2025-09-04 01:44:12,428 - INFO - logging in using static token
+2025-09-04 01:44:15,947 - INFO - Shard ID None has connected to Gateway (Session ID: 97ddde6d95f3c50f8a5e0ec830e0f33a).
+2025-09-04 01:45:11,186 - INFO - logging in using static token
+2025-09-04 01:45:45,489 - INFO - Shard ID None has connected to Gateway (Session ID: 13c125717e80b35605fd28ad0259fedd).
+2025-09-04 01:48:00,282 - INFO - logging in using static token
+2025-09-04 01:48:03,041 - INFO - Shard ID None has connected to Gateway (Session ID: bf9045f07bc848ff96a241e26a49c3e4).
+2025-09-04 02:35:20,023 - INFO - logging in using static token
+2025-09-04 02:35:23,441 - INFO - Shard ID None has connected to Gateway (Session ID: 9936686c87b68670462367805b495be4).
+2025-09-04 02:36:32,262 - INFO - logging in using static token
+2025-09-04 02:36:42,981 - INFO - logging in using static token
+2025-09-04 02:36:45,095 - INFO - Shard ID None has connected to Gateway (Session ID: 4e1834a8d642101b1bfe3a88ddeb6130).
+2025-09-04 02:38:27,969 - INFO - logging in using static token
+2025-09-04 02:38:30,258 - INFO - Shard ID None has connected to Gateway (Session ID: ba2a9c24df9aab12dfa6d0dc96e73805).
+2025-09-04 02:40:19,976 - INFO - logging in using static token
+2025-09-04 02:40:22,153 - INFO - Shard ID None has connected to Gateway (Session ID: 28fb19e895dfd18385b3ec72372b0c69).
+2025-09-04 02:41:09,369 - INFO - logging in using static token
+2025-09-04 02:41:11,631 - INFO - Shard ID None has connected to Gateway (Session ID: 312acad82e1a4816d672d882216e1b59).
+2025-09-04 22:53:00,176 - INFO - logging in using static token
+2025-09-04 22:53:02,443 - INFO - Shard ID None has connected to Gateway (Session ID: 330791bb124ce72ba48ec9215f923e80).
+2025-09-04 22:53:24,753 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 347, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 448, in MessageEvaluate
+    type, Data = ParserType(message.content.lower())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 244, in ParserType
+    seed_Data, fuzzresultant = GAGMessageParser(sentence)
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: cannot unpack non-iterable coroutine object
+2025-09-04 22:54:17,471 - INFO - logging in using static token
+2025-09-04 22:54:20,184 - INFO - Shard ID None has connected to Gateway (Session ID: ac70f8b53434aa8b4ead8c8232835674).
+2025-09-04 22:54:33,155 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 347, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 448, in MessageEvaluate
+    type, Data = await ParserType(message.content.lower())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 244, in ParserType
+    seed_Data, fuzzresultant = await GAGMessageParser(sentence)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 105, in GAGMessageParser
+    plant_names = [row[0] for row in await (await VC.asynciovdb.execute("SELECT name FROM GAG_PlantsData")).fetchall()]
+                                                  ^^^^^^^^^^^^^
+AttributeError: module 'Config.sValueConfig' has no attribute 'asynciovdb'. Did you mean: 'asyncio'?
+2025-09-04 22:55:23,659 - INFO - logging in using static token
+2025-09-04 22:55:28,118 - INFO - Shard ID None has connected to Gateway (Session ID: 402d592004c5a0fc31f3d9c64f7615b9).
+2025-09-04 23:14:15,842 - INFO - logging in using static token
+2025-09-04 23:14:18,393 - INFO - Shard ID None has connected to Gateway (Session ID: 1c766d89cd3f6bcf881e7580af05bb4f).
+2025-09-04 23:15:54,388 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 347, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 462, in MessageEvaluate
+    data, quantity = GAGValue(Data)
+    ^^^^^^^^^^^^^^
+TypeError: cannot unpack non-iterable coroutine object
+2025-09-04 23:16:31,908 - INFO - logging in using static token
+2025-09-04 23:16:34,289 - INFO - Shard ID None has connected to Gateway (Session ID: ce017cdcabdd31fbee91092efa7a9504).
+2025-09-04 23:16:43,939 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 347, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 462, in MessageEvaluate
+    data, quantity = await GAGValue(Data)
+                     ^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 278, in GAGValue
+    cursor = await VC.vdb.execute(query, mutations)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such table: MutationData
+2025-09-04 23:54:48,334 - INFO - logging in using static token
+2025-09-04 23:54:50,622 - INFO - Shard ID None has connected to Gateway (Session ID: 9ee8e601ef41ed818bb738bfa946b7f7).
+2025-09-04 23:55:19,092 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 347, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 462, in MessageEvaluate
+    data, quantity = await GAGValue(Data)
+                     ^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 286, in GAGValue
+    cursor = await VC.vdb.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: multiplier
+2025-09-04 23:55:46,821 - INFO - logging in using static token
+2025-09-04 23:55:48,807 - INFO - Shard ID None has connected to Gateway (Session ID: f58f8fc38d2136f944dfff8fcb003ac5).
+2025-09-05 00:01:00,542 - INFO - logging in using static token
+2025-09-05 00:01:02,585 - INFO - Shard ID None has connected to Gateway (Session ID: 826caed7afb9fdd3291edd9d96ed25a3).
+2025-09-05 00:02:08,998 - INFO - logging in using static token
+2025-09-05 00:02:30,823 - INFO - logging in using static token
+2025-09-05 00:02:33,765 - INFO - Shard ID None has connected to Gateway (Session ID: e257ea857d0962a35a7db88cf3109009).
+2025-09-05 00:04:04,142 - INFO - logging in using static token
+2025-09-05 00:04:07,076 - INFO - Shard ID None has connected to Gateway (Session ID: 1edd41f09b8fff3f2e0083b35c393528).
+2025-09-05 00:06:23,545 - INFO - logging in using static token
+2025-09-05 00:06:25,771 - INFO - Shard ID None has connected to Gateway (Session ID: ede6c900c47f6da6a05f66bb811dff90).
+2025-09-06 23:10:10,570 - INFO - logging in using static token
+2025-09-06 23:10:13,526 - INFO - Shard ID None has connected to Gateway (Session ID: 8e956d551fa303f2c874c55dd077b5e9).
+2025-09-06 23:11:16,182 - INFO - logging in using static token
+2025-09-06 23:11:19,816 - INFO - Shard ID None has connected to Gateway (Session ID: d986c363467f2c791c08a5081df2068d).
+2025-09-06 23:12:15,613 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 470, in MessageEvaluate
+    type, Data = await ParserType(message.content.lower())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 234, in ParserType
+    seed_Data, fuzzresultant = await GAGMessageParser(sentence)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 124, in GAGMessageParser
+    fruit_data = fruit_name if fruit_name.lower() in plant_set else None
+                               ^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'lower'
+2025-09-06 23:14:40,007 - INFO - logging in using static token
+2025-09-06 23:14:43,485 - INFO - Shard ID None has connected to Gateway (Session ID: 4c822d27c16a4ea4e2eb3f93d1d049a6).
+2025-09-06 23:14:51,686 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 474, in MessageEvaluate
+    type, Data = await ParserType(message.content.lower())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 239, in ParserType
+    pet_Data, secondary_fuzzresultant = await GAGPetMessageParser(sentence)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 220, in GAGPetMessageParser
+    cursor = await VC.vdb.execute("SELECT name FROM GAG_MutationValueData")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such table: GAG_MutationValueData
+2025-09-06 23:15:51,795 - INFO - logging in using static token
+2025-09-06 23:15:54,804 - INFO - Shard ID None has connected to Gateway (Session ID: 9a55ddf817ea87ea49049acda87134ec).
+2025-09-06 23:15:59,951 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 519, in MessageEvaluate
+    view = CV2.GAGPetValueComponent(price_formatter(int(pet_value) * 1), f'{Data['weight']} kg', f'{Data['age']}', Data['name'], "attachment://image.png", Data['pet_mutation'], classification)
+                                                    ^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'coroutine'
+2025-09-06 23:17:15,668 - INFO - logging in using static token
+2025-09-06 23:17:19,081 - INFO - Shard ID None has connected to Gateway (Session ID: d41270f8928e9d18ae034c4b6b874480).
+2025-09-06 23:17:25,201 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 519, in MessageEvaluate
+    view = await CV2.GAGPetValueComponent(price_formatter(int(pet_value) * 1), f'{Data['weight']} kg', f'{Data['age']}', Data['name'], "attachment://image.png", Data['pet_mutation'], classification)
+                                                          ^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'coroutine'
+2025-09-06 23:19:03,611 - INFO - logging in using static token
+2025-09-06 23:19:06,946 - INFO - Shard ID None has connected to Gateway (Session ID: 34820e9d08b7427db8bbc74fc3798965).
+2025-09-06 23:19:13,027 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 519, in MessageEvaluate
+    view = await CV2.GAGPetValueComponent(price_formatter(int(pet_value) * 1), f'{Data['weight']} kg', f'{Data['age']}', Data['name'], "attachment://image.png", Data['pet_mutation'], classification)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object GAGPetValueComponent can't be used in 'await' expression
+2025-09-06 23:19:58,075 - INFO - logging in using static token
+2025-09-06 23:20:00,283 - INFO - Shard ID None has connected to Gateway (Session ID: 48721b6054fa9187445858b79bd087c3).
+2025-09-06 23:22:46,820 - INFO - logging in using static token
+2025-09-06 23:22:51,525 - INFO - Shard ID None has connected to Gateway (Session ID: 6bf9ef3688dbffb8e3fef3805782ccae).
+2025-09-06 23:24:08,928 - INFO - logging in using static token
+2025-09-06 23:24:11,031 - INFO - Shard ID None has connected to Gateway (Session ID: e2c1e573e33a19fcce51a5451fbf33ec).
+2025-09-06 23:25:51,331 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 489, in MessageEvaluate
+    if img_path:
+       ^^^^^^^^
+UnboundLocalError: cannot access local variable 'img_path' where it is not associated with a value
+2025-09-06 23:29:06,812 - INFO - logging in using static token
+2025-09-06 23:29:09,096 - INFO - Shard ID None has connected to Gateway (Session ID: 5f1229acde6aafc8d4033288dfa5c4d0).
+2025-09-06 23:29:12,910 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 493, in MessageEvaluate
+    await message.reply(view=view)
+                             ^^^^
+UnboundLocalError: cannot access local variable 'view' where it is not associated with a value
+2025-09-06 23:30:05,910 - INFO - logging in using static token
+2025-09-06 23:30:08,337 - INFO - Shard ID None has connected to Gateway (Session ID: d1ab095601365730a935e710abd3e0ba).
+2025-09-06 23:30:12,285 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 493, in MessageEvaluate
+    await message.reply(view=CV2.EmptyView())
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\message.py", line 1883, in reply
+    return await self.channel.send(content, reference=self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\abc.py", line 1700, in send
+    with handle_message_parameters(
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\http.py", line 196, in handle_message_parameters
+    payload['components'] = view.to_components()
+                            ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ui\view.py", line 826, in to_components
+    for i in self._children:
+             ^^^^^^^^^^^^^^
+AttributeError: 'EmptyView' object has no attribute '_children'. Did you mean: 'children'?
+2025-09-06 23:30:33,364 - INFO - logging in using static token
+2025-09-06 23:30:36,392 - INFO - Shard ID None has connected to Gateway (Session ID: e0aebbd663cf0a7da3008b875d4a586e).
+2025-09-06 23:34:28,138 - INFO - logging in using static token
+2025-09-06 23:34:30,257 - INFO - Shard ID None has connected to Gateway (Session ID: 04198d65e8f712dbaeadbb6858d65f90).
+2025-09-06 23:35:08,403 - INFO - logging in using static token
+2025-09-06 23:35:10,846 - INFO - Shard ID None has connected to Gateway (Session ID: 71ddde1fb87a5d0d7810f8288d6549f5).
+2025-09-06 23:35:19,588 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 493, in MessageEvaluate
+    await message.reply(view=view)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\message.py", line 1883, in reply
+    return await self.channel.send(content, reference=self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\abc.py", line 1717, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In components.0.components.2.items.0.media.url: The referenced attachment ("attachment://image.png") was not found
+2025-09-07 00:02:14,163 - INFO - logging in using static token
+2025-09-07 00:02:17,191 - INFO - Shard ID None has connected to Gateway (Session ID: 3c91f7efa446fbe0cee3766571650227).
+2025-09-07 00:04:02,572 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 455, in MessageEvaluate
+    link = await cursor.fetchone()[0]
+                 ~~~~~~~~~~~~~~~~~^^^
+TypeError: 'coroutine' object is not subscriptable
+2025-09-07 00:16:05,082 - INFO - logging in using static token
+2025-09-07 00:16:08,630 - INFO - Shard ID None has connected to Gateway (Session ID: f89cbebdb9c2bedd05481cca3391e1a7).
+2025-09-07 00:20:19,301 - INFO - logging in using static token
+2025-09-07 00:20:23,673 - INFO - Shard ID None has connected to Gateway (Session ID: 833081fba16bf3b43c5ceddc1876478c).
+2025-09-07 00:22:00,573 - INFO - logging in using static token
+2025-09-07 00:22:03,014 - INFO - Shard ID None has connected to Gateway (Session ID: 1edcc63cf2318332f10bda878f2bcf55).
+2025-09-07 00:23:05,095 - INFO - logging in using static token
+2025-09-07 00:23:08,714 - INFO - Shard ID None has connected to Gateway (Session ID: a372e2fdad61616949620fa4c8deecb4).
+2025-09-07 00:24:25,374 - INFO - logging in using static token
+2025-09-07 00:24:27,668 - INFO - Shard ID None has connected to Gateway (Session ID: 234de81089f3d33c0d0c58327775e9e9).
+2025-09-07 00:25:38,895 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 348, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 450, in MessageEvaluate
+    view = CV2.GAGPetValueComponent(price_formatter(int(pet_value) * 1), f'{Data['weight']} kg', f'{Data['age']}', Data['name'], link, Data['pet_mutation'], classification)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Misc\sLilyComponentV2.py", line 19, in __init__
+    discord.MediaGalleryItem(
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\components.py", line 1038, in __init__
+    self.media = media
+    ^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\components.py", line 1067, in media
+    raise TypeError(f'Expected a str or UnfurledMediaItem, not {value.__class__.__name__}')
+TypeError: Expected a str or UnfurledMediaItem, not NoneType
+2025-09-07 00:31:11,428 - INFO - logging in using static token
+2025-09-07 00:31:13,940 - INFO - Shard ID None has connected to Gateway (Session ID: 4a59a7490dfdc73e8c16a2ca448a657a).
+2025-09-07 00:32:36,916 - INFO - logging in using static token
+2025-09-07 00:36:15,140 - INFO - logging in using static token
+2025-09-07 00:36:17,968 - INFO - Shard ID None has connected to Gateway (Session ID: f02c871e9dc89c3bb315cb9f17e70451).
+2025-09-07 00:42:09,329 - INFO - logging in using static token
+2025-09-07 00:42:11,989 - INFO - Shard ID None has connected to Gateway (Session ID: 8864c2c3f3fc4ceebfc4f03ef51056c3).
+2025-09-07 00:44:36,785 - INFO - logging in using static token
+2025-09-07 00:44:39,506 - INFO - Shard ID None has connected to Gateway (Session ID: 14f31fa87f963b53b449ba1ce2a7317d).
+2025-09-07 01:00:46,736 - INFO - logging in using static token
+2025-09-07 01:01:07,330 - INFO - logging in using static token
+2025-09-07 01:01:10,827 - INFO - Shard ID None has connected to Gateway (Session ID: 4cb31c5a6557f8a2e0a4bda2d671945a).

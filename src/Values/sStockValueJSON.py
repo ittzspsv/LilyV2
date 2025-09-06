@@ -1,8 +1,13 @@
 import json
-import re
-import Config.sBotDetails as Config
-from LilyAlgorthims.sTradeFormatAlgorthim import *
-from ui.sWinOrLossImageGenerator import *
+import aiosqlite
+import asyncio
+try:
+    import Config.sValueConfig as VC
+    import Config.sBotDetails as Config
+    from LilyAlgorthims.sTradeFormatAlgorthim import *
+    from ui.sWinOrLossImageGenerator import *
+except:
+    pass
 
 from PIL import Image
 
@@ -26,28 +31,28 @@ def UpdateFruitDict():
 
 UpdateFruitDict()
 
-def fetch_fruit_details(fruit_name):
-    fruit_name = fruit_name.lower()
-    
-    if fruit_name in fruit_dict:
-        fruit = fruit_dict[fruit_name]
-        
-        return fruit
-        '''return {
-            "Name": fruit["name"],
-            "Physical Value": fruit["physical_value"],
-            "Permanent Value": fruit["permanent_value"],
-            "Physical Demand": fruit["physical_demand"],
-            "Permanent Demand": fruit["permanent_demand"],
-            "Demand Type": fruit["demand_type"],
-            "Permanent Demand Type": fruit["permanent_demand_type"]
-        }'''
+async def fetch_fruit_details(fruit_name):
+    cursor = await VC.vdb.execute(
+    "SELECT * FROM BF_ItemValues WHERE LOWER(name) = ?", 
+    (fruit_name.lower(),)
+)
+    data = await cursor.fetchone()
+    await cursor.close()
+
+    if data:
+        return {
+            "name": data[0],
+            "physical_value": data[1],
+            "permanent_value": data[2],
+            "physical_demand": data[3],
+            "permanent_demand": data[4],
+            "demand_type": data[5],
+            "permanent_demand_type": data[6],
+            "category" : data[7],
+            "icon_url" : data[9]
+        }
     
     return f"Fruit '{fruit_name}' not found in database."
-
-def fetch_all_fruits():
-    return value_data
-
 
 def calculate_win_loss(my_value, opponent_value, Type=0):
     try:
@@ -74,8 +79,7 @@ def calculate_win_loss(my_value, opponent_value, Type=0):
         else:
             return 0
 
-
-def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type=[], Type=0, suggestion=0):
+async def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type=[], Type=0, suggestion=0):
     fruit_exceed_limit = 0
     if len(your_fruits) > 4 or len(their_fruits) > 4:
         fruit_exceed_limit = 1
@@ -88,7 +92,7 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
 
     # Calculate total value of your fruits
     for fruit, fruit_type in zip(your_fruits, your_fruit_type):
-        ydata = fetch_fruit_details(fruit)
+        ydata = await fetch_fruit_details(fruit)
 
         if isinstance(ydata, dict):
             fruit_type = fruit_type.lower()
@@ -97,14 +101,13 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
             else:
                 value_key = "physical_value"
 
-            refined_value = ydata[value_key].replace(",", "")
-            value = int(refined_value)
+            value = ydata[value_key]
             your_fruit_individual_values.append(value)
             total_value_of_your_fruit += value
 
     # Calculate total value of their fruits
     for fruit, fruit_type in zip(their_fruits, their_fruit_type):
-        ydata = fetch_fruit_details(fruit)
+        ydata = await fetch_fruit_details(fruit)
 
         if isinstance(ydata, dict):
             fruit_type = fruit_type.lower()
@@ -113,8 +116,7 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
             else:
                 value_key = "physical_value"
 
-            refined_value = ydata[value_key].replace(",", "")
-            value = int(refined_value)
+            value = ydata[value_key]
             their_fruit_individual_values.append(value)
             total_value_of_their_fruit += value
 
@@ -184,7 +186,6 @@ def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_fruit_type
             img = Image.open('src/ui/TooManyFruitRequests.png')
             img.resize((int(img.width * 0.7), int(img.height * 0.7)))
             return img
-
 
 def update_fruit_data_json_type(json_file_path, updated_fruits):
     with open(json_file_path, "r", encoding="utf-8") as json_file:
