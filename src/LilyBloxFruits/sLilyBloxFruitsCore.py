@@ -117,9 +117,9 @@ class TradeSuggestorWindow(discord.ui.View):
                     )
 
 async def MessageEvaluate(self, bot, message):
-        if message.guild.id == 1240215331071594536 and message.channel.id == 1362321135231959112:
-            message_id = 1407484713005744240
-            source_channel = bot.get_channel(1362321135231959112)
+        if message.guild.id == 1099482621161001113 and message.channel.id == 1409330087337398322:
+            message_id = message.id
+            source_channel = bot.get_channel(1409330087337398322)
 
             if source_channel is None:
                 return
