@@ -15,9 +15,6 @@ import LilyTicketTool.LilyTicketToolCore as LilyTTCore
 import LilyManagement.sLilyStaffManagement as LSM
 from LilyGAG.sLilyGAGStockListeners import StockWebSocket
 import LilyGAG.sLilyGAGCore as GAG
-import ui.sWantedPoster as WP
-import io
-from PIL import Image
 import logging
 
 
@@ -73,63 +70,50 @@ class MyBot(commands.Bot):
         #await bot.load_extension("LilyMiddleman.sLilyMiddlemanCommands")
         await bot.tree.sync()
 
-    async def BotStorageInitialization(self, guild):
-        base_path = f"storage/{guild.id}"
-        directories = [
-            f"storage/common/Comboes",
-            base_path,
-            f"{base_path}/modlogs",
-            f"{base_path}/botlogs",
-            f"{base_path}/configs",
-            f"{base_path}/sessions",
-            f"{base_path}/stafflogs",
-            f"{base_path}/vouches",
-            f"{base_path}/vcmutelogs",
-        ]
-
-        for directory in directories:
-            os.makedirs(directory, exist_ok=True)
-
-        config_files = {
-            f"{base_path}/configs/assignable_roles.json": {},
-            f"{base_path}/configs/configs.json" : {},
-            f"{base_path}/configs/blacklisted_mods.json": {},
-            f"{base_path}/sessions/ButtonSessionMemory.json": {},
-            f"{base_path}/configs/configs.json" : {}
-        }
-
-        for file_path, default_data in config_files.items():
-            if not os.path.exists(file_path):
-                with open(file_path, "w") as f:
-                    json.dump(default_data, f)
-                pass
-                #print(f"Created file: {file_path}")
-            else:
-                pass
-                #print(f"File exists: {file_path} — Skipped")
-        print(f"Initialized {guild.name}")
-
     async def BotInitialize(self):
         for guild in self.guilds:
-                await self.BotStorageInitialization(guild)
                 await self.MemoryButtonSetup(guild)
+        guild_ids = [(guild.id,) for guild in self.guilds]
+        await ValueConfig.cdb.executemany(
+            "INSERT OR IGNORE INTO ConfigData (guild_id) VALUES (?)",
+            guild_ids
+        )
+        await ValueConfig.cdb.commit()
 
     async def MemoryButtonSetup(self, Guild: discord.Guild):
-        ButtonSessionMemory = f"storage/{Guild.id}/sessions/ButtonSessionMemory.json"
-        if not os.path.exists(ButtonSessionMemory):
-            return
         try:
-            with open(ButtonSessionMemory, "r") as f:
-                content = f.read().strip()
-                if not content:
-                    return
-                all_views = json.loads(content)
-        except json.JSONDecodeError as e:
-            with open(ButtonSessionMemory, "w") as f:
-                f.write("[]")
+            cursor = await ValueConfig.cdb.execute(
+                "SELECT MemoryButton FROM ConfigData WHERE guild_id = ?",
+                (Guild.id,)
+            )
+            row = await cursor.fetchone()
+        except Exception as e:
+            print(f"Database error during MemoryButtonSetup: {e}")
+            return
+
+        if not row or not row[0]:
+            return
+
+        try:
+            all_views = json.loads(row[0])
+        except json.JSONDecodeError:
+            await ValueConfig.cdb.execute(
+                """
+                INSERT INTO ConfigData (guild_id, MemoryButton)
+                VALUES (?, ?)
+                ON CONFLICT(guild_id) DO UPDATE SET MemoryButton = excluded.MemoryButton
+                """,
+                (Guild.id, "[]")
+            )
+            await ValueConfig.cdb.commit()
+            return
+
+        if not all_views:
             return
 
         valid_views = []
+        bot = self
+
         for view_data in all_views:
             channel_id = view_data.get("channel_id")
             message_id = view_data.get("message_id")
@@ -141,11 +125,7 @@ class MyBot(commands.Bot):
 
             try:
                 message = await channel.fetch_message(message_id)
-            except discord.NotFound:
-                continue
-            except discord.Forbidden:
-                continue
-            except discord.HTTPException:
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                 continue
 
             view = discord.ui.View(timeout=None)
@@ -171,8 +151,19 @@ class MyBot(commands.Bot):
 
             bot.add_view(view)
             valid_views.append(view_data)
-        with open(ButtonSessionMemory, "w") as f:
-            json.dump(valid_views, f, indent=4)
+
+        try:
+            await ValueConfig.cdb.execute(
+                """
+                INSERT INTO ConfigData (guild_id, MemoryButton)
+                VALUES (?, ?)
+                ON CONFLICT(guild_id) DO UPDATE SET MemoryButton = excluded.MemoryButton
+                """,
+                (Guild.id, json.dumps(valid_views, indent=4))
+            )
+            await ValueConfig.cdb.commit()
+        except Exception as e:
+            print(f"Failed to update valid views in DB: {e}")
 
     async def ConnectDatabase(self):
         await LilyLogging.initialize()
@@ -182,11 +173,11 @@ class MyBot(commands.Bot):
 
     async def on_ready(self):
         print('Logged on as', self.user)   
+        await self.ConnectDatabase()
         await self.BotInitialize()
         await LilyTTCore.InitializeView(self)
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
-        await self.ConnectDatabase()
         #handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
         #asyncio.create_task(handler.run())
         await self.tree.sync()

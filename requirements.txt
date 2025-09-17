@@ -17,3 +17,4 @@ Unidecode
 numpy
 aiohttp
 aiofiles
+jstudio

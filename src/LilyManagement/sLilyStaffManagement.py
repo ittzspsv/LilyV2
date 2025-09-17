@@ -1,8 +1,8 @@
 import json
 import discord
 import aiosqlite
-import pandas as pd
 import asyncio
+import random
 import ast
 try:
     import Misc.sLilyComponentV2 as CS2
@@ -95,19 +95,6 @@ async def FetchStaffDetail(staff: discord.Member):
         else:
             strike_count = 0
         view = CS2.StaffDataComponent(name, role, responsibility, join_date, f"{years} years {months} months {days} days", strike_count, staff.avatar.url)
-        '''
-        embed = discord.Embed(title=name.title(), colour=0xf50000)
-        embed.add_field(name="Role", value=role, inline=False)
-        embed.add_field(name="Responsibilities", value=responsibility, inline=False)
-        embed.add_field(name="Join Date", value=join_date, inline=False)
-        embed.add_field(
-            name="Evaluated Experience In Server",
-            value=f"{years} years {months} months {days} days",
-            inline=False
-        )
-        embed.add_field(name="Strike Count", value=strike_count, inline=False)
-        embed.set_thumbnail(url=staff.avatar.url)
-        '''
         return view
 
     except Exception as e:
@@ -187,6 +174,7 @@ async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
         strike_data = ast.literal_eval(values[0][0])
 
         strike = {
+            "Strike_id" : random.randint(0, 10000),
             "reason": reason,
             "date": datetime.today().strftime("%d/%m/%Y"),
             "manager": ctx.author.id
@@ -211,7 +199,98 @@ async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
             colour=0xf50000
         )
         return embed
-    
+
+async def RemoveStrikeStaff(ctx: commands.Context, staff_id: str, strike_id: str):
+    try:
+        cursor = await sdb.execute("SELECT strikes FROM staff_data WHERE staff_id = ?", (staff_id,))
+        row = await cursor.fetchone()
+
+        if not row:
+            embed = discord.Embed(title="Staff Member Not Found", colour=0xf50000)
+            return embed
+
+        raw = row[0]
+
+        if raw is None or raw == "":
+            strikes = []
+        else:
+            try:
+                strikes = ast.literal_eval(raw)
+            except Exception:
+                try:
+                    strikes = json.loads(raw)
+                except Exception:
+                    embed = discord.Embed(
+                        title="Parse Error",
+                        description="Could not parse the strikes data for this user.",
+                        colour=0xf50000
+                    )
+                    return embed
+
+        if not isinstance(strikes, list):
+            strikes = []
+
+        try:
+            target_id = int(strike_id)
+        except Exception:
+            embed = discord.Embed(
+                title="Invalid Strike ID",
+                description="`strike_id` must be an integer (or numeric string).",
+                colour=0xf50000
+            )
+            return embed
+
+        def is_match(s):
+            if not isinstance(s, dict):
+                return False
+            sid = s.get("Strike_id")
+            try:
+                return int(sid) == target_id
+            except Exception:
+                return str(sid) == str(target_id)
+
+        matches = [s for s in strikes if is_match(s)]
+        if not matches:
+            embed = discord.Embed(
+                title="Strike Not Found",
+                description=f"No strike with ID `{target_id}` found for <@{staff_id}>.",
+                colour=0xf50000
+            )
+            return embed
+
+        new_strikes = [s for s in strikes if not is_match(s)]
+        removed_count = len(matches)
+
+        await sdb.execute(
+            "UPDATE staff_data SET strikes = ? WHERE staff_id = ?",
+            (str(new_strikes), staff_id)
+        )
+        await sdb.commit()
+
+        first = matches[0]
+        reason = first.get("reason", "N/A")
+        date = first.get("date", "N/A")
+        manager = first.get("manager", "N/A")
+
+        manager_mention = f"<@{manager}>" if manager not in (None, "N/A") else "N/A"
+
+        embed = discord.Embed(
+            description=f"✅ Removed `{removed_count}` strike(s) from <@{staff_id}> (Strike ID: `{target_id}`)",
+            colour=0x00ff00
+        )
+        embed.add_field(name="Reason", value=str(reason), inline=True)
+        embed.add_field(name="Date", value=str(date), inline=True)
+        embed.add_field(name="Manager", value=manager_mention, inline=True)
+
+        return embed
+
+    except Exception as e:
+        embed = discord.Embed(
+            title=f"Exception: {e}",
+            colour=0xf50000
+        )
+        return embed    
+
 async def ListStrikes(staff_id: str):
     try:
         async with sdb.execute("SELECT strikes FROM staff_data WHERE staff_id = ?", (staff_id,)) as cursor:
@@ -236,6 +315,7 @@ async def ListStrikes(staff_id: str):
             embed.add_field(
                 name=f"Strike {idx}",
                 value=(
+                    f'**Strike ID : {strike['Strike_id']}**\n'
                     f"**Reason     : {strike['reason']}**\n"
                     f"**Date       : {strike['date']}**\n"
                     f"**Manager    : <@{strike['manager']}>**"

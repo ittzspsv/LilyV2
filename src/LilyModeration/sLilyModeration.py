@@ -347,13 +347,8 @@ def MuteParser(duration: str):
         raise ValueError(f"Unsupported unit: {unit}")
 
 async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = []):
-    except_limit_ban_ids = await Config.load_exceptional_ban_ids(ctx)
     author_role_ids = [role.id for role in ctx.author.roles]
     valid_limit_roles = [role_id for role_id in author_role_ids if role_id in Config.limit_Ban_details]
-
-    if ctx.author.id in except_limit_ban_ids:
-        await ctx.send(embed=SimpleEmbed("You are restricted from using this command"))
-        return
 
     if not valid_limit_roles:
         await ctx.send(embed=SimpleEmbed("You don't have permission to perform a limited ban."))
@@ -362,7 +357,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
     try:
         user_id = user_input.id if isinstance(user_input, (discord.User, discord.Member)) else int(user_input)
     except ValueError:
-        await ctx.send(embed=SimpleEmbed("Not valid user id"))
+        await ctx.send(embed=SimpleEmbed("Invalid user id"))
         return
 
     member_obj = ctx.guild.get_member(user_id)

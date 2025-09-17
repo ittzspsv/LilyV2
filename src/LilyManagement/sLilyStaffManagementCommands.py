@@ -45,6 +45,19 @@ class LilyManagement(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.StaffManagerRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @commands.hybrid_command(name='removestrike', description='strikes a staff with a specified reason')
+    async def removestrike(self, ctx: commands.Context, id: str, strike_id: str):
+        if ctx.guild.id not in [970643838047760384, 1240215331071594536]:
+            await ctx.send("Server Change!")
+            return
+        id = id.replace("<@", "").replace(">", "")
+        try:
+            await ctx.send(embed=await smLily.RemoveStrikeStaff(ctx, id, strike_id))
+        except Exception as e:
+            await ctx.send(f"Exception {e}")
+
+
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
     @commands.hybrid_command(name='strikes', description='shows strikes for a concurrent staff')
     async def strikes(self, ctx: commands.Context, id: str):

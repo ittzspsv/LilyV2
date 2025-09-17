@@ -4,6 +4,7 @@ import discord
 import os
 import json
 import LilyLogging.sLilyLogging as LilyLogging
+import Config.sValueConfig as ValueConfig
 
 from discord import SelectOption, Interaction, ui
 
@@ -57,22 +58,25 @@ class LilyEmbed(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def create_formatted_embed(self, ctx:commands.Context, channel_to_send: discord.TextChannel, link: str = "", simulate_as:discord.Member=None):
             await ctx.defer()
-
-            ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
             try:
-                async with aiohttp.ClientSession() as session:
-                    try:
-                        async with session.get(link) as response:
-                            if response.status != 200:
-                                await ctx.send(f"HTTP Exception: {response.status}")
-                                return
-                            config = await response.text()
-                    except aiohttp.ClientError as e:
-                        await ctx.send(f"Error Fetching Config: {str(e)}")
-                        return
+                try:
+                    async with aiohttp.ClientSession() as session:
+                        try:
+                            async with session.get(link) as response:
+                                if response.status != 200:
+                                    await ctx.send(f"HTTP Exception: {response.status}")
+                                    return
+                                config = await response.text()
+                        except aiohttp.ClientError as e:
+                            await ctx.send(f"Error Fetching Config: {str(e)}")
+                            return
+
+                except Exception as e:
+                    await ctx.send(f"Download Exception: {str(e)}")
+                    return
 
                 try:
-                    if simulate_as == None:
+                    if simulate_as is None:
                         embeds, buttons = sLilyEmbed.EmbedParser(config, ctx.author)
                     else:
                         embeds, buttons = sLilyEmbed.EmbedParser(config, simulate_as)
@@ -91,7 +95,9 @@ class LilyEmbed(commands.Cog):
                             await interaction.response.send_message(embed=embed, ephemeral=True)
                         except Exception as e:
                             try:
-                                await interaction.response.send_message(f"Displaying Embed Failure: {str(e)}", ephemeral=True)
+                                await interaction.response.send_message(
+                                    f"Displaying Embed Failure: {str(e)}", ephemeral=True
+                                )
                             except:
                                 pass
 
@@ -110,13 +116,21 @@ class LilyEmbed(commands.Cog):
                         message = await channel_to_send.send(embeds=embeds, view=view)
                         await ctx.send("Embeds sent successfully.")
                     elif buttons:
-                        message = await channel_to_send.send(content="Use the buttons to explore the guide:", view=view)
+                        message = await channel_to_send.send(
+                            content="Use the buttons to explore the guide:", view=view
+                        )
                         await ctx.send("Embeds sent successfully.")
                     else:
-                        await ctx.send("No embeds or buttons were found in the config. Please check your format.", ephemeral=True)
+                        await ctx.send(
+                            "No embeds or buttons were found in the config. Please check your format.",
+                            ephemeral=True
+                        )
                         return
                 except Exception as e:
-                    await ctx.send(f"Failed to send message to the specified channel: {str(e)}", ephemeral=True)
+                    await ctx.send(
+                        f"Failed to send message to the specified channel: {str(e)}",
+                        ephemeral=True
+                    )
                     return
 
                 persistent_data = {
@@ -126,23 +140,37 @@ class LilyEmbed(commands.Cog):
                 }
 
                 try:
-                    if os.path.exists(ButtonSessionMemory):
-                        with open(ButtonSessionMemory, "r") as f:
-                            content = f.read().strip()
-                            all_views = json.loads(content) if content else []
+                    cursor = await ValueConfig.cdb.execute(
+                        "SELECT MemoryButton FROM ConfigData WHERE guild_id = ?",
+                        (ctx.guild.id,)
+                    )
+                    row = await cursor.fetchone()
+                    if row and row[0]:
+                        try:
+                            all_views = json.loads(row[0])
+                        except json.JSONDecodeError:
+                            all_views = []
                     else:
                         all_views = []
-                except (json.JSONDecodeError, OSError):
-                    all_views = []
 
-                all_views.append(persistent_data)
+                    all_views.append(persistent_data)
 
-                try:
-                    with open(ButtonSessionMemory, "w") as f:
-                        json.dump(all_views, f, indent=4)
+                    await ValueConfig.cdb.execute(
+                        """
+                        INSERT INTO ConfigData (guild_id, MemoryButton)
+                        VALUES (?, ?)
+                        ON CONFLICT(guild_id) DO UPDATE SET MemoryButton = excluded.MemoryButton
+                        """,
+                        (ctx.guild.id, json.dumps(all_views, indent=4))
+                    )
+                    await ValueConfig.cdb.commit()
+
                 except Exception as e:
                     try:
-                        await ctx.send(f"Failed to save Button Session. You may have to post this embed again if program got restarted: {str(e)}", ephemeral=True)
+                        await ctx.send(
+                            f"Failed to save Button Session to database: {str(e)}",
+                            ephemeral=True
+                        )
                     except:
                         pass
 
@@ -155,31 +183,40 @@ class LilyEmbed(commands.Cog):
     @PermissionEvaluator(RoleAllowed=Config.DeveloperRoles + Config.OwnerRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name="update_formatted_embed", description="Update an existing formatted embed with a new config rule data")
-    async def update_formatted_embed(self, ctx:commands.Context, link: str, simulate_as:discord.Member=None):
+    async def update_formatted_embed(self, ctx: commands.Context, link: str, simulate_as: discord.Member = None):
         await ctx.defer()
 
-        ButtonSessionMemory = f"storage/{ctx.guild.id}/sessions/ButtonSessionMemory.json"
+        try:
+            cursor = await ValueConfig.cdb.execute(
+                "SELECT MemoryButton FROM ConfigData WHERE guild_id = ?",
+                (ctx.guild.id,)
+            )
+            row = await cursor.fetchone()
+        except Exception as e:
+            await ctx.send(f"Database error loading sessions: {str(e)}", ephemeral=True)
+            return
 
-        if not os.path.exists(ButtonSessionMemory):
+        if not row or not row[0]:
             await ctx.send("No previous sessions found.", ephemeral=True)
             return
 
         try:
-            with open(ButtonSessionMemory, "r") as f:
-                all_views = json.load(f)
+            all_views = json.loads(row[0])
         except json.JSONDecodeError:
-            await ctx.send("Session memory file is corrupted.")
+            await ctx.send("Session memory is corrupted.", ephemeral=True)
             return
 
         if not all_views:
-            await ctx.send("No saved embed sessions to update.")
+            await ctx.send("No saved embed sessions to update.", ephemeral=True)
             return
+
         bot = self.bot
+
         class SessionSelect(ui.Select):
             def __init__(self, sessions):
                 self.bot = bot
                 options = [
-                    SelectOption(
+                    discord.SelectOption(
                         label=f"Message ID: {s['message_id']}",
                         description=f"Channel ID: {s['channel_id']}",
                         value=str(i)
@@ -187,7 +224,7 @@ class LilyEmbed(commands.Cog):
                 ]
                 super().__init__(placeholder="Choose Embed Session to Update", options=options)
 
-            async def callback(self, interaction: Interaction):
+            async def callback(self, interaction: discord.Interaction):
                 index = int(self.values[0])
                 session = all_views[index]
 
@@ -208,7 +245,7 @@ class LilyEmbed(commands.Cog):
                         new_config = await response.text()
 
                 try:
-                    if simulate_as == None:
+                    if simulate_as is None:
                         new_embeds, new_buttons = sLilyEmbed.EmbedParser(new_config, ctx.author)
                     else:
                         new_embeds, new_buttons = sLilyEmbed.EmbedParser(new_config, simulate_as)
@@ -222,8 +259,8 @@ class LilyEmbed(commands.Cog):
                 for idx, (button, embed) in enumerate(new_buttons):
                     button.custom_id = f"guide_button_{message.id}_{idx}"
 
-                    async def callback(interaction: Interaction, embed=embed):
-                        await interaction.response.send_message(embed=embed, ephemeral=True)
+                    async def callback(inner_interaction: discord.Interaction, embed=embed):
+                        await inner_interaction.response.send_message(embed=embed, ephemeral=True)
 
                     button.callback = callback
                     new_view.add_item(button)
@@ -246,9 +283,21 @@ class LilyEmbed(commands.Cog):
                 except Exception as e:
                     await interaction.followup.send(f"Failed to update message: {str(e)}", ephemeral=True)
                     return
+
                 all_views[index]["buttons"] = updated_buttons
-                with open(ButtonSessionMemory, "w") as f:
-                    json.dump(all_views, f, indent=4)
+                try:
+                    await ValueConfig.cdb.execute(
+                        """
+                        INSERT INTO ConfigData (guild_id, MemoryButton)
+                        VALUES (?, ?)
+                        ON CONFLICT(guild_id) DO UPDATE SET MemoryButton = excluded.MemoryButton
+                        """,
+                        (ctx.guild.id, json.dumps(all_views, indent=4))
+                    )
+                    await ValueConfig.cdb.commit()
+                except Exception as e:
+                    await interaction.followup.send(f"Failed to save updated session data: {str(e)}", ephemeral=True)
+                    return
 
                 await interaction.followup.send("Embed updated successfully.", ephemeral=True)
 

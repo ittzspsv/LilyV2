@@ -6,12 +6,15 @@ import LilyAlgorthims.sFruitDetectionAlgorthim as FDA
 import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
 import LilyAlgorthims.sStockProcessorAlgorthim as SPA
 import Combo.LilyComboManager as LCM
+import ui.sStockGenerator as SG
 import Config.sBotDetails as Config
 import LilyAlgorthims.sTradeFormatAlgorthim as TFA
 from Stock.sCurrentStock import *
 import Values.sStockValueJSON as StockValueJSON
+import Config.sValueConfig as LilyConfig
 from Misc.sFruitImageFetcher import *
 import Misc.sLilyComponentV2 as CV2
+import ui.sFruitValueGenerator as FVG
 import ui.sComboImageGenerator as CIG
 
 import re
@@ -117,15 +120,21 @@ class TradeSuggestorWindow(discord.ui.View):
                     )
 
 async def MessageEvaluate(self, bot, message):
-        if message.guild.id == 1099482621161001113 and message.channel.id == 1417675004899754014:
-            message_id = message.id
-            source_channel = bot.get_channel(1417675004899754014)
-
-            if source_channel is None:
-                return
+        if message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.stock_fetch_channel_id:
+            try:
+                cursor = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'StockImage'")
+                row = await cursor.fetchone()
+                use_image_mode = (row and row[0] == 1)
+            except Exception as e:
+                print(f"DB error reading GlobalConfig: {e}")
+                use_image_mode = False
 
             try:
-                fetched_message = await source_channel.fetch_message(message_id)
+                source_channel = bot.get_channel(Config.stock_fetch_channel_id)
+                if source_channel is None:
+                    return
+
+                fetched_message = await source_channel.fetch_message(1417812924071673856)
                 if not fetched_message.embeds:
                     return
             except Exception as e:
@@ -133,132 +142,129 @@ async def MessageEvaluate(self, bot, message):
                 return
 
             embeded_string = ""
-
             for embed in fetched_message.embeds:
                 title = embed.title or "-"
                 description = embed.description or "-"
                 embeded_string += f"Title: {title} Description: {description}"
 
             Title, Fruit_Items = SPA.StockMessageProcessor(embeded_string)
-            view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
+
 
             CurrentGoodFruits = []
+            for key in Fruit_Items.keys():
+                if ("normal" in Title.lower() and key in good_fruits) or (key in m_good_fruits):
+                    CurrentGoodFruits.append(key)
 
-            for keys, values in Fruit_Items.items():
-                if "normal" in title.lower():
-                    if keys in good_fruits:
-                        CurrentGoodFruits.append(keys)
-                else:
-                    if keys in m_good_fruits:
-                        CurrentGoodFruits.append(keys)
+            stock_file = None
+            stock_view = None
 
-            for guild in bot.guilds:
+            if use_image_mode:
                 try:
-                    channel_data = Config.load_channel_config(None, guild.id, 1)
-                    if "stock_update_channel_id" not in channel_data:
-                        continue
+                    img = SG.StockImageGenerator(Fruit_Items, Title.lower())
+                    buffer = io.BytesIO()
+                    img.save(buffer, format="PNG")
+                    buffer.seek(0)
+                    stock_file = discord.File(fp=buffer, filename="stock_image.png")
+                except Exception as e:
+                    print(f"Error generating stock image: {e}")
+                    return
+            else:
+                stock_view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
+                stock_file = discord.File("src/ui/Border.png", filename="border.png")
 
-                    stock_update_channel_id = channel_data["stock_update_channel_id"]
-                    stock_update_channel = bot.get_channel(stock_update_channel_id)
+            try:
+                cursor = await LilyConfig.cdb.execute(
+                    "SELECT guild_id, bf_stock_channel_id FROM ConfigData WHERE bf_stock_channel_id IS NOT NULL"
+                )
+                rows = await cursor.fetchall()
+            except Exception as e:
+                print(f"DB error getting ConfigData: {e}")
+                return
 
-                    if stock_update_channel is None:
-                        continue
-                    stock_message = await stock_update_channel.send(view=view, file=discord.File("src/ui/Border.png", filename="border.png"))
+            if not rows:
+                return
+
+            for guild_id, stock_update_channel_id in rows:
+                guild = bot.get_guild(guild_id)
+                if not guild:
+                    continue
+
+                channel = bot.get_channel(stock_update_channel_id)
+                if not channel:
+                    continue
+
+                try:
+                    stock_message = await channel.send(file=stock_file, view=stock_view)
                     await stock_message.add_reaction("🇼")
                     await stock_message.add_reaction("🇱")
 
                     if CurrentGoodFruits:
-                        role = discord.utils.get(guild.roles, name='Stock Ping')
+                        role = discord.utils.get(guild.roles, name="Stock Ping")
                         if role:
-                            await stock_update_channel.send(
+                            await channel.send(
                                 f"<@&{role.id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!"
                             )
-
                 except Exception as e:
-                    print(f"Error posting stock to guild {guild.id}: {e}")        
-
+                    print(f"Error posting stock to guild {guild.id}: {e}")
         elif re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
-            ctx = await bot.get_context(message)
-            channel_data = Config.load_channel_config(ctx)
-            fruit_values_channel_sid = channel_data.get("fruit_values_channel_id", 0)
-            if not fruit_values_channel_sid:
-                return
-
-            fChannel = self.get_channel(fruit_values_channel_sid)
-            if message.channel != fChannel:
-                return
-
-            match = re.search(r"\b(?:fruit value of|value of|value)\s+(.+)", message.content.lower())
-            if not match:
-                await message.delete()
-                return
-
-            item_name = match.group(1).strip()
-            item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
-
-            cursor = await VC.vdb.execute("SELECT name FROM BF_ItemValues")
-            rows = await cursor.fetchall()
-            fruit_names = [row[0].lower() for row in rows]
-            fruit_names = sorted(fruit_names, key=len, reverse=True)
-            fruit_set = set(fruit_names)
-
-            fruit_names, alias_map = await StockValueJSON.get_all_fruit_names()
-            item_name = await StockValueJSON.MatchFruitSet(item_name, fruit_set, alias_map)
-            item_name_capital = item_name.title() if item_name else ""
-
-            jsonfruitdata = await StockValueJSON.fetch_fruit_details(item_name)
-            if not isinstance(jsonfruitdata, dict):
-                await message.delete()
-                return
-
-            embed = discord.Embed(
-                title=f"{item_name_capital}",
-                colour=Config.embed_color_codes.get(jsonfruitdata.get('category'), 0xFFFFFF)
-            )
-            embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
-
-            embed.add_field(
-                name=f"{emoji_data['BulletIn'][0]}Physical Value",
-                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['physical_value']:,}",
-                inline=False
-            )
-            embed.add_field(
-                name=f"{emoji_data['BulletIn'][0]}Physical Demand",
-                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['physical_demand']}",
-                inline=False
-            )
-
-            if jsonfruitdata.get('permanent_value') is not None:
-                embed.add_field(
-                    name=f"{emoji_data['BulletIn'][0]}Permanent Value",
-                    value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['permanent_value']:,}",
-                    inline=False
+            status_msg = await message.reply("Thinking...")
+            try:
+                ctx = await bot.get_context(message)
+                cursor = await LilyConfig.cdb.execute(
+                    "SELECT bf_fruit_value_channel_id FROM ConfigData WHERE guild_id = ?", 
+                    (ctx.guild.id,)
                 )
-            if jsonfruitdata.get('permanent_demand'):
-                embed.add_field(
-                    name=f"{emoji_data['BulletIn'][0]}Permanent Demand",
-                    value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['permanent_demand']}",
-                    inline=False
-                )
+                row = await cursor.fetchone()
+                if not row or not row[0]:
+                    return
 
-            embed.add_field(
-                name=f"{emoji_data['BulletIn'][0]}Demand Type",
-                value=f"{emoji_data['SubEntries'][1]}{jsonfruitdata['demand_type']}",
-                inline=False
-            )
+                fChannel = self.get_channel(int(row[0]))
+                if message.channel != fChannel:
+                    return
 
-            if Config.fruit_value_embed_type == 0:
-                embed.set_image(url=rows[1])
-            else:
-                embed.set_thumbnail(url=jsonfruitdata['icon_url'])
+                match = re.search(r"\b(?:fruit value of|value of|value)\s+(.+)", message.content.lower())
+                if not match:
+                    await message.delete()
+                    return
 
-            embed.add_field(
-                name="",
-                value=f"[{Config.server_name}]({Config.server_invite_link})",
-                inline=False
-            )
+                item_name = match.group(1).strip()
+                item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
 
-            await message.reply(embed=embed)
+                cursor = await VC.vdb.execute("SELECT name FROM BF_ItemValues")
+                rows = await cursor.fetchall()
+                fruit_names = [row[0].lower() for row in rows]
+                fruit_names = sorted(fruit_names, key=len, reverse=True)
+                fruit_set = set(fruit_names)
+
+                fruit_names, alias_map = await StockValueJSON.get_all_fruit_names()
+                item_name = await StockValueJSON.MatchFruitSet(item_name, fruit_set, alias_map)
+                item_name_capital = item_name.title() if item_name else ""
+
+                jsonfruitdata = await StockValueJSON.fetch_fruit_details(item_name)
+                if not isinstance(jsonfruitdata, dict):
+                    await message.delete()
+                    return
+
+                overload_data = {
+                    "fruit_name": item_name_capital,
+                    "physical_value": jsonfruitdata['physical_value'],
+                    "permanent_value": jsonfruitdata['permanent_value'],
+                    "value": jsonfruitdata['physical_value'],
+                    "demand": jsonfruitdata['physical_demand'],
+                    "demand_type": jsonfruitdata['demand_type']
+                }
+
+                img = await FVG.GenerateValueImage(overload_data)
+                buffer = io.BytesIO()
+                img.save(buffer, format="PNG", optimize=True)
+                buffer.seek(0)
+
+                file = discord.File(fp=buffer, filename="trade_result.png")
+
+                await status_msg.edit(content=None, attachments=[file])
+
+            except Exception as e:
+                await status_msg.edit(content=f'Exception: {e}')
 
         elif await TFA.is_valid_trade_format(message.content.lower()): 
             lowered_message = message.content.lower()
@@ -343,12 +349,12 @@ async def MessageEvaluate(self, bot, message):
 
                 else:
                     ctx = await bot.get_context(message)
-                    channel_data = Config.load_channel_config(ctx)
-                    if "w_or_l_channel_id" in channel_data:
-                            w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
+                    cursor = await LilyConfig.cdb.execute("SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
+                    row = await cursor.fetchone()
+                    if row and row[0]:
+                        w_or_l_channel = self.get_channel(row[0])
                     else:
                         return
-                    w_or_l_channel = self.get_channel(w_or_l_channel_sid)
                     if message.channel == w_or_l_channel:
                         status_msg = await message.reply("Thinking...")
 
@@ -372,22 +378,12 @@ async def MessageEvaluate(self, bot, message):
         elif await TFA.is_valid_trade_suggestor_format(message.content.lower()): 
             your_fruits1, your_fruit_types1, garbage_type, garbage_type1 = await FDA.extract_trade_details(message.content)
             ctx = await bot.get_context(message)
-            channel_data = Config.load_channel_config(ctx)
-            _w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
-            if message.channel == self.get_channel(_w_or_l_channel_sid):
-                view = TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
-
-                embed = discord.Embed(title="Trade Suggestion Configuration",description="",color=discord.Color.red())
-                
-                embed.add_field(name="• Customize your Suggestor Settings, Then Click Suggest", value="")
-
-                await message.reply(embed=embed, view=view)
-
-        elif FDAE.is_valid_trade_suggestor_sequence(message.content.lower()):
-            your_fruits1, your_fruit_types1, their_fruits1, their_fruits_types1 = FDAE.extract_fruit_trade(message.content, emoji_id_to_name)
-            ctx = await bot.get_context(message)
-            channel_data = Config.load_channel_config(ctx)
-            _w_or_l_channel_sid = channel_data.get("w_or_l_channel_id", 0)
+            cursor = await LilyConfig.cdb.execute("SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
+            row = await cursor.fetchone()
+            if row and row[0]:
+                        _w_or_l_channel_sid = self.get_channel(row[0])
+            else:
+                        return
             if message.channel == self.get_channel(_w_or_l_channel_sid):
                 view = TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
 
@@ -551,4 +547,3 @@ async def MessageEvaluate(self, bot, message):
                             await message.reply(f"Exception {e}")
                     else:
                         pass
-

@@ -30,7 +30,6 @@ def format_value(val):
     else:
         return str(value)
 
-
 def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm"):
     draw = ImageDraw.Draw(img)
     glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
@@ -43,7 +42,6 @@ def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm
     img.paste(blurred_glow, (0, 0), blurred_glow)
 
     draw.text(position, text, font=font, fill=text_color, anchor=anchor)
-
 
 def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt", stretch_height=1.0):
     temp_img = Image.new("RGBA", (1000, 500), (0, 0, 0, 0))
@@ -77,8 +75,6 @@ def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt"
         y -= text_height
 
     image.paste(gradient, (int(x), int(y)), gradient)
-
-
 
 def draw_gradient_bar(image, x, y, width, height, percent, color_start, color_end, bg_color=(40, 40, 40, 180), stretch_ratio=0.5):
     draw = ImageDraw.Draw(image)

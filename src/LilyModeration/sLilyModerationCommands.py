@@ -187,38 +187,5 @@ class LilyModeration(commands.Cog):
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles)
-    @commands.hybrid_command(name="blacklist_user", description="Blacklist a user ID from using limited ban command.")
-    async def blacklist_user(self, ctx: commands.Context, user: discord.Member):
-        current_ids = await Config.load_exceptional_ban_ids(ctx)
-
-        if user.id in current_ids:
-            await ctx.send(embed=mLily.SimpleEmbed("User is already blacklisted"))
-            return
-        if user.id in Config.ids:
-            await ctx.send(embed=mLily.SimpleEmbed(f"you can't use my commands against me {ctx.author.mention}"))
-            return
-
-        current_ids.append(user.id)
-        await Config.save_exceptional_ban_ids(ctx, current_ids)
-
-        await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> Got Blacklisted"))
-        await LilyLogging.WriteLog(ctx, ctx.author.id, f"has Blacklisted <@{user.id}> from using **Limited Bans**")
-
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles)
-    @commands.hybrid_command(name="unblacklist_user", description="Remove a user ID from the limited ban blacklist.")
-    async def unblacklist_user(self, ctx: commands.Context, user: discord.Member):
-        current_ids = await Config.load_exceptional_ban_ids(ctx)
-
-        if user.id not in current_ids:
-            await ctx.send(embed=mLily.SimpleEmbed("User is not blacklisted."))
-            return
-
-        current_ids.remove(user.id)
-        await Config.save_exceptional_ban_ids(ctx, current_ids)
-
-        await ctx.send(embed=mLily.SimpleEmbed(f"<@{user.id}> has been removed from the blacklist."))
-        await LilyLogging.WriteLog(ctx, ctx.author.id, f"has removed <@{user.id}> from the **Limited Bans** blacklist.")
-
 async def setup(bot):
     await bot.add_cog(LilyModeration(bot))

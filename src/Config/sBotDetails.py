@@ -120,7 +120,7 @@ server_invite_link = "https://discord.com/invite/bloxtrade"
 fruit_value_embed_type = 1
 
 # Port system (0 = test environment, 1 = production environment)
-port = 0 # Currently set to Production Server
+port = 1 # Currently set to Production Server
 meta_enable = 0
 engagement = 0
 
@@ -165,6 +165,10 @@ if port == 0:
 
     #GUILD REFERENCE
     GUILD_ID = 1240215331071594536
+
+    #Core Channel Config
+    stock_fetch_guild_id = 1240215331071594536
+    stock_fetch_channel_id = 1362321135231959112
 
 else:
     # PRODUCTION SERVER SETTINGS (BLOXTRADE)
@@ -214,6 +218,10 @@ else:
     #GUILD REFERENCE
     GUILD_ID = 970643838047760384
 
+    #Core Channel Config
+    stock_fetch_guild_id = 1099482621161001113
+    stock_fetch_channel_id = 1417675004899754014
+
 # Embed colors based on item type
 embed_color_codes = {
     "common": 0xa1a4a5,
@@ -238,7 +246,7 @@ staff_manager_role_id = 1365324107947970700
 #ROLES
 
 async def update_config_data():
-    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles,seed_gear_stock_channel_id, eggstock_channel_id,cosmeticsstock_channel_id,weatherupdate_channel_id,GUILD_ID, eventshop_channel_id, MiddlemanRoles
+    global ids, owner_ids, trusted_moderator_ids, staff_manager_ids, limit_Ban_details, StaffRoles, TrustedStaffRoles, StaffManagerRoles, DeveloperRoles, OwnerRoles, BlacklistedRoles,seed_gear_stock_channel_id, eggstock_channel_id,cosmeticsstock_channel_id,weatherupdate_channel_id,GUILD_ID, eventshop_channel_id, MiddlemanRoles, stock_fetch_guild_id, stock_fetch_channel_id
     url = 'https://ittzspsv.github.io/LilyV2-Configs/LilyConfig.json'
 
     async with aiohttp.ClientSession() as session:
@@ -269,6 +277,10 @@ async def update_config_data():
 
                 #GUILD REFERENCE
                 GUILD_ID = int(data['Guilds']['GAGGuildID'])
+
+                #Stock fetch reference
+                stock_fetch_guild_id = int(data['StockUpdates']['stock_fetch_guild_id'])
+                stock_fetch_channel_id = int(data['StockUpdates']['stock_fetch_channel_id'])
 
 
                 return "Success"

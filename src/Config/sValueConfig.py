@@ -2,6 +2,8 @@ import asyncio
 import aiosqlite
 
 vdb = None
+cdb = None
 async def initialize():
-    global vdb
-    vdb = await aiosqlite.connect("src/Config/JSONData/ValueData.db")
+    global vdb, cdb
+    vdb = await aiosqlite.connect("storage/configs/ValueData.db")
+    cdb = await aiosqlite.connect("storage/configs/Configs.db")

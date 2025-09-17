@@ -147,8 +147,9 @@ class LilyBloxFruits(commands.Cog):
 
             if row:
                 url = row[0]
-                await FID.DownloadImage(name, "src/ui/fruit_icons", url)
-                await ctx.send(f"Image '{name}' updated successfully!")
+                result = await FID.DownloadImage(name, "src/ui/fruit_icons", url)
+                if result:
+                    await ctx.send(f"Image '{name}' updated successfully!")
             else:
                 await ctx.send("Row Not Found Exception")
 
