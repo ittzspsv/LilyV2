@@ -205,9 +205,10 @@ class LilyUtility(commands.Cog):
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
     @commands.hybrid_command(name='set_stock_type', description='stock type 0 = embed; 1 = image')
     async def set_stock_type(self, ctx:commands.Context, type:int):
-        await ValueConfig.cdb.execute("UPDATE stock_config SET value = ? WHERE key = ?", (type, "StockImage"))
+        await ValueConfig.cdb.execute("UPDATE GlobalConfigs SET value = ? WHERE key = ?", (type, "StockImage"))
         await ValueConfig.cdb.commit()
-        await ctx.send(f"Setted Stock Type to {type}")
+        addltext = "Image" if type == 1 else "Embed"
+        await ctx.send(f"Stock Type set to {addltext}")
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

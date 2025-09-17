@@ -134,7 +134,7 @@ async def MessageEvaluate(self, bot, message):
                 if source_channel is None:
                     return
 
-                fetched_message = await source_channel.fetch_message(1417812924071673856)
+                fetched_message = await source_channel.fetch_message(message.id)
                 if not fetched_message.embeds:
                     return
             except Exception as e:
