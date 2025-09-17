@@ -362,7 +362,7 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"So fast Try after {error.retry_after:.1f} seconds.")
     else:
-        await ctx.send(f"Exception {error}")
+        pass
 
 @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
 @bot.command()
