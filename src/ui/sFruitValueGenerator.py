@@ -142,6 +142,39 @@ async def GenerateValueImage(data, output="card.png"):
     else:
         print(f"[WARN] Missing icon for {fruit_name}")
 
+    start_x = 360
+    start_y = 280
+    row_gap = 95
+
+    def row(label, val, y, glow_color=(0, 255, 120), text_color=(255, 255, 255)):
+        draw_gradient_text(
+            canvas, (start_x, y), label.upper(),
+            label_font, [(255, 150, 255), (180, 80, 255)], anchor="lm"
+        )
+        draw_neon_text(
+            canvas, (start_x, y + 38), val, label_font,
+            glow_color=glow_color, text_color=text_color, anchor="lm"
+        )
+
+    row("Physical Value", format_currency(physical_value),
+        start_y, glow_color=(0, 255, 120), text_color=(200, 255, 200))
+
+    row("Permanent Value", format_currency(permanent_value),
+        start_y + row_gap, glow_color=(0, 255, 120), text_color=(200, 255, 200))
+
+    if value_amount:
+        row("Value", format_currency(value_amount),
+            start_y + row_gap * 2, glow_color=(255, 100, 180), text_color=(255, 180, 220))
+        offset = 3
+    else:
+        offset = 2
+
+    row("Demand", str(demand),
+        start_y + row_gap * offset, glow_color=(255, 200, 50), text_color=(255, 220, 150))
+
+    if demand_type:
+        row("Demand Type", demand_type.upper(),
+            start_y + row_gap * (offset + 1), glow_color=(255, 200, 50), text_color=(255, 220, 150))
     img = canvas.convert("RGB")
     img_resized = img.resize((int(img.width * 0.7), int(img.height * 0.7)))
     return img_resized
