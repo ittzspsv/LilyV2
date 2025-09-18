@@ -84,7 +84,6 @@ def get_icon_path(folder, fruit_name):
         if os.path.exists(candidate):
             return candidate
 
-
     fruit_lower = fruit_name.lower()
     for f in os.listdir(folder):
         name, ext = os.path.splitext(f)
@@ -92,7 +91,6 @@ def get_icon_path(folder, fruit_name):
             return os.path.join(folder, f)
 
     return None
-
 
 async def GenerateValueImage(data, output="card.png"):
     fruit_name = data.get("fruit_name", "UNKNOWN")
@@ -109,7 +107,6 @@ async def GenerateValueImage(data, output="card.png"):
 
     big_font = load_font(FONT_PATH, 46)
     label_font = load_font(FONT_PATH, 32)
-
 
     icon_file = get_icon_path(ITEM_IMAGE_FOLDER, fruit_name)
     if icon_file:
@@ -143,25 +140,26 @@ async def GenerateValueImage(data, output="card.png"):
         print(f"[WARN] Missing icon for {fruit_name}")
 
 
+    gradient_colors = [(150, 180, 255), (50, 80, 255)]
     draw_gradient_text(
-canvas,
-(180, 520),
-fruit_name.upper(),
-big_font,
-gradient_colors=gradient_colors,
-anchor="mm",
-stretch_height=1.0
-)
+        canvas,
+        (180, 520),
+        fruit_name.upper(),
+        big_font,
+        gradient_colors=gradient_colors,
+        anchor="mm",
+        stretch_height=1.0
+    )
+    draw_neon_text(
+        canvas,
+        (180, 520),
+        fruit_name.upper(),
+        big_font,
+        glow_color=(150, 180, 255, 100),
+        text_color=(255, 255, 255),
+        anchor="mm"
+    )
 
-draw_neon_text(
-canvas,
-(180, 520),
-fruit_name.upper(),
-big_font,
-glow_color=(150, 180, 255, 100),
-text_color=(255, 255, 255),
-anchor="mm"
-)
     start_x = 360
     start_y = 280
     row_gap = 95
@@ -195,6 +193,7 @@ anchor="mm"
     if demand_type:
         row("Demand Type", demand_type.upper(),
             start_y + row_gap * (offset + 1), glow_color=(255, 200, 50), text_color=(255, 220, 150))
+
     img = canvas.convert("RGB")
-    img_resized = img.resize((int(img.width * 0.7), int(img.height * 0.7)))
+    img_resized = img.resize((int(img.width * 0.7), int(img.height * 0.7)), Image.Resampling.LANCZOS)
     return img_resized
