@@ -142,6 +142,26 @@ async def GenerateValueImage(data, output="card.png"):
     else:
         print(f"[WARN] Missing icon for {fruit_name}")
 
+
+    draw_gradient_text(
+canvas,
+(180, 520),
+fruit_name.upper(),
+big_font,
+gradient_colors=gradient_colors,
+anchor="mm",
+stretch_height=1.0
+)
+
+draw_neon_text(
+canvas,
+(180, 520),
+fruit_name.upper(),
+big_font,
+glow_color=(150, 180, 255, 100),
+text_color=(255, 255, 255),
+anchor="mm"
+)
     start_x = 360
     start_y = 280
     row_gap = 95
