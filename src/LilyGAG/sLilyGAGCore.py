@@ -388,7 +388,7 @@ async def WORL(message:str=None):
     their_side_values = []
 
     for split in your_side_split:
-        type, data = ParserType(split)
+        type, data = await ParserType(split)
         if type == "SeedType":
             Tuple  = data
             valuedata, quantity = await GAGValue(Tuple)
@@ -400,7 +400,7 @@ async def WORL(message:str=None):
             your_side_values.append(value)
 
     for split in their_side_split:
-        type, data = ParserType(split)
+        type, data = await ParserType(split)
         if type == "SeedType":
             Tuple  = data
             valuedata, quantity = await GAGValue(Tuple)
@@ -424,70 +424,73 @@ async def WORL(message:str=None):
         return {"outcome": "Fair", "percentage": 0.0}, your_side_items, your_side_values, their_side_items, their_side_values
 
 async def MessageEvaluate(self, bot, message):
-    channel_configs = Config.load_channel_config(await bot.get_context(message))
-    if message.channel.id == channel_configs.get('gag_values', 0):
-            type, Data = await ParserType(message.content.lower())
-            if type == "SeedType":
-                data, quantity = await GAGValue(Data)
-                name = Data[0].replace(" ", "_")
-                cursor = await VC.vdb.execute("SELECT icon_link FROM GAG_PlantsData WHERE name = ?", (name,))
-                row = await cursor.fetchone()
-                if row is not None:
-                    link = row[0]
-                else:
-                    link = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Question_opening-closing.svg/800px-Question_opening-closing.svg.png"  # or handle empty result             
-                view = CV2.GAGFruitValueComponent(price_formatter(int(data['value'])), f"{data['Weight']}kg", data["Variant"], data['Name'],data['Mutation'], link)
+    ctx = await bot.get_context(message)
+    cursor = await VC.cdb.execute("SELECT gag_item_values_channel_id, gag_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
+    channel_rows = await cursor.fetchone()
+    if channel_rows:
+        if message.channel.id == channel_rows[0]:
+                type, Data = await ParserType(message.content.lower())
+                if type == "SeedType":
+                    data, quantity = await GAGValue(Data)
+                    name = Data[0].replace(" ", "_")
+                    cursor = await VC.vdb.execute("SELECT icon_link FROM GAG_PlantsData WHERE name = ?", (name,))
+                    row = await cursor.fetchone()
+                    if row is not None:
+                        link = row[0]
+                    else:
+                        link = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Question_opening-closing.svg/800px-Question_opening-closing.svg.png"  # or handle empty result             
+                    view = CV2.GAGFruitValueComponent(price_formatter(int(data['value'])), f"{data['Weight']}kg", data["Variant"], data['Name'],data['Mutation'], link)
 
-            elif type == "PetType":
-                pet_value = await GAGPetValue(Data)
-                name = Data["name"].replace(" ", "_")
-                cursor = await VC.vdb.execute("SELECT icon_link FROM GAG_PetValue WHERE PetName = ?", (name,))
-                row = await cursor.fetchone()
-                if row is not None:
-                    link = row[0]
-                else:
-                    link = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Question_opening-closing.svg/800px-Question_opening-closing.svg.png"
-                classification = ""
-                classification_mapping = {
-                        "Small": (0.7, 1.4),
-                        "Normal": (1.4, 3.9),
-                        "Semi Huge": (3.9, 4.9),
-                        "Huge": (4.9, 7.9),
-                        "Titanic": (7.9, 8.9),
-                        "Godly": (8.9, 11)
-                    }
+                elif type == "PetType":
+                    pet_value = await GAGPetValue(Data)
+                    name = Data["name"].replace(" ", "_")
+                    cursor = await VC.vdb.execute("SELECT icon_link FROM GAG_PetValue WHERE PetName = ?", (name,))
+                    row = await cursor.fetchone()
+                    if row is not None:
+                        link = row[0]
+                    else:
+                        link = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Question_opening-closing.svg/800px-Question_opening-closing.svg.png"
+                    classification = ""
+                    classification_mapping = {
+                            "Small": (0.7, 1.4),
+                            "Normal": (1.4, 3.9),
+                            "Semi Huge": (3.9, 4.9),
+                            "Huge": (4.9, 7.9),
+                            "Titanic": (7.9, 8.9),
+                            "Godly": (8.9, 11)
+                        }
 
-                value = float(PetWeightChart(int(Data['age']), int(Data['weight']))[0])
-                for category, (low, high) in classification_mapping.items():
-                    if low <= value < high:
-                        classification = category
-                        break
+                    value = float(PetWeightChart(int(Data['age']), int(Data['weight']))[0])
+                    for category, (low, high) in classification_mapping.items():
+                        if low <= value < high:
+                            classification = category
+                            break
 
-                view = CV2.GAGPetValueComponent(price_formatter(int(pet_value) * 1), f'{Data['weight']} kg', f'{Data['age']}', Data['name'], link, Data['pet_mutation'], classification)
-            await message.reply(view=view)
+                    view = CV2.GAGPetValueComponent(price_formatter(int(pet_value) * 1), f'{Data['weight']} kg', f'{Data['age']}', Data['name'], link, Data['pet_mutation'], classification)
+                await message.reply(view=view)
 
-    elif message.channel.id == channel_configs.get('gag_worl', 0):
-        try:
-            org_message = await message.reply("Thinking...")
-            outcome_data, your_side_items, your_side_values, their_side_items, their_side_values = await WORL(message.content.lower())
-            if your_side_items and their_side_items:
-                your_side_items  = [items.replace(" ", "_").title() for items in your_side_items]
-                their_side_items  = [items.replace(" ", "_").title() for items in their_side_items]
-                winorlossorfair = 0
-                if outcome_data['outcome'] == 'Win':
+        elif message.channel.id == channel_rows[1]:
+            try:
+                org_message = await message.reply("Thinking...")
+                outcome_data, your_side_items, your_side_values, their_side_items, their_side_values = await WORL(message.content.lower())
+                if your_side_items and their_side_items:
+                    your_side_items  = [items.replace(" ", "_").title() for items in your_side_items]
+                    their_side_items  = [items.replace(" ", "_").title() for items in their_side_items]
                     winorlossorfair = 0
-                elif outcome_data['outcome'] == 'Loss':
-                    winorlossorfair = 1
-                else:
-                    winorlossorfair = 2
-                generated_img = LilyWORLGen.GAGGenerateWORLImage(your_side_items[:4], your_side_values, their_side_items[:4], their_side_values, outcome_data['outcome'].title(), f"Your Trade is an {outcome_data['outcome'].title()}", outcome_data['percentage'], winorlossorfair)
-                img_buffer = BytesIO()
-                generated_img.save(img_buffer, format="PNG")
-                img_buffer.seek(0)
+                    if outcome_data['outcome'] == 'Win':
+                        winorlossorfair = 0
+                    elif outcome_data['outcome'] == 'Loss':
+                        winorlossorfair = 1
+                    else:
+                        winorlossorfair = 2
+                    generated_img = LilyWORLGen.GAGGenerateWORLImage(your_side_items[:4], your_side_values, their_side_items[:4], their_side_values, outcome_data['outcome'].title(), f"Your Trade is an {outcome_data['outcome'].title()}", outcome_data['percentage'], winorlossorfair)
+                    img_buffer = BytesIO()
+                    generated_img.save(img_buffer, format="PNG")
+                    img_buffer.seek(0)
 
-                file = discord.File(img_buffer, filename="trade.png")
+                    file = discord.File(img_buffer, filename="trade.png")
 
-                await org_message.edit(content="", attachments=[file])
-        except:
-            await message.delete()
-            await org_message.delete()
+                    await org_message.edit(content="", attachments=[file])
+            except:
+                await message.delete()
+                await org_message.delete()

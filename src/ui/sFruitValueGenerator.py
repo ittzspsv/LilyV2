@@ -140,7 +140,12 @@ async def GenerateValueImage(data, output="card.png"):
         print(f"[WARN] Missing icon for {fruit_name}")
 
 
-    gradient_colors = [(150, 180, 255), (50, 80, 255)]
+    max_name_width = 300 
+    big_font = fit_font_size(draw, fruit_name.upper(), FONT_PATH, max_name_width, starting_size=46, min_size=28)
+
+
+    gradient_colors = [(100, 200, 255), (180, 150, 255)]  # light blue → light purple
+
     draw_gradient_text(
         canvas,
         (180, 520),
@@ -150,6 +155,7 @@ async def GenerateValueImage(data, output="card.png"):
         anchor="mm",
         stretch_height=1.0
     )
+
     draw_neon_text(
         canvas,
         (180, 520),

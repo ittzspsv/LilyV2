@@ -131,40 +131,36 @@ class LilyModeration(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='modlogs', description='checks logs for particular user')
-    async def modlogs(self, ctx, slice_exp: str = None, member: discord.User = None):
-        try:
+    @commands.hybrid_command(name='modlogs', description='Checks logs for a particular user')
+    async def modlogs(self, ctx, mod_type: str = "all", slice_exp: str = None, member: discord.User = None, moderator: discord.User = None):
+        slice_obj = None
+        if slice_exp:
             try:
-                start, stop = (int(x) if x else 0 for x in slice_exp.split(":"))
-            except ValueError:
-                await ctx.send(embed=mLily.SimpleEmbed("Slicing Error. Make sure your slicing is in the format 'start:stop'"))
-                return
-            except Exception as e:
-                await ctx.send(embed=mLily.SimpleEmbed(f"Error while parsing slice: {e}"))
+                start, stop = (int(x) if x else None for x in slice_exp.split(":"))
+                slice_obj = slice(start, stop)
+            except Exception:
+                await ctx.send(embed=mLily.SimpleEmbed("Slicing Error. Format must be 'start:stop'"))
                 return
 
-            if not member:
-                try:
-                    user = await self.bot.fetch_user(ctx.author.id)
-                    embed = await mLily.mod_logs(ctx,ctx.author.id, user, slice_expr=slice(start, stop))
-                except Exception as e:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user or display logs: {e}"))
-                    return
-            else:
-                try:
-                    user = await self.bot.fetch_user(member.id)
-                    embed = await mLily.mod_logs(ctx, member.id, user, slice_expr=slice(start, stop))
-                except ValueError as v:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"{v}"))
-                    return
-                except Exception as e:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch member ban logs csv: {e}"))
-                    return
+        target_id = member.id if member else ctx.author.id
+        try:
+            user = await self.bot.fetch_user(target_id)
+        except Exception:
+            await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user with ID {target_id}"))
+            return
 
+        try:
+            embed = await mLily.mod_logs(
+                ctx,
+                target_user_id=target_id,
+                user=user,
+                moderator=moderator,
+                mod_type=mod_type,
+                slice_expr=slice_obj
+            )
             await ctx.send(embed=embed)
-
         except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch mod logs: {e}"))
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

@@ -1,8 +1,9 @@
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
+import math
 
 
-def generate_gradient_text(text, font, size, gradient_start, gradient_end):
+def generate_gradient_text(text, font, size, gradient_start, gradient_end, y_stretch=1.0):
     text_mask = Image.new("L", size, 0)
     text_draw = ImageDraw.Draw(text_mask)
 
@@ -10,10 +11,8 @@ def generate_gradient_text(text, font, size, gradient_start, gradient_end):
     text_width = bbox[2] - bbox[0]
     text_height = bbox[3] - bbox[1]
 
-    # Corrected centering
     x = (size[0] - text_width) // 2 - bbox[0]
     y = (size[1] - text_height) // 2 - bbox[1]
-
     text_draw.text((x, y), text, fill=255, font=font)
 
     gradient_array = np.zeros((size[1], size[0], 4), dtype=np.uint8)
@@ -29,55 +28,73 @@ def generate_gradient_text(text, font, size, gradient_start, gradient_end):
     text_colored = Image.new("RGBA", size, (255, 255, 255, 0))
     text_colored = Image.composite(gradient_img, text_colored, text_mask)
 
+    if y_stretch != 1.0:
+        w, h = text_colored.size
+        text_colored = text_colored.resize((w, int(h * y_stretch)), resample=Image.BICUBIC)
+
     return text_colored
 
 
-def fit_font_size(text, font_path, max_width, max_height, start_size=200):
-    words = text.split()
-    # If text has 4 or more words, we allow more aggressive fitting
-    scale_factor = 1.15 if len(words) >= 4 else 1.0  
+def fit_font_size(text, font_path, max_width, max_height, rotation_angle=30, start_size=200):
+    char_len = len(text.replace(" ", ""))
 
-    for font_size in range(start_size, 10, -2):
-        font = ImageFont.truetype(font_path, font_size)
+    if char_len > 6:
+        adj_width = max_width * 0.85
+        adj_height = max_height * 1.15
+    elif char_len <= 4:
+        adj_width = max_width * 0.85
+        adj_height = max_height * 0.75
+    else:
+        adj_width = max_width
+        adj_height = max_height
+
+    angle_rad = math.radians(rotation_angle)
+    sin_a, cos_a = abs(math.sin(angle_rad)), abs(math.cos(angle_rad))
+
+    for size in range(start_size, 10, -2):
+        font = ImageFont.truetype(font_path, size)
         bbox = font.getbbox(text)
         w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
 
-        # Apply scale factor to fill more space for longer text
-        if w * scale_factor <= max_width and h * scale_factor <= max_height:
+        rotated_w = w * cos_a + h * sin_a
+        rotated_h = w * sin_a + h * cos_a
+
+        if rotated_w <= adj_width and rotated_h <= adj_height:
             return font
+
     raise ValueError("Text too large to fit in stamp")
 
 
-def center_overlay(base, overlay, x_shift=-7, y_shift=-16):
-    base_w, base_h = base.size
-    overlay_w, overlay_h = overlay.size
-
-    x = (base_w - overlay_w) // 2 + x_shift
-    y = (base_h - overlay_h) // 2 + y_shift
-
-    result = base.copy()
-    result.paste(overlay, (x, y), overlay)
-    return result
-
-
-
-def create_stamp(TEXT:str):
+def create_stamp(TEXT: str):
     BASE_IMAGE_PATH = "src/libraries/wantedposter/assets/image_components/stamp_base.png"
     FONT_PATH = "src/ui/font/nexa-rust.slab-black-shadow-01.otf"
     FONT_COLOR_START = (255, 0, 0, 255)
-    FONT_COLOR_END   = (255, 0, 0, 255)      
-    PADDING = 20
+    FONT_COLOR_END = (255, 0, 0, 255)
     ROTATION_ANGLE = 30
+    PADDING = 20
+
     base = Image.open(BASE_IMAGE_PATH).convert("RGBA")
     w, h = base.size
 
     max_text_width = w - 2 * PADDING
     max_text_height = h - 2 * PADDING
 
-    font = fit_font_size(TEXT, FONT_PATH, max_text_width, max_text_height)
+    font = fit_font_size(TEXT, FONT_PATH, max_text_width, max_text_height, rotation_angle=ROTATION_ANGLE)
 
-    text_img = generate_gradient_text(TEXT, font, (w, h), FONT_COLOR_START, FONT_COLOR_END)
-    rotated_text = text_img.rotate(ROTATION_ANGLE, expand=True, resample=Image.BICUBIC)
+    char_len = len(TEXT.replace(" ", ""))
+    if char_len > 6:
+        y_stretch = 1.25
+    elif char_len <= 4:
+        y_stretch = 0.85
+    else:
+        y_stretch = 1.0
 
-    final_stamp = center_overlay(base, rotated_text)
-    return final_stamp
+    text_img = generate_gradient_text(TEXT, font, (w, h), FONT_COLOR_START, FONT_COLOR_END, y_stretch=y_stretch)
+
+    rotated = text_img.rotate(ROTATION_ANGLE, expand=True, resample=Image.BICUBIC)
+
+    result = base.copy()
+    x = (w - rotated.width) // 2
+    y = (h - rotated.height) // 2
+    result.paste(rotated, (x, y), rotated)
+    return result

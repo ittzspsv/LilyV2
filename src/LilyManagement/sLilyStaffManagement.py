@@ -157,6 +157,52 @@ async def FetchAllStaffs():
     except Exception as e:
         return discord.Embed(title="Error", description=str(e), colour=0xf50000)
 
+async def AddStaff(ctx: commands.Context, staff: discord.Member):
+    staff_id = staff.id
+    name = staff.display_name
+    top_role = staff.top_role.name
+    join_date = datetime.now().strftime("%d/%m/%Y")
+
+    cursor = await sdb.execute("SELECT 1 FROM staff_data WHERE id = ?", (staff_id,))
+    exists = await cursor.fetchone()
+
+    if exists:
+        await sdb.execute(
+            "UPDATE staff_data SET name = ?, top_role = ? WHERE id = ?",
+            (name, top_role, staff_id)
+        )
+    else:
+        await sdb.execute(
+            """
+            INSERT INTO staff_data
+            (id, name, top_role, status, join_date, data, warnings, strikes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                staff_id,
+                name,
+                top_role,
+                'NIL',
+                join_date,
+                json.dumps([]),
+                0,
+                0
+            )
+        )
+
+    await sdb.commit()
+
+async def RemoveStaff(ctx: commands.Context, staff_id: int):
+    cursor = await sdb.execute("SELECT 1 FROM staff_data WHERE id = ?", (staff_id,))
+    exists = await cursor.fetchone()
+
+    if exists:
+        await sdb.execute("DELETE FROM staff_data WHERE id = ?", (staff_id,))
+        await sdb.commit()
+        await ctx.send(f"Staff with ID {staff_id} has been removed.")
+    else:
+        await ctx.send(f"No staff found with ID {staff_id}.")
+
 async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
     try:
         cursor_strikes = await sdb.execute(

@@ -68,7 +68,7 @@ class MyBot(commands.Bot):
         await bot.load_extension("LilyTicketTool.LilyTicketToolCommands")
         await bot.load_extension("LilyLeveling.sLilyLevelingCommands")
         #await bot.load_extension("LilyMiddleman.sLilyMiddlemanCommands")
-        await bot.tree.sync()
+        #await bot.tree.sync()
 
     async def BotInitialize(self):
         for guild in self.guilds:
@@ -180,7 +180,7 @@ class MyBot(commands.Bot):
         await bot.change_presence(status=discord.Status.idle, activity=game)
         #handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
         #asyncio.create_task(handler.run())
-        await self.tree.sync()
+        #await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())

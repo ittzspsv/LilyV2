@@ -206,8 +206,8 @@ async def MessageEvaluate(self, bot, message):
                             )
                 except Exception as e:
                     print(f"Error posting stock to guild {guild.id}: {e}")
+
         elif re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
-            status_msg = await message.reply("Thinking...")
             try:
                 ctx = await bot.get_context(message)
                 cursor = await LilyConfig.cdb.execute(
@@ -221,7 +221,7 @@ async def MessageEvaluate(self, bot, message):
                 fChannel = self.get_channel(int(row[0]))
                 if message.channel != fChannel:
                     return
-
+                status_msg = await message.reply("Thinking...")
                 match = re.search(r"\b(?:fruit value of|value of|value)\s+(.+)", message.content.lower())
                 if not match:
                     await message.delete()

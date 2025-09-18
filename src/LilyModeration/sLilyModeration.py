@@ -181,37 +181,66 @@ async def ms(ctx: commands.Context, moderator_id: int, user: discord.User, slice
         print("Error in display_logs:", e)
         return SimpleEmbed("Something went wrong while retrieving logs.")
     
-async def mod_logs(ctx: commands.Context, moderator_id: int, user: discord.User, slice_expr=None):
+async def mod_logs(ctx: commands.Context, target_user_id: int, user: discord.User, moderator: discord.User = None, mod_type: str = 'all', slice_expr=None):
     try:
-        async with LilyLogging.mdb.execute("""
-            SELECT mod_type, reason, timestamp, moderator_id
-            FROM modlogs
-            WHERE guild_id = ? AND target_user_id = ?
-            ORDER BY timestamp DESC
-        """, (ctx.guild.id, moderator_id)) as cursor:
+        DEFAULT_FETCH_LIMIT = 5 
+
+        count_query = "SELECT COUNT(*) FROM modlogs WHERE guild_id = ? AND target_user_id = ?"
+        count_params = [ctx.guild.id, target_user_id]
+        if moderator:
+            count_query += " AND moderator_id = ?"
+            count_params.append(moderator.id)
+        if mod_type.lower() != "all":
+            count_query += " AND lower(mod_type) = ?"
+            count_params.append(mod_type.lower())
+
+        async with LilyLogging.mdb.execute(count_query, tuple(count_params)) as cursor:
+            total_count_row = await cursor.fetchone()
+        total_count = total_count_row[0] if total_count_row else 0
+        if total_count == 0:
+            return SimpleEmbed("No Logs Found For the given filters")
+
+        type_query = "SELECT lower(mod_type), COUNT(*) FROM modlogs WHERE guild_id = ? AND target_user_id = ?"
+        type_params = [ctx.guild.id, target_user_id]
+        if moderator:
+            type_query += " AND moderator_id = ?"
+            type_params.append(moderator.id)
+        type_query += " GROUP BY lower(mod_type)"
+
+        async with LilyLogging.mdb.execute(type_query, tuple(type_params)) as cursor:
+            rows = await cursor.fetchall()
+        mod_type_counts = {row[0]: row[1] for row in rows}
+
+        select_query = "SELECT mod_type, reason, timestamp, moderator_id FROM modlogs WHERE guild_id = ? AND target_user_id = ?"
+        select_params = [ctx.guild.id, target_user_id]
+        if moderator:
+            select_query += " AND moderator_id = ?"
+            select_params.append(moderator.id)
+        if mod_type.lower() != "all":
+            select_query += " AND lower(mod_type) = ?"
+            select_params.append(mod_type.lower())
+        select_query += " ORDER BY timestamp DESC"
+
+        start = 0
+        limit = DEFAULT_FETCH_LIMIT
+        if slice_expr:
+            start = slice_expr.start or 0
+            if slice_expr.stop is not None:
+                limit = slice_expr.stop - start
+        select_query += " LIMIT ? OFFSET ?"
+        select_params.extend([limit, start])
+
+        async with LilyLogging.mdb.execute(select_query, tuple(select_params)) as cursor:
             rows = await cursor.fetchall()
 
-        if not rows:
-            return SimpleEmbed("No Logs Found For the given user ID")
-
-        all_logs = [
-            {
-                "moderator_id" : row[3],
-                "mod_type": row[0].lower(),
-                "reason": row[1],
-                "timestamp": row[2]
-            }
+        display_logs = [
+            {"moderator_id": row[3], "mod_type": row[0].lower(), "reason": row[1], "timestamp": row[2]}
             for row in rows
         ]
 
-        mod_type_counts = Counter(log["mod_type"] for log in all_logs)
-        total_logs = len(all_logs)
-
-        shown_logs = all_logs[slice_expr] if slice_expr else all_logs
-
         embed = discord.Embed(
             title=f"📘 {user.display_name} Mod Logs",
-            description=f"📑 Showing Logs for the user",
+            description="📑 Showing logs for the user",
             colour=discord.Colour.blurple(),
             timestamp=datetime.now()
         )
@@ -219,28 +248,26 @@ async def mod_logs(ctx: commands.Context, moderator_id: int, user: discord.User,
         embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
         embed.set_thumbnail(url=user.avatar.url if user.avatar else "https://example.com/default_avatar.png")
 
-        embed.add_field(name="📖 Total Logs", value=str(total_logs), inline=True)
+        embed.add_field(name="📖 Total Logs", value=str(total_count), inline=True)
         embed.add_field(name="🗓️ Date", value=datetime.now().strftime("%Y-%m-%d"), inline=True)
 
-        action_summary = "\n".join(
+        summary = "\n".join(
             f"🔸 **{action.title()}s**: `{count}`" for action, count in mod_type_counts.items()
         )
-        embed.add_field(name="📊 Logs Summary", value=action_summary or "No actions recorded", inline=False)
-
+        embed.add_field(name="📊 Logs Summary", value=summary or "No actions recorded", inline=False)
         embed.add_field(name="", value="**━━━━━━━━━━━━━━━━━━━**", inline=False)
 
-        for index, log in enumerate(shown_logs, start=1):
+        for index, log in enumerate(display_logs, start=1):
             try:
                 dt = datetime.fromisoformat(log["timestamp"])
             except ValueError:
                 dt = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
-
             formatted_time = dt.strftime("%Y-%m-%d %I:%M:%S %p")
             timezone = dt.tzinfo or "UTC"
 
             embed.add_field(
                 name=f"📌 Log #{index} - {log['mod_type'].title()}",
-                value=(f"> 👤 **Moderator ID:** <@{log['moderator_id']}>\n"
+                value=(f"> 👤 **Moderator:** <@{log['moderator_id']}>\n"
                        f"> 📝 **Reason:** {log['reason']}\n"
                        f"> ⏰ **Time:** {formatted_time} ({timezone})"),
                 inline=False
@@ -249,8 +276,8 @@ async def mod_logs(ctx: commands.Context, moderator_id: int, user: discord.User,
         return embed
 
     except Exception as e:
-        print("Error in display_logs:", e)
-        return SimpleEmbed("Something went wrong while retrieving logs.")
+        print("Error in mod_logs:", e)
+        return SimpleEmbed(f"Something went wrong while retrieving logs: {e}")
 
 async def checklogs(ctx: commands.Context, member: str = ""):
     if not member:
@@ -533,6 +560,24 @@ async def CheckVoiceMuted(member: discord.Member, channel: discord.TextChannel):
 
     except Exception as e:
         print(f"[Voice Mute Error] {e}")
+
+async def warn(ctx: commands.Context, member: discord.Member, reason: str):
+    await LilyLogging.LogModerationAction(ctx, ctx.author.id, member.id, "warn", reason)
+
+    embed = discord.Embed(
+        title="You have been warned",
+        color=discord.Color.orange()
+    )
+    embed.add_field(name="Server", value=ctx.guild.name, inline=False)
+    embed.add_field(name="Warned By", value=ctx.author.mention, inline=False)
+    embed.add_field(name="Reason", value=reason, inline=False)
+
+    try:
+        await member.send(embed=embed)
+    except discord.Forbidden:
+        await ctx.send(f"Could not DM {member.mention}")
+
+    await ctx.send(f"{member.mention} has been warned")
 
 async def VoiceMute(member: discord.Member, mute_duration: str, reason: str, channel: discord.TextChannel):
     folder_path = f"storage/{970643838047760384}/vcmutelogs"

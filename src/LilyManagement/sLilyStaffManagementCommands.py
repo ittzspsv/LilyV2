@@ -3,7 +3,7 @@ from LilyRulesets.sLilyRulesets import PermissionEvaluator, rPermissionEvaluator
 import LilyManagement.sLilyStaffManagement as smLily
 import LilyModeration.sLilyModeration as mLily
 import Config.sBotDetails as Config
-
+import discord
 from discord.ext import commands
 
 
@@ -57,7 +57,6 @@ class LilyManagement(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
     @commands.hybrid_command(name='strikes', description='shows strikes for a concurrent staff')
     async def strikes(self, ctx: commands.Context, id: str):
@@ -74,6 +73,20 @@ class LilyManagement(commands.Cog):
     @commands.hybrid_command(name='run_query', description='runs arbitrary query')
     async def run_staff_query(self, ctx: commands.Context, *, query: str):
         await smLily.run_query(ctx, query)
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles + Config.StaffManagerRoles)
+    @commands.hybrid_command(name='add_staff', description='Adds a member to staff_data')
+    async def add_staff(self, ctx: commands.Context, staff: discord.Member):
+        try:
+            await smLily.AddStaff(ctx, staff)
+            await ctx.send(f"{staff.mention} has been added/updated in staff_data.")
+        except Exception as e:
+            await ctx.send(f"Exception {e}")
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles + Config.StaffManagerRoles)
+    @commands.hybrid_command(name='remove_staff', description='Removes a member from staff_data')
+    async def remove_staff(self, ctx: commands.Context, staff: discord.Member):
+        await smLily.RemoveStaff(ctx, staff.id)
 
 async def setup(bot):
     await bot.add_cog(LilyManagement(bot))

@@ -1,9 +1,5 @@
-from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageChops
-import math
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
-import numpy as np
-
-
 
 CARD_WIDTH = 900
 BG_COLOR = (0, 0, 0)
@@ -11,18 +7,28 @@ PRICE_COLOR = (0, 255, 0)
 FONT_PATH = "src/ui/font/Game Bubble.ttf"
 ITEM_IMAGE_FOLDER = "src/ui/fruit_icons"
 
-
 fruits = {
     "Blade": 30000,
     "Rocket": 30000,
     "Dough": 30000,
     "Kitsune": 30000,
-    "Dough": 30000,
     "Yeti": 30000,
     "Dragon": 30000
-
 }
 
+def get_icon_path(folder, fruit_name):
+    for ext in [".png", ".webp", ".jpg", ".jpeg"]:
+        candidate = os.path.join(folder, f"{fruit_name}{ext}")
+        if os.path.exists(candidate):
+            return candidate
+
+    fruit_lower = fruit_name.lower()
+    for f in os.listdir(folder):
+        name, ext = os.path.splitext(f)
+        if name.lower() == fruit_lower and ext.lower() in [".png", ".webp", ".jpg", ".jpeg"]:
+            return os.path.join(folder, f)
+
+    return None
 
 def get_text_size(draw, text, font):
     bbox = draw.textbbox((0, 0), text, font=font)
@@ -38,55 +44,21 @@ def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm
 
     blurred_glow = glow.filter(ImageFilter.GaussianBlur(radius=5))
     img.paste(blurred_glow, (0, 0), blurred_glow)
-
     draw.text(position, text, font=font, fill=text_color, anchor=anchor)
 
-def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt", stretch_height=1.0):
-    temp_img = Image.new("RGBA", (1000, 500), (0, 0, 0, 0))
-    draw_temp = ImageDraw.Draw(temp_img)
-    text_bbox = draw_temp.textbbox((0, 0), text, font=font)
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = int((text_bbox[3] - text_bbox[1]) * stretch_height)
-
-    text_mask = Image.new("L", (text_width, text_height), 0)
-    draw_mask = ImageDraw.Draw(text_mask)
-    draw_mask.text((0, 0), text, font=font, fill=255)
-
-    gradient = Image.new("RGBA", (text_width, text_height), color=0)
-    grad_draw = ImageDraw.Draw(gradient)
-    for y in range(text_height):
-        ratio = y / text_height
-        r = int(gradient_colors[0][0] * (1 - ratio) + gradient_colors[1][0] * ratio)
-        g = int(gradient_colors[0][1] * (1 - ratio) + gradient_colors[1][1] * ratio)
-        b = int(gradient_colors[0][2] * (1 - ratio) + gradient_colors[1][2] * ratio)
-        grad_draw.line([(0, y), (text_width, y)], fill=(r, g, b), width=1)
-
-    gradient.putalpha(text_mask)
-
-    x, y = position
-    if anchor in ("mm", "mt", "mb"):
-        x -= text_width // 2
-    elif anchor in ("rm", "rt", "rb"):
-        x -= text_width
-    if anchor in ("mm", "lm", "rm"):
-        y -= text_height // 2
-    elif anchor in ("mb", "lb", "rb"):
-        y -= text_height
-
-    image.paste(gradient, (int(x), int(y)), gradient)
-
-def StockImageGenerator(data_dict, stock_type = "normal",output="card.png"):
-    if stock_type == "normal":
-        background_path = "src/ui/StockImages/NormalStock.png"
-    else:
-        background_path = "src/ui/StockImages/MirageStock.png"
+def StockImageGenerator(data_dict, stock_type="normal"):
+    background_path = (
+        "src/ui/StockImages/NormalStock.png"
+        if stock_type == "normal"
+        else "src/ui/StockImages/MirageStock.png"
+    )
     bg = Image.open(background_path).convert("RGBA")
-    bg_w, bg_h = bg.size  # 704x883
+    bg_w, bg_h = bg.size
 
     img = Image.new("RGBA", (bg_w, bg_h), (0, 0, 0, 0))
     img.paste(bg, (0, 0), bg)
-
     draw = ImageDraw.Draw(img)
+
     items = list(data_dict.items())
     count = len(items)
 
@@ -102,7 +74,7 @@ def StockImageGenerator(data_dict, stock_type = "normal",output="card.png"):
 
     if count <= max_cols:
         rows = [count]
-    elif count <= 2*max_cols:
+    elif count <= 2 * max_cols:
         first_row = min(max_cols, count)
         second_row = count - first_row
         rows = [first_row, second_row]
@@ -110,8 +82,8 @@ def StockImageGenerator(data_dict, stock_type = "normal",output="card.png"):
         rows = [max_cols, max_cols]
 
     gap_y = 100
-    total_height = len(rows) * icon_size + (len(rows)-1)*gap_y + 50
-    y_start = (bg_h - total_height) // 2 
+    total_height = len(rows) * icon_size + (len(rows) - 1) * gap_y + 50
+    y_start = (bg_h - total_height) // 2
 
     item_index = 0
     for r, cols_in_row in enumerate(rows):
@@ -128,25 +100,29 @@ def StockImageGenerator(data_dict, stock_type = "normal",output="card.png"):
             name, price = items[item_index]
             x = x_start + c * (icon_size + gap_x)
 
-            img_path = os.path.join(ITEM_IMAGE_FOLDER, f"{name.lower()}.png")
-            if os.path.exists(img_path):
-                icon = Image.open(img_path).convert("RGBA")
+            icon_path = get_icon_path(ITEM_IMAGE_FOLDER, name)
+            if icon_path:
+                icon = Image.open(icon_path).convert("RGBA")
                 icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
 
-                avg_color_img = icon.resize((1,1))
-                avg_color = avg_color_img.getpixel((0,0))[:3]
+                avg_color_img = icon.resize((1, 1))
+                avg_color = avg_color_img.getpixel((0, 0))[:3]
 
-                glow_size = (int(icon_size*2.5), int(icon_size*2.5)) 
-                glow_img = Image.new("RGBA", glow_size, (0,0,0,0))
+                glow_size = (int(icon_size * 2.5), int(icon_size * 2.5))
+                glow_img = Image.new("RGBA", glow_size, (0, 0, 0, 0))
                 glow_draw = ImageDraw.Draw(glow_img)
 
-                ellipse_bbox = (glow_size[0]//4, glow_size[1]//4, 3*glow_size[0]//4, 3*glow_size[1]//4)
+                ellipse_bbox = (
+                    glow_size[0] // 4,
+                    glow_size[1] // 4,
+                    3 * glow_size[0] // 4,
+                    3 * glow_size[1] // 4,
+                )
                 glow_draw.ellipse(ellipse_bbox, fill=avg_color + (150,))
-
                 glow = glow_img.filter(ImageFilter.GaussianBlur(25))
 
-                glow_x = x - (glow_size[0]-icon_size)//2
-                glow_y = row_y + 20 - (glow_size[1]-icon_size)//2
+                glow_x = x - (glow_size[0] - icon_size) // 2
+                glow_y = row_y + 20 - (glow_size[1] - icon_size) // 2
                 img.paste(glow, (glow_x, glow_y), glow)
 
                 img.paste(icon, (x, row_y + 20), icon)
