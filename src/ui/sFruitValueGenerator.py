@@ -84,6 +84,7 @@ def get_icon_path(folder, fruit_name):
         if os.path.exists(candidate):
             return candidate
 
+
     fruit_lower = fruit_name.lower()
     for f in os.listdir(folder):
         name, ext = os.path.splitext(f)
@@ -109,7 +110,8 @@ async def GenerateValueImage(data, output="card.png"):
     big_font = load_font(FONT_PATH, 46)
     label_font = load_font(FONT_PATH, 32)
 
-    icon_file = get_icon_path(ITEM_IMAGE_FOLDER, fruit_name.lower())
+
+    icon_file = get_icon_path(ITEM_IMAGE_FOLDER, fruit_name)
     if icon_file:
         icon_size = 220
         icon = Image.open(icon_file).convert("RGBA")
@@ -139,7 +141,6 @@ async def GenerateValueImage(data, output="card.png"):
         canvas.alpha_composite(icon, (icon_x, icon_y))
     else:
         print(f"[WARN] Missing icon for {fruit_name}")
-
 
     img = canvas.convert("RGB")
     img_resized = img.resize((int(img.width * 0.7), int(img.height * 0.7)))
