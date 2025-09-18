@@ -4,6 +4,7 @@ import os
 FONT_PATH = "src/ui/font/Game Bubble.ttf"
 ITEM_IMAGE_FOLDER = "src/ui/fruit_icons"
 BACKGROUND = "src/ui/FruitValues.png"
+
 def load_font(path, size):
     try:
         return ImageFont.truetype(path, size)
@@ -36,10 +37,10 @@ def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm
 
     for offset in range(1, 4):
         glow_draw.text(position, text, font=font,
-                       fill=glow_color[:3] + (100,),  # reduced alpha
+                       fill=glow_color[:3] + (100,),
                        anchor=anchor, stroke_width=offset)
 
-    blurred_glow = glow.filter(ImageFilter.GaussianBlur(radius=4))  # slightly smaller blur
+    blurred_glow = glow.filter(ImageFilter.GaussianBlur(radius=4))
     img.paste(blurred_glow, (0, 0), blurred_glow)
     draw.text(position, text, font=font, fill=text_color, anchor=anchor)
 
@@ -77,113 +78,69 @@ def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt"
 
     image.paste(gradient, (int(x), int(y)), gradient)
 
+def get_icon_path(folder, fruit_name):
+    for ext in [".png", ".webp", ".jpg", ".jpeg"]:
+        candidate = os.path.join(folder, f"{fruit_name}{ext}")
+        if os.path.exists(candidate):
+            return candidate
+
+    fruit_lower = fruit_name.lower()
+    for f in os.listdir(folder):
+        name, ext = os.path.splitext(f)
+        if name.lower() == fruit_lower and ext.lower() in [".png", ".webp", ".jpg", ".jpeg"]:
+            return os.path.join(folder, f)
+
+    return None
+
+
 async def GenerateValueImage(data, output="card.png"):
-    fruit_name = data.get("fruit_name","UNKNOWN")
-    physical_value = data.get("physical_value",0)
-    permanent_value = data.get("permanent_value",0)
-    value_amount = data.get("value",0)
-    demand = data.get("demand","")
-    demand_type = data.get("demand_type","")
+    fruit_name = data.get("fruit_name", "UNKNOWN")
+    physical_value = data.get("physical_value", 0)
+    permanent_value = data.get("permanent_value", 0)
+    value_amount = data.get("value", 0)
+    demand = data.get("demand", "")
+    demand_type = data.get("demand_type", "")
 
-    bg = Image.open(BACKGROUND).convert("RGBA").resize((704,883))
+    bg = Image.open(BACKGROUND).convert("RGBA").resize((704, 883))
     canvas = Image.new("RGBA", bg.size)
-    canvas.paste(bg, (0,0))
+    canvas.paste(bg, (0, 0))
     draw = ImageDraw.Draw(canvas)
-    W,H = canvas.size
 
-    big_font   = load_font(FONT_PATH, 46)
+    big_font = load_font(FONT_PATH, 46)
     label_font = load_font(FONT_PATH, 32)
 
-    icon_file = os.path.join(ITEM_IMAGE_FOLDER, f"{fruit_name.lower()}.png")
-    if os.path.exists(icon_file):
+    icon_file = get_icon_path(ITEM_IMAGE_FOLDER, fruit_name.lower())
+    if icon_file:
         icon_size = 220
         icon = Image.open(icon_file).convert("RGBA")
         icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
 
-        avg_color_img = icon.resize((1,1))
-        avg_color = avg_color_img.getpixel((0,0))[:3]
+        avg_color_img = icon.resize((1, 1))
+        avg_color = avg_color_img.getpixel((0, 0))[:3]
 
-   
-        glow_size = (int(icon_size*2.5), int(icon_size*2.5))
-        glow_img = Image.new("RGBA", glow_size, (0,0,0,0))
+        glow_size = (int(icon_size * 2.5), int(icon_size * 2.5))
+        glow_img = Image.new("RGBA", glow_size, (0, 0, 0, 0))
         glow_draw = ImageDraw.Draw(glow_img)
-        ellipse_bbox = (glow_size[0]//4, glow_size[1]//4,
-                        3*glow_size[0]//4, 3*glow_size[1]//4)
+        ellipse_bbox = (glow_size[0] // 4, glow_size[1] // 4,
+                        3 * glow_size[0] // 4, 3 * glow_size[1] // 4)
         glow_draw.ellipse(ellipse_bbox, fill=avg_color + (120,))
         glow = glow_img.filter(ImageFilter.GaussianBlur(20))
 
-        angle = 6 
+        angle = 6
         glow = glow.rotate(angle, expand=True, resample=Image.BICUBIC)
         icon = icon.rotate(angle, expand=True, resample=Image.BICUBIC)
 
-
-        glow_x = 60 + icon_size//2 - glow.width//2
-        glow_y = 260 + icon_size//2 - glow.height//2
+        glow_x = 60 + icon_size // 2 - glow.width // 2
+        glow_y = 260 + icon_size // 2 - glow.height // 2
         canvas.paste(glow, (glow_x, glow_y), glow)
 
-
-        icon_x = 60 + icon_size//2 - icon.width//2
-        icon_y = 260 + icon_size//2 - icon.height//2
+        icon_x = 60 + icon_size // 2 - icon.width // 2
+        icon_y = 260 + icon_size // 2 - icon.height // 2
         canvas.alpha_composite(icon, (icon_x, icon_y))
-
-
-    max_name_width = 300 
-    big_font = fit_font_size(draw, fruit_name.upper(), FONT_PATH, max_name_width, starting_size=46, min_size=28)
-
-
-    gradient_colors = [(100, 200, 255), (180, 150, 255)]  # light blue → light purple
-
-    draw_gradient_text(
-        canvas,
-        (180, 520),
-        fruit_name.upper(),
-        big_font,
-        gradient_colors=gradient_colors,
-        anchor="mm",
-        stretch_height=1.0
-    )
-
-    draw_neon_text(
-        canvas,
-        (180, 520),
-        fruit_name.upper(),
-        big_font,
-        glow_color=(150, 180, 255, 100),
-        text_color=(255, 255, 255),
-        anchor="mm"
-    )
-
-    start_x = 360
-    start_y = 280
-    row_gap = 95
-
-    def row(label, val, y, glow_color=(0,255,120), text_color=(255,255,255)):
-        draw_gradient_text(canvas, (start_x, y), label.upper(),
-                           label_font, [(255,150,255),(180,80,255)], anchor="lm")
-        draw_neon_text(canvas, (start_x, y+38), val, label_font,
-                       glow_color=glow_color, text_color=text_color, anchor="lm")
-
-    row("Physical Value", format_currency(physical_value),
-        start_y, glow_color=(0,255,120), text_color=(200,255,200))
-
-
-    row("Permanent Value", format_currency(permanent_value),
-        start_y+row_gap, glow_color=(0,255,120), text_color=(200,255,200))
-
-    if value_amount:
-        row("Value", format_currency(value_amount),
-            start_y+row_gap*2, glow_color=(255,100,180), text_color=(255,180,220))
-        offset = 3
     else:
-        offset = 2
+        print(f"[WARN] Missing icon for {fruit_name}")
 
-    row("Demand", str(demand),
-        start_y+row_gap*offset, glow_color=(255,200,50), text_color=(255,220,150))
 
-    if demand_type:
-        row("Demand Type", demand_type.upper(),
-            start_y+row_gap*(offset+1), glow_color=(255,200,50), text_color=(255,220,150))
-        
     img = canvas.convert("RGB")
     img_resized = img.resize((int(img.width * 0.7), int(img.height * 0.7)))
     return img_resized
