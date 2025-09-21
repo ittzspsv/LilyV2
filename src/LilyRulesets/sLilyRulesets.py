@@ -1,75 +1,100 @@
 from discord.ext import commands
+import inspect
 
 
-def PermissionEvaluator(PermissionType: str = "Role",RoleAllowed=None,RoleBlacklisted=None,UserAllowed=None,UserBlacklisted=None):
-    def predicate(ctx:commands.Context):
-        user_id = ctx.author.id
-        user_role_ids = {role.id for role in ctx.author.roles}
 
-        role_allowed = RoleAllowed() if callable(RoleAllowed) else RoleAllowed or []
-        role_blacklisted = RoleBlacklisted() if callable(RoleBlacklisted) else RoleBlacklisted or []
-        user_allowed = UserAllowed() if callable(UserAllowed) else UserAllowed or []
-        user_blacklisted = UserBlacklisted() if callable(UserBlacklisted) else UserBlacklisted or []
+def PermissionEvaluator(PermissionType="Role", RoleAllowed=None, RoleBlacklisted=None, UserAllowed=None, UserBlacklisted=None):
+    def decorator(func):
+        async def predicate(ctx: commands.Context):
+            user_id = ctx.author.id
+            user_role_ids = {role.id for role in ctx.author.roles}
 
-        if ctx.author.id == ctx.guild.owner_id:
-            return True
-
-
-        if user_id in user_blacklisted:
-            raise commands.CheckFailure(f"User Blacklist Exception: User ID {user_id}")
-
-        if any(role_id in user_role_ids for role_id in role_blacklisted):
-            raise commands.CheckFailure(f"Exception: Missing Permissions : errno 77777")
-
-        if PermissionType.lower() == "role":
-            if any(role_id in user_role_ids for role_id in role_allowed):
-                return True
+            if callable(RoleAllowed):
+                role_allowed = await RoleAllowed() if hasattr(RoleAllowed, "__await__") else RoleAllowed()
             else:
-                raise commands.CheckFailure("Required role missing")
+                role_allowed = RoleAllowed or []
 
-        elif PermissionType.lower() == "userid":
-            if user_id in user_allowed:
-                return True
+            if callable(RoleBlacklisted):
+                role_blacklisted = await RoleBlacklisted() if hasattr(RoleBlacklisted, "__await__") else RoleBlacklisted()
             else:
-                raise commands.CheckFailure("User ID not allowed")
+                role_blacklisted = RoleBlacklisted or []
 
-        elif PermissionType.lower() == "hybrid":
-            if (user_id in user_allowed) or (any(role_id in user_role_ids for role_id in role_allowed)):
-                return True
+            if callable(UserAllowed):
+                user_allowed = await UserAllowed() if hasattr(UserAllowed, "__await__") else UserAllowed()
             else:
-                raise commands.CheckFailure("Hybrid check failed")
+                user_allowed = UserAllowed or []
 
-        else:
-            raise commands.CheckFailure(f"Invalid PermissionType: {PermissionType}")
+            if callable(UserBlacklisted):
+                user_blacklisted = await UserBlacklisted() if hasattr(UserBlacklisted, "__await__") else UserBlacklisted()
+            else:
+                user_blacklisted = UserBlacklisted or []
 
-    return commands.check(predicate)
+            if ctx.author.id == ctx.guild.owner_id:
+                return True
 
-def rPermissionEvaluator(ctx,PermissionType: str = "Role",RoleAllowed = [],RoleBlacklisted = [],UserAllowed = [],UserBlacklisted = []):
+            if user_id in user_blacklisted:
+                raise commands.CheckFailure(f"User Blacklist Exception: User ID {user_id}")
+
+            if any(role_id in user_role_ids for role_id in role_blacklisted):
+                raise commands.CheckFailure(f"Exception: Missing Permissions : errno 77777")
+
+            if PermissionType.lower() == "role":
+                if any(role_id in user_role_ids for role_id in role_allowed):
+                    return True
+                else:
+                    raise commands.CheckFailure("Required role missing")
+            elif PermissionType.lower() == "userid":
+                if user_id in user_allowed:
+                    return True
+                else:
+                    raise commands.CheckFailure("User ID not allowed")
+            elif PermissionType.lower() == "hybrid":
+                if (user_id in user_allowed) or (any(role_id in user_role_ids for role_id in role_allowed)):
+                    return True
+                else:
+                    raise commands.CheckFailure("Hybrid check failed")
+            else:
+                raise commands.CheckFailure(f"Invalid PermissionType: {PermissionType}")
+
+        return commands.check(predicate)(func)
+    return decorator
+
+
+async def rPermissionEvaluator(ctx, PermissionType: str = "Role", RoleAllowed=None, RoleBlacklisted=None, UserAllowed=None, UserBlacklisted=None):
     user_id = ctx.author.id
     user_role_ids = {role.id for role in ctx.author.roles}
-    
-    RoleAllowed = RoleAllowed() if callable(RoleAllowed) else RoleAllowed
-    RoleBlacklisted = RoleBlacklisted() if callable(RoleBlacklisted) else RoleBlacklisted
-    UserAllowed = UserAllowed() if callable(UserAllowed) else UserAllowed
-    UserBlacklisted = UserBlacklisted() if callable(UserBlacklisted) else UserBlacklisted
+
+
+    async def resolve(value):
+        if callable(value):
+            if inspect.iscoroutinefunction(value):
+                return await value()
+            else:
+                return value()
+        return value or []
+
+    RoleAllowed = await resolve(RoleAllowed)
+    RoleBlacklisted = await resolve(RoleBlacklisted)
+    UserAllowed = await resolve(UserAllowed)
+    UserBlacklisted = await resolve(UserBlacklisted)
 
     if ctx.author.id == ctx.guild.owner_id:
         return True
 
+    # Blacklist checks
     if user_id in UserBlacklisted:
         return False
 
     if any(role_id in user_role_ids for role_id in RoleBlacklisted):
         return False
 
-    if PermissionType.lower() == "role":
+
+    PermissionType = PermissionType.lower()
+    if PermissionType == "role":
         return any(role_id in user_role_ids for role_id in RoleAllowed)
-
-    elif PermissionType.lower() == "userid":
+    elif PermissionType == "userid":
         return user_id in UserAllowed
-
-    elif PermissionType.lower() == "hybrid":
+    elif PermissionType == "hybrid":
         return (user_id in UserAllowed) or any(role_id in user_role_ids for role_id in RoleAllowed)
-
     else:
         return False

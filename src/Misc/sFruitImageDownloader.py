@@ -1,6 +1,5 @@
-import requests
+import asyncio
 import aiohttp
-import Misc.sFruitImageFetcher as FIF
 import os
 
 

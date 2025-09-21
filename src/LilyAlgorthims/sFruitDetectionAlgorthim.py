@@ -46,7 +46,13 @@ async def extract_trade_details(message):
                 if i > 0 and message_split[i - 1].isdigit():
                     counter = min(int(message_split[i - 1]), 10)
 
-                fruit_type = "Permanent" if (i > 0 and TFA.isPermanentMatch(message_parsed[i - 1])) else "Physical"
+                before_word = message_split[i - 1] if i > 0 else ""
+                after_word = message_split[i + matched_length] if i + matched_length < len(message_split) else ""
+
+                if TFA.isPermanentMatch(before_word) or TFA.isPermanentMatch(after_word):
+                    fruit_type = "Permanent"
+                else:
+                    fruit_type = "Physical"
 
                 for _ in range(counter):
                     fruit_list.append(matched_fruit)

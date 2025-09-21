@@ -16,6 +16,8 @@ from Misc.sFruitImageFetcher import *
 import Misc.sLilyComponentV2 as CV2
 import ui.sFruitValueGenerator as FVG
 import ui.sComboImageGenerator as CIG
+import logging
+import traceback
 
 import re
 import json
@@ -149,28 +151,21 @@ async def MessageEvaluate(self, bot, message):
 
             Title, Fruit_Items = SPA.StockMessageProcessor(embeded_string)
 
+            CurrentGoodFruits = [
+                key for key in Fruit_Items.keys()
+                if ("normal" in Title.lower() and key in good_fruits) or (key in m_good_fruits)
+            ]
 
-            CurrentGoodFruits = []
-            for key in Fruit_Items.keys():
-                if ("normal" in Title.lower() and key in good_fruits) or (key in m_good_fruits):
-                    CurrentGoodFruits.append(key)
-
-            stock_file = None
-            stock_view = None
-
+            stock_image_bytes = None
             if use_image_mode:
                 try:
                     img = SG.StockImageGenerator(Fruit_Items, Title.lower())
                     buffer = io.BytesIO()
                     img.save(buffer, format="PNG")
-                    buffer.seek(0)
-                    stock_file = discord.File(fp=buffer, filename="stock_image.png")
+                    stock_image_bytes = buffer.getvalue()
                 except Exception as e:
                     print(f"Error generating stock image: {e}")
                     return
-            else:
-                stock_view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
-                stock_file = discord.File("src/ui/Border.png", filename="border.png")
 
             try:
                 cursor = await LilyConfig.cdb.execute(
@@ -194,7 +189,13 @@ async def MessageEvaluate(self, bot, message):
                     continue
 
                 try:
-                    stock_message = await channel.send(file=stock_file, view=stock_view)
+                    if not use_image_mode:
+                        stock_view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
+                        stock_file_to_send = discord.File("src/ui/Border.png", filename="border.png")
+                    else:
+                        stock_file_to_send = discord.File(io.BytesIO(stock_image_bytes), filename="stock_image.png")
+                        stock_view = None
+                    stock_message = await channel.send(file=stock_file_to_send, view=stock_view)
                     await stock_message.add_reaction("🇼")
                     await stock_message.add_reaction("🇱")
 
@@ -204,10 +205,12 @@ async def MessageEvaluate(self, bot, message):
                             await channel.send(
                                 f"<@&{role.id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!"
                             )
+
                 except Exception as e:
                     print(f"Error posting stock to guild {guild.id}: {e}")
 
-        elif re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
+
+        if re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
             try:
                 ctx = await bot.get_context(message)
                 cursor = await LilyConfig.cdb.execute(
@@ -264,7 +267,10 @@ async def MessageEvaluate(self, bot, message):
                 await status_msg.edit(content=None, attachments=[file])
 
             except Exception as e:
-                await status_msg.edit(content=f'Exception: {e}')
+                try:
+                    await status_msg.delete()
+                except:
+                    pass
 
         elif await TFA.is_valid_trade_format(message.content.lower()): 
             lowered_message = message.content.lower()

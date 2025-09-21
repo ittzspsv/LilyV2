@@ -1,9 +1,7 @@
-import json
 import discord
 import aiosqlite
 import asyncio
-import random
-import ast
+
 try:
     import Misc.sLilyComponentV2 as CS2
 except:
@@ -13,6 +11,75 @@ from datetime import datetime
 from discord.ext import commands
 
 sdb = None
+
+class LOAModal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="Request LOA")
+        self.days = discord.ui.TextInput(
+            label="Number of days",
+            placeholder="Enter number of days",
+            required=True
+        )
+        self.reason = discord.ui.TextInput(
+            label="Reason",
+            style=discord.TextStyle.paragraph,
+            placeholder="Enter reason",
+            required=True
+        )
+        self.add_item(self.days)
+        self.add_item(self.reason)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Your LOA request has been submitted!", ephemeral=True)
+
+        days = int(self.days.value)
+        reason = self.reason.value
+        staff = interaction.user
+
+        review_channel = interaction.client.get_channel(1418140702163861504)
+        if review_channel is None:
+            await staff.send("Review channel not found.")
+            return
+
+        embed = discord.Embed(
+            title="📝 LOA Request",
+            description="A staff member has requested a Leave of Absence.",
+            color=discord.Color.blue()
+        )
+        embed.add_field(name="Staff", value=f"{staff.mention}", inline=True)
+        embed.add_field(name="Days", value=str(days), inline=True)
+        embed.add_field(name="Reason", value=reason, inline=False)
+        embed.set_thumbnail(url=staff.display_avatar.url if staff.display_avatar else "https://i.imgur.com/6VBx3io.png")
+        embed.set_footer(text="React with ✅ to approve or ❌ to reject.")
+
+        msg = await review_channel.send(embed=embed)
+        await msg.add_reaction("✅")
+        await msg.add_reaction("❌")
+
+        def check(reaction, user):
+            return (
+                not user.bot
+                and user != staff
+                and str(reaction.emoji) in ["✅", "❌"]
+                and reaction.message.id == msg.id
+            )
+
+        try:
+            reaction, user = await interaction.client.wait_for("reaction_add", timeout=86400.0, check=check)
+        except asyncio.TimeoutError:
+            await staff.send("Your LOA request timed out and was not reviewed.")
+            return
+
+        if str(reaction.emoji) == "✅":
+            await AssignLoa(staff.id, reason, days)
+            embed.color = discord.Color.green()
+            await staff.send(f"Your LOA request for **{days} days** has been approved. Good luck!")
+        else:
+            embed.color = discord.Color.red()
+            await staff.send(f"Your LOA request for **{days} days** has been rejected.")
+
+        await msg.edit(embed=embed)
+
 
 async def initialize():
     global sdb
@@ -59,24 +126,25 @@ async def run_query(ctx: commands.Context, query: str):
 
 async def FetchStaffDetail(staff: discord.Member):
     try:
-        resultant = await sdb.execute(
-            "SELECT name, role, responsibility, join_date, strikes FROM staff_data WHERE staff_id = ?",
-            (staff.id,)
-        )
-        row = await resultant.fetchone()
+        query = """
+        SELECT s.name, r.role_name, s.on_loa, s.strikes_count
+        FROM staffs s
+        LEFT JOIN roles r ON s.role_id = r.role_id
+        WHERE s.staff_id = ?
+        """
+        cursor = await sdb.execute(query, (staff.id,))
+        row = await cursor.fetchone()
 
         if not row:
             raise ValueError("Staff data not found in database.")
 
-        name, role, responsibility, join_date, strikes = row
+        name, role_name, is_loa, strikes_count = row
 
-        start_date = datetime.strptime(join_date, "%d/%m/%Y")
+        start_date = datetime.now()
         current_date = datetime.today()
-
         years = current_date.year - start_date.year
         months = current_date.month - start_date.month
         days = current_date.day - start_date.day
-
         if days < 0:
             months -= 1
             days += 30
@@ -84,31 +152,34 @@ async def FetchStaffDetail(staff: discord.Member):
             years -= 1
             months += 12
 
-        if isinstance(strikes, str):
-            try:
-                strikes_list = json.loads(strikes)  # JSON string
-                strike_count = len(strikes_list)
-            except json.JSONDecodeError:
-                strike_count = int(strikes) if strikes.isdigit() else 0
-        elif isinstance(strikes, int):
-            strike_count = strikes
-        else:
-            strike_count = 0
-        view = CS2.StaffDataComponent(name, role, responsibility, join_date, f"{years} years {months} months {days} days", strike_count, staff.avatar.url)
+        view = CS2.StaffDataComponent(
+            name, 
+            role_name or "N/A",
+            "N/A",
+            start_date.strftime("%d/%m/%Y"),
+            f"{years} years {months} months {days} days",
+            strikes_count,
+            staff.avatar.url
+        )
         return view
 
-    except Exception as e:
+    except Exception:
         return CS2.EmptyView()
 
 async def FetchAllStaffs():
     try:
-        async with sdb.execute(
-            "SELECT staff_id, role, LOA, higher_staff FROM staff_data"
-        ) as cursor:
+        query = """
+        SELECT s.staff_id, r.role_name, s.on_loa, r.role_priority
+        FROM staffs s
+        LEFT JOIN roles r ON s.role_id = r.role_id
+        WHERE s.retired = 0
+        ORDER BY r.role_priority ASC
+        """
+        async with sdb.execute(query) as cursor:
             rows = await cursor.fetchall()
 
         if not rows:
-            raise ValueError("No staff data found in database.")
+            raise ValueError("No active staff data found in database.")
 
         embed = discord.Embed(
             title="STAFF LIST",
@@ -120,37 +191,42 @@ async def FetchAllStaffs():
         active_moderators = 0
         loa_moderators = 0
 
-        for staff_id, role, loa, higher_staff in rows:
+        for staff_id, role_name, is_loa, role_priority in rows:
             mention = f"<@{staff_id}>"
+            role_name = role_name or "Unknown Role"
 
-            if role not in roles:
-                roles[role] = []
-            roles[role].append(mention)
+            if role_name not in roles:
+                roles[role_name] = {
+                    "priority": role_priority if role_priority is not None else 999,
+                    "mentions": []
+                }
 
-            if loa:
+            roles[role_name]["mentions"].append(mention)
+
+            if is_loa:
                 loa_moderators += 1
-            elif not higher_staff and not loa:
+            else:
                 active_moderators += 1
 
-        role_priority = ("")
-        for role, mentions in roles.items():
+        sorted_roles = sorted(
+            roles.items(),
+            key=lambda x: x[1]["priority"]
+        )
+
+        for role_name, data in sorted_roles:
+            mentions = data["mentions"]
             count = len(mentions)
-            names_with_bullet = "- " + "\n- ".join(mentions)
             embed.add_field(
-                name=f"__{role}__ ({count})",
-                value=names_with_bullet,
+                name=f"__{role_name}__ ({count})",
+                value="- " + "\n- ".join(mentions),
                 inline=False
             )
 
         analysis_text = (
-            f"**Staff Prioritized on Moderation:** {active_moderators}\n"
+            f"**Staff Active:** {active_moderators}\n"
             f"**Staffs in LOA:** {loa_moderators}"
         )
-        embed.add_field(
-            name="__ANALYSIS__",
-            value=analysis_text,
-            inline=False
-        )
+        embed.add_field(name="__ANALYSIS__", value=analysis_text, inline=False)
 
         return embed
 
@@ -160,219 +236,223 @@ async def FetchAllStaffs():
 async def AddStaff(ctx: commands.Context, staff: discord.Member):
     staff_id = staff.id
     name = staff.display_name
-    top_role = staff.top_role.name
-    join_date = datetime.now().strftime("%d/%m/%Y")
 
-    cursor = await sdb.execute("SELECT 1 FROM staff_data WHERE id = ?", (staff_id,))
-    exists = await cursor.fetchone()
+    cursor = await sdb.execute("SELECT retired FROM staffs WHERE staff_id = ?", (staff_id,))
+    row = await cursor.fetchone()
 
-    if exists:
-        await sdb.execute(
-            "UPDATE staff_data SET name = ?, top_role = ? WHERE id = ?",
-            (name, top_role, staff_id)
-        )
+    top_role = None
+    for role in sorted(staff.roles, key=lambda r: r.position, reverse=True):
+        if role.is_default():
+            continue
+        top_role = role
+        break
+
+    if not top_role:
+        await ctx.send(f"Staff {staff.mention} has no assignable roles.")
+        return
+
+    cursor = await sdb.execute("SELECT role_id FROM roles WHERE role_id = ?", (top_role.id,))
+    role_row = await cursor.fetchone()
+    if not role_row:
+        await ctx.send(f"Role {top_role.name} does not exist in the roles table.")
+        return
+
+    role_id = role_row[0]
+
+    if row:
+        retired = row[0]
+        if retired:
+            await sdb.execute(
+                "UPDATE staffs SET retired = 0, role_id = ?, name = ? WHERE staff_id = ?",
+                (role_id, name, staff_id)
+            )
+            await ctx.send(f"Staff {staff.mention} was retired and is now reactivated with updated role.")
+        else:
+            await sdb.execute(
+                "UPDATE staffs SET role_id = ?, name = ? WHERE staff_id = ?",
+                (role_id, name, staff_id)
+            )
+            await ctx.send(f"Staff {staff.mention}'s role has been updated.")
     else:
         await sdb.execute(
-            """
-            INSERT INTO staff_data
-            (id, name, top_role, status, join_date, data, warnings, strikes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                staff_id,
-                name,
-                top_role,
-                'NIL',
-                join_date,
-                json.dumps([]),
-                0,
-                0
-            )
+            "INSERT INTO staffs (staff_id, name, role_id, on_loa, strikes_count, retired) VALUES (?, ?, ?, 0, 0, 0)",
+            (staff_id, name, role_id)
         )
+        await ctx.send(f"Staff {staff.mention} has been added with role.")
 
     await sdb.commit()
 
 async def RemoveStaff(ctx: commands.Context, staff_id: int):
-    cursor = await sdb.execute("SELECT 1 FROM staff_data WHERE id = ?", (staff_id,))
+    cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ?", (staff_id,))
     exists = await cursor.fetchone()
 
     if exists:
-        await sdb.execute("DELETE FROM staff_data WHERE id = ?", (staff_id,))
+        await sdb.execute("UPDATE staffs SET retired = 1 WHERE staff_id = ?", (staff_id,))
         await sdb.commit()
-        await ctx.send(f"Staff with ID {staff_id} has been removed.")
+        await ctx.send(f"Staff with ID {staff_id} has been marked as retired.")
     else:
         await ctx.send(f"No staff found with ID {staff_id}.")
 
 async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
     try:
-        cursor_strikes = await sdb.execute(
-            "SELECT strikes FROM staff_data WHERE staff_id = ?", 
-            (staff_id,)
-        )
-        values = await cursor_strikes.fetchall()
+        cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ?", (staff_id,))
+        exists = await cursor.fetchone()
 
-        if not values:
-            embed = discord.Embed(
-                title="Staff Member Not Found",
-                colour=0xf50000
-            )
-            return embed
-        strike_data = ast.literal_eval(values[0][0])
-
-        strike = {
-            "Strike_id" : random.randint(0, 10000),
-            "reason": reason,
-            "date": datetime.today().strftime("%d/%m/%Y"),
-            "manager": ctx.author.id
-        }
-        strike_data.append(strike)
+        if not exists:
+            return discord.Embed(title="Staff Member Not Found", colour=0xf50000)
 
         await sdb.execute(
-            "UPDATE staff_data SET strikes = ? WHERE staff_id = ?", 
-            (str(strike_data), staff_id)
+            "INSERT INTO strikes (issued_by_id, issued_to_id, reason, date) VALUES (?, ?, ?, ?)",
+            (ctx.author.id, staff_id, reason, datetime.today().strftime("%d/%m/%Y"))
         )
-        await sdb.commit()
 
-        embed = discord.Embed(
+        await sdb.execute(
+            "UPDATE staffs SET strikes_count = strikes_count + 1 WHERE staff_id = ?",
+            (staff_id,)
+        )
+
+        await sdb.commit()
+        return discord.Embed(
             description=f"**Successfully Striked Staff <@{staff_id}>**",
             colour=0xf50000
         )
-        return embed
 
     except Exception as e:
-        embed = discord.Embed(
-            title=f"Exception: {e}",
-            colour=0xf50000
-        )
-        return embed
+        return discord.Embed(title=f"Exception: {e}", colour=0xf50000)
 
-async def RemoveStrikeStaff(ctx: commands.Context, staff_id: str, strike_id: str):
+async def RemoveStrikeStaff(ctx: commands.Context, strike_id: str):
     try:
-        cursor = await sdb.execute("SELECT strikes FROM staff_data WHERE staff_id = ?", (staff_id,))
+        target_id = int(strike_id)
+
+        cursor = await sdb.execute(
+            "SELECT issued_to_id FROM strikes WHERE strike_id = ?",
+            (target_id,)
+        )
         row = await cursor.fetchone()
 
         if not row:
-            embed = discord.Embed(title="Staff Member Not Found", colour=0xf50000)
-            return embed
-
-        raw = row[0]
-
-        if raw is None or raw == "":
-            strikes = []
-        else:
-            try:
-                strikes = ast.literal_eval(raw)
-            except Exception:
-                try:
-                    strikes = json.loads(raw)
-                except Exception:
-                    embed = discord.Embed(
-                        title="Parse Error",
-                        description="Could not parse the strikes data for this user.",
-                        colour=0xf50000
-                    )
-                    return embed
-
-        if not isinstance(strikes, list):
-            strikes = []
-
-        try:
-            target_id = int(strike_id)
-        except Exception:
-            embed = discord.Embed(
-                title="Invalid Strike ID",
-                description="`strike_id` must be an integer (or numeric string).",
-                colour=0xf50000
-            )
-            return embed
-
-        def is_match(s):
-            if not isinstance(s, dict):
-                return False
-            sid = s.get("Strike_id")
-            try:
-                return int(sid) == target_id
-            except Exception:
-                return str(sid) == str(target_id)
-
-        matches = [s for s in strikes if is_match(s)]
-        if not matches:
-            embed = discord.Embed(
+            return discord.Embed(
                 title="Strike Not Found",
-                description=f"No strike with ID `{target_id}` found for <@{staff_id}>.",
+                description=f"No strike with ID `{target_id}` found.",
                 colour=0xf50000
             )
-            return embed
 
-        new_strikes = [s for s in strikes if not is_match(s)]
-        removed_count = len(matches)
+        staff_id = row[0]
+
+        await sdb.execute("DELETE FROM strikes WHERE strike_id = ?", (target_id,))
 
         await sdb.execute(
-            "UPDATE staff_data SET strikes = ? WHERE staff_id = ?",
-            (str(new_strikes), staff_id)
+            """
+            UPDATE staffs
+            SET strikes_count = CASE 
+                WHEN strikes_count > 0 THEN strikes_count - 1 
+                ELSE 0 
+            END
+            WHERE staff_id = ?
+            """,
+            (staff_id,)
         )
+
         await sdb.commit()
 
-        first = matches[0]
-        reason = first.get("reason", "N/A")
-        date = first.get("date", "N/A")
-        manager = first.get("manager", "N/A")
-
-        manager_mention = f"<@{manager}>" if manager not in (None, "N/A") else "N/A"
-
-        embed = discord.Embed(
-            description=f"✅ Removed `{removed_count}` strike(s) from <@{staff_id}> (Strike ID: `{target_id}`)",
+        return discord.Embed(
+            description=f"Strike {target_id} removed from <@{staff_id}>",
             colour=0x00ff00
         )
-        embed.add_field(name="Reason", value=str(reason), inline=True)
-        embed.add_field(name="Date", value=str(date), inline=True)
-        embed.add_field(name="Manager", value=manager_mention, inline=True)
-
-        return embed
 
     except Exception as e:
-        embed = discord.Embed(
-            title=f"Exception: {e}",
-            colour=0xf50000
-        )
-        return embed    
+        return discord.Embed(title=f"Exception: {e}", colour=0xf50000)
 
-async def ListStrikes(staff_id: str):
+async def ListStrikes(staff: discord.Member):
     try:
-        async with sdb.execute("SELECT strikes FROM staff_data WHERE staff_id = ?", (staff_id,)) as cursor:
-            row = await cursor.fetchone()
+        async with sdb.execute(
+            "SELECT strike_id, reason, date, issued_by_id FROM strikes WHERE issued_to_id = ?",
+            (str(staff.id),)
+        ) as cursor:
+            rows = await cursor.fetchall()
 
-        if not row:
+        if not rows:
             return discord.Embed(
-                title="Staff Member Not Found",
-                description=f"No data found for <@{staff_id}>",
+                title="No Strikes Found",
+                description=f"No strikes found for {staff.mention}",
                 colour=0xf50000
-            )
-
-        strikes = ast.literal_eval(row[0]) if row[0] else []
+            ).set_thumbnail(url=staff.display_avatar.url)
 
         embed = discord.Embed(
-            title="Strikes",
-            description=f"Showing for <@{staff_id}>",
+            title=f"Strikes for {staff.display_name}",
+            description=f"Listing all strikes issued to {staff.mention}",
             colour=0xf50000
         )
+        embed.set_thumbnail(url=staff.display_avatar.url)
 
-        for idx, strike in enumerate(strikes, start=1):
+        for strike_id, reason, date, manager in rows:
             embed.add_field(
-                name=f"Strike {idx}",
+                name=f"__Strike ID: {strike_id}__",  # underline
                 value=(
-                    f'**Strike ID : {strike['Strike_id']}**\n'
-                    f"**Reason     : {strike['reason']}**\n"
-                    f"**Date       : {strike['date']}**\n"
-                    f"**Manager    : <@{strike['manager']}>**"
+                    f"**Reason:** {reason}\n"
+                    f"**Date:** {date}\n"
+                    f"**Manager:** <@{manager}>"
                 ),
                 inline=False
             )
 
+        embed.set_footer(text="Immutable Records Can only be removed by Higher Staffs")
         return embed
 
     except Exception as e:
         return discord.Embed(
-            title=f"Exception : {e}",
+            title=f"Exception: {e}",
             colour=0xf50000
         )
+    
+async def AssignLoa(staff_id: str, reason: str, days: int):
+    try:
+        await sdb.execute(
+            """
+            INSERT INTO leaves (staff_id, reason, days)
+            VALUES (?, ?, ?)
+            """,
+            (staff_id, reason, days)
+        )
+
+        await sdb.execute(
+            """
+            UPDATE staffs
+            SET on_loa = 1
+            WHERE staff_id = ?
+            """,
+            (staff_id,)
+        )
+
+        await sdb.commit()
+        return True
+
+    except Exception as e:
+        print(f"Error assigning LOA: {e}")
+        return False
+
+async def RemoveLoa(staff_id: str):
+    try:
+        await sdb.execute(
+            """
+            UPDATE staffs
+            SET on_loa = 0
+            WHERE staff_id = ?
+            """,
+            (staff_id,)
+        )
+
+        await sdb.commit()
+        return True
+
+    except Exception as e:
+        print(f"Error removing LOA: {e}")
+        return False
+
+async def RequestLoa(ctx: commands.Context):
+    interaction = getattr(ctx, "interaction", None)
+    if interaction:
+        await interaction.response.send_modal(LOAModal())
+    else:
+        await ctx.send("Opening LOA request modal...")
+        await ctx.send_modal(LOAModal())

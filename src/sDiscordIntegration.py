@@ -345,7 +345,6 @@ class MyBot(commands.Bot):
 
 bot = MyBot()
 
-
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
@@ -360,6 +359,7 @@ async def on_command_error(ctx, error):
 async def configure(ctx: commands.Context):
     text = await Config.update_config_data()
     await ctx.send(embed=mLily.SimpleEmbed(f'Updated bot config with code : {text}'))
+
 
 load_dotenv("token.env")
 

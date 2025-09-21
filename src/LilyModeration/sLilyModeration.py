@@ -3,7 +3,7 @@ import os
 import pytz
 import polars as pl
 import re
-import aiosqlite
+import LilyManagement.sLilyStaffManagement as LSM
 
 import Config.sBotDetails as Config
 from collections import Counter
@@ -28,56 +28,81 @@ def evaluate_log_file(filename):
         df.write_csv(filename)
 
 async def exceeded_ban_limit(ctx: commands.Context, moderator_id: int, moderator_role_ids: list[int]):
-    now = datetime.now(pytz.utc).isoformat()
+    if not moderator_role_ids:
+        return False
+
+    placeholders = ",".join("?" * len(moderator_role_ids))
+    query = f"""
+        SELECT role_id, ban_limit
+        FROM roles
+        WHERE ban_limit > 0 AND role_id IN ({placeholders})
+    """
+    cursor = await LSM.sdb.execute(query, [str(rid) for rid in moderator_role_ids])
+    rows = await cursor.fetchall()
+
+    if not rows:
+        return False
+
+    max_limit = max(row[1] for row in rows)
+
     past_24h = (datetime.now(pytz.utc) - timedelta(hours=24)).isoformat()
 
     try:
         async with LilyLogging.mdb.execute("""
-            SELECT COUNT(*) FROM modlogs
+            SELECT COUNT(*)
+            FROM modlogs
             WHERE guild_id = ? AND moderator_id = ? AND mod_type = 'ban'
-            AND timestamp >= ?
-        """, (ctx.guild.id, moderator_id, past_24h)) as cursor:
-            result = await cursor.fetchone()
+              AND timestamp >= ?
+        """, (ctx.guild.id, moderator_id, past_24h)) as c2:
+            result = await c2.fetchone()
             recent_ban_count = result[0] if result else 0
 
-        max_limit = max([Config.limit_Ban_details.get(role_id, 0) for role_id in moderator_role_ids], default=0)
-        return recent_ban_count >= max_limit if max_limit > 0 else False
+        return recent_ban_count >= max_limit
 
     except Exception as e:
+        print("Error checking ban limit:", e)
         return False
 
 async def remaining_Ban_time(ctx: commands.Context, moderator_id: int, moderator_role_ids: list[int]):
+    if not moderator_role_ids:
+        return None
+
     now = datetime.now(pytz.utc)
-    past_24h = now - timedelta(hours=24)
+    past_24h = (now - timedelta(hours=24)).isoformat()
 
     try:
-        async with LilyLogging.mdb.execute("""
-            SELECT timestamp FROM modlogs
-            WHERE guild_id = ? AND moderator_id = ? AND mod_type = 'ban'
-            AND timestamp >= ?
-            ORDER BY timestamp ASC LIMIT 1
-        """, (ctx.guild.id, moderator_id, past_24h.isoformat())) as cursor:
-            row = await cursor.fetchone()
+        placeholders = ",".join("?" * len(moderator_role_ids))
+        query = f"""
+            SELECT ban_limit
+            FROM roles
+            WHERE ban_limit > 0 AND role_id IN ({placeholders})
+        """
+        cursor = await LSM.sdb.execute(query, moderator_role_ids)
+        rows = await cursor.fetchall()
 
-        if not row:
+        if not rows:
             return None
 
-        oldest_ban_time = datetime.fromisoformat(row[0])
-
-        max_limit = max([Config.limit_Ban_details.get(role_id, 0) for role_id in moderator_role_ids], default=0)
-
-        async with LilyLogging.mdb.execute("""
-            SELECT COUNT(*) FROM modlogs
-            WHERE guild_id = ? AND moderator_id = ? AND mod_type = 'ban'
-            AND timestamp >= ?
-        """, (ctx.guild.id, moderator_id, past_24h.isoformat())) as cursor:
-            count_row = await cursor.fetchone()
-            recent_ban_count = count_row[0] if count_row else 0
-
-        if max_limit == 0 or recent_ban_count < max_limit:
+        max_limit = max(row[0] for row in rows)
+        if max_limit == 0:
             return None
 
-        cooldown_end = oldest_ban_time + timedelta(hours=24)
+        async with LilyLogging.mdb.execute("""
+            SELECT timestamp
+            FROM modlogs
+            WHERE guild_id = ? AND moderator_id = ? AND mod_type = 'ban'
+              AND timestamp >= ?
+            ORDER BY timestamp ASC
+        """, (ctx.guild.id, moderator_id, past_24h)) as cursor:
+            bans = await cursor.fetchall()
+
+        recent_ban_count = len(bans)
+        if recent_ban_count < max_limit:
+            return None
+
+        oldest_trigger_ban = datetime.fromisoformat(bans[0][0])
+        cooldown_end = oldest_trigger_ban + timedelta(hours=24)
+
         if cooldown_end > now:
             remaining = cooldown_end - now
             hours, remainder = divmod(int(remaining.total_seconds()), 3600)
@@ -87,26 +112,43 @@ async def remaining_Ban_time(ctx: commands.Context, moderator_id: int, moderator
         return None
 
     except Exception as e:
+        print("Error calculating remaining ban time:", e)
         return None
 
-async def remaining_ban_count(ctx: commands.Context, moderator_id, moderator_role_ids):
+async def remaining_ban_count(ctx: commands.Context, moderator_id: int, moderator_role_ids: list[int]):
+    if not moderator_role_ids:
+        return 0
+
     now = datetime.now(pytz.utc)
-    past_24h = now - timedelta(hours=24)
+    past_24h = (now - timedelta(hours=24)).isoformat()
 
     try:
+        placeholders = ",".join("?" * len(moderator_role_ids))
+        query = f"""
+            SELECT ban_limit
+            FROM roles
+            WHERE role_id IN ({placeholders}) AND ban_limit > 0
+        """
+        cursor = await LSM.sdb.execute(query, moderator_role_ids)
+        rows = await cursor.fetchall()
+        max_limit = max(row[0] for row in rows) if rows else 0
+
+        if max_limit == 0:
+            return 0
+
         async with LilyLogging.mdb.execute("""
-            SELECT COUNT(*) FROM modlogs
+            SELECT COUNT(*)
+            FROM modlogs
             WHERE guild_id = ? AND moderator_id = ? AND mod_type = 'ban'
-            AND timestamp >= ?
-        """, (ctx.guild.id, moderator_id, past_24h.isoformat())) as cursor:
+              AND timestamp >= ?
+        """, (ctx.guild.id, moderator_id, past_24h)) as cursor:
             row = await cursor.fetchone()
             recent_ban_count = row[0] if row else 0
 
-        max_limit = max([Config.limit_Ban_details.get(role_id, 0) for role_id in moderator_role_ids], default=0)
-
-        return max(0, max_limit - recent_ban_count) if max_limit > 0 else 0
+        return max(0, max_limit - recent_ban_count)
 
     except Exception as e:
+        print("Error calculating remaining ban count:", e)
         return 0
 
 async def ms(ctx: commands.Context, moderator_id: int, user: discord.User, slice_expr=None):
@@ -375,7 +417,20 @@ def MuteParser(duration: str):
 
 async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = []):
     author_role_ids = [role.id for role in ctx.author.roles]
-    valid_limit_roles = [role_id for role_id in author_role_ids if role_id in Config.limit_Ban_details]
+
+    role_ids = [str(rid) for rid in author_role_ids]
+    if role_ids:
+        placeholders = ",".join("?" * len(role_ids))
+        query = f"""
+            SELECT role_id
+            FROM roles
+            WHERE ban_limit > 0 AND role_id IN ({placeholders})
+        """
+        cursor = await LSM.sdb.execute(query, role_ids)
+        rows = await cursor.fetchall()
+        valid_limit_roles = [row[0] for row in rows]  # flatten
+    else:
+        valid_limit_roles = []
 
     if not valid_limit_roles:
         await ctx.send(embed=SimpleEmbed("You don't have permission to perform a limited ban."))
@@ -394,7 +449,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
         try:
             target_user = await ctx.bot.fetch_user(user_id)
         except discord.NotFound:
-            await ctx.send(embed=SimpleEmbed("User not found. "))
+            await ctx.send(embed=SimpleEmbed("User not found."))
             return
         except discord.HTTPException as e:
             await ctx.send(embed=SimpleEmbed(f"Exception: HTTPException {e}"))
@@ -427,7 +482,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
 
         remaining = await remaining_ban_count(ctx, ctx.author.id, valid_limit_roles)
         await ctx.send(embed=SimpleEmbed(
-            f"Banned: <@{user_id}>\n**Reason:** {reason}\n**Bans Remaining:** {remaining - 1}"
+            f"Banned: <@{user_id}>\n**Reason:** {reason}\n**Bans Remaining:** {remaining}"
         ))
 
         await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "ban", reason)

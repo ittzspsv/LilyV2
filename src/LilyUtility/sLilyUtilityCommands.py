@@ -172,7 +172,7 @@ class LilyUtility(commands.Cog):
             await VC.vdb.commit()
 
             if rows:
-                max_rows = 30  # cap for safety
+                max_rows = 30
                 total_rows = len(rows)
                 rows = rows[:max_rows]
 
@@ -201,6 +201,53 @@ class LilyUtility(commands.Cog):
 
         except Exception as e:
             await ctx.send(f"Error: `{type(e).__name__}: {e}`")
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @commands.hybrid_command(name='run_config_query', description='executes arbitary query for the database Config.')
+    async def run_config_query(self, ctx: commands.Context, *, query: str):
+        try:
+            cursor = await ValueConfig.cdb.execute(query)
+
+            try:
+                rows = await cursor.fetchall()
+                columns = [description[0] for description in cursor.description] if cursor.description else []
+            except Exception:
+                rows = None
+                columns = []
+
+            await VC.vdb.commit()
+
+            if rows:
+                max_rows = 30
+                total_rows = len(rows)
+                rows = rows[:max_rows]
+
+                col_widths = []
+                for i, col in enumerate(columns):
+                    max_len = max(len(str(row[i])) for row in rows) if rows else 0
+                    col_widths.append(max(len(col), max_len))
+
+                header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
+                separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
+
+                lines = []
+                for row in rows:
+                    line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
+                    lines.append(line)
+
+                table = "\n".join([header, separator] + lines)
+
+                if total_rows > max_rows:
+                    table += f"\n... and {total_rows - max_rows} more rows not shown."
+
+                await ctx.send(f"```\n{table}\n```")
+
+            else:
+                await ctx.send("Execution Successful")
+
+        except Exception as e:
+            await ctx.send(f"Error: `{type(e).__name__}: {e}`")
+
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
     @commands.hybrid_command(name='set_stock_type', description='stock type 0 = embed; 1 = image')
