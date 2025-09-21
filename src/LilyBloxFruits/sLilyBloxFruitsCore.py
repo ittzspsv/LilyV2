@@ -122,7 +122,7 @@ class TradeSuggestorWindow(discord.ui.View):
                     )
 
 async def MessageEvaluate(self, bot, message):
-        if message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.stock_fetch_channel_id:
+        if message.guild and message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.stock_fetch_channel_id:
             try:
                 cursor = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'StockImage'")
                 row = await cursor.fetchone()
