@@ -10,6 +10,7 @@ from collections import Counter
 import LilyLogging.sLilyLogging as LilyLogging
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
+from collections import Counter, defaultdict
 from discord.utils import utcnow
 
 
@@ -169,21 +170,34 @@ async def ms(ctx: commands.Context, moderator_id: int, user: discord.User, slice
                 "target_user_id": row[0],
                 "mod_type": row[1].lower(),
                 "reason": row[2],
-                "timestamp": row[3]
+                "timestamp": datetime.fromisoformat(row[3])
             }
             for row in rows
         ]
 
-        mod_type_counts = Counter(log["mod_type"] for log in all_logs)
-        total_logs = len(all_logs)
+        now = datetime.now(timezone.utc)
+        period_7d = now - timedelta(days=7)
+        period_30d = now - timedelta(days=30)
 
+        stats = defaultdict(lambda: {"7d": 0, "30d": 0, "total": 0})
+        for log in all_logs:
+            action = log["mod_type"]
+            ts = log["timestamp"]
+
+            stats[action]["total"] += 1
+            if ts >= period_7d:
+                stats[action]["7d"] += 1
+            if ts >= period_30d:
+                stats[action]["30d"] += 1
+
+        total_logs = len(all_logs)
         shown_logs = all_logs[slice_expr] if slice_expr else all_logs
 
         embed = discord.Embed(
             title="📘 Moderator Logs",
             description=f"🛡️ Moderator: <@{moderator_id}>",
             colour=discord.Colour.blurple(),
-            timestamp=datetime.now()
+            timestamp=now
         )
 
         embed.set_author(name=Config.bot_name, icon_url=Config.bot_icon_link_url)
@@ -191,29 +205,30 @@ async def ms(ctx: commands.Context, moderator_id: int, user: discord.User, slice
 
         embed.add_field(name="📖 Total Logs", value=str(total_logs), inline=True)
         embed.add_field(name="🕵️ Moderator ID", value=str(moderator_id), inline=True)
-        embed.add_field(name="🗓️ Date", value=datetime.now().strftime("%Y-%m-%d"), inline=True)
-
-        action_summary = "\n".join(
-            f"🔸 **{action.title()}s**: `{count}`" for action, count in mod_type_counts.items()
-        )
-        embed.add_field(name="📊 Moderation Summary", value=action_summary or "No actions recorded", inline=False)
+        embed.add_field(name="🗓️ Date", value=now.strftime("%Y-%m-%d"), inline=True)
 
         embed.add_field(name="", value="**━━━━━━━━━━━━━━━━━━━**", inline=False)
 
-        for index, log in enumerate(shown_logs, start=1):
-            try:
-                dt = datetime.fromisoformat(log["timestamp"])
-            except ValueError:
-                dt = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
+        for action in ("mute", "warn", "ban"):
+            s = stats[action]
+            embed.add_field(
+                name=f"{action.title()}s",
+                value=f"7d: `{s['7d']}`\n30d: `{s['30d']}`\nTotal: `{s['total']}`",
+                inline=True
+            )
 
-            formatted_time = dt.strftime("%Y-%m-%d %I:%M:%S %p")
-            timezone = dt.tzinfo or "UTC"
+        embed.add_field(name="", value="**━━━━━━━━━━━━━━━━━━━**", inline=False)
+
+        # individual logs
+        for index, log in enumerate(shown_logs, start=1):
+            formatted_time = log["timestamp"].strftime("%Y-%m-%d %I:%M:%S %p")
+            tz = log["timestamp"].tzinfo or "UTC"
 
             embed.add_field(
                 name=f"📌 Log #{index} - {log['mod_type'].title()}",
                 value=(f"> 👤 **User:** <@{log['target_user_id']}>\n"
                        f"> 📝 **Reason:** {log['reason']}\n"
-                       f"> ⏰ **Time:** {formatted_time} ({timezone})"),
+                       f"> ⏰ **Time:** {formatted_time} ({tz})"),
                 inline=False
             )
 
@@ -482,7 +497,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
 
         remaining = await remaining_ban_count(ctx, ctx.author.id, valid_limit_roles)
         await ctx.send(embed=SimpleEmbed(
-            f"Banned: <@{user_id}>\n**Reason:** {reason}\n**Bans Remaining:** {remaining}"
+            f"✅ Banned: <@{user_id}>\n**Bans Remaining:** {remaining}"
         ))
 
         await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "ban", reason)
@@ -528,7 +543,7 @@ async def mute_user(ctx, user: discord.Member, duration: str, reason: str = "No 
         await user.edit(timed_out_until=until, reason=reason)
 
         await ctx.send(embed=SimpleEmbed(
-            f"Muted: <@{user.id}>\n**Duration:** {duration}\n**Reason:** {reason}"
+            f"✅Muted: <@{user.id}> for **Duration:** {duration}"
         ))
 
         await LilyLogging.LogModerationAction(ctx, ctx.author.id, user.id, "mute", reason)
@@ -556,7 +571,7 @@ async def unmute(ctx, user: discord.Member):
 
     try:
         await user.edit(timed_out_until=None, reason="Manual unmute by moderator")
-        await ctx.send(embed=SimpleEmbed(f"Unmuted: <@{user.id}>"))
+        await ctx.send(embed=SimpleEmbed(f"✅ Unmuted: <@{user.id}>"))
         try:
             with open("src/LilyModeration/logchannelid.log", "r") as file:
                 logs_channel_id = int(file.read().strip())

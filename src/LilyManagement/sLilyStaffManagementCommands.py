@@ -79,9 +79,12 @@ class LilyManagement(commands.Cog):
         else:
             await ctx.reply(f"An error occured while removing LOA")
 
+    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
     @commands.hybrid_command(name='request_loa', description='Requests leave from higher staffs')
     async def request_loa(self, ctx: commands.Context):
         await smLily.RequestLoa(ctx)
+
+
 
 
 async def setup(bot):

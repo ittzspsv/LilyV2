@@ -30,7 +30,7 @@ class LOAModal(discord.ui.Modal):
         self.add_item(self.reason)
 
     async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Your LOA request has been submitted!", ephemeral=True)
+        await interaction.response.send_message("✅ Your LOA request has been submitted!", ephemeral=True)
 
         days = int(self.days.value)
         reason = self.reason.value
@@ -38,7 +38,7 @@ class LOAModal(discord.ui.Modal):
 
         review_channel = interaction.client.get_channel(1418140702163861504)
         if review_channel is None:
-            await staff.send("Review channel not found.")
+            await staff.send("⚠️ Review channel not found.")
             return
 
         embed = discord.Embed(
@@ -50,36 +50,44 @@ class LOAModal(discord.ui.Modal):
         embed.add_field(name="Days", value=str(days), inline=True)
         embed.add_field(name="Reason", value=reason, inline=False)
         embed.set_thumbnail(url=staff.display_avatar.url if staff.display_avatar else "https://i.imgur.com/6VBx3io.png")
-        embed.set_footer(text="React with ✅ to approve or ❌ to reject.")
+        embed.set_footer(text="Use the buttons below to approve or reject this request.")
 
-        msg = await review_channel.send(embed=embed)
-        await msg.add_reaction("✅")
-        await msg.add_reaction("❌")
+        view = LOAReviewView(staff, reason, days)
+        await review_channel.send(embed=embed, view=view)
 
-        def check(reaction, user):
-            return (
-                not user.bot
-                and user != staff
-                and str(reaction.emoji) in ["✅", "❌"]
-                and reaction.message.id == msg.id
-            )
+class LOAReviewView(discord.ui.View):
+    def __init__(self, staff, reason, days):
+        super().__init__(timeout=86400)
+        self.staff = staff
+        self.reason = reason
+        self.days = days
 
-        try:
-            reaction, user = await interaction.client.wait_for("reaction_add", timeout=86400.0, check=check)
-        except asyncio.TimeoutError:
-            await staff.send("Your LOA request timed out and was not reviewed.")
+    @discord.ui.button(label="Approve", style=discord.ButtonStyle.success)
+    async def approve(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not interaction.user.guild_permissions.manage_guild:
+            await interaction.response.send_message("❌ You don’t have permission to approve this.", ephemeral=True)
             return
 
-        if str(reaction.emoji) == "✅":
-            await AssignLoa(staff.id, reason, days)
-            embed.color = discord.Color.green()
-            await staff.send(f"Your LOA request for **{days} days** has been approved. Good luck!")
-        else:
-            embed.color = discord.Color.red()
-            await staff.send(f"Your LOA request for **{days} days** has been rejected.")
+        await AssignLoa(self.staff.id, self.reason, self.days)
+        embed = interaction.message.embeds[0]
+        embed.color = discord.Color.green()
+        await self.staff.send(f"✅ Your LOA request for **{self.days} days** has been approved. Good luck!")
+        await interaction.response.edit_message(embed=embed, view=None)
 
-        await msg.edit(embed=embed)
+    @discord.ui.button(label="Reject", style=discord.ButtonStyle.danger)
+    async def reject(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not interaction.user.guild_permissions.manage_guild:
+            await interaction.response.send_message("❌ You don’t have permission to reject this.", ephemeral=True)
+            return
 
+        embed = interaction.message.embeds[0]
+        embed.color = discord.Color.red()
+        await self.staff.send(f"❌ Your LOA request for **{self.days} days** has been rejected.")
+        await interaction.response.edit_message(embed=embed, view=None)
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
 
 async def initialize():
     global sdb
@@ -248,7 +256,7 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
         break
 
     if not top_role:
-        await ctx.send(f"Staff {staff.mention} has no assignable roles.")
+        await ctx.send(f"❌ Staff {staff.mention} has no assignable roles.")
         return
 
     cursor = await sdb.execute("SELECT role_id FROM roles WHERE role_id = ?", (top_role.id,))
@@ -266,19 +274,19 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
                 "UPDATE staffs SET retired = 0, role_id = ?, name = ? WHERE staff_id = ?",
                 (role_id, name, staff_id)
             )
-            await ctx.send(f"Staff {staff.mention} was retired and is now reactivated with updated role.")
+            await ctx.send(f"✅ Staff {staff.name} was retired and is now reactivated with updated role.")
         else:
             await sdb.execute(
                 "UPDATE staffs SET role_id = ?, name = ? WHERE staff_id = ?",
                 (role_id, name, staff_id)
             )
-            await ctx.send(f"Staff {staff.mention}'s role has been updated.")
+            await ctx.send(f"✅ Staff {staff.name}'s role has been updated.")
     else:
         await sdb.execute(
             "INSERT INTO staffs (staff_id, name, role_id, on_loa, strikes_count, retired) VALUES (?, ?, ?, 0, 0, 0)",
             (staff_id, name, role_id)
         )
-        await ctx.send(f"Staff {staff.mention} has been added with role.")
+        await ctx.send(f"✅ Staff {staff.name} has been added with role.")
 
     await sdb.commit()
 
@@ -289,7 +297,7 @@ async def RemoveStaff(ctx: commands.Context, staff_id: int):
     if exists:
         await sdb.execute("UPDATE staffs SET retired = 1 WHERE staff_id = ?", (staff_id,))
         await sdb.commit()
-        await ctx.send(f"Staff with ID {staff_id} has been marked as retired.")
+        await ctx.send(f"✅ Staff with ID {staff_id} has been marked as retired.")
     else:
         await ctx.send(f"No staff found with ID {staff_id}.")
 
@@ -313,7 +321,7 @@ async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
 
         await sdb.commit()
         return discord.Embed(
-            description=f"**Successfully Striked Staff <@{staff_id}>**",
+            description=f"✅ **Successfully Striked Staff <@{staff_id}>**",
             colour=0xf50000
         )
 
@@ -356,7 +364,7 @@ async def RemoveStrikeStaff(ctx: commands.Context, strike_id: str):
         await sdb.commit()
 
         return discord.Embed(
-            description=f"Strike {target_id} removed from <@{staff_id}>",
+            description=f"✅ Strike {target_id} removed from <@{staff_id}>",
             colour=0x00ff00
         )
 

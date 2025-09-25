@@ -72,7 +72,7 @@ class LilyModeration(commands.Cog):
         try:
             user = await self.bot.fetch_user(user_id)
             await ctx.guild.unban(user)
-            await ctx.send(embed=mLily.SimpleEmbed(f"Unbanned {user.mention}"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"✅ Unbanned {user.mention}"))
         except discord.NotFound:
             await ctx.send(embed=mLily.SimpleEmbed("This user is not banned!"))
         except discord.Forbidden:
@@ -88,11 +88,17 @@ class LilyModeration(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='warn', description='warns a user')
+    async def warn(self, ctx:commands.Context, member:discord.Member=None,*, reason="No reason provided"):
+        await mLily.warn(ctx, member, reason)
+
+    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unmute', description='unmutes a user with desired input')
     async def unmute(self, ctx:commands.Context, member:discord.Member=None):
         await mLily.unmute(ctx, member)
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
+    #@PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ms', description='checks logs for a particular moderator')
     async def ms(self, ctx, slice_exp: str = None, member: discord.Member=None):

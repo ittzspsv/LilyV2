@@ -29,9 +29,6 @@ def PermissionEvaluator(PermissionType="Role", RoleAllowed=None, RoleBlacklisted
             else:
                 user_blacklisted = UserBlacklisted or []
 
-            if ctx.author.id == ctx.guild.owner_id:
-                return True
-
             if user_id in user_blacklisted:
                 raise commands.CheckFailure(f"User Blacklist Exception: User ID {user_id}")
 
@@ -77,9 +74,6 @@ async def rPermissionEvaluator(ctx, PermissionType: str = "Role", RoleAllowed=No
     RoleBlacklisted = await resolve(RoleBlacklisted)
     UserAllowed = await resolve(UserAllowed)
     UserBlacklisted = await resolve(UserBlacklisted)
-
-    if ctx.author.id == ctx.guild.owner_id:
-        return True
 
     # Blacklist checks
     if user_id in UserBlacklisted:

@@ -17,4 +17,3 @@ message = """Title: **Current Normal Stock
 <:trex:1300167828267073556> T-Rex - 2,700,000<:dollar:1300186776840835223>
 
 <:clock:1182328726185312336> Stock Changes in: <t:1745020856:R>"""
-
