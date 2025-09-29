@@ -135,7 +135,7 @@ async def run_query(ctx: commands.Context, query: str):
 async def FetchStaffDetail(staff: discord.Member):
     try:
         query = """
-        SELECT s.name, r.role_name, s.on_loa, s.strikes_count
+        SELECT s.name, r.role_name, s.on_loa, s.strikes_count, s.joined_on, s.timezone
         FROM staffs s
         LEFT JOIN roles r ON s.role_id = r.role_id
         WHERE s.staff_id = ?
@@ -146,13 +146,15 @@ async def FetchStaffDetail(staff: discord.Member):
         if not row:
             raise ValueError("Staff data not found in database.")
 
-        name, role_name, is_loa, strikes_count = row
+        name, role_name, is_loa, strikes_count, joined_on_str, timezone = row
 
-        start_date = datetime.now()
+        joined_on = datetime.strptime(joined_on_str, "%d/%m/%Y")
         current_date = datetime.today()
-        years = current_date.year - start_date.year
-        months = current_date.month - start_date.month
-        days = current_date.day - start_date.day
+
+        years = current_date.year - joined_on.year
+        months = current_date.month - joined_on.month
+        days = current_date.day - joined_on.day
+
         if days < 0:
             months -= 1
             days += 30
@@ -164,14 +166,17 @@ async def FetchStaffDetail(staff: discord.Member):
             name, 
             role_name or "N/A",
             "N/A",
-            start_date.strftime("%d/%m/%Y"),
+            timezone or "Not Given",
+            joined_on.strftime("%d/%m/%Y"),
             f"{years} years {months} months {days} days",
             strikes_count,
-            staff.avatar.url
+            staff.avatar.url,
+            is_loa
         )
         return view
 
-    except Exception:
+    except Exception as e:
+        print(f"Error fetching staff detail: {e}")
         return CS2.EmptyView()
 
 async def FetchAllStaffs():

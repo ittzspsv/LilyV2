@@ -209,7 +209,6 @@ async def MessageEvaluate(self, bot, message):
                 except Exception as e:
                     print(f"Error posting stock to guild {guild.id}: {e}")
 
-
         if re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
             try:
                 ctx = await bot.get_context(message)

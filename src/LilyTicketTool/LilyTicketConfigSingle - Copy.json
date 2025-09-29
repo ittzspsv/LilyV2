@@ -31,7 +31,8 @@
         },
         "TicketType" : ["Selector", "Scam Report Ticket", "Abusive Moderator Ticket", "Server issue Ticket"],
         "Channel_To_Spawn" : 1366840025010012321,
-        "ModeratorRoles" : [1370812141606801510]
+        "ModeratorRoles" : [1370812141606801510],
+        "StaffManagerRoles" : [1381715790889357393]
     },
 
     "Modal" : [

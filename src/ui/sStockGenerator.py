@@ -10,10 +10,6 @@ ITEM_IMAGE_FOLDER = "src/ui/fruit_icons"
 fruits = {
     "Blade": 30000,
     "Rocket": 30000,
-    "Dough": 30000,
-    "Kitsune": 30000,
-    "Yeti": 30000,
-    "Dragon": 30000
 }
 
 def get_icon_path(folder, fruit_name):
@@ -49,7 +45,7 @@ def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm
 def StockImageGenerator(data_dict, stock_type="normal"):
     background_path = (
         "src/ui/StockImages/NormalStock.png"
-        if stock_type == "normal"
+        if "normal" in stock_type
         else "src/ui/StockImages/MirageStock.png"
     )
     bg = Image.open(background_path).convert("RGBA")
@@ -69,8 +65,14 @@ def StockImageGenerator(data_dict, stock_type="normal"):
         item_font = ImageFont.load_default()
         price_font = ImageFont.load_default()
 
-    max_cols = 3
     icon_size = 150
+    max_cols = 3
+    items = list(data_dict.items())
+    count = len(items)
+
+    if count > 2 * max_cols:
+        items = items[-2 * max_cols:]
+        count = len(items)
 
     if count <= max_cols:
         rows = [count]
@@ -91,8 +93,13 @@ def StockImageGenerator(data_dict, stock_type="normal"):
 
         total_icon_width = cols_in_row * icon_size
         remaining_space = bg_w - total_icon_width
-        gap_x = remaining_space // (cols_in_row + 1) if cols_in_row > 1 else 0
-        x_start = gap_x
+
+        if cols_in_row == 1:
+            x_start = remaining_space // 2
+            gap_x = 0
+        else:
+            gap_x = remaining_space // (cols_in_row + 1)
+            x_start = gap_x
 
         for c in range(cols_in_row):
             if item_index >= count:

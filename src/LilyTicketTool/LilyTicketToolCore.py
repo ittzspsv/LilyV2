@@ -1,11 +1,17 @@
 import discord
 import json
 from pathlib import Path
-from discord.ext import commands
+from discord.ext import tasks, commands
+from datetime import datetime, timedelta, timezone
 import Misc.sLilyEmbed as LilyEmbed
+import asyncio
+import json
 
 TICKET_VIEWS_PATH = Path("storage/view/TicketViews.json")
 TICKET_CHANNEL_LOG_PATH = Path("storage/view/TicketChannelViews.json")
+CLAIM_TIMEOUT = timedelta(minutes=30)
+
+claimed_tickets = {}
 
 def save_ticket_view(channel_id: int, message_id: int, config: dict):
     all_data = []
@@ -61,17 +67,17 @@ async def InitializeView(bot: commands.Bot):
                 continue
 
             try:
-                message = await channel.fetch_message(entry["message_id"])
+                await channel.fetch_message(entry["message_id"])
             except:
                 continue
 
             config = entry["config"]
-
             if config.get("view_type") == "ButtonType":
                 view = ButtonType(
                     name=config['Configs']['TicketType'][1],
                     type_=config['Configs']['TicketType'][2],
                     moderator_roles=config['Configs'].get('ModeratorRoles', []),
+                    staff_manager_roles=config['Configs'].get('StaffManagerRoles', []),
                     modal_details=config['Modal'][0],
                     field_details=config['Configs']['TicketEmbedFields']
                 )
@@ -80,7 +86,8 @@ async def InitializeView(bot: commands.Bot):
                     options=config['Configs']['TicketType'][1:],
                     modal_sets=config['Modal'],
                     field_details=config['Configs']['TicketEmbedFields'],
-                    moderator_roles=config['Configs'].get('ModeratorRoles', [])
+                    moderator_roles=config['Configs'].get('ModeratorRoles', []),
+                    staff_manager_roles=config['Configs'].get('StaffManagerRoles', []),
                 )
             else:
                 continue
@@ -105,6 +112,7 @@ async def InitializeView(bot: commands.Bot):
 
             config = entry["config"]
             moderator_roles = config.get("moderator_roles", [])
+            staff_manager_roles = config.get("staff_manager_roles", [])
 
             class BasicTicketer(discord.ui.View):
                 def __init__(self):
@@ -113,19 +121,56 @@ async def InitializeView(bot: commands.Bot):
                 @discord.ui.button(label="Claim", style=discord.ButtonStyle.secondary, custom_id="claim")
                 async def claim_button(self, interaction: discord.Interaction, button: discord.ui.Button):
                     user = interaction.user
-                    if any(role.id in moderator_roles for role in user.roles):
-                        await interaction.response.send_message(f"{user.mention} has claimed this ticket!", ephemeral=False)
-                    else:
+                    channel = interaction.channel
+
+                    if not any(role.id in moderator_roles for role in user.roles):
                         await interaction.response.send_message("You are not allowed to claim the ticket", ephemeral=True)
+                        return
+
+                    await channel.set_permissions(user, overwrite=discord.PermissionOverwrite(
+                        view_channel=True,
+                        send_messages=True
+                    ))
+
+                    if channel.id in claimed_tickets and claimed_tickets[channel.id]["task"]:
+                        claimed_tickets[channel.id]["task"].cancel()
+
+                    async def claim_timer():
+                        try:
+                            while True:
+                                await asyncio.sleep(CLAIM_TIMEOUT.total_seconds())
+                                last_msg = claimed_tickets.get(channel.id, {}).get("last_message", datetime.now(timezone.utc))
+                                if datetime.now(timezone.utc) - last_msg >= CLAIM_TIMEOUT:
+                                    await channel.set_permissions(user, overwrite=None)
+                                    await channel.send(f"Claim by {user.mention} has been reset due to inactivity.")
+                                    claimed_tickets.pop(channel.id, None)
+                                    break
+                        except asyncio.CancelledError:
+                            return
+
+                    task = asyncio.create_task(claim_timer())
+                    claimed_tickets[channel.id] = {
+                        "staff_id": user.id,
+                        "last_message": datetime.now(timezone.utc),
+                        "task": task
+                    }
+
+                    await interaction.response.send_message(f"✅ {user.mention} has claimed this ticket!", ephemeral=False)
 
                 @discord.ui.button(label="Close", style=discord.ButtonStyle.danger, custom_id="close")
                 async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
                     user = interaction.user
-                    if any(role.id in moderator_roles for role in user.roles):
-                        await interaction.response.send_message(f"Ticket has been closed by {user.mention}", ephemeral=False)
-                        await interaction.channel.delete()
-                    else:
+                    if not any(role.id in moderator_roles for role in user.roles):
                         await interaction.response.send_message("You are not allowed to close the ticket", ephemeral=True)
+                        return
+
+                    await interaction.response.send_message(f"Ticket has been closed by {user.mention}", ephemeral=False)
+                    if channel.id in claimed_tickets:
+                        task = claimed_tickets[channel.id].get("task")
+                        if task:
+                            task.cancel()
+                        claimed_tickets.pop(channel.id, None)
+                    await channel.delete()
 
             try:
                 bot.add_view(BasicTicketer())
@@ -133,11 +178,12 @@ async def InitializeView(bot: commands.Bot):
                 continue
 
 class BaseModal(discord.ui.Modal):
-    def __init__(self, title: str, fields: list[dict], moderator_roles: list, field_details: dict, on_submit_callback=None):
+    def __init__(self, title: str, fields: list[dict], moderator_roles: list, staff_manager_roles:list,field_details: dict, on_submit_callback=None):
         super().__init__(title=title)
         self.on_submit_callback = on_submit_callback
         self.inputs = {}
         self.moderator_roles = moderator_roles
+        self.staff_manager_roles = staff_manager_roles
         self.field_details = field_details
 
         for field_dict in fields:
@@ -164,7 +210,7 @@ class BaseModal(discord.ui.Modal):
         if self.on_submit_callback:
             await self.on_submit_callback(interaction, values)
         else:
-            await TicketConstructor(values, self.moderator_roles, interaction, self.field_details)
+            await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
 
 async def SendTicketLog(guild: discord.Guild, config: dict, *, opener=None, claimer=None, closer=None, modal_data: dict = None):
     log_channel_id = config.get("LogChannel") or config.get("log_channel")
@@ -196,9 +242,10 @@ async def SendTicketLog(guild: discord.Guild, config: dict, *, opener=None, clai
     except Exception:
         pass
 
-async def TicketConstructor(values: dict, moderator_roles: list, interaction: discord.Interaction, field_details: dict):
+async def TicketConstructor(values: dict, moderator_roles: list, staff_manager_roles:list,interaction: discord.Interaction, field_details: dict):
     guild = interaction.guild
     user = interaction.user
+    opened_user = interaction.user
 
     try:
         await interaction.response.defer(ephemeral=True)
@@ -211,6 +258,10 @@ async def TicketConstructor(values: dict, moderator_roles: list, interaction: di
     }
 
     for role_id in moderator_roles:
+        role = guild.get_role(role_id)
+        if role:
+            overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=False)
+    for role_id in staff_manager_roles:
         role = guild.get_role(role_id)
         if role:
             overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True)
@@ -247,28 +298,96 @@ async def TicketConstructor(values: dict, moderator_roles: list, interaction: di
         @discord.ui.button(label="Claim", style=discord.ButtonStyle.secondary, custom_id="claim")
         async def claim_button(self, interaction: discord.Interaction, button: discord.ui.Button):
             user = interaction.user
-            if any(role.id in moderator_roles for role in user.roles):
-                self.claimer = user
-                await interaction.response.send_message(f"{user.mention} has claimed this ticket!", ephemeral=False)
-            else:
+
+            if not any(role.id in moderator_roles for role in user.roles):
                 await interaction.response.send_message("You are not allowed to claim the ticket", ephemeral=True)
+                return
+
+            if private_channel.id in claimed_tickets:
+                current = claimed_tickets[private_channel.id]
+                claimed_user_id = current["staff_id"]
+                if claimed_user_id != user.id:
+                    await interaction.response.send_message(f"This ticket is already claimed by <@{claimed_user_id}>", ephemeral=True)
+                    return
+
+            await private_channel.set_permissions(user, send_messages=True, view_channel=True)
+            self.claimer = user
+
+            if private_channel.id in claimed_tickets and claimed_tickets[private_channel.id].get("task"):
+                claimed_tickets[private_channel.id]["task"].cancel()
+
+            async def claim_timer():
+                try:
+                    while True:
+                        await asyncio.sleep(CLAIM_TIMEOUT.total_seconds())
+                        last_msg = claimed_tickets.get(private_channel.id, {}).get("last_message", datetime.now(timezone.utc))
+                        if datetime.now(timezone.utc) - last_msg >= CLAIM_TIMEOUT:
+                            await private_channel.set_permissions(user, overwrite=None)
+                            await private_channel.send(f"Claim by {user.mention} has been reset due to inactivity.")
+                            claimed_tickets.pop(private_channel.id, None)
+                            self.claimer = None
+                            break
+                except asyncio.CancelledError:
+                    return
+
+            task = asyncio.create_task(claim_timer())
+            claimed_tickets[private_channel.id] = {"staff_id": user.id, "last_message": datetime.now(timezone.utc), "task": task}
+
+            await interaction.response.send_message(f"{user.mention} has claimed this ticket!", ephemeral=False)
+
+        @discord.ui.button(label="Revoke Claim", style=discord.ButtonStyle.danger, custom_id="revoke_claim")
+        async def revoke_claim_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+            user = interaction.user
+
+            if not any(role.id in staff_manager_roles for role in user.roles):
+                await interaction.response.send_message("You are not allowed to revoke claims.", ephemeral=True)
+                return
+
+            if private_channel.id not in claimed_tickets:
+                await interaction.response.send_message("No one has claimed this ticket yet.", ephemeral=True)
+                return
+
+            claimer_id = claimed_tickets[private_channel.id]["staff_id"]
+            claimer = guild.get_member(claimer_id)
+
+            if claimer:
+                await private_channel.set_permissions(claimer, overwrite=None)
+
+            if claimed_tickets[private_channel.id].get("task"):
+                claimed_tickets[private_channel.id]["task"].cancel()
+
+            claimed_tickets.pop(private_channel.id, None)
+            self.claimer = None
+
+            await private_channel.send(f"The claim has been revoked by {user.mention}. This ticket is now unclaimed.")
+            await interaction.response.send_message("Claim successfully revoked.", ephemeral=True)
 
         @discord.ui.button(label="Close", style=discord.ButtonStyle.danger, custom_id="close")
         async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
             user = interaction.user
-            if any(role.id in moderator_roles for role in user.roles):
-                await interaction.response.send_message(f"Ticket has been closed by {user.mention}", ephemeral=False)
-                await SendTicketLog(
-                    guild,
-                    log_data,
-                    opener=interaction.channel.topic and guild.get_member_named(interaction.channel.topic),
-                    claimer=self.claimer,
-                    closer=user,
-                    modal_data=values
-                )
-                await interaction.channel.delete()
-            else:
-                await interaction.response.send_message("You are not allowed to close the ticket", ephemeral=True)
+
+            is_claimer = self.claimer and user.id == self.claimer.id
+            is_staff_manager = any(role.id in staff_manager_roles for role in user.roles)
+
+            if not (is_claimer or is_staff_manager):
+                await interaction.response.send_message("You are not allowed to close this ticket", ephemeral=True)
+                return
+
+            await interaction.response.send_message(f"Ticket has been closed by {user.mention}", ephemeral=False)
+            await SendTicketLog(
+                guild,
+                log_data,
+                opener=opened_user,
+                claimer=self.claimer,
+                closer=user,
+                modal_data=values
+            )
+
+            if private_channel.id in claimed_tickets and claimed_tickets[private_channel.id].get("task"):
+                claimed_tickets[private_channel.id]["task"].cancel()
+                claimed_tickets.pop(private_channel.id, None)
+
+            await interaction.channel.delete()
 
     view = BasicTicketer()
     await private_channel.send(content=f"{user.mention} your ticket has been created.", embeds=embeds, view=view)
@@ -277,13 +396,13 @@ async def TicketConstructor(values: dict, moderator_roles: list, interaction: di
     save_ticket_channel(private_channel.id, log_data)
     await SendTicketLog(guild, log_data, opener=user, modal_data=values)
 
-
 class ButtonType(discord.ui.View):
-    def __init__(self, name: str, type_: str, moderator_roles: list, modal_details: dict, field_details: dict, *, timeout=None):
+    def __init__(self, name: str, type_: str, moderator_roles: list, staff_manager_roles: list, modal_details: dict, field_details: dict, *, timeout=None):
         super().__init__(timeout=None)
         self.name = name
         self.type_ = type_
         self.moderator_roles = moderator_roles
+        self.staff_manager_roles = staff_manager_roles
         self.modal_details = modal_details
         self.field_details = field_details
 
@@ -311,22 +430,30 @@ class ButtonType(discord.ui.View):
                 title="Please enter some informations",
                 fields=fields,
                 moderator_roles=view.moderator_roles,
+                staff_manager_roles=view.staff_manager_roles,
                 field_details=view.field_details
             )
             await interaction.response.send_modal(modal)
 
 class SelectorType(discord.ui.View):
-    def __init__(self, options: list[str], modal_sets: list, field_details: dict, moderator_roles: list[int]):
+    def __init__(self, options: list[str], modal_sets: list, field_details: dict, moderator_roles: list[int], staff_manager_roles: list[int]):
         super().__init__(timeout=None)
         self.options = options
         self.modals = modal_sets
         self.field_details = field_details
         self.moderator_roles = moderator_roles
+        self.staff_manager_roles = staff_manager_roles
 
-        self.add_item(self.ModalSelect(self.options, self.modals, self.moderator_roles, self.field_details))
+        self.add_item(self.ModalSelect(
+            self.options,
+            self.modals,
+            self.moderator_roles,
+            self.staff_manager_roles,
+            self.field_details
+        ))
 
     class ModalSelect(discord.ui.Select):
-        def __init__(self, options: list[str], modals: list, moderator_roles: list[int], field_details: dict):
+        def __init__(self, options: list[str], modals: list, moderator_roles: list[int], staff_manager_roles: list[int], field_details: dict):
             select_options = [
                 discord.SelectOption(label=opt, value=str(i)) for i, opt in enumerate(options)
             ]
@@ -334,6 +461,7 @@ class SelectorType(discord.ui.View):
 
             self.modals = modals
             self.moderator_roles = moderator_roles
+            self.staff_manager_roles = staff_manager_roles
             self.field_details = field_details
             self.labels = options
 
@@ -348,6 +476,7 @@ class SelectorType(discord.ui.View):
                 title=self.labels[index],
                 fields=modal_fields,
                 moderator_roles=self.moderator_roles,
+                staff_manager_roles=self.staff_manager_roles,
                 field_details=self.field_details
             )
             await interaction.response.send_modal(modal)
@@ -356,12 +485,31 @@ async def SpawnTickets(ctx: commands.Context, json_data):
     content, embed = LilyEmbed.ParseAdvancedEmbed(json_data['Configs']['Embed'])
     channel = ctx.guild.get_channel(json_data['Configs']['Channel_To_Spawn'])
 
+    staff_roles = [ctx.guild.get_role(r) for r in json_data['Configs'].get('StaffManagerRoles', [])]
+    mod_roles = [ctx.guild.get_role(r) for r in json_data['Configs'].get('ModeratorRoles', [])]
+
+    overwrites = {}
+
+    overwrites[ctx.guild.default_role] = discord.PermissionOverwrite(view_channel=False)
+
+    for role in staff_roles:
+        if role:
+            overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True)
+
+
+    for role in mod_roles:
+        if role:
+            overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=False)
+
+    await channel.edit(overwrites=overwrites)
+
     ticket_type = json_data['Configs']['TicketType']
     if ticket_type[0] == 'Button':
         view = ButtonType(
             name=ticket_type[1],
             type_=ticket_type[2],
             moderator_roles=json_data['Configs'].get('ModeratorRoles', []),
+            staff_manager_roles=json_data['Configs'].get('StaffManagerRoles', []),
             modal_details=json_data['Modal'][0],
             field_details=json_data['Configs']['TicketEmbedFields']
         )
@@ -374,7 +522,8 @@ async def SpawnTickets(ctx: commands.Context, json_data):
             options=ticket_type[1:],
             modal_sets=json_data['Modal'],
             field_details=json_data['Configs']['TicketEmbedFields'],
-            moderator_roles=json_data['Configs'].get('ModeratorRoles', [])
+            moderator_roles=json_data['Configs'].get('ModeratorRoles', []),
+            staff_manager_roles=json_data['Configs'].get('StaffManagerRoles', [])
         )
         message = await channel.send(embeds=embed, view=view)
         json_data["view_type"] = "SelectorType"
