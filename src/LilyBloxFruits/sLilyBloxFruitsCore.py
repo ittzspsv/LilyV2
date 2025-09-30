@@ -1,11 +1,9 @@
 import discord
 
 import Config.sValueConfig as VC
-import LilyAlgorthims.sFruitDetectionAlgorthimEmoji as FDAE
 import LilyAlgorthims.sFruitDetectionAlgorthim as FDA
 import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
 import LilyAlgorthims.sStockProcessorAlgorthim as SPA
-import Combo.LilyComboManager as LCM
 import ui.sStockGenerator as SG
 import Config.sBotDetails as Config
 import LilyAlgorthims.sTradeFormatAlgorthim as TFA
@@ -15,9 +13,6 @@ import Config.sValueConfig as LilyConfig
 from Misc.sFruitImageFetcher import *
 import Misc.sLilyComponentV2 as CV2
 import ui.sFruitValueGenerator as FVG
-import ui.sComboImageGenerator as CIG
-import logging
-import traceback
 
 import re
 import json
@@ -397,158 +392,3 @@ async def MessageEvaluate(self, bot, message):
                 embed.add_field(name="• Customize your Suggestor Settings, Then Click Suggest", value="")
 
                 await message.reply(embed=embed, view=view)
-
-        elif LCM.ComboScope(message.content.lower()) != None:
-                    try:
-                        ctx = await bot.get_context(message)
-                        channel_config = Config.load_channel_config(ctx)
-                        combo_channel_id = channel_config.get('combo_channel_id', 0)
-                    except:
-                        combo_channel_id = 0
-                    if not message.channel.id == combo_channel_id:
-                        return
-                    message_refined = " ".join(line.strip() for line in message.content.splitlines() if line.strip())
-                    message_refined = message_refined.lower()
-                    result = LCM.ComboScope(message_refined)
-                    parsed_build, combo_data = LCM.ComboPatternParser(message_refined)
-                    data = (parsed_build, combo_data)
-
-                    if result == 'Suggesting':
-                        if LCM.ValidComboDataType(data):
-                            cid = LCM.RegisterCombo(str(message.author.id), parsed_build, combo_data)
-                            combo = LCM.ComboLookupByID(cid)
-
-                            id = combo['id']
-                            user_id = combo['user_id']
-                            combo_data = combo['combo_data']
-                            Item_List = {}
-                            if combo.get("Fruit"):
-                                Item_List[combo["Fruit"]] = "fruit_icons"
-                            if combo.get("Sword"):
-                                Item_List[combo["Sword"]] = "sword_icons"
-                            if combo.get("Fighting Style"):
-                                Item_List[combo["Fighting Style"]] = "fighting_styles"
-                            if combo.get("Gun"):
-                                Item_List[combo["Gun"]] = "gun_icons"
-                            Item_Icon_List = []
-                            
-                            for key, value in Item_List.items():
-                                if key and key.strip():
-                                    imod = key.replace(" ", "_")
-                                    icon = f'src/ui/{value}/{imod}.png'
-                                    Item_Icon_List.append(icon)
-
-                            combo_text = ""
-                            #Parsing Combo Texts
-                            for base, nested in ast.literal_eval(combo_data):
-                                combo_ = " ".join(nested)
-                                name_formatted = base.title()
-                                combo_text += f"- **{name_formatted}: {combo_}**\n"
-
-                            img = CIG.CreateBaseBuildIcon(Item_Icon_List)
-                            img_byte_arr = io.BytesIO()
-                            img.save(img_byte_arr, format='PNG')
-                            img_byte_arr.seek(0)
-
-                            embeds = []
-                            imgfile = discord.File(img_byte_arr, filename="image.png")
-                            embed = discord.Embed(title="__BUILD__",colour=0xf5008f)
-
-                            embed.set_author(name=f"{Config.server_name} Combos")
-                            embed.set_image(url="attachment://image.png")
-
-                            embeds.append(embed)
-
-                            divider_text = "<:divider:1374032878760886342>"
-                            divider_texts = ""
-                            for i in range(0, 22):
-                                divider_texts += divider_text
-
-                            embed = discord.Embed(title=f"__COMBO__",
-                            description=combo_text,
-                            colour=0xf5008f)
-                            
-                            embed.add_field(name="",
-                                value=divider_texts,
-                                inline=False)
-                            
-                            embed.add_field(name="",
-                                value=f"Combo ID : {id} \nCombo By <@{user_id}>",
-                                inline=False)
-                            embed.set_footer(text='This system is still in WIP')
-                            embeds.append(embed)
-
-
-                            await message.reply(content=f'Success! \nHere is The Preview of your combo', file=imgfile, embeds=embeds)
-                        else:
-                            await message.reply("Error Paring Combo structure")
-
-                    elif result == 'Asking':
-                        try:
-                            if parsed_build:
-                                combo = LCM.ComboLookup(message.content.lower())
-                                id = combo['id']
-                                user_id = combo['user_id']
-                                combo_data = combo['combo_data']
-                                Item_List = {}
-                                if combo.get("Fruit"):
-                                    Item_List[combo["Fruit"]] = "fruit_icons"
-                                if combo.get("Sword"):
-                                    Item_List[combo["Sword"]] = "sword_icons"
-                                if combo.get("Fighting Style"):
-                                    Item_List[combo["Fighting Style"]] = "fighting_styles"
-                                if combo.get("Gun"):
-                                    Item_List[combo["Gun"]] = "gun_icons"
-                                Item_Icon_List = []
-                                
-                                for key, value in Item_List.items():
-                                    if key and key.strip():
-                                        imod = key.replace(" ", "_")
-                                        icon = f'src/ui/{value}/{imod}.png'
-                                        Item_Icon_List.append(icon)
-
-                                combo_text = ""
-                                #Parsing Combo Texts
-                                for base, nested in ast.literal_eval(combo_data):
-                                    combo_ = " ".join(nested)
-                                    name_formatted = base.title()
-                                    combo_text += f"- **{name_formatted}: {combo_}**\n"
-
-                                img = CIG.CreateBaseBuildIcon(Item_Icon_List)
-                                img_byte_arr = io.BytesIO()
-                                img.save(img_byte_arr, format='PNG')
-                                img_byte_arr.seek(0)
-
-                                embeds = []
-                                imgfile = discord.File(img_byte_arr, filename="image.png")
-                                embed = discord.Embed(title="__BUILD__",colour=0xf5008f)
-
-                                embed.set_author(name=f"{Config.server_name} Combos")
-                                embed.set_image(url="attachment://image.png")
-
-                                embeds.append(embed)
-
-                                divider_text = "<:divider:1374032878760886342>"
-                                divider_texts = ""
-                                for i in range(0, 22):
-                                    divider_texts += divider_text
-
-                                embed = discord.Embed(title=f"__COMBO__",
-                                description=combo_text,
-                                colour=0xf5008f)
-                                
-                                embed.add_field(name="",
-                                    value=divider_texts,
-                                    inline=False)
-                                
-                                embed.add_field(name="",
-                                    value=f"Combo ID : {id} \nCombo By <@{user_id}>",
-                                    inline=False)
-                                embed.set_footer(text='This system is still in WIP')
-                                embeds.append(embed)
-
-                                await message.reply(file=imgfile, embeds=embeds)
-                        except Exception as e:
-                            await message.reply(f"Exception {e}")
-                    else:
-                        pass

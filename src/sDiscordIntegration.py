@@ -7,20 +7,15 @@ import LilyModeration.sLilyModeration as mLily
 import Misc.sLilyEmbed as LilyEmbed
 import LilyBloxFruits.sLilyBloxFruitsCore as LBFC
 import LilyResponse.sLilyResponse as aiLily
-import LilyGAG.sLilyGAGCore as LGAG
 import LilyLeveling.sLilyLevelingCore as LilyLeveling
 import LilyLogging.sLilyLogging as LilyLogging
 import Config.sValueConfig as ValueConfig
-import LilyTicketTool.LilyTicketToolCore as LilyTTCore
 import LilyManagement.sLilyStaffManagement as LSM
-from LilyGAG.sLilyGAGStockListeners import StockWebSocket
-import LilyGAG.sLilyGAGCore as GAG
 import logging
 
 
 import os
 import asyncio
-from urllib.parse import quote
 import json
     
 import re
@@ -36,38 +31,12 @@ class MyBot(commands.Bot):
         intents.presences = True 
         intents.guilds = True
         super().__init__(command_prefix=Config.bot_command_prefix,intents=discord.Intents.all())
-        self.monitored_users = [845511381637529641, 999309816914792630]
-        self.protected_roles = [1351867043393044551, 1360395431737036900, 1381715715794534590]
-
-    async def on_member_update(self, before, after):
-            if after.id not in self.monitored_users:
-                return
-
-            before_roles = set(before.roles)
-            after_roles = set(after.roles)
-
-            removed_roles = before_roles - after_roles
-
-            for role in removed_roles:
-                if role.id in self.protected_roles:
-                    try:
-                        await after.add_roles(role, reason="Reworking")
-                    except Exception as e:
-                        pass
 
     async def setup_hook(self):
-        await bot.load_extension("LilyModeration.sLilyModerationCommands")
-        await bot.load_extension("LilyVouch.sLilyVouchCommands")
         await bot.load_extension("LilyUtility.sLilyUtilityCommands")
-        await bot.load_extension("LilyManagement.sLilyStaffManagementCommands")
         await bot.load_extension("LilyLogging.sLilyLoggingCommands")
         await bot.load_extension("LilyBloxFruits.sLilyBloxFruitsCommands")
         await bot.load_extension("Misc.sLilyEmbedCommands")
-        await bot.load_extension("LilyResponse.sLilyResponseCommands")
-        await bot.load_extension("LilyGAG.sLilyGAGCommands")
-        await bot.load_extension("LilyTicketTool.LilyTicketToolCommands")
-        await bot.load_extension("LilyLeveling.sLilyLevelingCommands")
-        #await bot.load_extension("LilyMiddleman.sLilyMiddlemanCommands")
         await bot.tree.sync()
 
     async def BotInitialize(self):
@@ -175,11 +144,8 @@ class MyBot(commands.Bot):
         print('Logged on as', self.user)   
         await self.ConnectDatabase()
         await self.BotInitialize()
-        await LilyTTCore.InitializeView(self)
         game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         await bot.change_presence(status=discord.Status.idle, activity=game)
-        #handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
-        #asyncio.create_task(handler.run())
         await self.tree.sync()
 
     async def on_guild_join(self, guild):
@@ -218,129 +184,14 @@ class MyBot(commands.Bot):
     async def is_user(self, user, user_id):
         return user.id == int(user_id)  
 
-    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings, img=None):
-        return
-        embed = discord.Embed(title=stock_type,
-                      description=stock_msg, colour=0x2b00ff)
-        embed.set_author(name="BloxTrade | Grow a garden Stocks")
-        file = discord.File("src/ui/Border.png", filename="border.png")
-        embed.set_image(url="attachment://border.png")
-        channel = self.get_channel(channel_id)
-        try:
-            await channel.send(embed=embed, content=" ".join(pings), file=file)
-        except:
-            return
-        
-    async def PostStockAdvanced(self, seed_stock_msg:str, gear_stock_msg:str, channel_id, pings):
-        return
-        embed = discord.Embed(title="STOCK",colour=0x2b00ff)
-        embed.set_author(name="BloxTrade | Grow a garden Stocks")
-        embed.add_field(name="🌱SEED STOCK",
-                value=seed_stock_msg,
-                inline=True)
-        embed.add_field(name="⚙️ GEAR STOCK",
-                        value=gear_stock_msg,
-                        inline=True)
-        file = discord.File("src/ui/Border.png", filename="border.png")
-        embed.set_image(url="attachment://border.png")
-        channel = self.get_channel(channel_id)
-        try:
-            await channel.send(embed=embed, content=" ".join(pings), file=file)
-        except:
-            return
-        
-    async def PostCV2View(self, View, channel_id):
-        channel = self.get_channel(channel_id)
-        try:
-            await channel.send(view=View, file=discord.File("src/ui/Border.png", filename="border.png"))
-        except:
-            return
-
-    async def ConditionEvaluator(self, user, condition):
-        match = re.match(r'<(hasrole|isuser) (\d+)> \? (.+) : (.+)', condition)
-        if match:
-            check_type, check_value, true_value, false_value = match.groups()
-
-            if check_type == 'hasrole':
-                if await bot.has_role(user, check_value):
-                    return true_value
-                else:
-                    return false_value
-            elif check_type == 'isuser':
-                if await bot.is_user(user, check_value):
-                    return true_value
-                else:
-                    return false_value
-        return condition
-
-    async def RespondProcessor(self, message):
-        try:
-            feature_cache = open("src/Config/BotFeatures.txt", "r")
-            feature_int = feature_cache.read()
-            print(feature_int)
-        except Exception as e:
-            feature_int = 0
-        if int(feature_int) == 0:
-                return
-        response_text, channel_id, delete_message, emoji_to_react, medias,whitelist_roles = aiLily.get_response(message.content)
-        if response_text and (message.channel.id in channel_id or re.match(r"^ticket-\d{4}$", message.channel.name)):
-            if any(role.id in whitelist_roles for role in message.author.roles):
-                return
-            response_text = re.sub(r'\{user\.name}', message.author.name, response_text)
-
-            conditions = re.findall(r'\{(<(hasrole|isuser) \d+> \? .*? : .*?)\}', response_text)
-            for condition_tuple in conditions:
-                condition = condition_tuple[0]
-                evaluated_value = await bot.ConditionEvaluator(message.author, condition)
-                response_text = response_text.replace(f'{{{condition}}}', evaluated_value)
-
-            for media in medias:
-                    m_parser = media.split("=")
-                    if "img" in m_parser:
-                        try:
-                            imglink = m_parser[1]
-                        except Exception as e:
-                            imglink = ""
-                    if "gif" in m_parser:
-                        try:
-                            giflink = m_parser[1]
-                        except Exception as e:
-                            giflink = ""
-            if delete_message.lower() == "false":
-                for emoji in emoji_to_react:
-                    try:
-                        await message.add_reaction(emoji)
-                    except discord.HTTPException as e:
-                        print(f"Failed to add reaction {emoji}: {e}")
-                await message.reply(f'{response_text}')
-                try:
-                    await message.channel.send(giflink)
-                except:
-                    pass
-            else:
-                await message.delete()
-                await message.channel.send(f"{message.author.mention} {response_text}")
-                try:
-                    await message.channel.send(giflink)
-                except Exception as e:
-                    print(e)
-
     async def on_message(self, message:discord.Message): 
         if message.author == self.user:
               return         
 
         if message.channel.id in LilyLeveling.config['AllowedChannels']:
             await LilyLeveling.LevelProcessor(message)
-
-        await bot.RespondProcessor(message) 
           
         await LBFC.MessageEvaluate(self, bot, message)
-
-        await LGAG.MessageEvaluate(self, bot, message)
-        
-        response_text_parsing = ["{user.name}", "{server}"]
-        response_conditions = ["{<hasroll > ? hii : you dont have the role yet}", "{<isuser> ? hii : you dont have the role yet}"]
-       
         await self.process_commands(message)
 
 bot = MyBot()
