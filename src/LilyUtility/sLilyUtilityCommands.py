@@ -26,6 +26,7 @@ class LilyUtility(commands.Cog):
         Combo = "Combo"
         GAGValues = "GAGValues"
         GAGWORL = "GAGWORL"
+        PVBZStockUpdate = "PVBZStockUpdate"
 
     @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
     @commands.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
@@ -52,6 +53,10 @@ class LilyUtility(commands.Cog):
             await ctx.send(f"GAG Values Channel Set To <#{channel_to_assign.id}>")
         elif bot_feature == self.Channels.GAGWORL:
             await ValueConfig.cdb.execute("UPDATE ConfigData SET gag_win_loss_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
+            await ValueConfig.cdb.commit()
+            await ctx.send(f"GAG WORL Channel Set To <#{channel_to_assign.id}>")
+        elif bot_feature == self.Channels.PVBZStockUpdate:
+            await ValueConfig.cdb.execute("UPDATE ConfigData SET pvb_stock_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
             await ValueConfig.cdb.commit()
             await ctx.send(f"GAG WORL Channel Set To <#{channel_to_assign.id}>")
         else:

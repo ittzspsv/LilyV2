@@ -13,6 +13,7 @@ import LilyLogging.sLilyLogging as LilyLogging
 import Config.sValueConfig as ValueConfig
 import LilyTicketTool.LilyTicketToolCore as LilyTTCore
 import LilyManagement.sLilyStaffManagement as LSM
+import LilyPVB.LilyPVBCore as LPVBC
 from LilyGAG.sLilyGAGStockListeners import StockWebSocket
 import LilyGAG.sLilyGAGCore as GAG
 import logging
@@ -176,8 +177,7 @@ class MyBot(commands.Bot):
         await self.ConnectDatabase()
         await self.BotInitialize()
         await LilyTTCore.InitializeView(self)
-        game = discord.Streaming(name="Gate to Oblivion", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-        await bot.change_presence(status=discord.Status.idle, activity=game)
+        await bot.change_presence(status=discord.Status.invisible)
         #handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
         #asyncio.create_task(handler.run())
         await self.tree.sync()
@@ -217,37 +217,6 @@ class MyBot(commands.Bot):
 
     async def is_user(self, user, user_id):
         return user.id == int(user_id)  
-
-    async def PostStock(self, stock_type, stock_msg: str, channel_id, pings, img=None):
-        return
-        embed = discord.Embed(title=stock_type,
-                      description=stock_msg, colour=0x2b00ff)
-        embed.set_author(name="BloxTrade | Grow a garden Stocks")
-        file = discord.File("src/ui/Border.png", filename="border.png")
-        embed.set_image(url="attachment://border.png")
-        channel = self.get_channel(channel_id)
-        try:
-            await channel.send(embed=embed, content=" ".join(pings), file=file)
-        except:
-            return
-        
-    async def PostStockAdvanced(self, seed_stock_msg:str, gear_stock_msg:str, channel_id, pings):
-        return
-        embed = discord.Embed(title="STOCK",colour=0x2b00ff)
-        embed.set_author(name="BloxTrade | Grow a garden Stocks")
-        embed.add_field(name="🌱SEED STOCK",
-                value=seed_stock_msg,
-                inline=True)
-        embed.add_field(name="⚙️ GEAR STOCK",
-                        value=gear_stock_msg,
-                        inline=True)
-        file = discord.File("src/ui/Border.png", filename="border.png")
-        embed.set_image(url="attachment://border.png")
-        channel = self.get_channel(channel_id)
-        try:
-            await channel.send(embed=embed, content=" ".join(pings), file=file)
-        except:
-            return
         
     async def PostCV2View(self, View, channel_id):
         channel = self.get_channel(channel_id)
@@ -337,6 +306,8 @@ class MyBot(commands.Bot):
         await LBFC.MessageEvaluate(self, bot, message)
 
         await LGAG.MessageEvaluate(self, bot, message)
+
+        await LPVBC.MessageEvaluate(self, bot, message)
         
         response_text_parsing = ["{user.name}", "{server}"]
         response_conditions = ["{<hasroll > ? hii : you dont have the role yet}", "{<isuser> ? hii : you dont have the role yet}"]

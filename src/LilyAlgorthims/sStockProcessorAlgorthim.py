@@ -11,6 +11,34 @@ def StockMessageProcessor(message: str):
     items = {k.strip(): int(v.replace(',', '')) for k, v in raw_items.items()}
     return title, items
 
+def StockMessageProcessorPVB(embed):
+    data = {
+        "title": embed.title or "",
+        "sections": {}
+    }
+
+    description = embed.description or ""
+    lines = description.splitlines()
+
+    current_section = None
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        if line.startswith("**") and line.endswith("**"):
+            current_section = line.strip("* ")
+            data["sections"][current_section] = {}
+            continue
+
+        match = re.match(r"(.+?)\s*[xX]\s*(\d+)", line)
+        if match and current_section:
+            item, qty = match.groups()
+            data["sections"][current_section][item.strip()] = int(qty)
+
+    return data
+
 
 message = """Title: **Current Normal Stock
 **Description: <:spike:1300167770629214298> Spike - 180,000<:dollar:1300186776840835223>

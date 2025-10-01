@@ -169,6 +169,7 @@ if port == 0:
     #Core Channel Config
     stock_fetch_guild_id = 1240215331071594536
     stock_fetch_channel_id = 1362321135231959112
+    stock_fetch_channel_id_pvb = 1422672815768735926
 
 else:
     # PRODUCTION SERVER SETTINGS (BLOXTRADE)
@@ -221,6 +222,7 @@ else:
     #Core Channel Config
     stock_fetch_guild_id = 1099482621161001113
     stock_fetch_channel_id = 1417675004899754014
+    stock_fetch_channel_id_pvb = 1422672815768735926
 
 # Embed colors based on item type
 embed_color_codes = {
