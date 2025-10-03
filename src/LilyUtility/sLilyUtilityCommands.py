@@ -32,9 +32,19 @@ class LilyUtility(commands.Cog):
     @commands.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
     async def assign_channel(self, ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
         if bot_feature == self.Channels.StockUpdate:
-            await ValueConfig.cdb.execute("UPDATE ConfigData SET bf_stock_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
+            await ctx.send(f"Stock Update will be sent in <#{channel_to_assign.id}>")
+
+            webhook = await channel_to_assign.create_webhook(
+                name=f"{Config.bot_name} Stock Updates"
+            )
+
+            await ValueConfig.cdb.execute(
+                "UPDATE ConfigData SET bf_stock_webhook = ? WHERE guild_id = ?",
+                (webhook.url, ctx.guild.id)
+            )
             await ValueConfig.cdb.commit()
-            await ctx.send(f"Stock Update receives in <#{channel_to_assign.id}>")
+
+            await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
         elif bot_feature == self.Channels.WORL:
             await ValueConfig.cdb.execute("UPDATE ConfigData SET bf_win_loss_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
             await ValueConfig.cdb.commit()

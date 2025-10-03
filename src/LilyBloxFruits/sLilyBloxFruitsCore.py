@@ -16,6 +16,7 @@ from Misc.sFruitImageFetcher import *
 import Misc.sLilyComponentV2 as CV2
 import ui.sFruitValueGenerator as FVG
 import ui.sComboImageGenerator as CIG
+import aiohttp
 import logging
 import traceback
 
@@ -169,7 +170,7 @@ async def MessageEvaluate(self, bot, message):
 
             try:
                 cursor = await LilyConfig.cdb.execute(
-                    "SELECT guild_id, bf_stock_channel_id FROM ConfigData WHERE bf_stock_channel_id IS NOT NULL"
+                    "SELECT guild_id, bf_stock_webhook FROM ConfigData WHERE bf_stock_webhook IS NOT NULL"
                 )
                 rows = await cursor.fetchall()
             except Exception as e:
@@ -179,35 +180,33 @@ async def MessageEvaluate(self, bot, message):
             if not rows:
                 return
 
-            for guild_id, stock_update_channel_id in rows:
-                guild = bot.get_guild(guild_id)
-                if not guild:
-                    continue
+            async with aiohttp.ClientSession() as session:
+                for guild_id, webhook_url in rows:
+                    guild = bot.get_guild(guild_id)
+                    if not guild:
+                        continue
 
-                channel = bot.get_channel(stock_update_channel_id)
-                if not channel:
-                    continue
+                    try:
+                        webhook = discord.Webhook.from_url(webhook_url, session=session)
 
-                try:
-                    if not use_image_mode:
-                        stock_view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
-                        stock_file_to_send = discord.File("src/ui/Border.png", filename="border.png")
-                    else:
-                        stock_file_to_send = discord.File(io.BytesIO(stock_image_bytes), filename="stock_image.png")
-                        stock_view = None
-                    stock_message = await channel.send(file=stock_file_to_send, view=stock_view)
-                    await stock_message.add_reaction("🇼")
-                    await stock_message.add_reaction("🇱")
+                        if use_image_mode and stock_image_bytes:
+                            file = discord.File(io.BytesIO(stock_image_bytes), filename="stock_image.png")
+                            await webhook.send(file=file, wait=True)
+                        else:
+                            stock_view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
+                            file = discord.File("src/ui/Border.png", filename="border.png")
+                            await webhook.send(file=file, view=stock_view, wait=True)
 
-                    if CurrentGoodFruits:
-                        role = discord.utils.get(guild.roles, name="Stock Ping")
-                        if role:
-                            await channel.send(
-                                f"<@&{role.id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!"
-                            )
+                        if CurrentGoodFruits:
+                            role = discord.utils.get(guild.roles, name="Stock Ping")
+                            if role:
+                                await webhook.send(
+                                    content=f"<@&{role.id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!",
+                                    wait=True
+                                )
 
-                except Exception as e:
-                    print(f"Error posting stock to guild {guild.id}: {e}")
+                    except Exception as e:
+                        print(f"Error posting stock to guild {guild.id} via webhook {webhook_url}: {e}")
 
         if re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
             try:
