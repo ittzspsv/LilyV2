@@ -1,7 +1,7 @@
 [
     {
-        "channel_id": 1349753791704072313,
-        "message_id": 1409607447517204680,
+        "channel_id": 1370395716106588241,
+        "message_id": 1421841571908944064,
         "config": {
             "Configs": {
                 "Embed": {
@@ -34,16 +34,78 @@
                             }
                         ]
                     },
-                    "LogChannel": 1356223694388723792
+                    "LogChannel": 1421841285253431408
                 },
                 "TicketType": [
                     "Button",
                     "Create Ticket",
                     "Secondary"
                 ],
-                "Channel_To_Spawn": 1349753791704072313,
+                "Channel_To_Spawn": 1370395716106588241,
                 "ModeratorRoles": [
-                    1381715790889357393
+                    1421829879510601738
+                ],
+                "StaffManagerRoles": [
+                    1421829900016287854
+                ]
+            },
+            "Modal": [
+                {
+                    "Discord ID | Username of that scammer": 600,
+                    "Please explain what he did": 600
+                }
+            ],
+            "view_type": "ButtonType"
+        }
+    },
+    {
+        "channel_id": 1370395716106588241,
+        "message_id": 1422295627693428879,
+        "config": {
+            "Configs": {
+                "Embed": {
+                    "embeds": [
+                        {
+                            "author": {
+                                "name": "BloxTrade Support"
+                            },
+                            "title": "Support Ticket",
+                            "description": "Explore our various ticket options for tailored assistance. Whether it's giveaways, trading, or moderation concerns, we're here to help. Choose the right ticket, and we'll assist you promptly.",
+                            "footer": {
+                                "text": "Made using LilyV2"
+                            }
+                        }
+                    ]
+                },
+                "TicketEmbedFields": {
+                    "Title": "Support Ticket",
+                    "TEmbed": {
+                        "embeds": [
+                            {
+                                "title": "Support Ticket Instructions",
+                                "description": "Thank you for contacting Support\n\n**Benefits of our support team**",
+                                "fields": [
+                                    {
+                                        "name": "",
+                                        "value": "Nothing will be done\nidk why tf u wasting ur time"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "LogChannel": 1421841285253431408
+                },
+                "TicketType": [
+                    "Button",
+                    "Create Ticket",
+                    "Secondary"
+                ],
+                "Channel_To_Spawn": 1370395716106588241,
+                "ModeratorRoles": [
+                    1421829879510601738
+                ],
+                "StaffManagerRoles": [
+                    1421829900016287854
                 ]
             },
             "Modal": [

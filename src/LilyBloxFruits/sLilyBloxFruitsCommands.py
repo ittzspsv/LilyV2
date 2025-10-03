@@ -153,5 +153,7 @@ class LilyBloxFruits(commands.Cog):
             else:
                 await ctx.send("Row Not Found Exception")
 
+    
+
 async def setup(bot):
     await bot.add_cog(LilyBloxFruits(bot))

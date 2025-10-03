@@ -1,44 +1,49 @@
+import sqlite3
 import json
 
+# Path to your SQLite database
+DB_PATH = 'storage/configs/ValueData.db'
+# Output JSON file
+OUTPUT_JSON = 'ValueData.json'
 
-def EvaluateSkill(name, age=1, weight=1):
-    def time_to_seconds(t: str) -> int:
-        m, s = map(int, t.split(":"))
-        return m * 60 + s
+def fetch_database_data(db_path):
+    data = {}
+    
+    # Connect to the database
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Get all table names
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    
+    for table_name_tuple in tables:
+        table_name = table_name_tuple[0]
+        table_data = []
 
-    def seconds_to_time(sec: int) -> str:
-        m, s = divmod(sec, 60)
-        return f"{m:02}:{s:02}"
+        # Get all rows for this table
+        cursor.execute(f"SELECT * FROM {table_name}")
+        rows = cursor.fetchall()
 
-    def interpolate(start, end, age, stat_type, weight=10):
-        factor = (age - 1) / 99 * (weight / 10)
+        # Get column names
+        column_names = [description[0] for description in cursor.description]
 
-        if stat_type == "time":
-            start_sec = time_to_seconds(start)
-            end_sec = time_to_seconds(end)
-            val = start_sec + (end_sec - start_sec) * factor
-            return seconds_to_time(round(val))
-        elif stat_type == "float":
-            val = start + (end - start) * factor
-            return round(val, 2)
-        elif stat_type == "int":
-            val = start + (end - start) * factor
-            return int(round(val))
-        return start
+        # Combine rows with column names
+        for row in rows:
+            row_dict = dict(zip(column_names, row))
+            table_data.append(row_dict)
 
-    def get_ability_text(ability, age, weight=10):
-        stats = {}
-        for k, v in ability["stats"].items():
-            stats[k] = interpolate(v["start"], v["end"], age, v["type"], weight)
-        return ability["description"].format(**stats)
+        # Store in final data
+        data[table_name] = table_data
 
-    # Example usage with abilities.json
-    with open("abilities.json") as f:
-        data = json.load(f)
+    conn.close()
+    return data
 
-    for ability in data["abilities"]:
-        print("Age 1  :", get_ability_text(ability, 1))
-        print("Age 50 :", get_ability_text(ability, 50))
-        print("Age 100:", get_ability_text(ability, 100))
-        print("-" * 50)
-        break
+def save_to_json(data, output_file):
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+if __name__ == "__main__":
+    db_data = fetch_database_data(DB_PATH)
+    save_to_json(db_data, OUTPUT_JSON)
+    print(f"Database dumped successfully to {OUTPUT_JSON}")
