@@ -47,33 +47,37 @@ async def MessageEvaluate(self, bot, message):
             seed_stock, seed_pings = await build_stock(seeds, "seed", guild)
             gear_stock, gear_pings = await build_stock(gears, "Gear", guild)
 
-            seed_view = CV2.GAGStockComponent(stock_name, seed_stock, seed_pings)
-            gear_view = CV2.GAGStockComponent(stock_name, gear_stock, gear_pings)
+            seed_embed = CV2.GAGStockComponent(stock_name, seed_stock, seed_pings)
+            gear_embed = CV2.GAGStockComponent(stock_name, gear_stock, gear_pings)
 
             cursor = await VC.cdb.execute(
-                "SELECT guild_id, pvb_stock_channel_id FROM ConfigData WHERE pvb_stock_channel_id IS NOT NULL"
+                "SELECT guild_id, pvb_stock_webhook FROM ConfigData WHERE pvb_stock_webhook IS NOT NULL"
             )
             rows = await cursor.fetchall()
 
-            for guild_id, channel_id in rows:
-                guild = VC.bot.get_guild(int(guild_id))
-                if guild is None:
-                    continue
-
-                channel = guild.get_channel(int(channel_id))
-                if channel is None:
-                    continue
-
+            for guild_id, webhook_url in rows:
                 try:
-                    await channel.send(
-                        view=seed_view,
-                        file=discord.File("src/ui/Border.png", filename="border.png")
+                    webhook = discord.Webhook.from_url(webhook_url, client=VC.bot)
+
+                    file = discord.File("src/ui/Border.png", filename="border.png")
+
+                    await webhook.send(
+                        view=seed_embed,
+                        username=stock_name,
+                        avatar_url=VC.bot.user.display_avatar.url,
+                        file=file,
                     )
-                    await channel.send(
-                        view=gear_view,
-                        file=discord.File("src/ui/Border.png", filename="border.png")
+
+                    await webhook.send(
+                        view=gear_embed,
+                        username=stock_name,
+                        avatar_url=VC.bot.user.display_avatar.url,
+                        file=discord.File("src/ui/Border.png", filename="border.png"),
                     )
+
+                except discord.NotFound:
+                    print(f"Invalid webhook for guild {guild_id}")
                 except discord.Forbidden:
-                    print(f"Missing permission to send messages in {guild.name} ({channel_id})")
+                    print(f"Webhook forbidden for guild {guild_id}")
                 except discord.HTTPException as e:
-                    print(f"Failed to send message in {guild.name}: {e}")
+                    print(f"Failed to send via webhook for guild {guild_id}: {e}")

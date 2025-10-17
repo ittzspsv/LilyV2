@@ -121,3 +121,453 @@ AttributeError: 'str' object has no attribute 'mention'
 2025-09-30 00:13:25,950 - INFO - Shard ID None has connected to Gateway (Session ID: f9a14b9b7e52166c5db6429bb1977bcd).
 2025-09-30 00:21:06,950 - INFO - logging in using static token
 2025-09-30 00:21:13,116 - INFO - Shard ID None has connected to Gateway (Session ID: 489b139e7a12da83a90e22cb928d45fd).
+2025-10-10 00:29:01,208 - INFO - logging in using static token
+2025-10-10 00:29:07,032 - INFO - Shard ID None has connected to Gateway (Session ID: d64d86c5bb020383f9f2c9436b6982e3).
+2025-10-10 00:30:10,709 - INFO - logging in using static token
+2025-10-10 00:30:13,999 - INFO - Shard ID None has connected to Gateway (Session ID: 9f0639fce67ea8aa3b038555e570c177).
+2025-10-10 00:36:00,051 - INFO - logging in using static token
+2025-10-10 00:36:02,809 - INFO - Shard ID None has connected to Gateway (Session ID: 071341e241b974bb6165105539d5f305).
+2025-10-10 00:37:22,090 - INFO - logging in using static token
+2025-10-10 00:37:24,453 - INFO - Shard ID None has connected to Gateway (Session ID: c13f3ab503655a11379c033ff4993292).
+2025-10-10 00:41:52,353 - INFO - logging in using static token
+2025-10-10 00:41:57,691 - INFO - Shard ID None has connected to Gateway (Session ID: 0981ed40b5abd248cc5eb7b2696818d1).
+2025-10-10 00:42:46,726 - INFO - logging in using static token
+2025-10-10 00:42:49,937 - INFO - Shard ID None has connected to Gateway (Session ID: 03e09973be3fdea97645525c0d612c6b).
+2025-10-10 00:44:46,865 - INFO - logging in using static token
+2025-10-10 00:44:49,159 - INFO - Shard ID None has connected to Gateway (Session ID: 5d2d1da3b013e13113acef79cf480ad6).
+2025-10-10 00:45:04,285 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 310, in on_message
+    await LPVBC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyPVB\LilyPVBCore.py", line 53, in MessageEvaluate
+    cursor = await VC.cdb.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: pvb_stock_channel_id
+2025-10-10 00:47:49,320 - INFO - logging in using static token
+2025-10-10 00:47:51,674 - INFO - Shard ID None has connected to Gateway (Session ID: d7bd5a26f03f45b4588287bd2d574291).
+2025-10-10 00:50:03,837 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 310, in on_message
+    await LPVBC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyPVB\LilyPVBCore.py", line 53, in MessageEvaluate
+    cursor = await VC.cdb.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: pvb_stock_channel_id
+2025-10-10 00:51:12,913 - INFO - logging in using static token
+2025-10-10 00:51:15,247 - INFO - Shard ID None has connected to Gateway (Session ID: 5dd2c37ef3daad03b22761c89eafc1ac).
+2025-10-10 00:52:28,601 - INFO - logging in using static token
+2025-10-10 00:52:30,881 - INFO - Shard ID None has connected to Gateway (Session ID: a9e1be64aef2f25ddc9d917a66be035b).
+2025-10-10 00:53:19,144 - INFO - logging in using static token
+2025-10-10 00:53:21,499 - INFO - Shard ID None has connected to Gateway (Session ID: cde6188b3304ff12f5dff7a63ce2f66f).
+2025-10-10 00:54:12,562 - INFO - logging in using static token
+2025-10-10 00:54:16,564 - INFO - Shard ID None has connected to Gateway (Session ID: bcebdb10f7a72b84730d3f89103e1f6f).
+2025-10-10 00:55:06,211 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 310, in on_message
+    await LPVBC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyPVB\LilyPVBCore.py", line 53, in MessageEvaluate
+    cursor = await VC.cdb.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: pvb_stock_channel_id
+2025-10-10 00:57:23,736 - INFO - logging in using static token
+2025-10-10 00:57:27,963 - INFO - Shard ID None has connected to Gateway (Session ID: 98bd0dcb33fa8f4825587a4e8130df07).
+2025-10-10 00:59:16,706 - INFO - logging in using static token
+2025-10-10 00:59:19,884 - INFO - Shard ID None has connected to Gateway (Session ID: dd51079af324f3908a76b6fd785c03eb).
+2025-10-10 01:00:05,034 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 310, in on_message
+    await LPVBC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyPVB\LilyPVBCore.py", line 53, in MessageEvaluate
+    cursor = await VC.cdb.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: pvb_stock_channel_id
+2025-10-10 01:01:46,545 - INFO - logging in using static token
+2025-10-10 01:01:49,929 - INFO - Shard ID None has connected to Gateway (Session ID: c7818384f9d065d755acd5eb0f896096).
+2025-10-10 01:01:52,252 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 308, in on_message
+    await LGAG.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyGAG\sLilyGAGCore.py", line 428, in MessageEvaluate
+    cursor = await VC.cdb.execute("SELECT gag_item_values_channel_id, gag_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
+                   ^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-10-10 01:02:04,455 - INFO - logging in using static token
+2025-10-10 01:02:06,632 - WARNING - We are being rate limited. PUT https://discord.com/api/v10/applications/1240222509811499050/commands responded with 429. Retrying in 11.83 seconds.
+2025-10-10 01:02:25,415 - INFO - logging in using static token
+2025-10-10 01:02:27,926 - INFO - Shard ID None has connected to Gateway (Session ID: 75d2a09406a4d1f457a92f4cba37cd47).
+2025-10-10 01:04:03,102 - INFO - logging in using static token
+2025-10-10 01:04:05,504 - INFO - Shard ID None has connected to Gateway (Session ID: 4cb57deede00b68d69a5a1c6d8bf7c52).
+2025-10-10 01:05:04,117 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 310, in on_message
+    await LPVBC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyPVB\LilyPVBCore.py", line 53, in MessageEvaluate
+    cursor = await VC.cdb.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: pvb_stock_channel_id
+2025-10-10 01:05:40,305 - INFO - logging in using static token
+2025-10-10 01:05:42,557 - INFO - Shard ID None has connected to Gateway (Session ID: 7cbfd813440e7518d968d756a5e3f578).
+2025-10-10 01:08:16,716 - INFO - logging in using static token
+2025-10-10 01:08:20,697 - INFO - Shard ID None has connected to Gateway (Session ID: cb2b9d296565e61b8f87acec6737e8c2).
+2025-10-10 01:11:17,472 - INFO - logging in using static token
+2025-10-10 01:11:19,886 - INFO - Shard ID None has connected to Gateway (Session ID: 295bf291240411f46b23ad81e5c7b826).
+2025-10-10 01:15:06,862 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 310, in on_message
+    await LPVBC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyPVB\LilyPVBCore.py", line 52, in MessageEvaluate
+    seed_embed = CV2.GAGStockComponent.as_embed(stock_name, seed_stock, seed_pings)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'GAGStockComponent' has no attribute 'as_embed'
+2025-10-10 01:18:56,563 - INFO - logging in using static token
+2025-10-10 01:19:00,262 - INFO - Shard ID None has connected to Gateway (Session ID: efabf6c816b692adf966a1b19bb2159e).
+2025-10-10 01:24:13,837 - INFO - logging in using static token
+2025-10-10 01:24:16,395 - INFO - Shard ID None has connected to Gateway (Session ID: bd2e021dbc353e09d930d45b956a573a).
+2025-10-16 21:41:17,975 - INFO - logging in using static token
+2025-10-16 21:41:23,259 - INFO - Shard ID None has connected to Gateway (Session ID: 1bc13ad1f69f34fd07e7d4555703b076).
+2025-10-16 21:43:08,494 - INFO - logging in using static token
+2025-10-16 21:43:12,162 - INFO - Shard ID None has connected to Gateway (Session ID: ffe2f8d52e319fc4e5a6633bd20c644a).
+2025-10-16 21:47:36,068 - INFO - logging in using static token
+2025-10-16 21:47:39,887 - INFO - Shard ID None has connected to Gateway (Session ID: 476c07487845891efd1c0ceda88d35d8).
+2025-10-16 22:16:14,283 - INFO - logging in using static token
+2025-10-16 22:16:19,128 - INFO - Shard ID None has connected to Gateway (Session ID: 9aff58a88c953c99efc9bd6385a893a2).
+2025-10-16 22:17:15,178 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 315, in on_message
+    await self.process_commands(message)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1420, in process_commands
+    await self.invoke(ctx)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1378, in invoke
+    await ctx.command.invoke(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1051, in invoke
+    await self.prepare(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 955, in prepare
+    if not await self.can_run(ctx):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 552, in can_run
+    return await super().can_run(ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1318, in can_run
+    return await discord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\utils.py", line 727, in async_all
+    elem = await elem
+           ^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyRulesets\sLilyRulesets.py", line 39, in predicate
+    if any(role_id in user_role_ids for role_id in role_allowed):
+                                                   ^^^^^^^^^^^^
+TypeError: 'function' object is not iterable
+2025-10-16 22:17:47,138 - INFO - logging in using static token
+2025-10-16 22:17:49,907 - INFO - Shard ID None has connected to Gateway (Session ID: d654cd7410f5efdf28047fff55a55cc7).
+2025-10-16 22:17:59,306 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 315, in on_message
+    await self.process_commands(message)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1420, in process_commands
+    await self.invoke(ctx)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1378, in invoke
+    await ctx.command.invoke(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1051, in invoke
+    await self.prepare(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 955, in prepare
+    if not await self.can_run(ctx):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 552, in can_run
+    return await super().can_run(ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1318, in can_run
+    return await discord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\utils.py", line 727, in async_all
+    elem = await elem
+           ^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyRulesets\sLilyRulesets.py", line 39, in predicate
+    if any(role_id in user_role_ids for role_id in role_allowed):
+                                                   ^^^^^^^^^^^^
+TypeError: 'coroutine' object is not iterable
+2025-10-16 22:18:22,659 - INFO - logging in using static token
+2025-10-16 22:18:25,410 - INFO - Shard ID None has connected to Gateway (Session ID: b8ee5bcc2c6d82ea70e0f6cede43b195).
+2025-10-16 22:18:31,722 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 315, in on_message
+    await self.process_commands(message)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1420, in process_commands
+    await self.invoke(ctx)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1378, in invoke
+    await ctx.command.invoke(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1051, in invoke
+    await self.prepare(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 955, in prepare
+    if not await self.can_run(ctx):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 552, in can_run
+    return await super().can_run(ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1318, in can_run
+    return await discord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\utils.py", line 727, in async_all
+    elem = await elem
+           ^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyRulesets\sLilyRulesets.py", line 39, in predicate
+    if any(role_id in user_role_ids for role_id in role_allowed):
+                                                   ^^^^^^^^^^^^
+TypeError: 'coroutine' object is not iterable
+2025-10-16 22:19:24,217 - INFO - logging in using static token
+2025-10-16 22:19:26,856 - INFO - Shard ID None has connected to Gateway (Session ID: 823a8a849bad8227086888939495b8e3).
+2025-10-16 22:19:38,192 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 315, in on_message
+    await self.process_commands(message)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1420, in process_commands
+    await self.invoke(ctx)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1378, in invoke
+    await ctx.command.invoke(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1051, in invoke
+    await self.prepare(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 955, in prepare
+    if not await self.can_run(ctx):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 552, in can_run
+    return await super().can_run(ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1318, in can_run
+    return await discord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\utils.py", line 727, in async_all
+    elem = await elem
+           ^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyRulesets\sLilyRulesets.py", line 39, in predicate
+    if any(role_id in user_role_ids for role_id in role_allowed):
+                                                   ^^^^^^^^^^^^
+TypeError: 'coroutine' object is not iterable
+2025-10-16 22:22:27,024 - INFO - logging in using static token
+2025-10-16 22:22:29,720 - INFO - Shard ID None has connected to Gateway (Session ID: 43abbb4f4efd7a0ed6ea5796907b2cc4).
+2025-10-16 22:23:14,888 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 315, in on_message
+    await self.process_commands(message)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1420, in process_commands
+    await self.invoke(ctx)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1378, in invoke
+    await ctx.command.invoke(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1051, in invoke
+    await self.prepare(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 955, in prepare
+    if not await self.can_run(ctx):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 552, in can_run
+    return await super().can_run(ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1318, in can_run
+    return await discord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\utils.py", line 727, in async_all
+    elem = await elem
+           ^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyRulesets\sLilyRulesets.py", line 39, in predicate
+    if any(role_id in user_role_ids for role_id in role_allowed):
+                                                   ^^^^^^^^^^^^
+TypeError: 'coroutine' object is not iterable
+2025-10-16 22:23:58,371 - INFO - logging in using static token
+2025-10-16 22:24:00,767 - INFO - Shard ID None has connected to Gateway (Session ID: 417ddf059d667efb9fbdd9198456feb3).
+2025-10-16 22:24:07,800 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 315, in on_message
+    await self.process_commands(message)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1420, in process_commands
+    await self.invoke(ctx)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1378, in invoke
+    await ctx.command.invoke(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1051, in invoke
+    await self.prepare(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 955, in prepare
+    if not await self.can_run(ctx):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 552, in can_run
+    return await super().can_run(ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1318, in can_run
+    return await discord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\utils.py", line 727, in async_all
+    elem = await elem
+           ^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyRulesets\sLilyRulesets.py", line 20, in predicate
+    role_allowed = await maybe_call(RoleAllowed)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyRulesets\sLilyRulesets.py", line 16, in maybe_call
+    return await result
+           ^^^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\Config\sValueConfig.py", line 24, in GetBanRoles
+    cursor = await cdb.execute("SELECT role_id FROM roles WHERE ban_limit > 0")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such table: roles
+2025-10-16 22:25:32,685 - INFO - logging in using static token
+2025-10-16 22:25:35,386 - INFO - Shard ID None has connected to Gateway (Session ID: 41133e803543674ba83402e063ea9368).
+2025-10-17 21:23:54,724 - INFO - logging in using static token
+2025-10-17 21:24:05,028 - INFO - Shard ID None has connected to Gateway (Session ID: 66055f3cb50d54648496d8bec92427ee).
+2025-10-17 21:26:35,095 - INFO - logging in using static token
+2025-10-17 21:26:38,690 - INFO - Shard ID None has connected to Gateway (Session ID: 2ac4951c2ca60ed836c1f36ccd6e190b).
+2025-10-17 21:37:31,438 - INFO - logging in using static token
+2025-10-17 21:38:28,349 - INFO - Shard ID None has connected to Gateway (Session ID: 56d5acbe9addfb5a1ed3d405305a9e20).
+2025-10-17 21:40:56,995 - INFO - Shard ID None has successfully RESUMED session 56d5acbe9addfb5a1ed3d405305a9e20.
+2025-10-17 21:43:41,039 - INFO - logging in using static token
+2025-10-17 21:43:46,167 - INFO - Shard ID None has connected to Gateway (Session ID: ec476f4f1696a2777668116daa592469).
+2025-10-17 21:44:57,774 - INFO - logging in using static token
+2025-10-17 21:45:03,680 - INFO - Shard ID None has connected to Gateway (Session ID: e4644fe297be8920413fd8a1d6c40c41).
+2025-10-17 21:47:05,555 - INFO - logging in using static token
+2025-10-17 21:47:11,870 - INFO - Shard ID None has connected to Gateway (Session ID: 5984ed2d799b2565a51296e76d5e399b).
+2025-10-17 21:47:40,679 - INFO - logging in using static token
+2025-10-17 21:48:47,859 - INFO - logging in using static token
+2025-10-17 21:48:50,757 - INFO - Shard ID None has connected to Gateway (Session ID: 1d5abcf6212fc925f0cd1284576014b2).
+2025-10-17 21:50:03,539 - INFO - logging in using static token
+2025-10-17 21:50:06,839 - INFO - Shard ID None has connected to Gateway (Session ID: 781d5751ebf5a428868585f3479e8344).
+2025-10-17 21:50:34,689 - INFO - logging in using static token
+2025-10-17 21:50:38,424 - INFO - Shard ID None has connected to Gateway (Session ID: 283df28f58e13b8d3e112deb21dd8466).
+2025-10-17 21:53:51,803 - INFO - logging in using static token
+2025-10-17 21:53:55,694 - INFO - Shard ID None has connected to Gateway (Session ID: 469ec35d9c4e9137a10b685eb4423e09).
+2025-10-17 21:54:01,009 - ERROR - Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\app_commands\tree.py:1149> exception=TypeError("'coroutine' object is not iterable")>
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\app_commands\tree.py", line 1151, in wrapper
+    await self._call(interaction)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\app_commands\tree.py", line 1310, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 459, in _invoke_with_namespace
+    await command.prepare(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 955, in prepare
+    if not await self.can_run(ctx):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 550, in can_run
+    return await self.app_command._check_can_run(ctx.interaction)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 441, in _check_can_run
+    if self.wrapped.checks and not await async_all(f(ctx) for f in self.wrapped.checks):  # type: ignore
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\utils.py", line 727, in async_all
+    elem = await elem
+           ^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyRulesets\sLilyRulesets.py", line 33, in predicate
+    if any(role_id in user_role_ids for role_id in role_allowed):
+                                                   ^^^^^^^^^^^^
+TypeError: 'coroutine' object is not iterable
+2025-10-17 21:54:16,890 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 315, in on_message
+    await self.process_commands(message)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1420, in process_commands
+    await self.invoke(ctx)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\bot.py", line 1378, in invoke
+    await ctx.command.invoke(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1051, in invoke
+    await self.prepare(ctx)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 955, in prepare
+    if not await self.can_run(ctx):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\hybrid.py", line 552, in can_run
+    return await super().can_run(ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\commands\core.py", line 1318, in can_run
+    return await discord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\utils.py", line 727, in async_all
+    elem = await elem
+           ^^^^^^^^^^
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyRulesets\sLilyRulesets.py", line 33, in predicate
+    if any(role_id in user_role_ids for role_id in role_allowed):
+                                                   ^^^^^^^^^^^^
+TypeError: 'coroutine' object is not iterable
+2025-10-17 21:55:46,195 - INFO - logging in using static token
+2025-10-17 21:55:48,789 - INFO - Shard ID None has connected to Gateway (Session ID: 5abab84f24ede1466364e2a8c60725ef).
+2025-10-17 21:56:38,756 - INFO - logging in using static token
+2025-10-17 21:56:41,458 - INFO - Shard ID None has connected to Gateway (Session ID: 867f945cf1c9cba6d223740836caed6a).

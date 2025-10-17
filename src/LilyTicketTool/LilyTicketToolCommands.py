@@ -3,13 +3,14 @@ from discord.ext import commands
 import json
 import LilyTicketTool.LilyTicketToolCore as LTTC
 import Config.sBotDetails as Config
+import LilyManagement.sLilyStaffManagement as LSM
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
 
 class LilyTicketTool(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name='spawn_ticket', description='spawn in ticket processor')
     async def spawnticket(self, ctx):
         if not ctx.message.attachments:

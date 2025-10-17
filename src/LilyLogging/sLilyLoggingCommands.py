@@ -2,6 +2,7 @@ import discord
 import polars as pl
 
 from discord.ext import commands
+import LilyManagement.sLilyStaffManagement as LSM
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
 
 
@@ -11,7 +12,7 @@ class LilyLogging(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @PermissionEvaluator(RoleAllowed=Config.DeveloperRoles, RoleBlacklisted=Config.BlacklistedRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.hybrid_command(name='bot_logs', description='gets core bot logs')
     async def botlogs(self, ctx:commands.Context):
@@ -24,7 +25,7 @@ class LilyLogging(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-    @PermissionEvaluator(RoleAllowed=Config.DeveloperRoles, RoleBlacklisted=Config.BlacklistedRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.hybrid_command(name='clear_bot_logs', description='clears all bot logs')
     async def clear_botlogs(self, ctx:commands.Context):
@@ -38,7 +39,7 @@ class LilyLogging(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-    @PermissionEvaluator(RoleAllowed=Config.StaffRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.hybrid_command(name='user_logs', description='shows current logs for users')
     async def user_logs(self, ctx: commands.Context,user_id: str = None,log_range: str = "0:10"):
@@ -85,7 +86,7 @@ class LilyLogging(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-    @PermissionEvaluator(RoleAllowed=Config.DeveloperRoles, RoleBlacklisted=Config.BlacklistedRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name='clearlogs', description='clear bot logs.  taking a override command which takes in how much logs to preserve from latest logs')
     async def clear_logs(self, ctx:commands.Context, last:int=0):
                 log_file_path = f"storage/{ctx.guild.id}/botlogs/logs.csv"

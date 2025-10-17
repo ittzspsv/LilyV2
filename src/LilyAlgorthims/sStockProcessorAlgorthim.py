@@ -35,7 +35,8 @@ def StockMessageProcessorPVB(embed):
         match = re.match(r"(.+?)\s*[xX]\s*(\d+)", line)
         if match and current_section:
             item, qty = match.groups()
-            data["sections"][current_section][item.strip()] = int(qty)
+            item_clean = re.sub(r"<:[^:]+:\d+>", "", item).strip()
+            data["sections"][current_section][item_clean] = int(qty)
 
     return data
 

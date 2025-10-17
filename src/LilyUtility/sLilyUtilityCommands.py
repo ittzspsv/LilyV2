@@ -3,8 +3,10 @@ import LilyLogging.sLilyLogging as LilyLogging
 import LilyModeration.sLilyRoleManagement as rLily
 import LilyLeveling.sLilyLevelingCore as LLC
 import LilyModeration.sLilyModeration as mLily
+import json
 import Config.sValueConfig as ValueConfig
 import Config.sValueConfig as VC
+import LilyManagement.sLilyStaffManagement as LSM
 
 import discord
 from discord.ext import commands
@@ -28,7 +30,7 @@ class LilyUtility(commands.Cog):
         GAGWORL = "GAGWORL"
         PVBZStockUpdate = "PVBZStockUpdate"
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
     async def assign_channel(self, ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
         if bot_feature == self.Channels.StockUpdate:
@@ -73,7 +75,7 @@ class LilyUtility(commands.Cog):
             await ctx.send(f"Unable to Assign the Channel")
 
     # MESSAGING UTILITY
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
     @commands.hybrid_command(name='direct_message', description='direct messages using the bot')
     async def dm(self, ctx, user: discord.User, message: str): 
         try:
@@ -96,7 +98,7 @@ class LilyUtility(commands.Cog):
 
 
     # SERVER UTILITY
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name='list', description='lists the total number of users in the server')
     async def ServerList(self, ctx: commands.Context):
         if not ctx.author.id in Config.ids + Config.owner_ids:
@@ -130,7 +132,7 @@ class LilyUtility(commands.Cog):
         else:
             await ctx.send(user.id)
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name='run_value_query', description='executes arbitary query for the database ValueData.')
     async def run_value_query(self, ctx:commands.Context, *, query: str):
             try:
@@ -171,7 +173,7 @@ class LilyUtility(commands.Cog):
             except Exception as e:
                 await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name='run_levels_query', description='executes arbitary query for the database Levels.')
     async def run_levels_query(self, ctx: commands.Context, *, query: str):
         try:
@@ -217,7 +219,7 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name='run_config_query', description='executes arbitary query for the database Config.')
     async def run_config_query(self, ctx: commands.Context, *, query: str):
         try:
@@ -264,13 +266,61 @@ class LilyUtility(commands.Cog):
             await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name='set_stock_type', description='stock type 0 = embed; 1 = image')
     async def set_stock_type(self, ctx:commands.Context, type:int):
         await ValueConfig.cdb.execute("UPDATE GlobalConfigs SET value = ? WHERE key = ?", (type, "StockImage"))
         await ValueConfig.cdb.commit()
         addltext = "Image" if type == 1 else "Embed"
         await ctx.send(f"Stock Type set to {addltext}")
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @commands.hybrid_command(name='update',description='Updates a Discord role with the specified configuration')
+    async def update_role(self,ctx: commands.Context,role: discord.Role,cache: str,boolean: int):
+        try:
+            data = json.loads(cache)
+        except json.JSONDecodeError:
+            return await ctx.reply("Invalid Cache Formattings")
+
+        new_position = None
+        current_permissions = role.permissions
+
+        if "role_position" in data:
+            try:
+                new_position = int(data["role_position"])
+            except ValueError:
+                return await ctx.reply("Position Error")
+
+        if "role_permission" in data:
+            perms_list = data["role_permission"]
+            if not isinstance(perms_list, list):
+                return await ctx.reply("Permission Error")
+
+            new_permissions = current_permissions
+
+            for perm_name in perms_list:
+                if perm_name.lower() == "administrator":
+                    continue
+
+                if hasattr(new_permissions, perm_name):
+                    setattr(new_permissions, perm_name, bool(boolean))
+                else:
+                    pass
+
+        else:
+            new_permissions = current_permissions
+        try:
+            if new_position is not None:
+                await role.edit(position=new_position, reason=f"Role Updation")
+            
+            if "role_permission" in data:
+                await role.edit(permissions=new_permissions, reason=f"Role Updation")
+        except discord.Forbidden:
+            return await ctx.reply("I don't have permission to modify this role.")
+        except discord.HTTPException as e:
+            return await ctx.reply(f"Failed to update role: {e}")
+
+        await ctx.reply(f"Role **{role.name}** updated successfully.")
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

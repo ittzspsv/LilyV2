@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 import Config.sBotDetails as Config
 import LilyVouch.sLilyVouches as vLily
+import LilyManagement.sLilyStaffManagement as LSM
 import LilyModeration.sLilyModeration as mLily
 
 
@@ -39,7 +40,7 @@ class LilyVouch(commands.Cog):
             max = min + 10
         await ctx.send(embed=vLily.display_vouch_embed(ctx, member, min, max))
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Community Manager')))
     @commands.hybrid_command(name='verify_service_provider', description='if a service provider is trusted then he can be verified')
     async def verify_service_provider(self, ctx: commands.Context,  member: discord.Member):
         if not member:
@@ -47,7 +48,7 @@ class LilyVouch(commands.Cog):
         else:
             await ctx.send(embed=vLily.verify_servicer(ctx, member.id))
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Community Manager')))
     @commands.hybrid_command(name='unverify_service_provider', description='if a service provider is found to be  fraud after verification then he can be un-verified')
     async def unverify_service_provider(self, ctx: commands.Context,  member: discord.Member):
         if not member:
@@ -55,7 +56,7 @@ class LilyVouch(commands.Cog):
         else:
             await ctx.send(embed=vLily.unverify_servicer(ctx, member.id))
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles + Config.TrustedStaffRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Community Manager')))
     @commands.hybrid_command(name='delete_vouch', description='deletes a vouch from mentioned service provider at a particular timeframe')
     async def delete_vouch(self, ctx: commands.Context,  member: discord.Member, timestamp_str: str):
         if not member:

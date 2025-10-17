@@ -3,6 +3,7 @@ import discord
 import io
 import LilyLeveling.sLilyLevelingCore as LilyLevelCore
 from ui.sWantedPoster import PosterGeneration
+import LilyManagement.sLilyStaffManagement as LSM
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
 import Config.sBotDetails as Config
 import os
@@ -38,13 +39,13 @@ class LilyLeveling(commands.Cog):
             except Exception as e:
                 await message.edit(content=f"Exception {e}")
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='set_level', description='sets a level for user')
     async def set_level(self, ctx:commands.Context, member:discord.Member, level:int):
         await LilyLevelCore.SetLevel(ctx, member, level)
 
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='add_bounty', description='adds a bounty for user')
     async def add_bounty(self, ctx:commands.Context, member:discord.Member, amount:int):
@@ -56,13 +57,13 @@ class LilyLeveling(commands.Cog):
         await LilyLevelCore.UpdateProfile(ctx, name, role,description)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
     @commands.hybrid_command(name='set_profile_for', description='updates or adds a new profile for a given member')
     async def set_profile_for(self, ctx:commands.Context, member:discord.Member=None,name:str=None, role:str=None,* ,description:str=None, stamp:str=None):
         await LilyLevelCore.UpdateProfileFor(ctx, member,name,role ,description, stamp)
         
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @PermissionEvaluator(RoleAllowed=lambda: Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles, RoleBlacklisted=lambda: Config.BlacklistedRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
     @commands.hybrid_command(name='update_leveling_config', description='updates or adds a new profile for a given member')
     async def update_leveling_config(self, ctx: commands.Context):
         path = "src/LilyLeveling/LevelingConfig.json"
