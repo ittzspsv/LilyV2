@@ -304,54 +304,6 @@ class LilyUtility(commands.Cog):
         await ctx.send(f"Stock Type set to {addltext}")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
-    @commands.hybrid_command(name='rupdate',description='Updates a Discord role with the specified configuration')
-    async def update_role(self,ctx: commands.Context,role: discord.Role,cache: str,boolean: int):
-        try:
-            data = json.loads(cache)
-        except json.JSONDecodeError:
-            return await ctx.reply("Invalid Cache Formattings")
-
-        new_position = None
-        current_permissions = role.permissions
-
-        if "role_position" in data:
-            try:
-                new_position = int(data["role_position"])
-            except ValueError:
-                return await ctx.reply("Position Error")
-
-        if "role_permission" in data:
-            perms_list = data["role_permission"]
-            if not isinstance(perms_list, list):
-                return await ctx.reply("Permission Error")
-
-            new_permissions = current_permissions
-
-            for perm_name in perms_list:
-                if perm_name.lower() == "administrator":
-                    continue
-
-                if hasattr(new_permissions, perm_name):
-                    setattr(new_permissions, perm_name, bool(boolean))
-                else:
-                    pass
-
-        else:
-            new_permissions = current_permissions
-        try:
-            if new_position is not None:
-                await role.edit(position=new_position, reason=f"Role Updation")
-            
-            if "role_permission" in data:
-                await role.edit(permissions=new_permissions, reason=f"Role Updation")
-        except discord.Forbidden:
-            return await ctx.reply("I don't have permission to modify this role.")
-        except discord.HTTPException as e:
-            return await ctx.reply(f"Failed to update role: {e}")
-
-        await ctx.reply(f"Role **{role.name}** updated successfully.")
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name='cupdate',description='Updates a Discord text channel with the specified configuration')
     async def update_channel(self, ctx: commands.Context, channel: discord.TextChannel, cache: str, boolean: int):
         try:
