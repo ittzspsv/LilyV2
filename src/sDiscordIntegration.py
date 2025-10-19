@@ -326,7 +326,6 @@ class MyBot(commands.Bot):
         await self.process_commands(message)
 
 bot = MyBot()
-bot1 = MyBot()
 
 @bot.event
 async def on_command_error(ctx, error):
