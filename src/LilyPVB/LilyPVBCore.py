@@ -39,8 +39,6 @@ async def MessageEvaluate(self, bot, message):
             embed = msg.embeds[0]
             parsed = SPA.StockMessageProcessorPVB(embed)
 
-            print(parsed)
-
             stock_name = "PVB Stocks"
             sections = parsed.get("sections", {})
 
