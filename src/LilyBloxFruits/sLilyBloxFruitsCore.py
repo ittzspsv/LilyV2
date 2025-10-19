@@ -17,8 +17,6 @@ import Misc.sLilyComponentV2 as CV2
 import ui.sFruitValueGenerator as FVG
 import ui.sComboImageGenerator as CIG
 import aiohttp
-import logging
-import traceback
 
 import re
 import json
@@ -170,7 +168,7 @@ async def MessageEvaluate(self, bot, message):
 
             try:
                 cursor = await LilyConfig.cdb.execute(
-                    "SELECT guild_id, bf_stock_webhook FROM ConfigData WHERE bf_stock_webhook IS NOT NULL"
+                    "SELECT StockPingID, bf_stock_webhook FROM BF_StockHandler WHERE bf_stock_webhook IS NOT NULL"
                 )
                 rows = await cursor.fetchall()
             except Exception as e:
@@ -181,11 +179,7 @@ async def MessageEvaluate(self, bot, message):
                 return
 
             async with aiohttp.ClientSession() as session:
-                for guild_id, webhook_url in rows:
-                    guild = bot.get_guild(guild_id)
-                    if not guild:
-                        continue
-
+                for stock_ping, webhook_url in rows:
                     try:
                         webhook = discord.Webhook.from_url(webhook_url, session=session)
 
@@ -198,15 +192,14 @@ async def MessageEvaluate(self, bot, message):
                             await webhook.send(file=file, view=stock_view, wait=True)
 
                         if CurrentGoodFruits:
-                            role = discord.utils.get(guild.roles, name="Stock Ping")
-                            if role:
+                            if stock_ping:
                                 await webhook.send(
-                                    content=f"<@&{role.id}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!",
+                                    content=f"<@&{stock_ping}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!",
                                     wait=True
                                 )
 
                     except Exception as e:
-                        print(f"Error posting stock to guild {guild.id} via webhook {webhook_url}: {e}")
+                        pass
 
         if re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
             try:

@@ -35,17 +35,28 @@ class LilyUtility(commands.Cog):
     async def assign_channel(self, ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
         if bot_feature == self.Channels.StockUpdate:
             await ctx.send(f"Stock Update will be sent in <#{channel_to_assign.id}>")
-
             webhook = await channel_to_assign.create_webhook(
                 name=f"{Config.bot_name} Stock Updates"
             )
 
-            await ValueConfig.cdb.execute(
-                "UPDATE ConfigData SET bf_stock_webhook = ? WHERE guild_id = ?",
-                (webhook.url, ctx.guild.id)
+            cursor = await ValueConfig.cdb.execute(
+                "SELECT guild_id FROM BF_StockHandler WHERE guild_id = ?",
+                (ctx.guild.id,)
             )
-            await ValueConfig.cdb.commit()
+            row = await cursor.fetchone()
 
+            if row:
+                await ValueConfig.cdb.execute(
+                    "UPDATE BF_StockHandler SET bf_stock_webhook = ? WHERE guild_id = ?",
+                    (webhook.url, ctx.guild.id)
+                )
+            else: 
+                await ValueConfig.cdb.execute(
+                    "INSERT INTO BF_StockHandler (guild_id, bf_stock_webhook) VALUES (?, ?)",
+                    (ctx.guild.id, webhook.url)
+                )
+
+            await ValueConfig.cdb.commit()
             await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
         elif bot_feature == self.Channels.WORL:
             await ValueConfig.cdb.execute("UPDATE ConfigData SET bf_win_loss_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
@@ -68,11 +79,30 @@ class LilyUtility(commands.Cog):
             await ValueConfig.cdb.commit()
             await ctx.send(f"GAG WORL Channel Set To <#{channel_to_assign.id}>")
         elif bot_feature == self.Channels.PVBZStockUpdate:
-            await ValueConfig.cdb.execute("UPDATE ConfigData SET pvb_stock_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
+            await ctx.send(f"Stock Update will be sent in <#{channel_to_assign.id}>")
+            webhook = await channel_to_assign.create_webhook(
+                name=f"{Config.bot_name} Stock Updates"
+            )
+
+            cursor = await ValueConfig.cdb.execute(
+                "SELECT guild_id FROM PVB_StockHandler WHERE guild_id = ?",
+                (ctx.guild.id,)
+            )
+            row = await cursor.fetchone()
+
+            if row:
+                await ValueConfig.cdb.execute(
+                    "UPDATE PVB_StockHandler SET pvb_stock_webhook = ? WHERE guild_id = ?",
+                    (webhook.url, ctx.guild.id)
+                )
+            else:
+                await ValueConfig.cdb.execute(
+                    "INSERT INTO PVB_StockHandler (guild_id, pvb_stock_webhook) VALUES (?, ?)",
+                    (ctx.guild.id, webhook.url)
+                )
+
             await ValueConfig.cdb.commit()
-            await ctx.send(f"GAG WORL Channel Set To <#{channel_to_assign.id}>")
-        else:
-            await ctx.send(f"Unable to Assign the Channel")
+            await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
 
     # MESSAGING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
@@ -265,7 +295,6 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
-
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name='set_stock_type', description='stock type 0 = embed; 1 = image')
     async def set_stock_type(self, ctx:commands.Context, type:int):
@@ -275,7 +304,7 @@ class LilyUtility(commands.Cog):
         await ctx.send(f"Stock Type set to {addltext}")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
-    @commands.hybrid_command(name='update',description='Updates a Discord role with the specified configuration')
+    @commands.hybrid_command(name='rupdate',description='Updates a Discord role with the specified configuration')
     async def update_role(self,ctx: commands.Context,role: discord.Role,cache: str,boolean: int):
         try:
             data = json.loads(cache)
@@ -321,6 +350,163 @@ class LilyUtility(commands.Cog):
             return await ctx.reply(f"Failed to update role: {e}")
 
         await ctx.reply(f"Role **{role.name}** updated successfully.")
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @commands.hybrid_command(name='cupdate',description='Updates a Discord text channel with the specified configuration')
+    async def update_channel(self, ctx: commands.Context, channel: discord.TextChannel, cache: str, boolean: int):
+        try:
+            data = json.loads(cache)
+        except json.JSONDecodeError:
+            return await ctx.reply("Invalid Cache Formattings")
+
+        edit_kwargs = {}
+
+        if "channel_name" in data:
+            new_name = data["channel_name"]
+            if isinstance(new_name, str) and new_name.strip():
+                edit_kwargs["name"] = new_name
+            else:
+                return await ctx.reply("Channel Name Error")
+
+        if "channel_topic" in data:
+            new_topic = data["channel_topic"]
+            if isinstance(new_topic, str):
+                edit_kwargs["topic"] = new_topic
+            else:
+                return await ctx.reply("Topic Error")
+
+        if "channel_nsfw" in data:
+            nsfw_flag = data["channel_nsfw"]
+            if isinstance(nsfw_flag, bool):
+                edit_kwargs["nsfw"] = nsfw_flag
+            else:
+                return await ctx.reply("NSFW Flag Error")
+
+        if "channel_position" in data:
+            try:
+                new_position = int(data["channel_position"])
+                edit_kwargs["position"] = new_position
+            except ValueError:
+                return await ctx.reply("Position Error")
+
+        if "channel_permissions" in data:
+            perms_list = data["channel_permissions"]
+            if not isinstance(perms_list, list):
+                return await ctx.reply("Permissions Error")
+
+            overwrites = channel.overwrites.copy()
+            everyone_role = ctx.guild.default_role
+
+            if everyone_role not in overwrites:
+                overwrites[everyone_role] = discord.PermissionOverwrite()
+
+            ow = overwrites[everyone_role]
+
+            for perm_name in perms_list:
+                if hasattr(ow, perm_name):
+                    setattr(ow, perm_name, bool(boolean))
+                else:
+                    pass
+
+            overwrites[everyone_role] = ow
+            edit_kwargs["overwrites"] = overwrites
+
+        if not edit_kwargs:
+            return await ctx.reply("No valid fields found to update.")
+
+        try:
+            await channel.edit(**edit_kwargs, reason="Text Channel Updation")
+        except discord.Forbidden:
+            return await ctx.reply("I don't have permission to modify this channel.")
+        except discord.HTTPException as e:
+            return await ctx.reply(f"Failed to update channel: {e}")
+
+        await ctx.reply(f"Channel **{channel.name}** updated successfully.")
+
+    @commands.hybrid_command(name='add_bloxfruits_stock_webhook',description='Adds or updates Blox Fruits stock webhook for a guild')
+    async def add_bloxfruits_stock_webhook(self,ctx: commands.Context,guild_id: int,webhook_url: str,stock_ping_roll_id: int = 0):
+        try:
+            cursor = await ValueConfig.cdb.execute(
+                "SELECT bf_stock_webhook, StockPingID FROM BF_StockHandler WHERE guild_id = ?",
+                (guild_id,)
+            )
+            row = await cursor.fetchone()
+
+            if row:
+                current_webhook, current_stock_ping_id = row
+
+                final_webhook = webhook_url or current_webhook
+                final_stock_ping = stock_ping_roll_id or current_stock_ping_id
+
+                await ValueConfig.cdb.execute(
+                    """
+                    UPDATE BF_StockHandler
+                    SET bf_stock_webhook = ?, StockPingID = ?
+                    WHERE guild_id = ?
+                    """,
+                    (final_webhook, final_stock_ping, guild_id)
+                )
+            else:
+                await ValueConfig.cdb.execute(
+                    """
+                    INSERT INTO BF_StockHandler (guild_id, bf_stock_webhook, StockPingID)
+                    VALUES (?, ?, ?)
+                    """,
+                    (guild_id, webhook_url, stock_ping_roll_id)
+                )
+
+            await ValueConfig.cdb.commit()
+            await ctx.send(f"Webhook for guild {guild_id} has been set/updated successfully.")
+
+        except Exception as e:
+            await ctx.send(f"Error adding/updating webhook: `{e}`")
+            print(e)
+
+
+    @commands.hybrid_command(name='add_pvz_stock_webhook',description='Adds or updates PVZ stock webhook for a guild')
+    async def add_pvz_stock_webhook(self,ctx: commands.Context,guild_id: int,webhook_url: str,mythical_ping: int = 0,godly_ping: int = 0,secret_ping: int = 0):
+        try:
+            cursor = await ValueConfig.cdb.execute(
+                """
+                SELECT pvb_stock_webhook, mythical_ping, godly_ping, secret_ping
+                FROM PVB_StockHandler
+                WHERE guild_id = ?
+                """,
+                (guild_id,)
+            )
+            row = await cursor.fetchone()
+
+            if row:
+                current_webhook, current_mythical, current_godly, current_secret = row
+
+                final_webhook = webhook_url or current_webhook
+                final_mythical = mythical_ping or current_mythical
+                final_godly = godly_ping or current_godly
+                final_secret = secret_ping or current_secret
+
+                await ValueConfig.cdb.execute(
+                    """
+                    UPDATE PVB_StockHandler
+                    SET pvb_stock_webhook = ?, mythical_ping = ?, godly_ping = ?, secret_ping = ?
+                    WHERE guild_id = ?
+                    """,
+                    (final_webhook, final_mythical, final_godly, final_secret, guild_id)
+                )
+            else:
+                await ValueConfig.cdb.execute(
+                    """
+                    INSERT INTO PVB_StockHandler (guild_id, pvb_stock_webhook, mythical_ping, godly_ping, secret_ping)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (guild_id, webhook_url, mythical_ping, godly_ping, secret_ping)
+                )
+
+            await ValueConfig.cdb.commit()
+            await ctx.send(f"PVZ stock webhook for guild {guild_id} has been set/updated successfully.")
+
+        except Exception as e:
+            await ctx.send(f"Error adding/updating PVZ webhook: {e}")
+            print(e)
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

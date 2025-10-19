@@ -123,11 +123,52 @@ class GAGStockComponent(discord.ui.LayoutView):
             )
         )
 
-
-
         if pings:
             pings_text = "## PINGS\n" + ", ".join(pings)
             sections.append(discord.ui.TextDisplay(content=pings_text))
+
+        container1 = discord.ui.Container(
+            *sections,
+            accent_colour=discord.Colour(8447),  # blue accent
+        )
+
+        self.add_item(container1)
+
+class PVBStockComponent(discord.ui.LayoutView):
+    def __init__(self, stock_name,seed_stock):
+        super().__init__()
+        self.stock_name = stock_name
+        self.seed_stock = seed_stock
+
+        sections = [
+            discord.ui.TextDisplay(content=f"## {stock_name}"),
+        ]
+
+        sections.append(
+            discord.ui.MediaGallery(
+                discord.MediaGalleryItem(media="attachment://border.png")
+            )
+        )
+
+        for item in seed_stock:
+            sections.append(
+                discord.ui.Section(
+                    discord.ui.TextDisplay(
+                        content=(
+                            f"### {item['display_name']}\n"
+                            f"- Quantity : **x{item['quantity']}**\n"
+                            f"- Rarity : {item['rarity']}"
+                        )
+                    ),
+                    accessory=discord.ui.Thumbnail(media=item['icon']),
+                )
+            )
+
+        sections.append(
+            discord.ui.MediaGallery(
+                discord.MediaGalleryItem(media="attachment://border.png")
+            )
+        )
 
         container1 = discord.ui.Container(
             *sections,

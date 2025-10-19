@@ -57,19 +57,25 @@ class MyBot(commands.Bot):
                         pass
 
     async def setup_hook(self):
-        await bot.load_extension("LilyModeration.sLilyModerationCommands")
-        await bot.load_extension("LilyVouch.sLilyVouchCommands")
-        await bot.load_extension("LilyUtility.sLilyUtilityCommands")
-        await bot.load_extension("LilyManagement.sLilyStaffManagementCommands")
-        await bot.load_extension("LilyLogging.sLilyLoggingCommands")
-        await bot.load_extension("LilyBloxFruits.sLilyBloxFruitsCommands")
-        await bot.load_extension("Misc.sLilyEmbedCommands")
-        await bot.load_extension("LilyResponse.sLilyResponseCommands")
-        await bot.load_extension("LilyGAG.sLilyGAGCommands")
-        await bot.load_extension("LilyTicketTool.LilyTicketToolCommands")
-        await bot.load_extension("LilyLeveling.sLilyLevelingCommands")
-        #await bot.load_extension("LilyMiddleman.sLilyMiddlemanCommands")
-        await bot.tree.sync()
+        extensions = [
+            "LilyModeration.sLilyModerationCommands",
+            "LilyVouch.sLilyVouchCommands",
+            "LilyUtility.sLilyUtilityCommands",
+            "LilyManagement.sLilyStaffManagementCommands",
+            "LilyLogging.sLilyLoggingCommands",
+            "LilyBloxFruits.sLilyBloxFruitsCommands",
+            "Misc.sLilyEmbedCommands",
+            "LilyResponse.sLilyResponseCommands",
+            "LilyGAG.sLilyGAGCommands",
+            "LilyTicketTool.LilyTicketToolCommands",
+            "LilyLeveling.sLilyLevelingCommands",
+            # "LilyMiddleman.sLilyMiddlemanCommands"
+        ]
+
+        for ext in extensions:
+            if ext not in self.extensions:
+                await self.load_extension(ext)
+        #await self.tree.sync()
 
     async def BotInitialize(self):
         for guild in self.guilds:
@@ -177,10 +183,15 @@ class MyBot(commands.Bot):
         await self.ConnectDatabase()
         await self.BotInitialize()
         await LilyTTCore.InitializeView(self)
-        await bot.change_presence(status=discord.Status.invisible)
+        await bot.change_presence(
+        activity=discord.Streaming(
+            name="Gate to Oblivion",
+            url="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1"
+        )
+    )
         #handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
         #asyncio.create_task(handler.run())
-        await self.tree.sync()
+        #await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -315,6 +326,7 @@ class MyBot(commands.Bot):
         await self.process_commands(message)
 
 bot = MyBot()
+bot1 = MyBot()
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -331,7 +343,14 @@ async def configure(ctx: commands.Context):
     text = await Config.update_config_data()
     await ctx.send(embed=mLily.SimpleEmbed(f'Updated bot config with code : {text}'))
 
-
 load_dotenv("token.env")
 
 bot.run(os.getenv("token"))
+
+'''
+async def main():
+    await asyncio.gather(
+        
+    )
+
+asyncio.run(main())'''
