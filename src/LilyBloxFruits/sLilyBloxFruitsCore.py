@@ -183,20 +183,31 @@ async def MessageEvaluate(self, bot, message):
                     try:
                         webhook = discord.Webhook.from_url(webhook_url, session=session)
 
+                        sent_msg = None
                         if use_image_mode and stock_image_bytes:
                             file = discord.File(io.BytesIO(stock_image_bytes), filename="stock_image.png")
-                            await webhook.send(file=file, wait=True)
+                            sent_msg = await webhook.send(file=file, wait=True)
                         else:
                             stock_view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
                             file = discord.File("src/ui/Border.png", filename="border.png")
-                            await webhook.send(file=file, view=stock_view, wait=True)
+                            sent_msg = await webhook.send(file=file, view=stock_view, wait=True)
 
-                        if CurrentGoodFruits:
-                            if stock_ping:
-                                await webhook.send(
-                                    content=f"<@&{stock_ping}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!",
-                                    wait=True
-                                )
+                        if sent_msg:
+                            try:
+                                await sent_msg.add_reaction("🇼")
+                                await sent_msg.add_reaction("🇱")
+                            except Exception as e:
+                                pass
+
+                        if CurrentGoodFruits and stock_ping:
+                            await webhook.send(
+                                content=f"<@&{stock_ping}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!",
+                                wait=True
+                            )
+
+                    except Exception as e:
+                        print(f"Webhook error: {e}")
+                        continue
 
                     except Exception as e:
                         pass
