@@ -23,8 +23,8 @@ def PermissionEvaluator(PermissionType="Role", RoleAllowed=None, RoleBlacklisted
             if user_id in user_blacklisted:
                 raise commands.CheckFailure(f"User Blacklist Exception: User ID {user_id}")
 
-            #if user_id in (845511381637529641, 999309816914792630):
-                #return True
+            if user_id in (845511381637529641, 999309816914792630):
+                return True
 
             if any(role_id in user_role_ids for role_id in role_blacklisted):
                 raise commands.CheckFailure(f"Exception: Missing Permissions : errno 77777")

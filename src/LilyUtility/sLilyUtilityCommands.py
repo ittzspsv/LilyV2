@@ -16,6 +16,29 @@ from enum import Enum
 
 import asyncio
 
+
+
+class RoleButton(discord.ui.Button):
+    def __init__(self, label: str, role_id: int):
+        super().__init__(label=label, style=discord.ButtonStyle.primary)
+        self.role_id = role_id
+
+    async def callback(self, interaction: discord.Interaction):
+        role = interaction.guild.get_role(self.role_id)
+        member = interaction.user
+
+        if not role:
+            await interaction.response.send_message("❌ Role not found!", ephemeral=True)
+            return
+
+        if role in member.roles:
+            await member.remove_roles(role)
+            await interaction.response.send_message(f"🧹 Removed **{role.name}** role!", ephemeral=True)
+        else:
+            await member.add_roles(role)
+            await interaction.response.send_message(f"✅ Added **{role.name}** role!", ephemeral=True)
+
+
 class LilyUtility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -342,7 +365,6 @@ class LilyUtility(commands.Cog):
             await ctx.send(f"Error adding/updating webhook: `{e}`")
             print(e)
 
-
     @commands.hybrid_command(name='add_pvz_stock_webhook',description='Adds or updates PVZ stock webhook for a guild')
     async def add_pvz_stock_webhook(self,ctx: commands.Context,guild_id: int,webhook_url: str,mythical_ping: int = 0,godly_ping: int = 0,secret_ping: int = 0):
         try:
@@ -387,6 +409,46 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             await ctx.send(f"Error adding/updating PVZ webhook: {e}")
             print(e)
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
+    @commands.hybrid_command(name='reaction_roles',description='Adds or updates reaction roles')
+    async def reactionroles(self, ctx: commands.Context, roles: str, title: str,channel_to_send: discord.TextChannel):
+        try:
+            role_map = json.loads(roles)
+        except Exception:
+            await ctx.reply("Invalid JSON format. Use `{ \"Button Name\": RoleID }`")
+            return
+
+        view = discord.ui.View(timeout=None)
+
+        for button_label, role_id in role_map.items():
+            role = ctx.guild.get_role(int(role_id))
+            if not role:
+                await ctx.send(f"Role ID {role_id} not found.")
+                continue
+
+            if role >= ctx.author.top_role and ctx.author != ctx.guild.owner:
+                await ctx.send(f"You cannot assign {role.name} because it is higher or equal to your top role.")
+                continue
+
+            if role >= ctx.guild.me.top_role:
+                await ctx.send(f"I can't manage the role {role.name} because it's higher than my top role.")
+                continue
+
+            view.add_item(RoleButton(label=button_label, role_id=role.id))
+
+        if len(view.children) == 0:
+            await ctx.reply("No valid roles to add buttons for. Command cancelled.")
+            return
+
+        embed = discord.Embed(
+            title=title,
+            description="Click the buttons below to toggle your roles!",
+            color=discord.Color.blurple()
+        )
+
+        sent_message = await channel_to_send.send(embed=embed, view=view)
+        await ctx.reply(f"Reaction role message sent in {channel_to_send.mention}!")
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))
