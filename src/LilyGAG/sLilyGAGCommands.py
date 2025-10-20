@@ -16,7 +16,7 @@ class LilyGAG(commands.Cog):
         self.bot = bot
 
     
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='modify_gag_config', description='updates the gag config with desired input attached')
     async def modify_gag_config(self, ctx, file_name: str):
         dir_path = "src/LilyGAG/data"
@@ -45,7 +45,7 @@ class LilyGAG(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='gag_upload_png', description='updates the gag image with desired input attached')
     async def gag_upload_img(self, ctx, file_name: str):
         if not ctx.message.attachments:
@@ -107,7 +107,7 @@ class LilyGAG(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='update_image_gag', description='reloads combo data if any changes is done')
     async def UpdateImageGAG(self, ctx: commands.Context, name: str="", type:str="pet"):
             if type.lower() not in ["pet", "plant"]:

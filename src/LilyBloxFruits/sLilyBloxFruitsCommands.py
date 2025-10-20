@@ -100,7 +100,7 @@ class LilyBloxFruits(commands.Cog):
         except Exception as e:
             await ctx.send(e)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='fetch_combo_file', description='updates the given fruit value with str:cache')
     async def fetch_combo_file(self, ctx: commands.Context):
         file_path = "storage/common/Comboes/Comboes.csv"
@@ -109,7 +109,7 @@ class LilyBloxFruits(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='upload_combo_csv', description='updates the given fruit value with str:cache')
     async def upload_combo_csv(self, ctx):
         if not ctx.message.attachments:
@@ -127,7 +127,7 @@ class LilyBloxFruits(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
     
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='load_combo_data', description='reloads combo data if any changes is done')
     async def load_combo_data(self, ctx):
         try:
@@ -136,7 +136,7 @@ class LilyBloxFruits(commands.Cog):
         except Exception as e:
             await ctx.send(e)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='update_image_blox_fruits', description='reloads combo data if any changes is done')
     async def UpdateImageBloxFruits(self, ctx: commands.Context, name: str=""):
             cursor = await VC.vdb.execute(

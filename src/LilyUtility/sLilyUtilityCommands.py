@@ -128,7 +128,7 @@ class LilyUtility(commands.Cog):
 
 
     # SERVER UTILITY
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='list', description='lists the total number of users in the server')
     async def ServerList(self, ctx: commands.Context):
         if not ctx.author.id in Config.ids + Config.owner_ids:
@@ -162,7 +162,7 @@ class LilyUtility(commands.Cog):
         else:
             await ctx.send(user.id)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='run_value_query', description='executes arbitary query for the database ValueData.')
     async def run_value_query(self, ctx:commands.Context, *, query: str):
             try:
@@ -203,7 +203,7 @@ class LilyUtility(commands.Cog):
             except Exception as e:
                 await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='run_levels_query', description='executes arbitary query for the database Levels.')
     async def run_levels_query(self, ctx: commands.Context, *, query: str):
         try:
@@ -249,7 +249,7 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='run_config_query', description='executes arbitary query for the database Config.')
     async def run_config_query(self, ctx: commands.Context, *, query: str):
         try:
@@ -295,7 +295,7 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='set_stock_type', description='stock type 0 = embed; 1 = image')
     async def set_stock_type(self, ctx:commands.Context, type:int):
         await ValueConfig.cdb.execute("UPDATE GlobalConfigs SET value = ? WHERE key = ?", (type, "StockImage"))

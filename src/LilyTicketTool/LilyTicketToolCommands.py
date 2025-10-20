@@ -10,7 +10,7 @@ class LilyTicketTool(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='spawn_ticket', description='spawn in ticket processor')
     async def spawnticket(self, ctx):
         if not ctx.message.attachments:

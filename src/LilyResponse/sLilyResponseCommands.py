@@ -11,7 +11,7 @@ class LilyResponse(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='enable_response', description='sets auto response feature to boolean value 0 and 1')
     #feature_cache for Autoresponse, ChannelResponse = 1
     async def set_response_feature(self, ctx:commands.Context, feature_cache:str="0"):
@@ -23,7 +23,7 @@ class LilyResponse(commands.Cog):
         except Exception as e:
             await ctx.send(mLily.SimpleEmbed(f'Exception {e}'))
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='update_response', description='updates auto response feature for the bot')
     async def update_response(self, ctx:commands.Context):
         success = aiLily.update_response()

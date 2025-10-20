@@ -1,4 +1,5 @@
 import aiosqlite
+import asyncio
 
 vdb = None
 cdb = None

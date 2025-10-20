@@ -12,14 +12,14 @@ class LilyManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)))
     @commands.hybrid_command(name='staffdata', description='shows data for a particular staff')
     async def staffdata(self, ctx:commands.Context, id:str):
         id = id.replace("<@", "").replace(">", "")
         staff_member = await self.bot.fetch_user(int(id))
         await ctx.send(view=await smLily.FetchStaffDetail(staff_member))
 
-    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)))
     @commands.hybrid_command(name='staffs', description='shows all staff registered name with the count')
     async def staffs(self, ctx:commands.Context):
         try:
@@ -44,7 +44,7 @@ class LilyManagement(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)))
     @commands.hybrid_command(name='strikes', description='shows strikes for a concurrent staff')
     async def strikes(self, ctx: commands.Context, id: discord.Member):
         try:
@@ -52,7 +52,7 @@ class LilyManagement(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
-    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Developer',)))
     @commands.hybrid_command(name='run_staff_query', description='runs arbitrary  for the database Staff')
     async def run_staff_query(self, ctx: commands.Context, *, query: str):
         await smLily.run_query(ctx, query)
@@ -79,7 +79,7 @@ class LilyManagement(commands.Cog):
         else:
             await ctx.reply(f"An error occured while removing LOA")
 
-    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)))
     @commands.hybrid_command(name='request_loa', description='Requests leave from higher staffs')
     async def request_loa(self, ctx: commands.Context):
         await smLily.RequestLoa(ctx)

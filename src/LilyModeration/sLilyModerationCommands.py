@@ -81,25 +81,25 @@ class LilyModeration(commands.Cog):
         except discord.HTTPException as e:
             await ctx.send(f"Exception Raised: {e}")
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='mute', description='mutes a user with desired input')
     async def mute(self, ctx:commands.Context, member:discord.Member=None, duration:str="1",*, reason="No reason provided"):
         await mLily.mute_user(ctx, member, duration, reason)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='warn', description='warns a user')
     async def warn(self, ctx:commands.Context, member:discord.Member=None,*, reason="No reason provided"):
         await mLily.warn(ctx, member, reason)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unmute', description='unmutes a user with desired input')
     async def unmute(self, ctx:commands.Context, member:discord.Member=None):
         await mLily.unmute(ctx, member)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ms', description='checks logs for a particular moderator')
     async def ms(self, ctx, slice_exp: str = None, member: discord.Member=None):
@@ -136,7 +136,7 @@ class LilyModeration(commands.Cog):
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='modlogs', description='Checks logs for a particular user')
     async def modlogs(self, ctx, mod_type: str = "all", slice_exp: str = None, member: discord.User = None, moderator: discord.User = None):
@@ -169,7 +169,7 @@ class LilyModeration(commands.Cog):
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch mod logs: {e}"))
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='checkbanlog', description='checks ban log for a particular user')
     async def checkbanlog(self, ctx, member: str = ""):
