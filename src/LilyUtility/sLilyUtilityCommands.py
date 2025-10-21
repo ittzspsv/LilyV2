@@ -7,6 +7,8 @@ import json
 import Config.sValueConfig as ValueConfig
 import Config.sValueConfig as VC
 import LilyManagement.sLilyStaffManagement as LSM
+import Misc.sLilyEmbed as LE
+import aiohttp
 
 import discord
 from discord.ext import commands
@@ -449,6 +451,46 @@ class LilyUtility(commands.Cog):
 
         sent_message = await channel_to_send.send(embed=embed, view=view)
         await ctx.reply(f"Reaction role message sent in {channel_to_send.mention}!")
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
+    @commands.hybrid_command(name='telecast_message',description='Sends Message to All webhooks linked')
+    async def telecast(self, ctx: commands.Context, msg_config: str):
+        try:
+            data = json.loads(msg_config)
+
+            content, embed = LE.ParseAdvancedEmbed(data)
+            cursor = await VC.cdb.execute(
+                "SELECT pvb_stock_webhook FROM PVB_StockHandler WHERE guild_id != ?", (ctx.guild.id,)
+            )
+            row_1 = await cursor.fetchall()
+
+            cursor = await VC.cdb.execute(
+                "SELECT bf_stock_webhook FROM BF_StockHandler WHERE guild_id != ?", (ctx.guild.id,)
+            )
+            row_2 = await cursor.fetchall()
+
+            row_merged = row_1 + row_2
+            if not row_merged:
+                await ctx.send("No webhooks found to telecast the message.")
+                return
+
+            sent_count = 0
+            async with aiohttp.ClientSession() as session:
+                for webhook_row in row_merged:
+                    webhook_url = webhook_row[0]
+                    if not webhook_url:
+                        continue
+                    try:
+                        webhook = discord.Webhook.from_url(webhook_url, session=session)
+                        await webhook.send(content=content, embeds=embed)
+                        sent_count += 1
+                    except Exception as wh_err:
+                        print(f"Failed to send to webhook {webhook_url}: {wh_err}")
+
+            await ctx.send(f"Telecast completed. Message sent to {sent_count} webhooks.")
+
+        except Exception as e:
+            await ctx.send(f"An error occurred while telecasting: {e}")
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

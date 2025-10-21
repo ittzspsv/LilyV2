@@ -189,8 +189,6 @@ class MyBot(commands.Bot):
             url="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1"
         )
     )
-        #handler = StockWebSocket(f"wss://websocket.joshlei.com/growagarden", bot)
-        #asyncio.create_task(handler.run())
         await self.tree.sync()
 
     async def on_guild_join(self, guild):
