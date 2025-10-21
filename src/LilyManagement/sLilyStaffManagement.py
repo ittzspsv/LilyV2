@@ -153,7 +153,7 @@ async def run_query(ctx: commands.Context, query: str):
 async def FetchStaffDetail(staff: discord.Member):
     try:
         query = """
-        SELECT s.name, r.role_name, s.on_loa, s.strikes_count, s.joined_on, s.timezone
+        SELECT s.name, r.role_name, s.on_loa, s.strikes_count, s.joined_on, s.timezone, s.responsibility
         FROM staffs s
         LEFT JOIN roles r ON s.role_id = r.role_id
         WHERE s.staff_id = ?
@@ -164,7 +164,7 @@ async def FetchStaffDetail(staff: discord.Member):
         if not row:
             raise ValueError("Staff data not found in database.")
 
-        name, role_name, is_loa, strikes_count, joined_on_str, timezone = row
+        name, role_name, is_loa, strikes_count, joined_on_str, timezone, responsibility = row
 
         joined_on = datetime.strptime(joined_on_str, "%d/%m/%Y")
         current_date = datetime.today()
@@ -183,7 +183,7 @@ async def FetchStaffDetail(staff: discord.Member):
         view = CS2.StaffDataComponent(
             name, 
             role_name or "N/A",
-            "N/A",
+            responsibility or "N/A",
             timezone or "Not Given",
             joined_on.strftime("%d/%m/%Y"),
             f"{years} years {months} months {days} days",
