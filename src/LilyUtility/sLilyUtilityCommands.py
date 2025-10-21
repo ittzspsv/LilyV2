@@ -358,6 +358,7 @@ class LilyUtility(commands.Cog):
         await ctx.send(f"Stock Type set to {addltext}")
 
     @commands.hybrid_command(name='add_bloxfruits_stock_webhook',description='Adds or updates Blox Fruits stock webhook for a guild')
+    @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
     async def add_bloxfruits_stock_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,stock_ping_roll_id: int = 0):
         try:
             cursor = await ValueConfig.cdb.execute(
@@ -400,6 +401,7 @@ class LilyUtility(commands.Cog):
             print(e)
 
     @commands.hybrid_command(name='add_pvz_stock_webhook',description='Adds or updates PVZ stock webhook for a guild')
+    @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
     async def add_pvb_stock_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,mythical_ping: int = 0,godly_ping: int = 0,secret_ping: int = 0):
         try:
             cursor = await ValueConfig.cdb.execute(
@@ -448,6 +450,7 @@ class LilyUtility(commands.Cog):
             print(e)
 
     @commands.hybrid_command(name='add_pvz_weather_webhook',description='Adds or updates PVZ weather webhook for a guild')
+    @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
     async def add_pvb_weather_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,weather_ping: int = 0):
         try:
             cursor = await ValueConfig.cdb.execute(
@@ -494,6 +497,7 @@ class LilyUtility(commands.Cog):
             print(e)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='reaction_roles',description='Adds or updates reaction roles')
     async def reactionroles(self, ctx: commands.Context, roles: str, title: str,channel_to_send: discord.TextChannel):
         try:
@@ -534,6 +538,7 @@ class LilyUtility(commands.Cog):
         await ctx.reply(f"Reaction role message sent in {channel_to_send.mention}!")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='telecast_message',description='Sends Message to All webhooks linked')
     async def telecast(self, ctx: commands.Context, msg_config: str):
         try:
