@@ -170,6 +170,7 @@ if port == 0:
     stock_fetch_guild_id = 1240215331071594536
     stock_fetch_channel_id = 1362321135231959112
     stock_fetch_channel_id_pvb = 1422672815768735926
+    weather_fetch_channel_id_pvb = 1422672916700729356
 
 else:
     # PRODUCTION SERVER SETTINGS (BLOXTRADE)
@@ -223,6 +224,7 @@ else:
     stock_fetch_guild_id = 1099482621161001113
     stock_fetch_channel_id = 1417675004899754014
     stock_fetch_channel_id_pvb = 1422672815768735926
+    weather_fetch_channel_id_pvb = 1422672916700729356
 
 # Embed colors based on item type
 embed_color_codes = {

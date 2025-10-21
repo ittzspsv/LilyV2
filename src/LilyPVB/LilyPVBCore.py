@@ -100,3 +100,33 @@ async def MessageEvaluate(self, bot, message):
                         except Exception as e:
                             print(e)
                             continue
+
+    elif message.guild and message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.weather_fetch_channel_id_pvb:
+        try:
+            msg = await message.channel.fetch_message(1430277975592407265)
+        except Exception as e:
+            print(f"Failed to fetch message: {e}")
+            return
+
+        if msg.embeds:
+            old_embed = msg.embeds[0]
+            description_text = SPA.WeatherExtractor(old_embed.description).replace('Alert!', '')
+            new_embed = discord.Embed(
+                title="WEATHER ALERT",
+                description=f"**{description_text}**",
+                colour=0x3100f5
+            )
+
+            cursor = await VC.cdb.execute(
+                "SELECT pvb_weather_webhook, weather_ping FROM PVB_WeatherHandler WHERE pvb_weather_webhook IS NOT NULL"
+            )
+            rows = await cursor.fetchall()
+
+            async with aiohttp.ClientSession() as session:
+                for webhook_url, weather_ping in rows:
+                    try:
+                        webhook = discord.Webhook.from_url(webhook_url, session=session)
+                        content = f'<@&{weather_ping}>' if weather_ping else None
+                        await webhook.send(content=content, embed=new_embed)
+                    except Exception as e:
+                        continue

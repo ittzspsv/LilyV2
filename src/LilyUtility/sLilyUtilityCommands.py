@@ -54,6 +54,7 @@ class LilyUtility(commands.Cog):
         GAGValues = "GAGValues"
         GAGWORL = "GAGWORL"
         PVBZStockUpdate = "PVBZStockUpdate"
+        PVBWeatherUpdate = "PVBWeatherUpdate"
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
     @commands.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
@@ -128,6 +129,34 @@ class LilyUtility(commands.Cog):
 
             await ValueConfig.cdb.commit()
             await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
+        elif bot_feature == self.Channels.PVBWeatherUpdate:
+            try:
+                await ctx.send(f"Stock Update will be sent in <#{channel_to_assign.id}>")
+                webhook = await channel_to_assign.create_webhook(
+                    name=f"{Config.bot_name} Weather Updates"
+                )
+
+                cursor = await ValueConfig.cdb.execute(
+                    "SELECT guild_id FROM PVB_WeatherHandler WHERE guild_id = ?",
+                    (ctx.guild.id,)
+                )
+                row = await cursor.fetchone()
+
+                if row:
+                    await ValueConfig.cdb.execute(
+                        "UPDATE PVB_WeatherHandler SET pvb_weather_webhook = ? WHERE guild_id = ?",
+                        (webhook.url, ctx.guild.id)
+                    )
+                else:
+                    await ValueConfig.cdb.execute(
+                        "INSERT INTO PVB_WeatherHandler (guild_id, pvb_weather_webhook) VALUES (?, ?)",
+                        (ctx.guild.id, webhook.url)
+                    )
+
+                await ValueConfig.cdb.commit()
+                await ctx.send(f"Webhook created: Weather will be sent in {channel_to_assign.name}")
+            except Exception as e:
+                print(e)
 
     # MESSAGING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
@@ -329,11 +358,11 @@ class LilyUtility(commands.Cog):
         await ctx.send(f"Stock Type set to {addltext}")
 
     @commands.hybrid_command(name='add_bloxfruits_stock_webhook',description='Adds or updates Blox Fruits stock webhook for a guild')
-    async def add_bloxfruits_stock_webhook(self,ctx: commands.Context,guild_id: int,webhook_url: str,stock_ping_roll_id: int = 0):
+    async def add_bloxfruits_stock_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,stock_ping_roll_id: int = 0):
         try:
             cursor = await ValueConfig.cdb.execute(
                 "SELECT bf_stock_webhook, StockPingID FROM BF_StockHandler WHERE guild_id = ?",
-                (guild_id,)
+                (int(guild_id),)
             )
             row = await cursor.fetchone()
 
@@ -349,7 +378,7 @@ class LilyUtility(commands.Cog):
                     SET bf_stock_webhook = ?, StockPingID = ?
                     WHERE guild_id = ?
                     """,
-                    (final_webhook, final_stock_ping, guild_id)
+                    (final_webhook, final_stock_ping, int(guild_id))
                 )
             else:
                 await ValueConfig.cdb.execute(
@@ -357,18 +386,18 @@ class LilyUtility(commands.Cog):
                     INSERT INTO BF_StockHandler (guild_id, bf_stock_webhook, StockPingID)
                     VALUES (?, ?, ?)
                     """,
-                    (guild_id, webhook_url, stock_ping_roll_id)
+                    (int(guild_id), webhook_url, stock_ping_roll_id)
                 )
 
             await ValueConfig.cdb.commit()
-            await ctx.send(f"Webhook for guild {guild_id} has been set/updated successfully.")
+            await ctx.send(f"Webhook for guild {guild_id} has been set/updated successfully.", ephemeral=True)
 
         except Exception as e:
-            await ctx.send(f"Error adding/updating webhook: `{e}`")
+            await ctx.send(f"Error adding/updating webhook: `{e}`", ephemeral=True)
             print(e)
 
     @commands.hybrid_command(name='add_pvz_stock_webhook',description='Adds or updates PVZ stock webhook for a guild')
-    async def add_pvz_stock_webhook(self,ctx: commands.Context,guild_id: int,webhook_url: str,mythical_ping: int = 0,godly_ping: int = 0,secret_ping: int = 0):
+    async def add_pvb_stock_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,mythical_ping: int = 0,godly_ping: int = 0,secret_ping: int = 0):
         try:
             cursor = await ValueConfig.cdb.execute(
                 """
@@ -376,7 +405,7 @@ class LilyUtility(commands.Cog):
                 FROM PVB_StockHandler
                 WHERE guild_id = ?
                 """,
-                (guild_id,)
+                (int(guild_id),)
             )
             row = await cursor.fetchone()
 
@@ -394,7 +423,7 @@ class LilyUtility(commands.Cog):
                     SET pvb_stock_webhook = ?, mythical_ping = ?, godly_ping = ?, secret_ping = ?
                     WHERE guild_id = ?
                     """,
-                    (final_webhook, final_mythical, final_godly, final_secret, guild_id)
+                    (final_webhook, final_mythical, final_godly, final_secret, int(guild_id))
                 )
             else:
                 await ValueConfig.cdb.execute(
@@ -402,7 +431,7 @@ class LilyUtility(commands.Cog):
                     INSERT INTO PVB_StockHandler (guild_id, pvb_stock_webhook, mythical_ping, godly_ping, secret_ping)
                     VALUES (?, ?, ?, ?, ?)
                     """,
-                    (guild_id, webhook_url, mythical_ping, godly_ping, secret_ping)
+                    (int(guild_id), webhook_url, mythical_ping, godly_ping, secret_ping)
                 )
 
             await ValueConfig.cdb.commit()
@@ -410,6 +439,49 @@ class LilyUtility(commands.Cog):
 
         except Exception as e:
             await ctx.send(f"Error adding/updating PVZ webhook: {e}")
+            print(e)
+
+    @commands.hybrid_command(name='add_pvz_weather_webhook',description='Adds or updates PVZ weather webhook for a guild')
+    async def add_pvb_weather_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,weather_ping: int = 0):
+        try:
+            cursor = await ValueConfig.cdb.execute(
+                """
+                SELECT pvb_weather_webhook, weather_ping
+                FROM PVB_WeatherHandler
+                WHERE guild_id = ?
+                """,
+                (int(guild_id),)
+            )
+            row = await cursor.fetchone()
+
+            if row:
+                current_webhook, current_ping = row
+
+                final_webhook = webhook_url or current_webhook
+                final_ping = weather_ping or current_ping
+
+                await ValueConfig.cdb.execute(
+                    """
+                    UPDATE PVB_WeatherHandler
+                    SET pvb_weather_webhook = ?, weather_ping = ?
+                    WHERE guild_id = ?
+                    """,
+                    (final_webhook, final_ping, int(guild_id))
+                )
+            else:
+                await ValueConfig.cdb.execute(
+                    """
+                    INSERT INTO PVB_WeatherHandler (guild_id, pvb_weather_webhook, weather_ping)
+                    VALUES (?, ?, ?)
+                    """,
+                    (int(guild_id), webhook_url, weather_ping)
+                )
+
+            await ValueConfig.cdb.commit()
+            await ctx.send(f"PVZ weather webhook for guild {guild_id} has been set/updated successfully.")
+
+        except Exception as e:
+            await ctx.send(f"Error adding/updating PVZ weather webhook: {e}")
             print(e)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))

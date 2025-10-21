@@ -41,6 +41,13 @@ def StockMessageProcessorPVB(embed):
     return data
 
 
+def WeatherExtractor(message: str) -> str | None:
+    pattern = r"\*\*(.*?)\*\*"
+    match = re.search(pattern, message, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return None
+
 message = """Title: **Current Normal Stock
 **Description: <:spike:1300167770629214298> Spike - 180,000<:dollar:1300186776840835223>
 <:trex:1300167828267073556> T-Rex - 2,700,000<:dollar:1300186776840835223>
