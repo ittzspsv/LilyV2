@@ -391,6 +391,9 @@ class LilyUtility(commands.Cog):
 
             await ValueConfig.cdb.commit()
             await ctx.send(f"Webhook for guild {guild_id} has been set/updated successfully.", ephemeral=True)
+            channel = await ctx.guild.fetch_channel(1430313688010719253)
+            if channel:
+                await channel.send(f'<@{ctx.author.id}> Assigned Blox Fruits Stock webhook to his guild with id {guild_id}')
 
         except Exception as e:
             await ctx.send(f"Error adding/updating webhook: `{e}`", ephemeral=True)
@@ -435,10 +438,13 @@ class LilyUtility(commands.Cog):
                 )
 
             await ValueConfig.cdb.commit()
-            await ctx.send(f"PVZ stock webhook for guild {guild_id} has been set/updated successfully.")
+            await ctx.send(f"PVZ stock webhook for guild {guild_id} has been set/updated successfully.", ephemeral=True)
+            channel = await ctx.guild.fetch_channel(1430313688010719253)
+            if channel:
+                await channel.send(f'<@{ctx.author.id}> Assigned PVB Stock webhook to his guild with id {guild_id}')
 
         except Exception as e:
-            await ctx.send(f"Error adding/updating PVZ webhook: {e}")
+            await ctx.send(f"Error adding/updating PVZ webhook: {e}", ephemeral=True)
             print(e)
 
     @commands.hybrid_command(name='add_pvz_weather_webhook',description='Adds or updates PVZ weather webhook for a guild')
@@ -478,10 +484,13 @@ class LilyUtility(commands.Cog):
                 )
 
             await ValueConfig.cdb.commit()
-            await ctx.send(f"PVZ weather webhook for guild {guild_id} has been set/updated successfully.")
+            await ctx.send(f"PVZ weather webhook for guild {guild_id} has been set/updated successfully.", ephemeral=True)
+            channel = await ctx.guild.fetch_channel(1430313688010719253)
+            if channel:
+                await channel.send(f'<@{ctx.author.id}> Assigned PVB Weather webhook to his guild with id {guild_id}')
 
         except Exception as e:
-            await ctx.send(f"Error adding/updating PVZ weather webhook: {e}")
+            await ctx.send(f"Error adding/updating PVZ weather webhook: {e}", ephemeral=True)
             print(e)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
