@@ -15,6 +15,7 @@ import LilyTicketTool.LilyTicketToolCore as LilyTTCore
 import LilyManagement.sLilyStaffManagement as LSM
 import LilyPVB.LilyPVBCore as LPVBC
 from LilyGAG.sLilyGAGStockListeners import StockWebSocket
+import LilySubstring.sLilySubstring as LS
 import LilyGAG.sLilyGAGCore as GAG
 import logging
 
@@ -332,6 +333,13 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"So fast Try after {error.retry_after:.1f} seconds.")
     else:
+        pass
+
+@bot.event
+async def on_presence_update(before, after):
+    try:
+        await LS.on_presence_update(before, after)
+    except:
         pass
 
 @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles + Config.OwnerRoles)
