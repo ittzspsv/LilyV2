@@ -3,12 +3,14 @@ import LilyLogging.sLilyLogging as LilyLogging
 import LilyModeration.sLilyRoleManagement as rLily
 import LilyLeveling.sLilyLevelingCore as LLC
 import LilyModeration.sLilyModeration as mLily
+
 import json
 import Config.sValueConfig as ValueConfig
 import Config.sValueConfig as VC
 import LilyManagement.sLilyStaffManagement as LSM
 import Misc.sLilyEmbed as LE
 import aiohttp
+import psutil
 
 import discord
 from discord.ext import commands
@@ -350,6 +352,98 @@ class LilyUtility(commands.Cog):
             await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
+    @commands.hybrid_command(name='run_botlogs_query', description='executes arbitary query for the database BotLogs.')
+    async def run_botlogs_query(self, ctx: commands.Context, *, query: str):
+        try:
+            cursor = await LilyLogging.bdb.execute(query)
+
+            try:
+                rows = await cursor.fetchall()
+                columns = [description[0] for description in cursor.description] if cursor.description else []
+            except Exception:
+                rows = None
+                columns = []
+
+            await VC.vdb.commit()
+
+            if rows:
+                max_rows = 30
+                total_rows = len(rows)
+                rows = rows[:max_rows]
+
+                col_widths = []
+                for i, col in enumerate(columns):
+                    max_len = max(len(str(row[i])) for row in rows) if rows else 0
+                    col_widths.append(max(len(col), max_len))
+
+                header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
+                separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
+
+                lines = []
+                for row in rows:
+                    line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
+                    lines.append(line)
+
+                table = "\n".join([header, separator] + lines)
+
+                if total_rows > max_rows:
+                    table += f"\n... and {total_rows - max_rows} more rows not shown."
+
+                await ctx.send(f"```\n{table}\n```")
+
+            else:
+                await ctx.send("Execution Successful")
+
+        except Exception as e:
+            await ctx.send(f"Error: `{type(e).__name__}: {e}`")
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
+    @commands.hybrid_command(name='run_modlogs_query', description='executes arbitary query for the database Modlogs.')
+    async def run_modlogs_query(self, ctx: commands.Context, *, query: str):
+        try:
+            cursor = await LilyLogging.mdb.execute(query)
+
+            try:
+                rows = await cursor.fetchall()
+                columns = [description[0] for description in cursor.description] if cursor.description else []
+            except Exception:
+                rows = None
+                columns = []
+
+            await VC.vdb.commit()
+
+            if rows:
+                max_rows = 30
+                total_rows = len(rows)
+                rows = rows[:max_rows]
+
+                col_widths = []
+                for i, col in enumerate(columns):
+                    max_len = max(len(str(row[i])) for row in rows) if rows else 0
+                    col_widths.append(max(len(col), max_len))
+
+                header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
+                separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
+
+                lines = []
+                for row in rows:
+                    line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
+                    lines.append(line)
+
+                table = "\n".join([header, separator] + lines)
+
+                if total_rows > max_rows:
+                    table += f"\n... and {total_rows - max_rows} more rows not shown."
+
+                await ctx.send(f"```\n{table}\n```")
+
+            else:
+                await ctx.send("Execution Successful")
+
+        except Exception as e:
+            await ctx.send(f"Error: `{type(e).__name__}: {e}`")
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='set_stock_type', description='stock type 0 = embed; 1 = image')
     async def set_stock_type(self, ctx:commands.Context, type:int):
         await ValueConfig.cdb.execute("UPDATE GlobalConfigs SET value = ? WHERE key = ?", (type, "StockImage"))
@@ -577,6 +671,11 @@ class LilyUtility(commands.Cog):
 
         except Exception as e:
             await ctx.send(f"An error occurred while telecasting: {e}")
+
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='latency',description='sends the latency of the bot')
+    async def latency(self, ctx: commands.Context):
+        await ctx.send(f'`{round(self.bot.latency * 1000, 2)}ms`')
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))
