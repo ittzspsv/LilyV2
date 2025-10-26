@@ -103,7 +103,7 @@ async def MessageEvaluate(self, bot, message):
 
     elif message.guild and message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.weather_fetch_channel_id_pvb:
         try:
-            msg = await message.channel.fetch_message(1430277975592407265)
+            msg = await message.channel.fetch_message(message.id)
         except Exception as e:
             print(f"Failed to fetch message: {e}")
             return
