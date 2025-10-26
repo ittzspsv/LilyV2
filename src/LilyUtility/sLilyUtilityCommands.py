@@ -10,7 +10,6 @@ import Config.sValueConfig as VC
 import LilyManagement.sLilyStaffManagement as LSM
 import Misc.sLilyEmbed as LE
 import aiohttp
-import psutil
 
 import discord
 from discord.ext import commands
