@@ -144,7 +144,7 @@ if port == 0:
 
     service_manager_roll_id = 1356187197526638693
 
-    appeal_server_link = "https://discord.gg/RvkyTxnH6r"
+    appeal_server_link = "https://discord.gg/StcA9GaEUU"
 
     role_creation_limit = 1
 
