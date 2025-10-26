@@ -3,6 +3,7 @@ import LilyLogging.sLilyLogging as LilyLogging
 import LilyModeration.sLilyRoleManagement as rLily
 import LilyLeveling.sLilyLevelingCore as LLC
 import LilyModeration.sLilyModeration as mLily
+import re
 
 import json
 import Config.sValueConfig as ValueConfig
@@ -675,6 +676,41 @@ class LilyUtility(commands.Cog):
     @commands.hybrid_command(name='latency',description='sends the latency of the bot')
     async def latency(self, ctx: commands.Context):
         await ctx.send(f'`{round(self.bot.latency * 1000, 2)}ms`')
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='role',description='assign role or removes a specified role from the user')
+    async def role(self, ctx: commands.Context, user: discord.Member, *, role_input: str):
+        if ctx.author.top_role <= user.top_role and ctx.author != ctx.guild.owner:
+            await ctx.send("You cannot modify roles of someone with equal or higher top role.")
+            return
+        
+        role = None
+        mention_match = re.match(r'<@&(\d+)>', role_input)
+        if mention_match:
+            role_id = int(mention_match.group(1))
+            role = ctx.guild.get_role(role_id)
+
+        if role is None and role_input.isdigit():
+            role = ctx.guild.get_role(int(role_input))
+        
+        if role is None:
+            role_name = role_input.replace('*', ' ')
+            role = discord.utils.get(ctx.guild.roles, name=role_name)
+
+        if role is None:
+            return await ctx.send(f"Role `{role_input}` not found on this server.")
+
+        if ctx.guild.me.top_role <= role:
+            return await ctx.send("I cannot manage this role because it's higher than my top role.")
+
+        if role in user.roles:
+            await user.remove_roles(role, reason=f"Role toggled by {ctx.author}")
+            await ctx.send(f"Removed role `{role.name}` from {user.mention}.")
+        else:
+            await user.add_roles(role, reason=f"Role toggled by {ctx.author}")
+            await ctx.send(f"Added role `{role.name}` to {user.mention}.")
+
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

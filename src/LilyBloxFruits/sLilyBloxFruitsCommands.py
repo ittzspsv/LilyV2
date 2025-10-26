@@ -3,6 +3,7 @@ from LilyRulesets.sLilyRulesets import PermissionEvaluator
 import Values.sStockValueJSON as StockValueJSON
 import LilyLogging.sLilyLogging as LilyLogging
 import LilyManagement.sLilyStaffManagement as LSM
+import re
 
 import Combo.LilyComboManager as LCM
 import Config.sBotDetails as Config
@@ -156,7 +157,20 @@ class LilyBloxFruits(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('ValueTeam', 'Developer')))
     @commands.hybrid_command(name='update_bf_value', description='updates an value of an item in blox fruits')
-    async def UpdateValue(self,ctx: commands.Context,name: str,physical_value: int = None,permanent_value: int = None,physical_demand: str = None,permanent_demand: str = None,demand_type: str = None,permanent_demand_type: str = None,category: str = None,aliases: str = None,icon_url: str = None):
+    async def UpdateValue(self, ctx: commands.Context,name: str,physical_value: str = None,permanent_value: str = None,physical_demand: str = None,permanent_demand: str = None,demand_type: str = None,permanent_demand_type: str = None,category: str = None,aliases: str = None,icon_url: str = None):
+        def parse_number(value):
+            if value is None:
+                return None
+            if isinstance(value, int):
+                return value
+            value = str(value).replace(",", "").strip().lower()
+            match = re.match(r"(\d+\.?\d*)([kmb]?)", value)
+            if not match:
+                return
+            number, suffix = match.groups()
+            number = float(number)
+            multiplier = {"": 1, "k": 1_000, "m": 1_000_000, "b": 1_000_000_000}
+            return int(number * multiplier.get(suffix, 1))
         try:
             cursor = await VC.vdb.execute("SELECT * FROM BF_ItemValues WHERE name = ?", (name.title(),))
             row = await cursor.fetchone()
@@ -164,10 +178,11 @@ class LilyBloxFruits(commands.Cog):
                 await ctx.send(f"No item found with name {name}.")
                 return
 
-
             columns = [d[0] for d in cursor.description]
             current_values = dict(zip(columns, row))
 
+            physical_value = parse_number(physical_value)
+            permanent_value = parse_number(permanent_value)
 
             if aliases is not None:
                 alias_list = [alias.strip() for alias in aliases.split(",") if alias.strip()]
@@ -197,9 +212,8 @@ class LilyBloxFruits(commands.Cog):
 
             await ctx.send(f"Item {name} updated successfully.")
         except Exception as e:
-             print(e)
-
-    
+            print(e)
+            await ctx.send(f"An error occurred: {e}")
 
 async def setup(bot):
     await bot.add_cog(LilyBloxFruits(bot))
