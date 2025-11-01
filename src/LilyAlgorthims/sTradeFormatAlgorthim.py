@@ -61,41 +61,46 @@ async def MatchFruit(fruits, data, threshold=80):
 
 async def MatchFruitSet(fruit: str, fruit_names: set, alias_map: dict, threshold=80):
     if not fruit or not fruit_names:
-        return None  
+        return None
 
     fruit = fruit.lower().strip()
     if not fruit:
-        return None  
+        return None
 
     cleaned_alias_map = {}
     for k, v in alias_map.items():
-        clean_key = k.strip("[]\"' ").lower() 
+        clean_key = k.strip("[]\"' ").lower()
         cleaned_alias_map[clean_key] = v.lower() if isinstance(v, str) else v
 
-    fruit_words = set(fruit.split())
-    filtered_fruits = set()
-
-    all_names = set(fruit_names)
+    all_names = set(x.lower() for x in fruit_names)
     all_names.update(cleaned_alias_map.keys())
 
+    if fruit in cleaned_alias_map:
+        return cleaned_alias_map[fruit]
+
+
+    if fruit in all_names:
+        return cleaned_alias_map.get(fruit, fruit)
+
+    fruit_words = set(fruit.split())
     for f in all_names:
         if not f:
             continue
-
         if set(f.split()) == fruit_words:
             return cleaned_alias_map.get(f, f)
 
-        if f[0].lower() == fruit[0]:
-            filtered_fruits.add(f)
-
+    filtered_fruits = [f for f in all_names if f and f[0] == fruit[0]]
     if not filtered_fruits:
         return None
 
-    # Fuzzy match
+    effective_threshold = threshold
+    if len(fruit) <= 3:
+        effective_threshold = max(threshold, 88)
+
     match = process.extractOne(fruit, filtered_fruits, scorer=fuzz.ratio)
     if match:
         best_match, score = match[0], match[1]
-        if score >= threshold:
+        if score >= effective_threshold:
             return cleaned_alias_map.get(best_match, best_match)
 
     return None

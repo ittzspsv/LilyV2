@@ -9,6 +9,7 @@ except:
 
 from datetime import datetime
 from discord.ext import commands
+import LilyRulesets.sLilyRulesets as LilyRuleset
 
 sdb = None
 
@@ -36,9 +37,9 @@ class LOAModal(discord.ui.Modal):
         reason = self.reason.value
         staff = interaction.user
 
-        review_channel = interaction.client.get_channel(1418140702163861504)
+        review_channel = interaction.client.get_channel(1421841285253431408)
         if review_channel is None:
-            await staff.send("⚠️ Review channel not found.")
+            await staff.send("⚠️ Review channel not found. Contact a developer")
             return
 
         embed = discord.Embed(
@@ -64,25 +65,44 @@ class LOAReviewView(discord.ui.View):
 
     @discord.ui.button(label="Approve", style=discord.ButtonStyle.success)
     async def approve(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.manage_guild:
-            await interaction.response.send_message("❌ You don’t have permission to approve this.", ephemeral=True)
+        try:
+            has_permission = await LilyRuleset.rPermissionEvaluator(
+                interaction,
+                PermissionType="role",
+                RoleAllowed=lambda: GetRoles(('Developer', 'Staff Manager', 'TestRole'))
+            )
+        except commands.CheckFailure as e:
+            await interaction.response.send_message(f"❌ {e}", ephemeral=True)
             return
 
         await AssignLoa(self.staff.id, self.reason, self.days)
         embed = interaction.message.embeds[0]
         embed.color = discord.Color.green()
-        await self.staff.send(f"✅ Your LOA request for **{self.days} days** has been approved. Good luck!")
+        await self.staff.send(
+            f"✅ Your LOA request for **{self.days} days** has been approved. Good luck!"
+        )
         await interaction.response.edit_message(embed=embed, view=None)
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.danger)
     async def reject(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.manage_guild:
-            await interaction.response.send_message("❌ You don’t have permission to reject this.", ephemeral=True)
+        try:
+            has_permission = await LilyRuleset.rPermissionEvaluator(
+                interaction,
+                PermissionType="role",
+                RoleAllowed=lambda: GetRoles(('Developer', 'Staff Manager', 'TestRole'))
+            )
+        except commands.CheckFailure as e:
+            await interaction.response.send_message(
+                f"❌ {e}", ephemeral=True
+            )
             return
 
         embed = interaction.message.embeds[0]
         embed.color = discord.Color.red()
-        await self.staff.send(f"❌ Your LOA request for **{self.days} days** has been rejected.")
+
+        await self.staff.send(
+            f"❌ Your LOA request for **{self.days} days** has been rejected."
+        )
         await interaction.response.edit_message(embed=embed, view=None)
 
     async def on_timeout(self):

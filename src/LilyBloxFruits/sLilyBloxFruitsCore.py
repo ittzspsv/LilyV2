@@ -125,7 +125,7 @@ async def MessageEvaluate(self, bot, message):
             try:
                 cursor = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'StockImage'")
                 row = await cursor.fetchone()
-                use_image_mode = (row and row[0] == 1)
+                use_image_mode = (row and int(row[0]) == 1)
             except Exception as e:
                 print(f"DB error reading GlobalConfig: {e}")
                 use_image_mode = False
@@ -150,9 +150,19 @@ async def MessageEvaluate(self, bot, message):
 
             Title, Fruit_Items = SPA.StockMessageProcessor(embeded_string)
 
+            
+            async with LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'BF_Normal_GoodFruits'") as cursor:
+                row = await cursor.fetchone()
+                good_fruits = [fruit.strip() for fruit in row[0].split(",")] if row and row[0] else []
+
+            async with LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'BF_Mirage_GoodFruits'") as cursor:
+                row = await cursor.fetchone()
+                m_good_fruits = [fruit.strip() for fruit in row[0].split(",")] if row and row[0] else []
+
             CurrentGoodFruits = [
                 key for key in Fruit_Items.keys()
-                if ("normal" in Title.lower() and key in good_fruits) or (key in m_good_fruits)
+                if ("normal" in Title.lower() and key in good_fruits)
+                or ("mirage" in Title.lower() and key in m_good_fruits)
             ]
 
             stock_image_bytes = None

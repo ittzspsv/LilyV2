@@ -17,6 +17,7 @@ import LilyPVB.LilyPVBCore as LPVBC
 from LilyGAG.sLilyGAGStockListeners import StockWebSocket
 import LilySubstring.sLilySubstring as LS
 import LilyGAG.sLilyGAGCore as GAG
+import LilyAlgorthims.sFruitDetectionAlgorthim as FDA
 import logging
 
 
@@ -37,7 +38,7 @@ class MyBot(commands.Bot):
         intents.members = True
         intents.presences = True 
         intents.guilds = True
-        super().__init__(command_prefix=Config.bot_command_prefix,intents=discord.Intents.all())
+        super().__init__(command_prefix=Config.bot_command_prefix,intents=discord.Intents.all(),help_command=None)
 
     async def setup_hook(self):
         extensions = [
@@ -49,16 +50,16 @@ class MyBot(commands.Bot):
             "LilyBloxFruits.sLilyBloxFruitsCommands",
             "Misc.sLilyEmbedCommands",
             "LilyResponse.sLilyResponseCommands",
-            "LilyGAG.sLilyGAGCommands",
+            # "LilyGAG.sLilyGAGCommands",
             "LilyTicketTool.LilyTicketToolCommands",
-            "LilyLeveling.sLilyLevelingCommands",
+            # "LilyLeveling.sLilyLevelingCommands",
             # "LilyMiddleman.sLilyMiddlemanCommands"
         ]
 
         for ext in extensions:
             if ext not in self.extensions:
                 await self.load_extension(ext)
-        await self.tree.sync()
+        #await self.tree.sync()
 
     async def BotInitialize(self):
         for guild in self.guilds:
@@ -172,7 +173,7 @@ class MyBot(commands.Bot):
             url="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1"
         )
     )
-        await self.tree.sync()
+        #await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())

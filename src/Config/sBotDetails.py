@@ -106,7 +106,7 @@ def load_channel_config_guild_id(guild_id: int, type=0):
 
 
 # Command prefix for the bot
-bot_command_prefix = "?"
+bot_command_prefix = "."
 
 # Bot display settings
 bot_name = "BloxTrade"

@@ -4,7 +4,8 @@ import os
 CARD_WIDTH = 900
 BG_COLOR = (0, 0, 0)
 PRICE_COLOR = (0, 255, 0)
-FONT_PATH = "src/ui/font/Game Bubble.ttf"
+FONT_PATH = "src/ui/font/Berlin Sans FB Bold.ttf"
+NUMBER_FONT_PATH = "src/ui/font/Game Bubble.ttf"
 ITEM_IMAGE_FOLDER = "src/ui/fruit_icons"
 
 fruits = {
@@ -59,16 +60,15 @@ def StockImageGenerator(data_dict, stock_type="normal"):
     count = len(items)
 
     try:
-        item_font = ImageFont.truetype(FONT_PATH, 30)
-        price_font = ImageFont.truetype(FONT_PATH, 24)
+        item_font = ImageFont.truetype(FONT_PATH, 40)
+        price_font = ImageFont.truetype(NUMBER_FONT_PATH, 32)
     except:
         item_font = ImageFont.load_default()
         price_font = ImageFont.load_default()
 
-    icon_size = 150
     max_cols = 3
-    items = list(data_dict.items())
-    count = len(items)
+    icon_size = 300 if count <= max_cols else 250
+    gap_y = 120
 
     if count > 2 * max_cols:
         items = items[-2 * max_cols:]
@@ -83,27 +83,21 @@ def StockImageGenerator(data_dict, stock_type="normal"):
     else:
         rows = [max_cols, max_cols]
 
-    gap_y = 100
-    total_height = len(rows) * icon_size + (len(rows) - 1) * gap_y + 50
+    total_height = len(rows) * icon_size + (len(rows) - 1) * gap_y + 80
     y_start = (bg_h - total_height) // 2
 
     item_index = 0
     for r, cols_in_row in enumerate(rows):
         row_y = y_start + r * (icon_size + gap_y)
-
         total_icon_width = cols_in_row * icon_size
         remaining_space = bg_w - total_icon_width
-
-        if cols_in_row == 1:
-            x_start = remaining_space // 2
-            gap_x = 0
-        else:
-            gap_x = remaining_space // (cols_in_row + 1)
-            x_start = gap_x
+        gap_x = remaining_space // (cols_in_row + 1)
+        x_start = gap_x
 
         for c in range(cols_in_row):
             if item_index >= count:
                 break
+
             name, price = items[item_index]
             x = x_start + c * (icon_size + gap_x)
 
@@ -112,10 +106,8 @@ def StockImageGenerator(data_dict, stock_type="normal"):
                 icon = Image.open(icon_path).convert("RGBA")
                 icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
 
-                avg_color_img = icon.resize((1, 1))
-                avg_color = avg_color_img.getpixel((0, 0))[:3]
-
-                glow_size = (int(icon_size * 2.5), int(icon_size * 2.5))
+                avg_color = icon.resize((1, 1)).getpixel((0, 0))[:3]
+                glow_size = (int(icon_size * 2), int(icon_size * 2))
                 glow_img = Image.new("RGBA", glow_size, (0, 0, 0, 0))
                 glow_draw = ImageDraw.Draw(glow_img)
 
@@ -126,33 +118,39 @@ def StockImageGenerator(data_dict, stock_type="normal"):
                     3 * glow_size[1] // 4,
                 )
                 glow_draw.ellipse(ellipse_bbox, fill=avg_color + (150,))
-                glow = glow_img.filter(ImageFilter.GaussianBlur(25))
+                glow = glow_img.filter(ImageFilter.GaussianBlur(35))
 
                 glow_x = x - (glow_size[0] - icon_size) // 2
-                glow_y = row_y + 20 - (glow_size[1] - icon_size) // 2
+                glow_y = row_y + 30 - (glow_size[1] - icon_size) // 2
                 img.paste(glow, (glow_x, glow_y), glow)
 
-                img.paste(icon, (x, row_y + 20), icon)
+                img.paste(icon, (x, row_y + 30), icon)
 
             draw_neon_text(
-                img,
-                (x + icon_size // 2, row_y),
-                name.upper(),
-                item_font,
-                glow_color=(0, 255, 255),
-                text_color=(255, 255, 255),
-                anchor="mt"
-            )
+            img,
+            (x + icon_size // 2, row_y),
+            name.upper(),
+            item_font,
+            glow_color=(200, 100, 255, 140),
+            text_color=(245, 230, 255),     
+            anchor="mt"
+        )
 
             price_str = f"${price:,}"
             price_w, _ = get_text_size(draw, price_str, price_font)
-            draw.text(
-                (x + (icon_size - price_w) / 2, row_y + 20 + icon_size + 10),
+            price_x = x + (icon_size - price_w) / 2
+            price_y = row_y + 30 + icon_size + 15
+
+            draw_neon_text(
+                img,
+                (price_x + price_w / 2, price_y), 
                 price_str,
-                font=price_font,
-                fill=PRICE_COLOR
+                price_font,
+                glow_color=(190, 90, 255, 140),  
+                text_color=(245, 230, 255),  
+                anchor="mt"
             )
 
             item_index += 1
 
-    return img.resize((int(img.width * 0.7), int(img.height * 0.7)))
+    return img

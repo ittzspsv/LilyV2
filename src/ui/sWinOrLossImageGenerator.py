@@ -43,55 +43,90 @@ def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm
 
     draw.text(position, text, font=font, fill=text_color, anchor=anchor)
 
-def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt", stretch_height=1.0):
-    temp_img = Image.new("RGBA", (1000, 500), (0, 0, 0, 0))
-    draw_temp = ImageDraw.Draw(temp_img)
-    text_bbox = draw_temp.textbbox((0, 0), text, font=font)
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = int((text_bbox[3] - text_bbox[1]) * stretch_height)
+def draw_gradient_text(
+    image, 
+    position, 
+    text, 
+    font, 
+    gradient_colors, 
+    anchor="lt", 
+    stretch_height=1.0, 
+    scale=1.0
+):
+    temp_img = Image.new("RGBA", (10, 10), (0, 0, 0, 0))
+    temp_draw = ImageDraw.Draw(temp_img)
+    x0, y0, x1, y1 = temp_draw.textbbox((0, 0), text, font=font)
+    text_w, text_h = x1 - x0, y1 - y0
 
-    text_mask = Image.new("L", (text_width, text_height), 0)
-    draw_mask = ImageDraw.Draw(text_mask)
-    draw_mask.text((0, 0), text, font=font, fill=255)
+    mask = Image.new("L", (text_w, text_h), 0)
+    mask_draw = ImageDraw.Draw(mask)
+    mask_draw.text((-x0, -y0), text, font=font, fill=255)
 
-    gradient = Image.new("RGBA", (text_width, text_height), color=0)
-    for y in range(text_height):
-        ratio = y / text_height
-        r = int(gradient_colors[0][0] * (1 - ratio) + gradient_colors[1][0] * ratio)
-        g = int(gradient_colors[0][1] * (1 - ratio) + gradient_colors[1][1] * ratio)
-        b = int(gradient_colors[0][2] * (1 - ratio) + gradient_colors[1][2] * ratio)
-        ImageDraw.Draw(gradient).line([(0, y), (text_width, y)], fill=(r, g, b), width=1)
+    if scale != 1.0 or stretch_height != 1.0:
+        new_w = max(1, int(text_w * scale))
+        new_h = max(1, int(text_h * stretch_height * scale))
+        mask = mask.resize((new_w, new_h), resample=Image.LANCZOS)
+        text_w, text_h = new_w, new_h
 
-    gradient.putalpha(text_mask)
+    gradient = Image.new("RGBA", (text_w, text_h))
+    grad_draw = ImageDraw.Draw(gradient)
+    c0, c1 = gradient_colors[0], gradient_colors[1]
+
+    for y in range(text_h):
+        t = y / float(text_h - 1) if text_h > 1 else 0
+        r = int(c0[0] * (1 - t) + c1[0] * t)
+        g = int(c0[1] * (1 - t) + c1[1] * t)
+        b = int(c0[2] * (1 - t) + c1[2] * t)
+        grad_draw.line([(0, y), (text_w, y)], fill=(r, g, b))
+
+    gradient.putalpha(mask)
 
     x, y = position
     if anchor in ("mm", "mt", "mb"):
-        x -= text_width // 2
+        x -= text_w // 2
     elif anchor in ("rm", "rt", "rb"):
-        x -= text_width
+        x -= text_w
     if anchor in ("mm", "lm", "rm"):
-        y -= text_height // 2
+        y -= text_h // 2
     elif anchor in ("mb", "lb", "rb"):
-        y -= text_height
+        y -= text_h
 
     image.paste(gradient, (int(x), int(y)), gradient)
 
-def draw_gradient_bar(image, x, y, width, height, percent, color_start, color_end, bg_color=(40, 40, 40, 180), stretch_ratio=0.5):
-    draw = ImageDraw.Draw(image)
+def draw_gradient_bar(img, x, y, width, height, percent,color_start, color_end,corner_radius=4,glow_intensity=0.3):
+    from PIL import ImageDraw, ImageFilter
 
-    draw.rectangle([x, y, x + width, y + height], fill=bg_color)
 
-    bar_width = int(width * (percent / 100))
+    bar_base = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(bar_base)
 
-    for i in range(bar_width):
-        stretched_i = i / (width * stretch_ratio)
-        stretched_i = min(stretched_i, 1.0)
 
-        r = int(color_start[0] * (1 - stretched_i) + color_end[0] * stretched_i)
-        g = int(color_start[1] * (1 - stretched_i) + color_end[1] * stretched_i)
-        b = int(color_start[2] * (1 - stretched_i) + color_end[2] * stretched_i)
+    for i in range(width):
+        t = i / (width - 1)
+        r = int(color_start[0] * (1 - t) + color_end[0] * t)
+        g = int(color_start[1] * (1 - t) + color_end[1] * t)
+        b = int(color_start[2] * (1 - t) + color_end[2] * t)
+        draw.line([(i, 0), (i, height)], fill=(r, g, b))
 
-        draw.line([(x + i, y), (x + i, y + height)], fill=(r, g, b), width=1)
+
+    progress_mask = Image.new("L", (width, height), 0)
+    mask_draw = ImageDraw.Draw(progress_mask)
+    progress_width = max(1, int(width * (percent / 100)))
+    mask_draw.rounded_rectangle((0, 0, progress_width, height), radius=corner_radius, fill=255)
+
+
+    track = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    track_draw = ImageDraw.Draw(track)
+    track_color = tuple(int(c * glow_intensity) for c in color_end) + (180,)
+    track_draw.rounded_rectangle((0, 0, width, height), radius=corner_radius, fill=track_color)
+
+
+    glow = track.filter(ImageFilter.GaussianBlur(radius=6))
+    img.alpha_composite(glow, dest=(x, y))
+
+
+    img.alpha_composite(track, dest=(x, y))
+    img.paste(bar_base, (x, y), progress_mask)
 
 def add_glow_border(icon, glow_color=(255, 255, 255), blur_radius=6, glow_alpha=150):
     glow_size = (icon.size[0] + 20, icon.size[1] + 20)
@@ -138,7 +173,7 @@ def GenerateWORLImage(
 
     def load_font(size):
         try:
-            return ImageFont.truetype("src/ui/font/Game Bubble.ttf", size)
+            return ImageFont.truetype("src/ui/font/Berlin Sans FB Bold.ttf", size)
         except:
             return ImageFont.load_default()
 
@@ -218,63 +253,68 @@ def GenerateWORLImage(
     their_label_x = (their_coords[0][0] + their_coords[1][0] + icon_size) // 2
     center_x = img.width // 2
 
-    draw_gradient_text(img, (your_label_x, 575), f"TOTAL: ${your_total:,}",
-                    font=font_total, gradient_colors=[(128, 255, 255), (255, 128, 255)], anchor="mm")
+    draw_gradient_text(
+    img, (your_label_x, 575),
+    f"TOTAL: ${format_value(your_total)}",
+    font=font_total,
+    gradient_colors=[(128, 255, 255), (255, 128, 255)],
+    anchor="mm",
+    scale=1.25,            
+    stretch_height=1    
+)
 
-    draw_gradient_text(img, (their_label_x, 575), f"TOTAL: ${their_total:,}",
-                    font=font_total, gradient_colors=[(255, 180, 255), (180, 255, 255)], anchor="mm")
+    draw_gradient_text(
+        img, (their_label_x, 575),
+        f"TOTAL: ${format_value(their_total)}",
+        font=font_total,
+        gradient_colors=[(255, 180, 255), (180, 255, 255)],
+        anchor="mm",
+        scale=1.25,
+        stretch_height=1
+    )
 
-    if winorloseorfair == 0:
-        bar_x, bar_y, bar_width, bar_height = 140, 660, 420, 12
-        draw_gradient_bar(img, bar_x, bar_y, bar_width, bar_height, percent,
-                        color_start=(180, 140, 0), color_end=(255, 230, 100))
+    bar_y = 640
+    bar_width = 480 
+    bar_height = 6    
+    bar_x = center_x - bar_width // 2 
 
-        draw_gradient_text(img, (center_x, bar_y - 30), f"{percent}% {trade_winorlose}",
-                        font=font_percentage, gradient_colors=[(180, 140, 0), (255, 230, 100)], anchor="mm")
-        
-        draw_gradient_text(
-            img,
-            (center_x - 20, bar_y + 80),
-            trade_conclusion,
-            font=font_result,
-            gradient_colors=[(180, 140, 0), (255, 230, 100)],
-            anchor="mm"
-        )
+    label_offset_y = -35
+    conclusion_offset_y = 40
 
-    elif winorloseorfair == 1:
-        bar_x, bar_y, bar_width, bar_height = 140, 660, 420, 12
-        draw_gradient_bar(img, bar_x, bar_y, bar_width, bar_height, percent,
-                        color_start=(120, 0, 0), color_end=(255, 100, 100))
-        draw_gradient_text(img, (center_x, bar_y - 30), f"{percent}% {trade_winorlose}",
-                        font=font_percentage, gradient_colors=[(120, 0, 0), (255, 100, 100)], anchor="mm")
-        
-        draw_gradient_text(
-            img,
-            (center_x - 20, bar_y + 80),
-            trade_conclusion,
-            font=font_result,
-            gradient_colors=[(120, 0, 0), (255, 100, 100)],
-            anchor="mm"
-        )
+    if winorloseorfair == 0: 
+        color_start = (180, 140, 0)
+        color_end = (255, 230, 100)
+    elif winorloseorfair == 1:  
+        color_start = (120, 0, 0)
+        color_end = (255, 100, 100)
+    else:  
+        color_start = (180, 100, 0)
+        color_end = (255, 210, 120)
 
-    else:
-        bar_x, bar_y, bar_width, bar_height = 140, 660, 420, 12
-        draw_gradient_bar(img, bar_x, bar_y, bar_width, bar_height, percent,
-                        color_start=(180, 100, 0), color_end=(255, 210, 120))
+    # --- Draw Gradient Bar ---
+    draw_gradient_bar(
+        img, bar_x, bar_y, bar_width, bar_height, percent,
+        color_start=color_start, color_end=color_end,
+        corner_radius=3
+    )
 
-        draw_gradient_text(img, (center_x, bar_y - 20), f"{percent}% {trade_winorlose}",
-                        font=font_percentage, gradient_colors=[(180, 100, 0), (255, 210, 120)], anchor="mm")
+    draw_gradient_text(
+        img, (center_x, bar_y + label_offset_y),
+        f"{percent}% {trade_winorlose}",
+        font=font_percentage,
+        gradient_colors=[color_start, color_end],
+        anchor="mm",
+        scale=1.0
+    )
 
-        draw_gradient_text(
-            img,
-            (center_x - 20, bar_y + 80),
-            trade_conclusion,
-            font=font_result,
-            gradient_colors=[(180, 100, 0), (255, 210, 120)],
-            anchor="mm"
-        )
-
-    img = img.resize((int(img.width * 0.7), int(img.height * 0.7)))
+    draw_gradient_text(
+        img, (center_x, bar_y + conclusion_offset_y),
+        trade_conclusion,
+        font=font_result,
+        gradient_colors=[color_start, color_end],
+        anchor="mm",
+        scale=0.75
+    )
     return img
 
 def GAGGenerateWORLImage(your_fruits, your_values, their_fruits, their_values,trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=77, winorloseorfair = 0, background_type=0):

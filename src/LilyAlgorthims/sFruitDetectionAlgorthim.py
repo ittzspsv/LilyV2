@@ -27,18 +27,26 @@ async def extract_trade_details(message):
         fruit_types = []
 
         i = 0
+        max_words = 1
+        for fn in fruit_names_sorted:
+            wn = len(fn.split())
+            if wn > max_words:
+                max_words = wn
+
         while i < len(message_split):
             matched_fruit = None
             matched_length = 0
 
-            for fruit in fruit_names_sorted:
-                matched_fruit = await TFA.MatchFruitSet(
-                    ' '.join(message_split[i:i + len(fruit.split())]),
-                    fruit_set,
-                    alias_map
-                )
-                if matched_fruit:
-                    matched_length = len(matched_fruit.split())
+            for window in range(max_words, 0, -1):
+                if i + window > len(message_split):
+                    continue
+                candidate = ' '.join(message_split[i:i + window])
+                matched = await TFA.MatchFruitSet(candidate, fruit_set, alias_map)
+                if matched:
+                    matched_fruit = matched 
+                    matched_length = len(matched.split()) 
+                    if matched_length == 0:
+                        matched_length = window
                     break
 
             if matched_fruit:
@@ -47,7 +55,7 @@ async def extract_trade_details(message):
                     counter = min(int(message_split[i - 1]), 10)
 
                 before_word = message_split[i - 1] if i > 0 else ""
-                after_word = message_split[i + matched_length] if i + matched_length < len(message_split) else ""
+                after_word = message_split[i + window] if i + window < len(message_split) else ""
 
                 if TFA.isPermanentMatch(before_word) or TFA.isPermanentMatch(after_word):
                     fruit_type = "Permanent"
@@ -58,9 +66,9 @@ async def extract_trade_details(message):
                     fruit_list.append(matched_fruit)
                     fruit_types.append(fruit_type)
 
-                i += matched_length - 1
-
-            i += 1
+                i += window
+            else:
+                i += 1
 
         return fruit_list, fruit_types
 

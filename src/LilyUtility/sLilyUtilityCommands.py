@@ -53,12 +53,10 @@ class LilyUtility(commands.Cog):
         WORL = "WORL"
         FruitValues = "FruitValues"
         Combo = "Combo"
-        GAGValues = "GAGValues"
-        GAGWORL = "GAGWORL"
         PVBZStockUpdate = "PVBZStockUpdate"
         PVBWeatherUpdate = "PVBWeatherUpdate"
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
     async def assign_channel(self, ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
         if bot_feature == self.Channels.StockUpdate:
@@ -98,14 +96,6 @@ class LilyUtility(commands.Cog):
             await ValueConfig.cdb.execute("UPDATE ConfigData SET bf_combo_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
             await ValueConfig.cdb.commit()
             await ctx.send(f"Combo Channel Set To <#{channel_to_assign.id}>")
-        elif bot_feature == self.Channels.GAGValues:
-            await ValueConfig.cdb.execute("UPDATE ConfigData SET gag_item_values_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"GAG Values Channel Set To <#{channel_to_assign.id}>")
-        elif bot_feature == self.Channels.GAGWORL:
-            await ValueConfig.cdb.execute("UPDATE ConfigData SET gag_win_loss_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"GAG WORL Channel Set To <#{channel_to_assign.id}>")
         elif bot_feature == self.Channels.PVBZStockUpdate:
             await ctx.send(f"Stock Update will be sent in <#{channel_to_assign.id}>")
             webhook = await channel_to_assign.create_webhook(
@@ -161,7 +151,7 @@ class LilyUtility(commands.Cog):
                 print(e)
 
     # MESSAGING UTILITY
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.hybrid_command(name='direct_message', description='direct messages using the bot')
     async def dm(self, ctx, user: discord.User, message: str): 
         try:
@@ -175,7 +165,7 @@ class LilyUtility(commands.Cog):
             await ctx.send(f"Exception {e}")
 
     # SLASH COMMAND SYNCING UTILITY
-    @PermissionEvaluator(RoleAllowed=lambda: Config.DeveloperRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.command()
     async def sync(self, ctx:commands.Context):
         guild = ctx.guild
@@ -451,6 +441,7 @@ class LilyUtility(commands.Cog):
         addltext = "Image" if type == 1 else "Embed"
         await ctx.send(f"Stock Type set to {addltext}")
 
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='add_bloxfruits_stock_webhook',description='Adds or updates Blox Fruits stock webhook for a guild')
     @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
     async def add_bloxfruits_stock_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,stock_ping_roll_id: int = 0):
@@ -494,6 +485,7 @@ class LilyUtility(commands.Cog):
             await ctx.send(f"Error adding/updating webhook: `{e}`", ephemeral=True)
             print(e)
 
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='add_pvz_stock_webhook',description='Adds or updates PVZ stock webhook for a guild')
     @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
     async def add_pvb_stock_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,mythical_ping: int = 0,godly_ping: int = 0,secret_ping: int = 0):
@@ -543,7 +535,9 @@ class LilyUtility(commands.Cog):
             await ctx.send(f"Error adding/updating PVZ webhook: {e}", ephemeral=True)
             print(e)
 
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='add_pvz_weather_webhook',description='Adds or updates PVZ weather webhook for a guild')
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
     async def add_pvb_weather_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,weather_ping: int = 0):
         try:
@@ -706,11 +700,87 @@ class LilyUtility(commands.Cog):
 
         if role in user.roles:
             await user.remove_roles(role, reason=f"Role toggled by {ctx.author}")
-            await ctx.send(f"Removed role `{role.name}` from {user.mention}.")
+            await ctx.send(f"✅ Removed role {role.name} from {user.mention}.")
         else:
             await user.add_roles(role, reason=f"Role toggled by {ctx.author}")
-            await ctx.send(f"Added role `{role.name}` to {user.mention}.")
+            await ctx.send(f"✅ Added role {role.name} to {user.mention}.")
 
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='update_role',description='updates a role securly')
+    async def update_role(self, ctx, role: discord.Role, *, json_input: str = None):
+        config = {}
+        msg = ""
+
+        if json_input:
+            try:
+                config = json.loads(json_input)
+            except json.JSONDecodeError:
+                await ctx.send("❌ Invalid JSON format.")
+                return
+
+        perms_data = {k: v for k, v in config.items() if k not in ["position"]}
+        position = config.get("position")
+
+        perms = role.permissions
+        valid_changes = []
+        invalid_keys = []
+
+        if perms_data:
+            for key, value in perms_data.items():
+                if key.lower() == "administrator" and value:
+                    await ctx.send("⚠️ Cannot directly assign Administrator permission.")
+                    continue
+
+                if hasattr(perms, key):
+                    setattr(perms, key, bool(value))
+                    valid_changes.append(f"{key} = {value}")
+                else:
+                    invalid_keys.append(key)
+
+            try:
+                await role.edit(permissions=perms, reason=f"Updated by {ctx.author}")
+                msg += f"✅ Updated **{role.name}** permissions."
+            except discord.Forbidden:
+                await ctx.send("I don't have permission to edit that role.")
+                return
+
+            if invalid_keys:
+                msg += f"\n⚠️ Invalid keys ignored: {', '.join(invalid_keys)}"
+
+        if position is not None:
+            try:
+                position = int(position)
+                top_role_pos = ctx.author.top_role.position
+
+                if position >= top_role_pos:
+                    msg += f"\n❌ Cannot move role above or equal to your top role ({ctx.author.top_role.name})."
+                else:
+                    await role.edit(position=position, reason=f"Repositioned by {ctx.author}")
+                    msg += f"\nRole repositioned to index **{position}**."
+            except (ValueError, discord.Forbidden):
+                msg += "\n⚠️ Failed to reposition role (invalid or insufficient permissions)."
+
+        if ctx.message.attachments:
+            for attachment in ctx.message.attachments:
+                if attachment.content_type and attachment.content_type.startswith("image/"):
+                    try:
+                        icon_bytes = await attachment.read()
+                        await role.edit(icon=icon_bytes, reason=f"Updated icon by {ctx.author}")
+                        msg += "\nRole icon updated from attached image."
+                        break
+                    except discord.Forbidden:
+                        msg += "\n⚠️ Missing permissions to edit role icon."
+                        break
+                    except Exception as e:
+                        msg += f"\n⚠️ Failed to update icon: {e}"
+                        break
+
+        if not msg:
+            msg = "⚠️ Nothing to update — no valid JSON or image attachment found."
+
+        await ctx.send(msg)
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))
