@@ -36,7 +36,13 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 - aiosqlite
 
 ## BOT - PREVIEW
-![Preview](misc/Collage.png)
+| ![Stock](misc/Stock.png) | ![Moderation](misc/Moderation.jpg) | ![Management](misc/Management.jpg) |
+|:--:|:--:|:--:|
+| **Stock System** | **Moderation Tools** | **Staff Management** |
+
+| ![FruitValues](misc/FruitValues.png) | ![WinLoss](misc/WinLoss.png) | |
+|:--:|:--:|:--:|
+| **Fruit Values** | **Win / Loss** |  |
 
 ## LEVELING (Based on the famous anime __One Piece__)
 ![Preview](misc/wanted.png)
