@@ -49,9 +49,10 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 
 
 ## CURRENTLY USED
-This bot is currently up and running on these servers [mainly designed for those] [no support for multi-servers until now]
+This bot is currently up and running on these servers [mainly designed for those] [no support for multi-servers until now (WIP!)]
 
 [Blox Trade | Roblox Blox Fruits](https://discord.gg/bloxtrade)
+[Life Times | Blox Fruits Trading Server](https://discord.gg/lfts)
 
 # SUPPORT
 Feel free to contact me personally through my discord [shreespsv] if you guys want more games to be added on the discord bot
