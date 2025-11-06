@@ -135,7 +135,7 @@ async def MessageEvaluate(self, bot, message):
                 if source_channel is None:
                     return
 
-                fetched_message = await source_channel.fetch_message(1436083095873912953)
+                fetched_message = await source_channel.fetch_message(message.id)
                 if not fetched_message.embeds:
                     return
             except Exception as e:
@@ -212,7 +212,6 @@ async def MessageEvaluate(self, bot, message):
                             )
 
                     except discord.NotFound:
-                        print(f"Webhook {webhook_url} returned 404 — deleting from database.")
                         try:
                             await LilyConfig.cdb.execute(
                                 "DELETE FROM BF_StockHandler WHERE rowid = ?", (rowid,)

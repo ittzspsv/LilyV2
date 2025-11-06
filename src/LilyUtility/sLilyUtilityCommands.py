@@ -566,10 +566,10 @@ class LilyUtility(commands.Cog):
 
         if role in user.roles:
             await user.remove_roles(role, reason=f"Role toggled by {ctx.author}")
-            await ctx.send(f"✅ Removed role {role.name} from {user.mention}.")
+            await ctx.send(f"✅ Removed role {role.name} from {user.name}.")
         else:
             await user.add_roles(role, reason=f"Role toggled by {ctx.author}")
-            await ctx.send(f"✅ Added role {role.name} to {user.mention}.")
+            await ctx.send(f"✅ Added role {role.name} to {user.name}.")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -582,7 +582,7 @@ class LilyUtility(commands.Cog):
             try:
                 config = json.loads(json_input)
             except json.JSONDecodeError:
-                await ctx.send("❌ Invalid JSON format.")
+                await ctx.send("Invalid JSON format.")
                 return
 
         perms_data = {k: v for k, v in config.items() if k not in ["position"]}
@@ -594,8 +594,8 @@ class LilyUtility(commands.Cog):
 
         if perms_data:
             for key, value in perms_data.items():
-                if key.lower() == "administrator" and value:
-                    await ctx.send("⚠️ Cannot directly assign Administrator permission.")
+                if key.lower() in ("administrator", "manage_server") and value:
+                    await ctx.send("Cannot assign permission. Due to Security Restrictions")
                     continue
 
                 if hasattr(perms, key):
@@ -636,14 +636,14 @@ class LilyUtility(commands.Cog):
                         msg += "\nRole icon updated from attached image."
                         break
                     except discord.Forbidden:
-                        msg += "\n⚠️ Missing permissions to edit role icon."
+                        msg += "\nMissing permissions to edit role icon."
                         break
                     except Exception as e:
-                        msg += f"\n⚠️ Failed to update icon: {e}"
+                        msg += f"\nFailed to update icon: {e}"
                         break
 
         if not msg:
-            msg = "⚠️ Nothing to update — no valid JSON or image attachment found."
+            msg = "Nothing to update — no valid JSON or image attachment found."
 
         await ctx.send(msg)
 
