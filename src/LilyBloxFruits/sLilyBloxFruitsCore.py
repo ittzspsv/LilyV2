@@ -135,7 +135,7 @@ async def MessageEvaluate(self, bot, message):
                 if source_channel is None:
                     return
 
-                fetched_message = await source_channel.fetch_message(message.id)
+                fetched_message = await source_channel.fetch_message(1436083095873912953)
                 if not fetched_message.embeds:
                     return
             except Exception as e:
@@ -150,7 +150,6 @@ async def MessageEvaluate(self, bot, message):
 
             Title, Fruit_Items = SPA.StockMessageProcessor(embeded_string)
 
-            
             async with LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'BF_Normal_GoodFruits'") as cursor:
                 row = await cursor.fetchone()
                 good_fruits = [fruit.strip() for fruit in row[0].split(",")] if row and row[0] else []
@@ -175,10 +174,15 @@ async def MessageEvaluate(self, bot, message):
                 except Exception as e:
                     print(f"Error generating stock image: {e}")
                     return
+            else:
+                try:
+                    stock_view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
+                except Exception as e:
+                    return
 
             try:
                 cursor = await LilyConfig.cdb.execute(
-                    "SELECT StockPingID, bf_stock_webhook FROM BF_StockHandler WHERE bf_stock_webhook IS NOT NULL"
+                    "SELECT StockPingID, bf_stock_webhook, rowid FROM BF_StockHandler WHERE bf_stock_webhook IS NOT NULL"
                 )
                 rows = await cursor.fetchall()
             except Exception as e:
@@ -189,25 +193,17 @@ async def MessageEvaluate(self, bot, message):
                 return
 
             async with aiohttp.ClientSession() as session:
-                for stock_ping, webhook_url in rows:
+                for stock_ping, webhook_url, rowid in rows:
                     try:
                         webhook = discord.Webhook.from_url(webhook_url, session=session)
 
-                        sent_msg = None
                         if use_image_mode and stock_image_bytes:
                             file = discord.File(io.BytesIO(stock_image_bytes), filename="stock_image.png")
-                            sent_msg = await webhook.send(file=file, wait=True)
+                            await webhook.send(file=file, wait=True)
                         else:
-                            stock_view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
+                            
                             file = discord.File("src/ui/Border.png", filename="border.png")
-                            sent_msg = await webhook.send(file=file, view=stock_view, wait=True)
-
-                        if sent_msg:
-                            try:
-                                await sent_msg.add_reaction("🇼")
-                                await sent_msg.add_reaction("🇱")
-                            except Exception as e:
-                                pass
+                            await webhook.send(file=file, view=stock_view, wait=True)
 
                         if CurrentGoodFruits and stock_ping:
                             await webhook.send(
@@ -215,12 +211,19 @@ async def MessageEvaluate(self, bot, message):
                                 wait=True
                             )
 
+                    except discord.NotFound:
+                        print(f"Webhook {webhook_url} returned 404 — deleting from database.")
+                        try:
+                            await LilyConfig.cdb.execute(
+                                "DELETE FROM BF_StockHandler WHERE rowid = ?", (rowid,)
+                            )
+                            await LilyConfig.cdb.commit()
+                        except Exception as db_err:
+                            print(f"Error deleting invalid webhook: {db_err}")
+
                     except Exception as e:
                         print(f"Webhook error: {e}")
                         continue
-
-                    except Exception as e:
-                        pass
 
         if re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
             try:

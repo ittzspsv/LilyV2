@@ -49,42 +49,14 @@ class LilyUtility(commands.Cog):
     # CHANNEL UTILITY
 
     class Channels(str, Enum):
-        StockUpdate = "StockUpdate"
         WORL = "WORL"
         FruitValues = "FruitValues"
         Combo = "Combo"
-        PVBZStockUpdate = "PVBZStockUpdate"
-        PVBWeatherUpdate = "PVBWeatherUpdate"
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
     async def assign_channel(self, ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
-        if bot_feature == self.Channels.StockUpdate:
-            await ctx.send(f"Stock Update will be sent in <#{channel_to_assign.id}>")
-            webhook = await channel_to_assign.create_webhook(
-                name=f"{Config.bot_name} Stock Updates"
-            )
-
-            cursor = await ValueConfig.cdb.execute(
-                "SELECT guild_id FROM BF_StockHandler WHERE guild_id = ?",
-                (ctx.guild.id,)
-            )
-            row = await cursor.fetchone()
-
-            if row:
-                await ValueConfig.cdb.execute(
-                    "UPDATE BF_StockHandler SET bf_stock_webhook = ? WHERE guild_id = ?",
-                    (webhook.url, ctx.guild.id)
-                )
-            else: 
-                await ValueConfig.cdb.execute(
-                    "INSERT INTO BF_StockHandler (guild_id, bf_stock_webhook) VALUES (?, ?)",
-                    (ctx.guild.id, webhook.url)
-                )
-
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
-        elif bot_feature == self.Channels.WORL:
+        if bot_feature == self.Channels.WORL:
             await ValueConfig.cdb.execute("UPDATE ConfigData SET bf_win_loss_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
             await ValueConfig.cdb.commit()
             await ctx.send(f"Win or Loss is Caliberated in <#{channel_to_assign.id}>")
@@ -96,59 +68,6 @@ class LilyUtility(commands.Cog):
             await ValueConfig.cdb.execute("UPDATE ConfigData SET bf_combo_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
             await ValueConfig.cdb.commit()
             await ctx.send(f"Combo Channel Set To <#{channel_to_assign.id}>")
-        elif bot_feature == self.Channels.PVBZStockUpdate:
-            await ctx.send(f"Stock Update will be sent in <#{channel_to_assign.id}>")
-            webhook = await channel_to_assign.create_webhook(
-                name=f"{Config.bot_name} Stock Updates"
-            )
-
-            cursor = await ValueConfig.cdb.execute(
-                "SELECT guild_id FROM PVB_StockHandler WHERE guild_id = ?",
-                (ctx.guild.id,)
-            )
-            row = await cursor.fetchone()
-
-            if row:
-                await ValueConfig.cdb.execute(
-                    "UPDATE PVB_StockHandler SET pvb_stock_webhook = ? WHERE guild_id = ?",
-                    (webhook.url, ctx.guild.id)
-                )
-            else:
-                await ValueConfig.cdb.execute(
-                    "INSERT INTO PVB_StockHandler (guild_id, pvb_stock_webhook) VALUES (?, ?)",
-                    (ctx.guild.id, webhook.url)
-                )
-
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
-        elif bot_feature == self.Channels.PVBWeatherUpdate:
-            try:
-                await ctx.send(f"Stock Update will be sent in <#{channel_to_assign.id}>")
-                webhook = await channel_to_assign.create_webhook(
-                    name=f"{Config.bot_name} Weather Updates"
-                )
-
-                cursor = await ValueConfig.cdb.execute(
-                    "SELECT guild_id FROM PVB_WeatherHandler WHERE guild_id = ?",
-                    (ctx.guild.id,)
-                )
-                row = await cursor.fetchone()
-
-                if row:
-                    await ValueConfig.cdb.execute(
-                        "UPDATE PVB_WeatherHandler SET pvb_weather_webhook = ? WHERE guild_id = ?",
-                        (webhook.url, ctx.guild.id)
-                    )
-                else:
-                    await ValueConfig.cdb.execute(
-                        "INSERT INTO PVB_WeatherHandler (guild_id, pvb_weather_webhook) VALUES (?, ?)",
-                        (ctx.guild.id, webhook.url)
-                    )
-
-                await ValueConfig.cdb.commit()
-                await ctx.send(f"Webhook created: Weather will be sent in {channel_to_assign.name}")
-            except Exception as e:
-                print(e)
 
     # MESSAGING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
@@ -444,149 +363,96 @@ class LilyUtility(commands.Cog):
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='add_bloxfruits_stock_webhook',description='Adds or updates Blox Fruits stock webhook for a guild')
     @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
-    async def add_bloxfruits_stock_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,stock_ping_roll_id: int = 0):
-        try:
-            cursor = await ValueConfig.cdb.execute(
-                "SELECT bf_stock_webhook, StockPingID FROM BF_StockHandler WHERE guild_id = ?",
-                (int(guild_id),)
-            )
-            row = await cursor.fetchone()
-
-            if row:
-                current_webhook, current_stock_ping_id = row
-
-                final_webhook = webhook_url or current_webhook
-                final_stock_ping = stock_ping_roll_id or current_stock_ping_id
-
-                await ValueConfig.cdb.execute(
-                    """
-                    UPDATE BF_StockHandler
-                    SET bf_stock_webhook = ?, StockPingID = ?
-                    WHERE guild_id = ?
-                    """,
-                    (final_webhook, final_stock_ping, int(guild_id))
-                )
-            else:
-                await ValueConfig.cdb.execute(
-                    """
-                    INSERT INTO BF_StockHandler (guild_id, bf_stock_webhook, StockPingID)
-                    VALUES (?, ?, ?)
-                    """,
-                    (int(guild_id), webhook_url, stock_ping_roll_id)
+    async def add_bloxfruits_stock_webhook(self, ctx: commands.Context, channel_to_assign:discord.TextChannel):
+            await ctx.send(f"Processing........")
+            try:
+                webhook = await channel_to_assign.create_webhook(
+                    name=f"{Config.bot_name} Stock Updates"
                 )
 
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"Webhook for guild {guild_id} has been set/updated successfully.", ephemeral=True)
-            channel = await ctx.guild.fetch_channel(1430313688010719253)
-            if channel:
-                await channel.send(f'<@{ctx.author.id}> Assigned Blox Fruits Stock webhook to his guild with id {guild_id}')
+                cursor = await ValueConfig.cdb.execute(
+                    "SELECT guild_id FROM BF_StockHandler WHERE guild_id = ?",
+                    (ctx.guild.id,)
+                )
+                row = await cursor.fetchone()
 
-        except Exception as e:
-            await ctx.send(f"Error adding/updating webhook: `{e}`", ephemeral=True)
-            print(e)
+                if row:
+                    await ValueConfig.cdb.execute(
+                        "UPDATE BF_StockHandler SET bf_stock_webhook = ? WHERE guild_id = ?",
+                        (webhook.url, ctx.guild.id)
+                    )
+                else: 
+                    await ValueConfig.cdb.execute(
+                        "INSERT INTO BF_StockHandler (guild_id, bf_stock_webhook) VALUES (?, ?)",
+                        (ctx.guild.id, webhook.url)
+                    )
+
+                await ValueConfig.cdb.commit()
+                await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
+            except Exception as e:
+                await ctx.send(f"Exception : {e}")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='add_pvz_stock_webhook',description='Adds or updates PVZ stock webhook for a guild')
     @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
-    async def add_pvb_stock_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,mythical_ping: int = 0,godly_ping: int = 0,secret_ping: int = 0):
-        try:
+    async def add_pvb_stock_webhook(self,ctx: commands.Context,channel_to_assign:discord.TextChannel, mythical_ping: discord.Role,godly_ping: discord.Role,secret_ping: discord.Role):
+            await ctx.send(f"Processing........")
+            webhook = await channel_to_assign.create_webhook(
+                name=f"{Config.bot_name} Stock Updates"
+            )
+
             cursor = await ValueConfig.cdb.execute(
-                """
-                SELECT pvb_stock_webhook, mythical_ping, godly_ping, secret_ping
-                FROM PVB_StockHandler
-                WHERE guild_id = ?
-                """,
-                (int(guild_id),)
+                "SELECT guild_id FROM PVB_StockHandler WHERE guild_id = ?",
+                (ctx.guild.id,)
             )
             row = await cursor.fetchone()
 
             if row:
-                current_webhook, current_mythical, current_godly, current_secret = row
-
-                final_webhook = webhook_url or current_webhook
-                final_mythical = mythical_ping or current_mythical
-                final_godly = godly_ping or current_godly
-                final_secret = secret_ping or current_secret
-
                 await ValueConfig.cdb.execute(
-                    """
-                    UPDATE PVB_StockHandler
-                    SET pvb_stock_webhook = ?, mythical_ping = ?, godly_ping = ?, secret_ping = ?
-                    WHERE guild_id = ?
-                    """,
-                    (final_webhook, final_mythical, final_godly, final_secret, int(guild_id))
+                    "UPDATE PVB_StockHandler SET pvb_stock_webhook = ? WHERE guild_id = ?",
+                    (webhook.url, ctx.guild.id)
                 )
             else:
                 await ValueConfig.cdb.execute(
-                    """
-                    INSERT INTO PVB_StockHandler (guild_id, pvb_stock_webhook, mythical_ping, godly_ping, secret_ping)
-                    VALUES (?, ?, ?, ?, ?)
-                    """,
-                    (int(guild_id), webhook_url, mythical_ping, godly_ping, secret_ping)
+                    "INSERT INTO PVB_StockHandler (guild_id, pvb_stock_webhook) VALUES (?, ?)",
+                    (ctx.guild.id, webhook.url)
                 )
 
             await ValueConfig.cdb.commit()
-            await ctx.send(f"PVZ stock webhook for guild {guild_id} has been set/updated successfully.", ephemeral=True)
-            channel = await ctx.guild.fetch_channel(1430313688010719253)
-            if channel:
-                await channel.send(f'<@{ctx.author.id}> Assigned PVB Stock webhook to his guild with id {guild_id}')
-
-        except Exception as e:
-            await ctx.send(f"Error adding/updating PVZ webhook: {e}", ephemeral=True)
-            print(e)
+            await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='add_pvz_weather_webhook',description='Adds or updates PVZ weather webhook for a guild')
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
     @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
-    async def add_pvb_weather_webhook(self,ctx: commands.Context,guild_id: str,webhook_url: str,weather_ping: int = 0):
-        try:
-            cursor = await ValueConfig.cdb.execute(
-                """
-                SELECT pvb_weather_webhook, weather_ping
-                FROM PVB_WeatherHandler
-                WHERE guild_id = ?
-                """,
-                (int(guild_id),)
-            )
-            row = await cursor.fetchone()
-
-            if row:
-                current_webhook, current_ping = row
-
-                final_webhook = webhook_url or current_webhook
-                final_ping = weather_ping or current_ping
-
-                await ValueConfig.cdb.execute(
-                    """
-                    UPDATE PVB_WeatherHandler
-                    SET pvb_weather_webhook = ?, weather_ping = ?
-                    WHERE guild_id = ?
-                    """,
-                    (final_webhook, final_ping, int(guild_id))
-                )
-            else:
-                await ValueConfig.cdb.execute(
-                    """
-                    INSERT INTO PVB_WeatherHandler (guild_id, pvb_weather_webhook, weather_ping)
-                    VALUES (?, ?, ?)
-                    """,
-                    (int(guild_id), webhook_url, weather_ping)
+    async def add_pvb_weather_webhook(self,ctx: commands.Context,channel_to_assign: discord.TextChannel,weather_ping: discord.Role):
+                await ctx.send(f"Processing........")
+                webhook = await channel_to_assign.create_webhook(
+                    name=f"{Config.bot_name} Weather Updates"
                 )
 
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"PVZ weather webhook for guild {guild_id} has been set/updated successfully.", ephemeral=True)
-            channel = await ctx.guild.fetch_channel(1430313688010719253)
-            if channel:
-                await channel.send(f'<@{ctx.author.id}> Assigned PVB Weather webhook to his guild with id {guild_id}')
+                cursor = await ValueConfig.cdb.execute(
+                    "SELECT guild_id FROM PVB_WeatherHandler WHERE guild_id = ?",
+                    (ctx.guild.id,)
+                )
+                row = await cursor.fetchone()
 
-        except Exception as e:
-            await ctx.send(f"Error adding/updating PVZ weather webhook: {e}", ephemeral=True)
-            print(e)
+                if row:
+                    await ValueConfig.cdb.execute(
+                        "UPDATE PVB_WeatherHandler SET pvb_weather_webhook = ? WHERE guild_id = ?",
+                        (webhook.url, ctx.guild.id)
+                    )
+                else:
+                    await ValueConfig.cdb.execute(
+                        "INSERT INTO PVB_WeatherHandler (guild_id, pvb_weather_webhook) VALUES (?, ?)",
+                        (ctx.guild.id, webhook.url)
+                    )
+
+                await ValueConfig.cdb.commit()
+                await ctx.send(f"Webhook created: Weather will be sent in {channel_to_assign.name}")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='reaction_roles',description='Adds or updates reaction roles')
+    @commands.hybrid_command(name='reaction_roles',description='Adds or updates reaction roles.  Follows role hierrachy of user who is triggering this')
     async def reactionroles(self, ctx: commands.Context, roles: str, title: str,channel_to_send: discord.TextChannel):
         try:
             role_map = json.loads(roles)
@@ -704,7 +570,6 @@ class LilyUtility(commands.Cog):
         else:
             await user.add_roles(role, reason=f"Role toggled by {ctx.author}")
             await ctx.send(f"✅ Added role {role.name} to {user.mention}.")
-
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

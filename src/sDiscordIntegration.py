@@ -179,10 +179,6 @@ class MyBot(commands.Bot):
         asyncio.create_task(self.BotInitialize())
 
     async def on_guild_channel_create(self, channel):
-        feature_cache = open("src/Config/BotFeatures.txt", "r")
-        feature_int = feature_cache.read()
-        if int(feature_int) == 0:
-            return
         if isinstance(channel, discord.TextChannel):
             if LilyEmbed.TicketParseRegex.match(channel.name):
                 print(f"Ticket channel created: {channel.name}")
