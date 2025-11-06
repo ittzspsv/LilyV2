@@ -571,6 +571,7 @@ class LilyUtility(commands.Cog):
             await user.add_roles(role, reason=f"Role toggled by {ctx.author}")
             await ctx.send(f"✅ Added role {role.name} to {user.name}.")
 
+    ''' NOT IN USE
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='update_role',description='updates a role securly')
@@ -646,6 +647,6 @@ class LilyUtility(commands.Cog):
             msg = "Nothing to update — no valid JSON or image attachment found."
 
         await ctx.send(msg)
-
+    '''
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))
