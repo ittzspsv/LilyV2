@@ -1,5 +1,8 @@
 import discord
 import Config.sValueConfig as VC
+import io
+import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
+import Values.sStockValueJSON as StockValueJSON
 
 class GAGPetValueComponent(discord.ui.LayoutView):
     def __init__(self, value, weight, age, name,link, mutations, pet_classifications):
@@ -220,3 +223,135 @@ class BloxFruitStockComponent(discord.ui.LayoutView):
 
         return cls(stock_type, container_items)
     
+
+
+class TradeSuggestorComponent(discord.ui.LayoutView):
+    def __init__(self, bot, your_fruits, your_types, message):
+        super().__init__()
+
+        self.bot = bot
+        self.your_fruits = your_fruits
+        self.your_types = your_types
+
+        self.permanent_emoji = discord.utils.get(bot.emojis, name="perm") or "✅"
+        self.gamepass_emoji = discord.utils.get(bot.emojis, name="gamepass") or "🎟️"
+        self.default_emoji = discord.utils.get(bot.emojis, name="default") or "🍉"
+        self.overpay_emoji = "🔥"
+        self.fair_emoji = "🤝"
+
+        self.include_permanent = False
+        self.include_gamepass = False
+        self.include_skins = False
+        self.overpay = True
+
+        self.message = message
+
+        self.basic_select = discord.ui.Select(
+            custom_id="basic_select",
+            options=[
+                discord.SelectOption(label="Default", value="default", emoji=self.default_emoji),
+                discord.SelectOption(label="Suggest Permanent", value="permanent", emoji=self.permanent_emoji),
+                discord.SelectOption(label="Suggest Gamepass", value="gamepass", emoji=self.gamepass_emoji),
+                discord.SelectOption(label="Suggest Fruit Skins", value="fruit_skins"),
+            ]
+        )
+        self.basic_select.callback = self.basic_select_callback
+
+        self.pricing_select = discord.ui.Select(
+            custom_id="pricing",
+            options=[
+                discord.SelectOption(label="Fair", value="fair", emoji=self.fair_emoji),
+                discord.SelectOption(label="Overpay", value="overpay", emoji=self.overpay_emoji),
+            ]
+        )
+        self.pricing_select.callback = self.pricing_select_callback
+
+        self.suggest_button = discord.ui.Button(
+            style=discord.ButtonStyle.secondary,
+            label="Suggest Trade",
+            custom_id="suggest_trade"
+        )
+        self.suggest_button.callback = self.suggest_button_callback
+
+        container = discord.ui.Container(
+            discord.ui.TextDisplay(content="## TRADE SUGGESTOR CONFIGURATION\n\n### • Customize your Suggester Settings, Then Click Suggest"),
+            discord.ui.TextDisplay(content="**BASIC SUGGESTIONS**"),
+            discord.ui.ActionRow(self.basic_select),
+            discord.ui.TextDisplay(content="**TRADE PRICING SUGGESTIONS**"),
+            discord.ui.ActionRow(self.pricing_select),
+            discord.ui.ActionRow(self.suggest_button),
+            accent_colour=discord.Colour(786687),
+        )
+
+        self.add_item(container)
+
+    async def basic_select_callback(self, interaction: discord.Interaction):
+        selected = self.basic_select.values[0]
+
+        self.include_permanent = False
+        self.include_gamepass = False
+        self.include_skins = False
+
+        if selected == "permanent":
+            self.include_permanent = True
+        elif selected == "gamepass":
+            self.include_gamepass = True
+        elif selected == "fruit_skins":
+            self.include_skins = True
+
+        await interaction.response.send_message(
+            f"You selected: {selected}", ephemeral=True
+        )
+
+
+    async def pricing_select_callback(self, interaction: discord.Interaction):
+        selected = self.pricing_select.values[0]
+
+        self.overpay = selected == "overpay"
+
+        await interaction.response.send_message(
+            f"Pricing selected: {selected}", ephemeral=True
+        )
+
+    async def suggest_button_callback(self, interaction: discord.Interaction):
+        try:
+            await interaction.response.defer()
+
+            their_fruits, their_types, success = await FSA.trade_suggestor(
+                self.your_fruits, self.your_types,
+                self.include_permanent,
+                self.include_gamepass,
+                self.include_skins,
+                self.overpay
+            )
+
+            if not success:
+                raise ValueError("Trade suggestion failed.")
+
+            image = await StockValueJSON.j_LorW(
+                self.your_fruits, self.your_types,
+                their_fruits, their_types,
+                1, 1
+            )
+
+            if image is None:
+                raise ValueError("Image generation failed.")
+
+            buffer = io.BytesIO()
+            image.save(buffer, format="WebP", quality=20, optimize=True)
+            buffer.seek(0)
+
+            try:
+                await interaction.delete_original_response()
+            except:
+                pass  
+
+            await self.message.reply(file=discord.File(fp=buffer, filename="trade_result.webp"),)
+
+        except Exception as e:
+            try:
+                await interaction.followup.send(
+                    f"Failed to generate trade: {e}", ephemeral=True
+                )
+            except:
+                print("Cannot send followup; interaction expired:", e)

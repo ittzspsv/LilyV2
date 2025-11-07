@@ -23,103 +23,6 @@ import json
 import io
 import ast
 
-if Config.port == 0:
-    emoji_data_path = "src/EmojiData.json"
-    with open(emoji_data_path, "r", encoding="utf-8") as json_file:
-        emoji_data = json.load(json_file)
-
-    emoji_id_to_name = {}
-    for fruit_name, emoji_value in emoji_data.items():
-        for emoji_values in emoji_value:
-            match = re.search(r"<:(\w+):(\d+)>", emoji_values)
-            if match:
-                emoji_id_to_name[match.group(2)] = fruit_name.title()
-
-else:
-    emoji_data_path = "src/bEmojiData.json"
-    with open(emoji_data_path, "r", encoding="utf-8") as json_file:
-        emoji_data = json.load(json_file)
-
-    emoji_id_to_name = {}
-    for fruit_name, emoji_value in emoji_data.items():
-        for emoji_values in emoji_value:
-            match = re.search(r"<:(\w+):(\d+)>", emoji_values)
-            if match:
-                emoji_id_to_name[match.group(2)] = fruit_name.title()
-
-
-class TradeSuggestorWindow(discord.ui.View):
-            def __init__(self, bot, user, your_fruits, your_types):
-                super().__init__(timeout=60)
-                self.bot = bot
-                self.user = user
-                self.state = False
-
-                self.your_fruits = your_fruits
-                self.your_types = your_types
-
-                self.include_permanent = False
-                self.include_gamepass = False
-                self.image_generated = False
-
-            @discord.ui.button(label="Permanent ❎", style=discord.ButtonStyle.secondary, row=0)
-            async def PermanentButton(self, interaction: discord.Interaction, button: discord.ui.Button):
-                if interaction.user != self.user:
-                    return
-
-                self.include_permanent = not self.include_permanent
-                button.label = f"Permanent {'✅' if self.include_permanent else '❎'}"
-                await interaction.response.edit_message(view=self)
-
-            @discord.ui.button(label="Gamepass ❎", style=discord.ButtonStyle.secondary, row=0)
-            async def GamepassButton(self, interaction: discord.Interaction, button: discord.ui.Button):
-                if interaction.user != self.user:
-                    return
-
-                self.include_gamepass = not self.include_gamepass
-                button.label = f"Gamepass {'✅' if self.include_gamepass else '❎'}"
-                await interaction.response.edit_message(view=self)
-
-            @discord.ui.button(label="Suggest", style=discord.ButtonStyle.success, row=1)
-            async def SuggestButton(self, interaction: discord.Interaction, button: discord.ui.Button):
-                if interaction.user != self.user:
-                    return
-
-                if self.image_generated:
-                    return
-
-                await interaction.response.edit_message(embed=None, content="Reasoning.....", attachments=[], view=None)
-
-                try:
-                    their_fruits, their_types, success = await FSA.trade_suggestor(
-                        self.your_fruits, self.your_types,
-                        self.include_permanent,
-                        self.include_gamepass
-                    )
-
-                    if success:
-                        image = await StockValueJSON.j_LorW(
-                            self.your_fruits, self.your_types,
-                            their_fruits, their_types,
-                            1, 1
-                        )
-
-                        if image is None:
-                            raise ValueError("Reasoning Failure")
-
-                        buffer = io.BytesIO()
-                        image.save(buffer, format="WebP", quality=20, optimize=True)
-                        buffer.seek(0)
-                        file = discord.File(fp=buffer, filename="trade_result.webp")
-                        await interaction.edit_original_response(embed=None, content=None, attachments=[file], view=None)
-                        self.image_generated = True
-                    else:
-                        raise ValueError("Reasoning Failure")
-                except Exception as e:
-                    await interaction.edit_original_response(
-                        content=f"Unhandled Exception: {str(e)}"
-                    )
-
 async def MessageEvaluate(self, bot, message):
         if message.guild and message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.stock_fetch_channel_id:
             try:
@@ -367,10 +270,8 @@ async def MessageEvaluate(self, bot, message):
                 (ctx.guild.id,)
             )
             row = await cursor.fetchone()
-            print("DB Row fetched:", row)
             
             if not row or not row[0]:
-                print("Step 3 - No Win/Loss channel found in DB")
                 return
             
             _w_or_l_channel = self.get_channel(row[0])
@@ -382,24 +283,8 @@ async def MessageEvaluate(self, bot, message):
                 return
             
             
-            view = TradeSuggestorWindow(
-                bot=self,
-                user=message.author,
-                your_fruits=your_fruits1,
-                your_types=your_fruit_types1
-            )
-            
-            embed = discord.Embed(
-                title="Trade Suggestion Configuration",
-                description="",
-                color=discord.Color.red()
-            )
-            embed.add_field(
-                name="• Customize your Suggestor Settings, Then Click Suggest",
-                value=""
-            )
-            
-            await message.reply(embed=embed, view=view)
+            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message)
+            await message.reply(view=view)
 
         elif LCM.ComboScope(message.content.lower()) != None:
                     try:

@@ -13,6 +13,34 @@ fruits = {
     "Rocket": 30000,
 }
 
+def format_currency(val):
+    value = int(val)
+    if value >= 1_000_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000_000:.1f}DX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000:.1f}NX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000:.1f}OX"
+    elif value >= 1_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000:.1f}SPX"
+    elif value >= 1_000_000_000_000_000_000_000: 
+        return f"{value / 1_000_000_000_000_000_000_000:.1f}SX"
+    elif value >= 1_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000:.1f}QI"
+    elif value >= 1_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000:.1f}QT"
+    elif value >= 1_000_000_000_000: 
+        return f"{value / 1_000_000_000_000:.1f}T"
+    elif value >= 1_000_000_000:  
+        return f"{value / 1_000_000_000:.1f}B"
+    elif value >= 1_000_000:  
+        return f"{value / 1_000_000:.1f}M"
+    elif value >= 1_000:  
+        return f"{value / 1_000:.1f}k"
+    else:
+        return str(int(value))
+
+
 def get_icon_path(folder, fruit_name):
     for ext in [".png", ".webp", ".jpg", ".jpeg"]:
         candidate = os.path.join(folder, f"{fruit_name}{ext}")
@@ -136,7 +164,7 @@ def StockImageGenerator(data_dict, stock_type="normal"):
             anchor="mt"
         )
 
-            price_str = f"${price:,}"
+            price_str = f"${format_currency(price)}"
             price_w, _ = get_text_size(draw, price_str, price_font)
             price_x = x + (icon_size - price_w) / 2
             price_y = row_y + 30 + icon_size + 15

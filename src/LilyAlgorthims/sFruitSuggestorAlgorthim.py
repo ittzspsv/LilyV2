@@ -33,7 +33,7 @@ async def fetch_all_fruits():
         })
     return fruits
 
-async def build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=False):
+async def build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False):
     pool = []
     cursor = await VC.vdb.execute(
         "SELECT name, category, physical_value, permanent_value FROM BF_ItemValues"
@@ -41,14 +41,16 @@ async def build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gam
     async for name, category, physical_value, permanent_value in cursor:
         if name in user_fruits or category == "limited":
             continue
+        if not suggest_fruit_skins and category.lower() == 'limited skin':
+            continue
 
         phys_val = parse_value(physical_value)
         perm_val = parse_value(permanent_value)
 
-        if category == "gamepass" and suggest_gamepass and phys_val > 0:
+        if category in ("gamepass", "limited skin") and (suggest_gamepass or suggest_fruit_skins) and phys_val > 0:
             pool.append((name, "physical", phys_val, "gamepass"))
 
-        elif category != "gamepass":
+        elif category not in ("gamepass", "limited skin"):
             if suggest_permanent and perm_val > 0:
                 pool.append((name, "permanent", perm_val, "fruit"))
             if phys_val > 0:
@@ -103,17 +105,20 @@ def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_a
 
     return best_valid or []
 
-async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_gamepass=False):
+async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False, overpay=False):
     total_value = 0
 
     for name, ftype in zip(user_fruits, fruit_types):
         total_value += await get_fruit_value(name, ftype.lower())
+    
+    if overpay:
+        total_value += total_value * 0.15
 
-    pool = await build_candidate_pool(user_fruits, suggest_permanent, suggest_gamepass)
+    pool = await build_candidate_pool(user_fruits, suggest_permanent, suggest_gamepass, suggest_fruit_skins)
     suggestion = generate_suggestion(pool, total_value)
 
     if not suggestion:
-        pool = await build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=True)
+        pool = await build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False)
         suggestion = generate_suggestion(pool, total_value)
 
     if not suggestion:
