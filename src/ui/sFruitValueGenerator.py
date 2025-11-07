@@ -142,10 +142,13 @@ async def GenerateValueImage(data, output="card.png"):
     number_font = load_font(NUMBER_FONT_PATH, 32)
 
     icon_file = get_icon_path(ITEM_IMAGE_FOLDER, fruit_name)
+
+    glow_opacity = 120 
+
     if icon_file:
         icon_size = 220
         icon = Image.open(icon_file).convert("RGBA")
-        icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
+        icon = icon.resize((icon_size, icon_size), Image.Resampling.BICUBIC)
 
         avg_color_img = icon.resize((1, 1))
         avg_color = avg_color_img.getpixel((0, 0))[:3]
@@ -153,18 +156,24 @@ async def GenerateValueImage(data, output="card.png"):
         glow_size = (int(icon_size * 2.5), int(icon_size * 2.5))
         glow_img = Image.new("RGBA", glow_size, (0, 0, 0, 0))
         glow_draw = ImageDraw.Draw(glow_img)
+
         ellipse_bbox = (glow_size[0] // 4, glow_size[1] // 4,
                         3 * glow_size[0] // 4, 3 * glow_size[1] // 4)
-        glow_draw.ellipse(ellipse_bbox, fill=avg_color + (120,))
-        glow = glow_img.filter(ImageFilter.GaussianBlur(20))
+        glow_draw.ellipse(ellipse_bbox, fill=avg_color + (glow_opacity,))
+
+
+        glow = glow_img.filter(ImageFilter.GaussianBlur(40))
+
 
         angle = 6
         glow = glow.rotate(angle, expand=True, resample=Image.BICUBIC)
         icon = icon.rotate(angle, expand=True, resample=Image.BICUBIC)
 
+
         glow_x = 60 + icon_size // 2 - glow.width // 2
         glow_y = 260 + icon_size // 2 - glow.height // 2
         canvas.paste(glow, (glow_x, glow_y), glow)
+
 
         icon_x = 60 + icon_size // 2 - icon.width // 2
         icon_y = 260 + icon_size // 2 - icon.height // 2

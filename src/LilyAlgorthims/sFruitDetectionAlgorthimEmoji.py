@@ -1,110 +1,74 @@
 import re
-import json
-import Config.sBotDetails as BD
+import LilyAlgorthims.sTradeFormatAlgorthim as TFA
 
 
+async def extract_fruits_emoji(message):
+    message = message.strip()
 
-if BD.port == 0:
-    emoji_data_path = "src/EmojiData.json"
-    with open(emoji_data_path, "r", encoding="utf-8") as json_file:
-        emoji_data = json.load(json_file)
-else:
-    emoji_data_path = "src/bEmojiData.json"
-    with open(emoji_data_path, "r", encoding="utf-8") as json_file:
-        emoji_data = json.load(json_file)
+    fruit_names, alias_map = await TFA.get_all_fruit_names()
+    fruit_names_sorted = sorted([name.lower() for name in fruit_names], key=len, reverse=True)
+    fruit_set = set(fruit_names_sorted)
 
-emoji_id_to_name = {}
-for fruit_name, emoji_value in emoji_data.items():
-    for emoji_values in emoji_value:
-        match = re.search(r"<:(\w+):(\d+)>", emoji_values)
-        if match:
-            emoji_id_to_name[match.group(2)] = fruit_name.title()
+    trade_separators = ["pointtrade", "point_trade", "trade_pointer"]
+    perm_keywords = ["perm", "permanent"]
 
+    trade_parts = None
+    for sep in trade_separators:
+        if sep.lower() in message.lower():
+            trade_parts = re.split(re.escape(sep), message, maxsplit=1)
+            break
 
-def extract_fruit_trade(emoji_string, emoji_id_to_name):
-    emojis = re.findall(r"<:(\w+):(\d+)>", emoji_string)
-
-    if not any(emoji_id in BD.TRADE_EMOJI_ID for _, emoji_id in emojis):
+    if not trade_parts or len(trade_parts) != 2:
         return [], [], [], []
 
-    your_fruits, your_fruit_types = [], []
-    their_fruits, their_fruit_types = [], []
+    left_side, right_side = trade_parts[0].strip(), trade_parts[1].strip()
 
-    trade_index = next((i for i, (garbage, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), None)
-    
-    if trade_index is None:
-        return [], [], [], []
+    async def extract_valid_items_with_type(text: str):
+        items = []
+        types = []
 
-    i = 0
-    while i < trade_index:
-        if any(emojis[i][1] == perm_emoji_id for perm_emoji_id in BD.PERM_EMOJI_ID): 
-            if i + 1 < trade_index and emojis[i + 1][1] in emoji_id_to_name:
-                your_fruits.append(emoji_id_to_name[emojis[i + 1][1]])
-                your_fruit_types.append("permanent")
-                i += 2 
+        text_clean = re.sub(r"<a?:([\w\d_]+):\d+>", r" \1 ", text)
+        words = re.split(r"[,\s]+", text_clean)
+
+        i = 0
+        max_words = max(len(fn.split()) for fn in fruit_names_sorted)
+        is_perm = False
+
+        while i < len(words):
+            word = words[i].strip()
+            if not word:
+                i += 1
                 continue
-        elif emojis[i][1] in emoji_id_to_name:
-            your_fruits.append(emoji_id_to_name[emojis[i][1]])
-            your_fruit_types.append("physical")
-        i += 1
 
-    i = trade_index + 1
-    while i < len(emojis):
-        if any(emojis[i][1] == perm_emoji_id for perm_emoji_id in BD.PERM_EMOJI_ID):
-            if i + 1 < len(emojis) and emojis[i + 1][1] in emoji_id_to_name:
-                their_fruits.append(emoji_id_to_name[emojis[i + 1][1]])
-                their_fruit_types.append("permanent")
-                i += 2
+            if word.lower() in perm_keywords:
+                is_perm = True
+                i += 1
                 continue
-        elif emojis[i][1] in emoji_id_to_name:
-            their_fruits.append(emoji_id_to_name[emojis[i][1]])
-            their_fruit_types.append("physical")
-        i += 1
+
+            matched_fruit = None
+            matched_length = 0
+            for window in range(max_words, 0, -1):
+                if i + window > len(words):
+                    continue
+                candidate = ' '.join(words[i:i + window])
+                matched = await TFA.MatchFruitSet(candidate.lower(), fruit_set, alias_map)
+                if matched:
+                    matched_fruit = matched.title()
+                    matched_length = len(candidate.split())
+                    break
+
+            if matched_fruit:
+                fruit_type = "Permanent" if is_perm else "Physical"
+                items.append(matched_fruit)
+                types.append(fruit_type)
+                is_perm = False
+                i += matched_length
+            else:
+                i += 1
+
+        return items, types
+
+    your_fruits, your_fruit_types = await extract_valid_items_with_type(left_side)
+    their_fruits, their_fruit_types = await extract_valid_items_with_type(right_side)
 
     return your_fruits, your_fruit_types, their_fruits, their_fruit_types
-
-def is_valid_trade_sequence(emoji_string, emoji_id_to_name):
-    if not any(trade_emoji in emoji_string for trade_emoji in BD.TRADE_EMOJI_ID):
-        return False
-
-    emojis = re.findall(r"<:(\w+):(\d+)>", emoji_string)
-
-    trade_index = next(
-        (i for i, (garbage, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), 
-        None
-    )
-
-    if trade_index is None or trade_index == 0 or trade_index == len(emojis) - 1:
-        return False
-
-    valid_fruits_before_trade = any(
-        emoji_id in emoji_id_to_name and emoji_id not in BD.PERM_EMOJI_ID 
-        for garbage, emoji_id in emojis[:trade_index]
-    )
-
-    valid_fruits_after_trade = any(
-        emoji_id in emoji_id_to_name and emoji_id not in BD.PERM_EMOJI_ID
-        for garbage, emoji_id in emojis[trade_index + 1:]
-    )
-
-    return valid_fruits_before_trade and valid_fruits_after_trade
-
-def is_valid_trade_suggestor_sequence(emoji_string):
-    if not any(trade_emoji in emoji_string for trade_emoji in BD.TRADE_EMOJI_ID):
-        return False
-    
-    emojis = re.findall(r"<:(\w+):(\d+)>", emoji_string)
-
-    trade_index = next(
-        (i for i, (garbage, emoji_id) in enumerate(emojis) if emoji_id in BD.TRADE_EMOJI_ID), 
-        None
-    )
-
-    if trade_index is None:
-        return False
-
-    trade_emoji_str = f"<:{emojis[trade_index][0]}:{emojis[trade_index][1]}>"
-    trade_emoji_pos = emoji_string.find(trade_emoji_str)
-
-    after_trade_emoji = emoji_string[trade_emoji_pos + len(trade_emoji_str):].strip()
-    return after_trade_emoji.startswith("❓")

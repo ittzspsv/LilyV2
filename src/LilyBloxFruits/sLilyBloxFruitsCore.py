@@ -281,93 +281,19 @@ async def MessageEvaluate(self, bot, message):
                 await status_msg.edit(content=None, attachments=[file])
 
             except Exception as e:
+                print(e)
                 try:
                     await status_msg.delete()
                 except:
                     pass
 
         elif await TFA.is_valid_trade_format(message.content.lower()): 
-            lowered_message = message.content.lower()
-            match = await TFA.is_valid_trade_format(lowered_message)
-            if match:
-                your_fruits = []
-                your_fruit_types=[]
-                their_fruits = []
-                their_fruits_types=[]
-                your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDA.extract_trade_details(message.content)
-                with open("src/Values/valueconfig.logs", "r") as fileptr:
-                    Type = int(fileptr.read().strip())
-                if Type == 0:
-                    output_dict = StockValueJSON.j_LorW(your_fruits, your_fruit_types, their_fruits, their_fruits_types, Type)
-                    #await message.channel.send(resultant)
-                    if isinstance(output_dict, dict):
+                    your_fruits = []
+                    your_fruit_types=[]
+                    their_fruits = []
+                    their_fruits_types=[]
+                    your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDA.extract_trade_details(message.content)
 
-                        percentage_calculation = StockValueJSON.calculate_win_loss(output_dict["Your_TotalValue"], output_dict["Their_TotalValue"])
-                    
-                        embed = discord.Embed(title=output_dict["TradeConclusion"],description=output_dict["TradeDescription"],color=output_dict["ColorKey"],)
-                        embed.set_author(
-                            name=Config.bot_name,
-                            icon_url=Config.bot_icon_link_url
-                        )
-
-                        your_fruit_values = [
-                            f"- {emoji_data[your_fruit_types[i].title()][0]} {emoji_data[your_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_IndividualValues'][i])}**"
-                            for i in range(min(len(your_fruit_types), len(your_fruits), len(output_dict["Your_IndividualValues"])))
-                        ]
-
-                        their_fruit_values = [
-                            f"- {emoji_data[their_fruits_types[i].title()][0]} {emoji_data[their_fruits[i]][0]}  {emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_IndividualValues'][i])}**"
-                            for i in range(min(len(their_fruits_types), len(their_fruits), len(output_dict["Their_IndividualValues"])))
-                        ]
-
-                        embed.add_field(
-                            name="**Your Offered Fruits**",
-                            value=" \n".join(your_fruit_values) if your_fruit_values else "*No fruits offered*",
-                            inline=True
-                        )
-
-                        embed.add_field(
-                            name="**Their Offered Fruits**",
-                            value="\n".join(their_fruit_values) if their_fruit_values else "*No fruits offered*",
-                            inline=True
-                        )
-
-                        embed.add_field(
-                            name="**Your Total Value:**",
-                            value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Your_TotalValue'])}**" if output_dict['Your_TotalValue'] else "*No values available*",
-                            inline=False
-                        )
-
-                        embed.add_field(
-                            name="**Their Total Value:**",
-                            value=f"{emoji_data['beli'][0]} **{'{:,}'.format(output_dict['Their_TotalValue'])}**" if output_dict['Their_TotalValue'] else "*No values available*",
-                            inline=False
-                        )
-
-                        if percentage_calculation != "Invalid input. Please enter numerical values.":
-                            embed.add_field(
-                                name=f"{percentage_calculation}",
-                                value="",
-                                inline=False
-                            )
-
-                        embed.add_field(
-                            name="",
-                            value=f"[{Config.server_name}]({Config.server_invite_link})",
-                            inline=False
-                        )
-                        ctx = await bot.get_context(message)
-                        channel_data = Config.load_channel_config(ctx)
-                        if "w_or_l_channel_id" in channel_data:
-                            w_or_l_channel_sid = channel_data["w_or_l_channel_id"]
-                        else:
-                            return
-
-                        w_or_l_channel = self.get_channel(w_or_l_channel_sid)
-                        if message.channel == w_or_l_channel:
-                            await message.reply(embed=embed)
-
-                else:
                     ctx = await bot.get_context(message)
                     cursor = await LilyConfig.cdb.execute("SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
                     row = await cursor.fetchone()
@@ -381,7 +307,7 @@ async def MessageEvaluate(self, bot, message):
                         image = await StockValueJSON.j_LorW(
                             your_fruits, your_fruit_types,
                             their_fruits, their_fruits_types,
-                            Type
+                            1
                         )
 
                         if image is None:
@@ -395,23 +321,85 @@ async def MessageEvaluate(self, bot, message):
                         file = discord.File(fp=buffer, filename="trade_result.png")
                         await status_msg.edit(content=None, attachments=[file])
 
-        elif await TFA.is_valid_trade_suggestor_format(message.content.lower()): 
-            your_fruits1, your_fruit_types1, garbage_type, garbage_type1 = await FDA.extract_trade_details(message.content)
-            ctx = await bot.get_context(message)
-            cursor = await LilyConfig.cdb.execute("SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
-            row = await cursor.fetchone()
-            if row and row[0]:
-                        _w_or_l_channel_sid = self.get_channel(row[0])
-            else:
+        elif await TFA.is_valid_emoji_trade_format(message.content):
+                    your_fruits = []
+                    your_fruit_types=[]
+                    their_fruits = []
+                    their_fruits_types=[]
+                    your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDAE.extract_fruits_emoji(message.content)
+
+
+                    ctx = await bot.get_context(message)
+                    cursor = await LilyConfig.cdb.execute("SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
+                    row = await cursor.fetchone()
+                    if row and row[0]:
+                        w_or_l_channel = self.get_channel(row[0])
+                    else:
                         return
-            if message.channel == self.get_channel(_w_or_l_channel_sid):
-                view = TradeSuggestorWindow(bot=self,user=message.author,your_fruits=your_fruits1,your_types=your_fruit_types1)
+                    if message.channel == w_or_l_channel:
+                        status_msg = await message.reply("Thinking...")
 
-                embed = discord.Embed(title="Trade Suggestion Configuration",description="",color=discord.Color.red())
-                
-                embed.add_field(name="• Customize your Suggestor Settings, Then Click Suggest", value="")
+                        image = await StockValueJSON.j_LorW(
+                            your_fruits, your_fruit_types,
+                            their_fruits, their_fruits_types,
+                            1
+                        )
 
-                await message.reply(embed=embed, view=view)
+                        if image is None:
+                            await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
+                            return
+
+                        buffer = io.BytesIO()
+                        image.save(buffer, format="PNG", optimize=True)
+                        buffer.seek(0)
+
+                        file = discord.File(fp=buffer, filename="trade_result.png")
+                        await status_msg.edit(content=None, attachments=[file])
+
+        elif await TFA.is_valid_trade_suggestor_format(message.content.lower()):
+            your_fruits1, your_fruit_types1, _, _ = await FDA.extract_trade_details(message.content)
+            ctx = await bot.get_context(message)
+            if not ctx.guild:
+                return
+            
+            cursor = await LilyConfig.cdb.execute(
+                "SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?",
+                (ctx.guild.id,)
+            )
+            row = await cursor.fetchone()
+            print("DB Row fetched:", row)
+            
+            if not row or not row[0]:
+                print("Step 3 - No Win/Loss channel found in DB")
+                return
+            
+            _w_or_l_channel = self.get_channel(row[0])
+            if not _w_or_l_channel:
+                return
+            
+            
+            if message.channel != _w_or_l_channel:
+                return
+            
+            
+            view = TradeSuggestorWindow(
+                bot=self,
+                user=message.author,
+                your_fruits=your_fruits1,
+                your_types=your_fruit_types1
+            )
+            
+            embed = discord.Embed(
+                title="Trade Suggestion Configuration",
+                description="",
+                color=discord.Color.red()
+            )
+            embed.add_field(
+                name="• Customize your Suggestor Settings, Then Click Suggest",
+                value=""
+            )
+            
+            await message.reply(embed=embed, view=view)
 
         elif LCM.ComboScope(message.content.lower()) != None:
                     try:

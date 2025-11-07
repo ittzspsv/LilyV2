@@ -1,6 +1,8 @@
 import re
 from rapidfuzz import process, fuzz
 import Config.sValueConfig as VC
+import LilyAlgorthims.sFruitDetectionAlgorthim as FDA
+import LilyAlgorthims.sFruitDetectionAlgorthimEmoji as FDAE
 
 TradeInitializer = [
     "i got", "i gave", "i want to", "i wanna", "i want", 
@@ -148,44 +150,50 @@ async def is_valid_trade_format(message):
 
     return bool(your_fruits) and bool(their_fruits)
 
-async def is_valid_trade_suggestor_format(message):
+
+async def is_valid_emoji_trade_format(message: str):
     message = message.lower().strip()
     message = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", message).strip()
 
-    if "for" not in message:
-        return False
-    trade_parts = message.split(" for ")
-
-    clean_your_side = predict_trade_message(trade_parts[0], TradeInitializer)
-
-    # Fetch fruits from DB once
     fruit_names, alias_map = await get_all_fruit_names()
+    trade_separators = ["pointtrade", "point_trade", "trade_pointer"]
 
-    async def extract_fruits(text):
-        fruits = []
-        words = re.split(r",\s*|\s+", text)
-        i = 0
-        while i < len(words):
-            item = words[i]
+    trade_parts = None
+    for sep in trade_separators:
+        if sep in message:
+            trade_parts = re.split(re.escape(sep), message, maxsplit=1)
+            break
 
-            if isPermanentMatch(item):
-                i += 1
-                if i < len(words):
-                    item = words[i]
+    if not trade_parts or len(trade_parts) != 2:
+        return False
 
-            for length in range(3, 0, -1):
-                possible_fruit = " ".join(words[i:i+length])
-                matched_fruit = await MatchFruitSet(possible_fruit, fruit_names, alias_map)
+    left_side, right_side = trade_parts[0].strip(), trade_parts[1].strip()
 
-                if matched_fruit:
-                    fruits.append(matched_fruit)
-                    i += length - 1
-                    break
+    async def extract_valid_items(text: str):
+        items = []
 
-            i += 1
-        return fruits
+        items.extend(re.findall(r"<a?:([\w\d_]+):\d+>", text))
 
-    your_fruits = await extract_fruits(clean_your_side)
+        words = re.split(r"[,\s]+", text)
+        for w in words:
+            if w:
+                valid_fruit = await MatchFruitSet(w, fruit_names, alias_map)
+                if valid_fruit:
+                    items.append(valid_fruit)
 
-    return bool(your_fruits)
+        return items
 
+    left_items = await extract_valid_items(left_side)
+    right_items = await extract_valid_items(right_side)
+
+    return bool(left_items) and bool(right_items)
+
+async def is_valid_trade_suggestor_format(message: str):
+    your_fruits, garbage1, their_fruits, garbage2 = await FDA.extract_trade_details(message)
+    
+    return bool((bool(your_fruits) != bool(their_fruits)))
+
+async def is_valid_trade_suggestor_format_emoji(message: str):
+    your_fruits, _, their_fruits, _ = await FDAE.extract_fruits_emoji(message)
+    
+    return bool((bool(your_fruits) != bool(their_fruits)))

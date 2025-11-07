@@ -59,7 +59,7 @@ class MyBot(commands.Bot):
         for ext in extensions:
             if ext not in self.extensions:
                 await self.load_extension(ext)
-        await self.tree.sync()
+        #await self.tree.sync()
 
     async def BotInitialize(self):
         for guild in self.guilds:
@@ -329,10 +329,14 @@ load_dotenv("token.env")
 
 bot.run(os.getenv("token"))
 
-'''
-async def main():
-    await asyncio.gather(
-        
-    )
 
-asyncio.run(main())'''
+'''
+
+async def main():
+    import LilyAlgorthims.sTradeFormatAlgorthim as TFA
+    await ValueConfig.initialize()
+    result = await TFA.is_valid_trade_suggestor_format("werewolf for")
+    print(result)
+
+asyncio.run(main())
+'''

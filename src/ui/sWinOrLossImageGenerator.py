@@ -147,10 +147,7 @@ def add_glow_border(icon, glow_color=(255, 255, 255), blur_radius=6, glow_alpha=
 
     return blurred
 
-def GenerateWORLImage(
-    your_fruits, your_values, their_fruits, their_values,your_fruit_types,their_fruit_types,
-    trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=77, winorloseorfair = 0, background_type=0
-):
+def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values,your_fruit_types,their_fruit_types,trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=77, winorloseorfair = 0, background_type=0):
     icon_size = 120
     value_font_offset = 6
     if background_type == 0:
@@ -195,9 +192,22 @@ def GenerateWORLImage(
                     icon_path = f"src/ui/fruit_icons/{fruit}.png"
                     icon = Image.open(icon_path).convert("RGBA").resize((icon_size, icon_size))
 
-                    glow = add_glow_border(icon, glow_color=(186, 85, 211), blur_radius=8, glow_alpha=180)
-                    glow_pos = (coord[0] - 10, coord[1] - 10)
+                    avg_color_img = icon.resize((1, 1))
+                    avg_color = avg_color_img.getpixel((0, 0))[:3]
+
+                    glow_scale = 2.5
+                    glow_size = int(icon_size * glow_scale)
+                    glow_img = Image.new("RGBA", (glow_size, glow_size), (0, 0, 0, 0))
+                    glow_draw = ImageDraw.Draw(glow_img)
+
+                    ellipse_bbox = (glow_size // 4, glow_size // 4, 3 * glow_size // 4, 3 * glow_size // 4)
+                    glow_draw.ellipse(ellipse_bbox, fill=avg_color + (120,))
+
+                    glow = glow_img.filter(ImageFilter.GaussianBlur(20))
+
+                    glow_pos = (coord[0] - (glow.width - icon_size)//2, coord[1] - (glow.height - icon_size)//2)
                     img.paste(glow, glow_pos, glow)
+
 
                     img.paste(icon, coord, icon)
 
@@ -232,13 +242,14 @@ def GenerateWORLImage(
                 except FileNotFoundError:
                     print(f"Missing icon: {fruit}")
             else:
-                glow_size = icon_size
+                glow_size = int(icon_size * 2.5)
                 placeholder = Image.new("RGBA", (glow_size, glow_size), (0, 0, 0, 0))
                 draw = ImageDraw.Draw(placeholder)
-                draw.ellipse((0, 0, glow_size, glow_size), fill=(255, 255, 255, 20))
-                blurred = placeholder.filter(ImageFilter.GaussianBlur(radius=6))
+                draw.ellipse((glow_size//4, glow_size//4, 3*glow_size//4, 3*glow_size//4), fill=(255, 255, 255, 30))
 
-                img.paste(blurred, coord, blurred)
+                blurred = placeholder.filter(ImageFilter.GaussianBlur(40))
+                blurred_pos = (coord[0] - (blurred.width - icon_size)//2, coord[1] - (blurred.height - icon_size)//2)
+                img.paste(blurred, blurred_pos, blurred)
 
 
     paste_fruits(your_fruits, your_coords, your_values, your_fruit_types)
@@ -291,7 +302,6 @@ def GenerateWORLImage(
         color_start = (180, 100, 0)
         color_end = (255, 210, 120)
 
-    # --- Draw Gradient Bar ---
     draw_gradient_bar(
         img, bar_x, bar_y, bar_width, bar_height, percent,
         color_start=color_start, color_end=color_end,
