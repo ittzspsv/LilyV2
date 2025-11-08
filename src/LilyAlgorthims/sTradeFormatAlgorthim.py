@@ -109,91 +109,103 @@ async def MatchFruitSet(fruit: str, fruit_names: set, alias_map: dict, threshold
 
 
 async def is_valid_trade_format(message):
-    message = message.lower().strip()
-    message = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", message).strip()
+    try:
+        message = message.lower().strip()
+        message = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", message).strip()
 
-    trade_parts = message.split(" for ")
-    if len(trade_parts) < 2:
-        return False
+        trade_parts = message.split(" for ")
+        if len(trade_parts) < 2:
+            return False
 
-    clean_your_side = predict_trade_message(trade_parts[0], TradeInitializer)
-    clean_their_side = predict_trade_message(trade_parts[1], OpponentTradeSplitter)
+        clean_your_side = predict_trade_message(trade_parts[0], TradeInitializer)
+        clean_their_side = predict_trade_message(trade_parts[1], OpponentTradeSplitter)
 
-    fruit_names, alias_map = await get_all_fruit_names()
+        fruit_names, alias_map = await get_all_fruit_names()
 
-    async def extract_fruits(text):
-        fruits = []
-        words = re.split(r",\s*|\s+", text)
-        i = 0
-        while i < len(words):
-            item = words[i]
+        async def extract_fruits(text):
+            fruits = []
+            words = re.split(r",\s*|\s+", text)
+            i = 0
+            while i < len(words):
+                item = words[i]
 
-            if isPermanentMatch(item):
+                if isPermanentMatch(item):
+                    i += 1
+                    if i < len(words):
+                        item = words[i]
+
+                for length in range(3, 0, -1):
+                    possible_fruit = " ".join(words[i:i+length])
+                    matched_fruit = await MatchFruitSet(possible_fruit, fruit_names, alias_map)
+
+                    if matched_fruit:
+                        fruits.append(matched_fruit)
+                        i += length - 1
+                        break
+
                 i += 1
-                if i < len(words):
-                    item = words[i]
+            return fruits
 
-            for length in range(3, 0, -1):
-                possible_fruit = " ".join(words[i:i+length])
-                matched_fruit = await MatchFruitSet(possible_fruit, fruit_names, alias_map)
+        your_fruits = await extract_fruits(clean_your_side)
+        their_fruits = await extract_fruits(clean_their_side)
 
-                if matched_fruit:
-                    fruits.append(matched_fruit)
-                    i += length - 1
-                    break
-
-            i += 1
-        return fruits
-
-    your_fruits = await extract_fruits(clean_your_side)
-    their_fruits = await extract_fruits(clean_their_side)
-
-    return bool(your_fruits) and bool(their_fruits)
+        return bool(your_fruits) and bool(their_fruits)
+    except:
+        return False
 
 
 async def is_valid_emoji_trade_format(message: str):
-    message = message.lower().strip()
-    message = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", message).strip()
+    try:
+        message = message.lower().strip()
+        message = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", message).strip()
 
-    fruit_names, alias_map = await get_all_fruit_names()
-    trade_separators = ["pointtrade", "point_trade", "trade_pointer"]
+        fruit_names, alias_map = await get_all_fruit_names()
+        trade_separators = ["pointtrade", "point_trade", "trade_pointer"]
 
-    trade_parts = None
-    for sep in trade_separators:
-        if sep in message:
-            trade_parts = re.split(re.escape(sep), message, maxsplit=1)
-            break
+        trade_parts = None
+        for sep in trade_separators:
+            if sep in message:
+                trade_parts = re.split(re.escape(sep), message, maxsplit=1)
+                break
 
-    if not trade_parts or len(trade_parts) != 2:
+        if not trade_parts or len(trade_parts) != 2:
+            return False
+
+        left_side, right_side = trade_parts[0].strip(), trade_parts[1].strip()
+
+        async def extract_valid_items(text: str):
+            items = []
+
+            items.extend(re.findall(r"<a?:([\w\d_]+):\d+>", text))
+
+            words = re.split(r"[,\s]+", text)
+            for w in words:
+                if w:
+                    valid_fruit = await MatchFruitSet(w, fruit_names, alias_map)
+                    if valid_fruit:
+                        items.append(valid_fruit)
+
+            return items
+
+        left_items = await extract_valid_items(left_side)
+        right_items = await extract_valid_items(right_side)
+
+        return bool(left_items) and bool(right_items)
+    except:
         return False
 
-    left_side, right_side = trade_parts[0].strip(), trade_parts[1].strip()
-
-    async def extract_valid_items(text: str):
-        items = []
-
-        items.extend(re.findall(r"<a?:([\w\d_]+):\d+>", text))
-
-        words = re.split(r"[,\s]+", text)
-        for w in words:
-            if w:
-                valid_fruit = await MatchFruitSet(w, fruit_names, alias_map)
-                if valid_fruit:
-                    items.append(valid_fruit)
-
-        return items
-
-    left_items = await extract_valid_items(left_side)
-    right_items = await extract_valid_items(right_side)
-
-    return bool(left_items) and bool(right_items)
-
 async def is_valid_trade_suggestor_format(message: str):
-    your_fruits, garbage1, their_fruits, garbage2 = await FDA.extract_trade_details(message)
-    
-    return bool((bool(your_fruits) != bool(their_fruits)))
+    try:
+        your_fruits, garbage1, their_fruits, garbage2 = await FDA.extract_trade_details(message)
+        
+        return bool((bool(your_fruits) != bool(their_fruits)))
+    except:
+        return False
 
 async def is_valid_trade_suggestor_format_emoji(message: str):
-    your_fruits, _, their_fruits, _ = await FDAE.extract_fruits_emoji(message)
-    
-    return bool((bool(your_fruits) != bool(their_fruits)))
+    try:
+        your_fruits, _, their_fruits, _ = await FDAE.extract_fruits_emoji(message)
+        
+        return bool((bool(your_fruits) != bool(their_fruits)))
+    except:
+        return False
