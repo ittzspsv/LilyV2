@@ -291,24 +291,20 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
     cursor = await sdb.execute("SELECT retired FROM staffs WHERE staff_id = ?", (staff_id,))
     row = await cursor.fetchone()
 
-    top_role = None
+    db_roles_cursor = await sdb.execute("SELECT role_id FROM roles")
+    db_role_ids = {r[0] for r in await db_roles_cursor.fetchall()}
+
+    matching_role = None
     for role in sorted(staff.roles, key=lambda r: r.position, reverse=True):
-        if role.is_default():
-            continue
-        top_role = role
-        break
+        if role.id in db_role_ids:
+            matching_role = role
+            break
 
-    if not top_role:
-        await ctx.send(f"❌ Staff {staff.mention} has no assignable roles.")
+    if not matching_role:
+        await ctx.send(f"Staff {staff.name} does not have any role registered in the database.")
         return
 
-    cursor = await sdb.execute("SELECT role_id FROM roles WHERE role_id = ?", (top_role.id,))
-    role_row = await cursor.fetchone()
-    if not role_row:
-        await ctx.send(f"Role {top_role.name} does not exist in the roles table.")
-        return
-
-    role_id = role_row[0]
+    role_id = matching_role.id
 
     if row:
         retired = row[0]
