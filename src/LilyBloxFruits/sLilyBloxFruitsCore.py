@@ -286,6 +286,34 @@ async def MessageEvaluate(self, bot, message):
             view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message)
             await message.reply(view=view)
 
+        elif await TFA.is_valid_trade_suggestor_format_emoji(message.content):
+            your_fruits1, your_fruit_types1, _, _ = await FDAE.extract_fruits_emoji(message.content)
+
+            ctx = await bot.get_context(message)
+            if not ctx.guild:
+                return
+            
+            cursor = await LilyConfig.cdb.execute(
+                "SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?",
+                (ctx.guild.id,)
+            )
+            row = await cursor.fetchone()
+            
+            if not row or not row[0]:
+                return
+            
+            _w_or_l_channel = self.get_channel(row[0])
+            if not _w_or_l_channel:
+                return
+            
+            
+            if message.channel != _w_or_l_channel:
+                return
+            
+            
+            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message)
+            await message.reply(view=view)
+
         elif LCM.ComboScope(message.content.lower()) != None:
                     try:
                         ctx = await bot.get_context(message)
