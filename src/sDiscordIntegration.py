@@ -167,12 +167,6 @@ class MyBot(commands.Bot):
         await self.ConnectDatabase()
         await self.BotInitialize()
         await LilyTTCore.InitializeView(self)
-        await bot.change_presence(
-        activity=discord.Streaming(
-            name="Gate to Oblivion",
-            url="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1"
-        )
-    )
         await self.tree.sync()
 
     async def on_guild_join(self, guild):
