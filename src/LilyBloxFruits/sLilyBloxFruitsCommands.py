@@ -139,21 +139,34 @@ class LilyBloxFruits(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='update_image_blox_fruits', description='reloads combo data if any changes is done')
-    async def UpdateImageBloxFruits(self, ctx: commands.Context, name: str=""):
+    async def UpdateImageBloxFruits(self, ctx: commands.Context, name: str = ""):
+        parser = [n.strip() for n in name.split(",") if n.strip()]
+
+        if not parser:
+            return await ctx.send("Please provide at least one fruit name.")
+
+        results = []
+
+        for fruit_name in parser:
             cursor = await VC.vdb.execute(
-                "SELECT icon_url FROM BF_ItemValues WHERE name = ?", 
-                (name,)
+                "SELECT icon_url FROM BF_ItemValues WHERE name = ?",
+                (fruit_name,)
             )
             row = await cursor.fetchone()
             await cursor.close()
 
             if row:
                 url = row[0]
-                result = await FID.DownloadImage(name, "src/ui/fruit_icons", url)
+                result = await FID.DownloadImage(fruit_name, "src/ui/fruit_icons", url)
+
                 if result:
-                    await ctx.send(f"Image '{name}' updated successfully!")
+                    results.append(f"Image updated for **{fruit_name}**")
+                else:
+                    results.append(f"Failed downloading image for **{fruit_name}**")
             else:
-                await ctx.send("Row Not Found Exception")
+                results.append(f"`{fruit_name}` not found in database.")
+
+        await ctx.send("\n".join(results))
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('ValueTeam', 'Developer')))
     @commands.hybrid_command(name='update_bf_value', description='updates an value of an item in blox fruits')

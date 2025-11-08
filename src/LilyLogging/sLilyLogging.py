@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from discord.ext import commands
+import discord
 import aiosqlite
 import pytz
 
@@ -56,3 +57,11 @@ async def LogModerationAction(ctx: commands.Context, moderator_id: int, target_u
     """, (ctx.guild.id, moderator_id, target_user_id, mod_type.lower(), reason, timestamp))
 
     await mdb.commit()
+
+async def PostLog(ctx: commands.Context, embed: discord.Embed):
+    channel = ctx.bot.get_channel(1325204537434312856)
+
+    if channel is None:
+        channel = await ctx.bot.fetch_channel(1325204537434312856)
+
+    await channel.send(embed=embed)

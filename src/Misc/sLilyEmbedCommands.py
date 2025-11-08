@@ -46,6 +46,7 @@ class LilyEmbed(commands.Cog):
                 await channel_to_send.send(content=content, embeds=embeds)
                 await ctx.send("Embed sent successfully.")
                 await LilyLogging.WriteLog(ctx, ctx.author.id, f"Has Sent an Embed to <#{channel_to_send.id}>")
+                await LilyLogging.PostLog(ctx, discord.Embed(description=f"**EMEBD SENT TO <#{channel_to_send.id}> BY <@{ctx.author.id}>**"))
             except Exception as embed_error:
                 await ctx.send(f"Parser Failure: {str(embed_error)}")
 
