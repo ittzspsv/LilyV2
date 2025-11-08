@@ -1,7 +1,6 @@
 import aiohttp
 
 import discord
-import os
 import json
 import LilyLogging.sLilyLogging as LilyLogging
 import Config.sValueConfig as ValueConfig

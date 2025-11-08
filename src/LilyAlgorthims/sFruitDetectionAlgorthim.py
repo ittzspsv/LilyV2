@@ -1,6 +1,5 @@
 import re
 import word2number.w2n
-import Config.sValueConfig as VC
 import LilyAlgorthims.sTradeFormatAlgorthim as TFA
 
 async def extract_trade_details(message):

@@ -34,29 +34,72 @@ async def fetch_all_fruits():
     return fruits
 
 async def build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False):
-    pool = []
-    cursor = await VC.vdb.execute(
-        "SELECT name, category, physical_value, permanent_value FROM BF_ItemValues"
-    )
-    async for name, category, physical_value, permanent_value in cursor:
-        if name in user_fruits or category == "limited":
-            continue
-        if not suggest_fruit_skins and category.lower() == 'limited skin':
-            continue
+    excluded = tuple(f.lower() for f in user_fruits) or ("",)
+    
+    category_map = {
+        'common'   : 1,
+        'uncommon' : 2,
+        'rare'     : 3,
+        'legendary': 4,
+        'mythical' : 5,
+        'gamepass' : 6
+    }
 
+
+    placeholders = ",".join("?" * len(excluded))
+    query = f"SELECT DISTINCT LOWER(category) FROM BF_ItemValues WHERE LOWER(name) IN ({placeholders})"
+    cursor = await VC.vdb.execute(query, excluded)
+    user_categories = [row[0] for row in await cursor.fetchall()]
+    await cursor.close()
+
+
+    rarity_levels = [category_map[c] for c in user_categories if c in category_map]
+    if not rarity_levels:
+        min_rarity, max_rarity = 1, 6
+    elif len(set(rarity_levels)) == 1:
+        only = rarity_levels[0]
+        min_rarity = max(1, only - 1)
+        max_rarity = only
+    else:
+        min_rarity = min(rarity_levels)
+        max_rarity = max(rarity_levels)
+
+    allowed_categories = [
+        cat for cat, lvl in category_map.items()
+        if min_rarity <= lvl <= max_rarity
+    ]
+
+    base_query = f"""
+        SELECT name, category, physical_value, permanent_value
+        FROM BF_ItemValues
+        WHERE LOWER(name) NOT IN ({placeholders})
+          AND LOWER(category) IN ({",".join("?" * len(allowed_categories))})
+          AND LOWER(category) != 'limited'
+    """
+
+    if not suggest_fruit_skins:
+        base_query += " AND LOWER(category) != 'limited skin'"
+
+    params = list(excluded) + allowed_categories
+    cursor = await VC.vdb.execute(base_query, params)
+    rows = await cursor.fetchall()
+    await cursor.close()
+
+
+    pool = []
+    for name, category, physical_value, permanent_value in rows:
         phys_val = parse_value(physical_value)
         perm_val = parse_value(permanent_value)
 
-        if category in ("gamepass", "limited skin") and (suggest_gamepass or suggest_fruit_skins) and phys_val > 0:
-            pool.append((name, "physical", phys_val, "gamepass"))
-
-        elif category not in ("gamepass", "limited skin"):
+        if category in ("gamepass", "limited skin"):
+            if (suggest_gamepass or suggest_fruit_skins) and phys_val > 0:
+                pool.append((name, "physical", phys_val, "gamepass"))
+        else:
             if suggest_permanent and perm_val > 0:
                 pool.append((name, "permanent", perm_val, "fruit"))
             if phys_val > 0:
                 pool.append((name, "physical", phys_val, "fruit"))
 
-    await cursor.close()
     return pool
 
 def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_attempts=15000, max_gamepass=2):
@@ -74,19 +117,22 @@ def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_a
         gp_count = 0
 
         attempt_pool = pool.copy()
+        random.shuffle(attempt_pool)
 
-        while len(selected) < 4 and total < target_max and attempt_pool:
+        while len(selected) < 4 and attempt_pool:
             item = random.choice(attempt_pool)
             attempt_pool.remove(item)
 
             name, ftype, val, category = item
 
+            if any(s[0] == name for s in selected):
+                continue
+
             if ftype == "permanent" and perm_count >= 1:
                 continue
             if category == "gamepass" and gp_count >= max_gamepass:
                 continue
-            if any(s[0] == name for s in selected):
-                continue
+
             if total + val > target_max:
                 continue
 
@@ -98,9 +144,13 @@ def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_a
             if category == "gamepass":
                 gp_count += 1
 
+            if target_min <= total <= target_max:
+                break
+
         if target_min <= total <= target_max:
             return selected
-        elif total >= target_min and best_valid is None:
+
+        if total >= target_min and (best_valid is None or abs(total - target_value) < abs(sum(v[2] for v in best_valid) - target_value)):
             best_valid = selected
 
     return best_valid or []
@@ -118,6 +168,7 @@ async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, sug
     suggestion = generate_suggestion(pool, total_value)
 
     if not suggestion:
+        total_value += total_value * 0.15
         pool = await build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False)
         suggestion = generate_suggestion(pool, total_value)
 
