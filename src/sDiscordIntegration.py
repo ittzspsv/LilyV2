@@ -59,7 +59,7 @@ class MyBot(commands.Bot):
         for ext in extensions:
             if ext not in self.extensions:
                 await self.load_extension(ext)
-        #await self.tree.sync()
+        await self.tree.sync()
 
     async def BotInitialize(self):
         for guild in self.guilds:
