@@ -1,12 +1,7 @@
 import random
 import Config.sValueConfig as VC
 
-def parse_value(val):
-    if val is None:
-        return 0
-    if isinstance(val, str):
-        return int(val.replace(",", ""))
-    return int(val)
+
 
 async def get_fruit_value(fruit_name, value_type="physical"):
     cursor = await VC.vdb.execute(
@@ -15,7 +10,7 @@ async def get_fruit_value(fruit_name, value_type="physical"):
     )
     row = await cursor.fetchone()
     await cursor.close()
-    return parse_value(row[0]) if row else 0
+    return row[0] if row else 0
 
 async def fetch_all_fruits():
     cursor = await VC.vdb.execute(
@@ -54,20 +49,23 @@ async def build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gam
 
 
     rarity_levels = [category_map[c] for c in user_categories if c in category_map]
-    if not rarity_levels:
-        min_rarity, max_rarity = 1, 6
-    elif len(set(rarity_levels)) == 1:
-        only = rarity_levels[0]
-        min_rarity = max(1, only - 1)
-        max_rarity = only
-    else:
-        min_rarity = min(rarity_levels)
-        max_rarity = max(rarity_levels)
 
-    allowed_categories = [
-        cat for cat, lvl in category_map.items()
-        if min_rarity <= lvl <= max_rarity
-    ]
+    if rarity_levels:
+        user_max_rarity = max(rarity_levels)
+    else:
+        user_max_rarity = 6 
+
+
+    if not suggest_permanent:
+        allowed_categories = [
+            cat for cat, lvl in category_map.items()
+            if lvl >= user_max_rarity
+        ]
+    else:
+        allowed_categories = list(category_map.keys())
+
+    if not suggest_gamepass:
+        allowed_categories.remove('gamepass')
 
     base_query = f"""
         SELECT name, category, physical_value, permanent_value
@@ -87,10 +85,7 @@ async def build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gam
 
 
     pool = []
-    for name, category, physical_value, permanent_value in rows:
-        phys_val = parse_value(physical_value)
-        perm_val = parse_value(permanent_value)
-
+    for name, category, phys_val, perm_val in rows:
         if category in ("gamepass", "limited skin"):
             if (suggest_gamepass or suggest_fruit_skins) and phys_val > 0:
                 pool.append((name, "physical", phys_val, "gamepass"))
