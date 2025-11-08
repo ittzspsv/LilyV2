@@ -450,6 +450,7 @@ class LilyUtility(commands.Cog):
                 await ValueConfig.cdb.commit()
                 await ctx.send(f"Webhook created: Weather will be sent in {channel_to_assign.name}")
 
+    '''
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='reaction_roles',description='Adds or updates reaction roles.  Follows role hierrachy of user who is triggering this')
@@ -490,7 +491,9 @@ class LilyUtility(commands.Cog):
 
         sent_message = await channel_to_send.send(embed=embed, view=view)
         await ctx.reply(f"Reaction role message sent in {channel_to_send.mention}!")
+    '''
 
+    '''
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='telecast_message',description='Sends Message to All webhooks linked')
@@ -531,7 +534,8 @@ class LilyUtility(commands.Cog):
 
         except Exception as e:
             await ctx.send(f"An error occurred while telecasting: {e}")
-
+    '''
+            
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='latency',description='sends the latency of the bot')
     async def latency(self, ctx: commands.Context):

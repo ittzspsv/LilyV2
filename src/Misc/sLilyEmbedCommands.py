@@ -4,7 +4,7 @@ import discord
 import json
 import LilyLogging.sLilyLogging as LilyLogging
 import Config.sValueConfig as ValueConfig
-
+import LilyManagement.sLilyStaffManagement as LSM
 from discord import SelectOption, Interaction, ui
 
 from discord.ext import commands
@@ -17,8 +17,8 @@ class LilyEmbed(commands.Cog):
         self.bot = bot
 
 
-    @PermissionEvaluator(RoleAllowed=Config.StaffManagerRoles + Config.DeveloperRoles + Config.OwnerRoles + Config.StaffRoles)
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Manager', 'Head Administrator')))
+    @commands.cooldown(rate=1, per=80, type=commands.BucketType.user)
     @commands.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
     async def create_embed(self, ctx: commands.Context, channel_to_send: discord.TextChannel, * ,embed_json_config: str = "{}"):
         try:
@@ -52,7 +52,7 @@ class LilyEmbed(commands.Cog):
         except Exception as e:
             await ctx.send(f"Unhandled Exception: {str(e)}")
 
-    @PermissionEvaluator(RoleAllowed=Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name="create_formatted_embed", description="Creates a formatted embed with custom buttons using a set of instructions")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def create_formatted_embed(self, ctx:commands.Context, channel_to_send: discord.TextChannel, link: str = "", simulate_as:discord.Member=None):
@@ -179,7 +179,7 @@ class LilyEmbed(commands.Cog):
                 except:
                     pass
 
-    @PermissionEvaluator(RoleAllowed=Config.DeveloperRoles + Config.OwnerRoles)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name="update_formatted_embed", description="Update an existing formatted embed with a new config rule data")
     async def update_formatted_embed(self, ctx: commands.Context, link: str, simulate_as: discord.Member = None):

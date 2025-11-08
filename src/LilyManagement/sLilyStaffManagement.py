@@ -114,22 +114,28 @@ async def initialize():
     sdb = await aiosqlite.connect("storage/management/staff_management.db")
 
 async def GetRoles(role_names: tuple = ()):
-    global sdb
-    if not role_names:
+    try:
+        global sdb
+        if not role_names:
+            return []
+
+        placeholders = ",".join("?" for _ in role_names)
+        query = f"SELECT role_id FROM roles WHERE role_name IN ({placeholders})"
+        
+        cursor = await sdb.execute(query, role_names)
+        rows = await cursor.fetchall()
+        return [row[0] for row in rows]
+    except:
         return []
 
-    placeholders = ",".join("?" for _ in role_names)
-    query = f"SELECT role_id FROM roles WHERE role_name IN ({placeholders})"
-    
-    cursor = await sdb.execute(query, role_names)
-    rows = await cursor.fetchall()
-    return [row[0] for row in rows]
-
 async def GetBanRoles():
-    global sdb
-    cursor = await sdb.execute("SELECT role_id FROM roles WHERE ban_limit > 0")
-    rows = await cursor.fetchall()
-    return [row[0] for row in rows]
+    try:
+        global sdb
+        cursor = await sdb.execute("SELECT role_id FROM roles WHERE ban_limit > 0")
+        rows = await cursor.fetchall()
+        return [row[0] for row in rows]
+    except:
+        return []
 
 async def run_query(ctx: commands.Context, query: str):
     try:

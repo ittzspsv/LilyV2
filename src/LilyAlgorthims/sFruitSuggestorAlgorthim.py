@@ -28,7 +28,7 @@ async def fetch_all_fruits():
         })
     return fruits
 
-async def build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False):
+async def BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False):
     excluded = tuple(f.lower() for f in user_fruits) or ("",)
     
     category_map = {
@@ -97,7 +97,7 @@ async def build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gam
 
     return pool
 
-def generate_suggestion(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_attempts=15000, max_gamepass=2):
+def SuggestBuilder(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_attempts=15000, max_gamepass=2):
     if not pool:
         return []
 
@@ -159,13 +159,13 @@ async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, sug
     if overpay:
         total_value += total_value * 0.15
 
-    pool = await build_candidate_pool(user_fruits, suggest_permanent, suggest_gamepass, suggest_fruit_skins)
-    suggestion = generate_suggestion(pool, total_value)
+    pool = await BuildFruitFilterationMap(user_fruits, suggest_permanent, suggest_gamepass, suggest_fruit_skins)
+    suggestion = SuggestBuilder(pool, total_value)
 
     if not suggestion:
         total_value += total_value * 0.15
-        pool = await build_candidate_pool(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False)
-        suggestion = generate_suggestion(pool, total_value)
+        pool = await BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False)
+        suggestion = SuggestBuilder(pool, total_value)
 
     if not suggestion:
         return [], [], False

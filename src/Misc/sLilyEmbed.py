@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 
 TicketParseRegex = re.compile(r"^ticket-\d+$", re.IGNORECASE)
+
 def EmbedParser(config_str: str, ctx:discord.Member):
     embeds_to_display = []
     buttons = []
