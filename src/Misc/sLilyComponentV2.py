@@ -336,7 +336,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                 raise ValueError("Image generation failed.")
 
             buffer = io.BytesIO()
-            image.save(buffer, format="WebP", quality=20, optimize=True)
+            image.save(buffer, format="PNG")
             buffer.seek(0)
 
             try:
