@@ -113,6 +113,10 @@ async def initialize():
     global sdb
     sdb = await aiosqlite.connect("storage/management/staff_management.db")
 
+    #DDL SCHEMA INITIALIZATION
+    await sdb.execute("CREATE TABLE IF NOT EXISTS roles (role_id INTEGER PRIMARY KEY ,role_name TEXT NOT NULL UNIQUE,role_priority INTEGER NOT NULL, ban_limit INTEGER)")
+    await sdb.commit()
+
 async def GetRoles(role_names: tuple = ()):
     try:
         global sdb
