@@ -348,6 +348,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
 
         except Exception as e:
             try:
+                await interaction.delete_original_response()
                 await interaction.followup.send(
                     f"Failed to generate trade: {e}", ephemeral=True
                 )
