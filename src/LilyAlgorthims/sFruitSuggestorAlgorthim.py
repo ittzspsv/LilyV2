@@ -94,13 +94,19 @@ async def BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest
                 pool.append((name, "permanent", perm_val, "fruit"))
             if phys_val > 0:
                 pool.append((name, "physical", phys_val, "fruit"))
-    print("POOL : 1")
-    print(pool)
     return pool
 
-def SuggestBuilder(pool, target_value, min_ratio=0.80, max_ratio=1.1, max_attempts=15000, max_gamepass=2):
+def SuggestBuilder(pool, target_value, max_attempts=15000, max_gamepass=2, overpay=False):
     if not pool:
         return []
+
+    if not overpay:
+        min_ratio=0.80
+        max_ratio=1.1
+    else:
+        min_ratio=1.03
+        max_ratio=1.1
+
 
     target_min = int(target_value * min_ratio)
     target_max = int(target_value * max_ratio)
