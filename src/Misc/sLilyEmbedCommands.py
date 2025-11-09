@@ -18,7 +18,7 @@ class LilyEmbed(commands.Cog):
 
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Manager', 'Head Administrator')))
-    @commands.cooldown(rate=1, per=600, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=80, type=commands.BucketType.user)
     @commands.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
     async def create_embed(self, ctx: commands.Context, channel_to_send: discord.TextChannel, * ,embed_json_config: str = "{}"):
         try:
