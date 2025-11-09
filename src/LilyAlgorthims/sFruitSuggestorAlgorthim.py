@@ -59,7 +59,7 @@ async def BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest
     if not suggest_permanent:
         allowed_categories = [
             cat for cat, lvl in category_map.items()
-            if lvl >= user_max_rarity
+            if lvl >= abs(user_max_rarity - 1)
         ]
     else:
         allowed_categories = list(category_map.keys())
@@ -94,15 +94,18 @@ async def BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest
                 pool.append((name, "permanent", perm_val, "fruit"))
             if phys_val > 0:
                 pool.append((name, "physical", phys_val, "fruit"))
-
+    print("POOL : 1")
+    print(pool)
     return pool
 
-def SuggestBuilder(pool, target_value, min_ratio=1.03, max_ratio=1.1, max_attempts=15000, max_gamepass=2):
+def SuggestBuilder(pool, target_value, min_ratio=0.80, max_ratio=1.1, max_attempts=15000, max_gamepass=2):
     if not pool:
         return []
 
     target_min = int(target_value * min_ratio)
     target_max = int(target_value * max_ratio)
+
+
     best_valid = None
 
     for _ in range(max_attempts):
