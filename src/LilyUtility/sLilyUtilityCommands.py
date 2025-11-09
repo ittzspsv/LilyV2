@@ -541,11 +541,15 @@ class LilyUtility(commands.Cog):
     async def latency(self, ctx: commands.Context):
         await ctx.send(f'`{round(self.bot.latency * 1000, 2)}ms`')
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Manager')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='role',description='assign role or removes a specified role from the user')
     async def role(self, ctx: commands.Context, user: discord.Member, *, role_input: str):
-        if ctx.author.top_role <= user.top_role and ctx.author != ctx.guild.owner:
+        if (
+            ctx.author != ctx.guild.owner 
+            and ctx.author != user
+            and ctx.author.top_role <= user.top_role
+        ):
             return await ctx.send("You cannot modify someone with equal or higher top role.")
 
         role = None
@@ -575,7 +579,7 @@ class LilyUtility(commands.Cog):
             return await ctx.send(f"Removed role **{role.name}** from **{user.name}**.")
         else:
             await user.add_roles(role, reason=f"Role given by {ctx.author}")
-            return await ctx.send(f":Added role **{role.name}** to **{user.name}**.")
+            return await ctx.send(f"Added role **{role.name}** to **{user.name}**.")
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))
