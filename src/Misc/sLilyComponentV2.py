@@ -224,7 +224,7 @@ class BloxFruitStockComponent(discord.ui.LayoutView):
         return cls(stock_type, container_items)
 
 class TradeSuggestorComponent(discord.ui.LayoutView):
-    def __init__(self, bot, your_fruits, your_types, message):
+    def __init__(self, bot, your_fruits, your_types, message, neglect_fruits):
         super().__init__()
 
         self.bot = bot
@@ -241,6 +241,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         self.include_gamepass = False
         self.include_skins = False
         self.overpay = False
+        self.neglect_fruits = neglect_fruits
 
         self.message = message
 
@@ -320,7 +321,8 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                 self.include_permanent,
                 self.include_gamepass,
                 self.include_skins,
-                self.overpay
+                self.overpay,
+                self.neglect_fruits
             )
 
             if not success:

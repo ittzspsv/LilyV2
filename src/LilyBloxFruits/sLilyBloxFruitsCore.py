@@ -260,7 +260,8 @@ async def MessageEvaluate(self, bot, message):
                         await status_msg.edit(content=None, attachments=[file])
 
         elif await TFA.is_valid_trade_suggestor_format(message.content.lower()):
-            your_fruits1, your_fruit_types1, _, _ = await FDA.extract_trade_details(message.content)
+            msg = re.sub(r"(for\b.*?\b)nlf\b", r"\1", message.content.lower())
+            your_fruits1, your_fruit_types1, neglect_fruits, _ = await FDA.extract_trade_details(msg)
             ctx = await bot.get_context(message)
             if not ctx.guild:
                 return
@@ -283,7 +284,7 @@ async def MessageEvaluate(self, bot, message):
                 return
             
             
-            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message)
+            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, neglect_fruits)
             await message.reply(view=view)
 
         elif await TFA.is_valid_trade_suggestor_format_emoji(message.content):

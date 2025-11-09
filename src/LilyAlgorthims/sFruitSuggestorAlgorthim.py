@@ -28,33 +28,34 @@ async def fetch_all_fruits():
         })
     return fruits
 
-async def BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False):
+async def BuildFruitFilterationMap(user_fruits,suggest_permanent=False,suggest_gamepass=False,suggest_fruit_skins=False,neglect_fruits=[]):
     excluded = tuple(f.lower() for f in user_fruits) or ("",)
-    
+    neglected = tuple(f.lower() for f in neglect_fruits)
+
+    blocked_fruits = excluded + neglected
+
     category_map = {
-        'common'   : 1,
-        'uncommon' : 2,
-        'rare'     : 3,
+        'common': 1,
+        'uncommon': 2,
+        'rare': 3,
         'legendary': 4,
-        'mythical' : 5,
-        'gamepass' : 6
+        'mythical': 5,
+        'gamepass': 6
     }
 
-
     placeholders = ",".join("?" * len(excluded))
-    query = f"SELECT DISTINCT LOWER(category) FROM BF_ItemValues WHERE LOWER(name) IN ({placeholders})"
+    query = f"""
+        SELECT DISTINCT LOWER(category)
+        FROM BF_ItemValues
+        WHERE LOWER(name) IN ({placeholders})
+    """
+
     cursor = await VC.vdb.execute(query, excluded)
     user_categories = [row[0] for row in await cursor.fetchall()]
     await cursor.close()
 
-
     rarity_levels = [category_map[c] for c in user_categories if c in category_map]
-
-    if rarity_levels:
-        user_max_rarity = max(rarity_levels)
-    else:
-        user_max_rarity = 6 
-
+    user_max_rarity = max(rarity_levels) if rarity_levels else 6
 
     if not suggest_permanent:
         allowed_categories = [
@@ -64,25 +65,29 @@ async def BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest
     else:
         allowed_categories = list(category_map.keys())
 
-    if not suggest_gamepass:
-        allowed_categories.remove('gamepass')
+    if not suggest_gamepass and "gamepass" in allowed_categories:
+        allowed_categories.remove("gamepass")
+
+    all_blocked = blocked_fruits
+    blocked_placeholders = ",".join("?" * len(all_blocked))
+    category_placeholders = ",".join("?" * len(allowed_categories))
 
     base_query = f"""
         SELECT name, category, physical_value, permanent_value
         FROM BF_ItemValues
-        WHERE LOWER(name) NOT IN ({placeholders})
-          AND LOWER(category) IN ({",".join("?" * len(allowed_categories))})
+        WHERE LOWER(name) NOT IN ({blocked_placeholders})
+          AND LOWER(category) IN ({category_placeholders})
           AND LOWER(category) != 'limited'
     """
 
     if not suggest_fruit_skins:
         base_query += " AND LOWER(category) != 'limited skin'"
 
-    params = list(excluded) + allowed_categories
+    params = list(all_blocked) + allowed_categories
+
     cursor = await VC.vdb.execute(base_query, params)
     rows = await cursor.fetchall()
     await cursor.close()
-
 
     pool = []
     for name, category, phys_val, perm_val in rows:
@@ -94,6 +99,7 @@ async def BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest
                 pool.append((name, "permanent", perm_val, "fruit"))
             if phys_val > 0:
                 pool.append((name, "physical", phys_val, "fruit"))
+
     return pool
 
 def SuggestBuilder(pool, target_value, max_attempts=15000, max_gamepass=2, overpay=False):
@@ -159,7 +165,97 @@ def SuggestBuilder(pool, target_value, max_attempts=15000, max_gamepass=2, overp
 
     return best_valid or []
 
-async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False, overpay=False):
+'''
+def SuggestBuilder(pool, target_value, max_attempts=15000, max_gamepass=2, overpay=False):
+    if not pool:
+        return []
+
+    if not overpay:
+        min_ratio = 0.80
+        max_ratio = 1.10
+    else:
+        min_ratio = 1.03
+        max_ratio = 1.10
+
+    target_min = int(target_value * min_ratio)
+    target_max = int(target_value * max_ratio)
+
+    # -----------------------------------------------------------
+    # INTERNAL FUNCTION → used twice (no-duplicate & duplicate mode)
+    # -----------------------------------------------------------
+    def attempt_build(allow_duplicates: bool):
+        best_valid = None
+
+        for _ in range(max_attempts):
+            selected = []
+            total = 0
+            perm_count = 0
+            gp_count = 0
+
+            attempt_pool = pool.copy()
+            random.shuffle(attempt_pool)
+
+            while len(selected) < 4 and attempt_pool:
+                item = random.choice(attempt_pool)
+                name, ftype, val, category = item
+
+                # ✨ Duplicate restriction (only if disabled)
+                if not allow_duplicates:
+                    if any(s[0] == name for s in selected):
+                        attempt_pool.remove(item)
+                        continue
+
+                # Permanent limit
+                if ftype == "permanent" and perm_count >= 1:
+                    attempt_pool.remove(item)
+                    continue
+
+                # Gamepass limit
+                if category == "gamepass" and gp_count >= max_gamepass:
+                    attempt_pool.remove(item)
+                    continue
+
+                # Can't exceed max allowed range
+                if total + val > target_max:
+                    attempt_pool.remove(item)
+                    continue
+
+                # Accept the fruit
+                selected.append(item)
+                total += val
+
+                if ftype == "permanent":
+                    perm_count += 1
+                if category == "gamepass":
+                    gp_count += 1
+
+                # If valid range reached, return immediately
+                if target_min <= total <= target_max:
+                    return selected
+
+            # (keep best attempt even if not perfect)
+            if total >= target_min and (
+                best_valid is None or abs(total - target_value) <
+                abs(sum(v[2] for v in best_valid) - target_value)
+            ):
+                best_valid = selected
+
+        return best_valid or []
+
+    # -----------------------------------------------------------
+    # 1) Try normal mode first (no duplicates)
+    # -----------------------------------------------------------
+    result = attempt_build(allow_duplicates=False)
+    if result:
+        return result
+
+    # -----------------------------------------------------------
+    # 2) Fallback: allow duplicates to improve matching
+    # -----------------------------------------------------------
+    return attempt_build(allow_duplicates=True)
+'''
+
+async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False, overpay=False, neglect_fruits=[]):
     total_value = 0
 
     for name, ftype in zip(user_fruits, fruit_types):
@@ -168,12 +264,12 @@ async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, sug
     if overpay:
         total_value += total_value * 0.15
 
-    pool = await BuildFruitFilterationMap(user_fruits, suggest_permanent, suggest_gamepass, suggest_fruit_skins)
+    pool = await BuildFruitFilterationMap(user_fruits, suggest_permanent, suggest_gamepass, suggest_fruit_skins, neglect_fruits)
     suggestion = SuggestBuilder(pool, total_value)
 
     if not suggestion:
         total_value += total_value * 0.15
-        pool = await BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False)
+        pool = await BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False, neglect_fruits=neglect_fruits)
         suggestion = SuggestBuilder(pool, total_value)
 
     if not suggestion:

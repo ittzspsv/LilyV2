@@ -116,6 +116,8 @@ async def is_valid_trade_format(message):
         trade_parts = message.split(" for ")
         if len(trade_parts) < 2:
             return False
+        if "nlf" in trade_parts[1].split():
+            return False
 
         clean_your_side = predict_trade_message(trade_parts[0], TradeInitializer)
         clean_their_side = predict_trade_message(trade_parts[1], OpponentTradeSplitter)
@@ -196,9 +198,16 @@ async def is_valid_emoji_trade_format(message: str):
 
 async def is_valid_trade_suggestor_format(message: str):
     try:
-        your_fruits, garbage1, their_fruits, garbage2 = await FDA.extract_trade_details(message)
-        
+        msg = message.lower().strip()
+        trimmed = re.sub(r"(for\b.*?\bnlf\b).*", r"\1", msg)
+
+        if "nlf" in trimmed:
+            trimmed = trimmed[:trimmed.find("nlf")].strip()
+
+        your_fruits, _, their_fruits, _ = await FDA.extract_trade_details(trimmed)
+
         return bool((bool(your_fruits) != bool(their_fruits)))
+
     except:
         return False
 
