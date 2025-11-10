@@ -184,8 +184,6 @@ class MyBot(commands.Bot):
 
         if message.channel.id in LilyLeveling.config['AllowedChannels']:
             await LilyLeveling.LevelProcessor(message)
-
-        await bot.RespondProcessor(message) 
           
         await LBFC.MessageEvaluate(self, bot, message)
 

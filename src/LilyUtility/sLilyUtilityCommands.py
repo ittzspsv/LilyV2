@@ -1,6 +1,5 @@
 from LilyRulesets.sLilyRulesets import PermissionEvaluator, rPermissionEvaluator
 import LilyLogging.sLilyLogging as LilyLogging
-import LilyModeration.sLilyRoleManagement as rLily
 import LilyLeveling.sLilyLevelingCore as LLC
 import LilyModeration.sLilyModeration as mLily
 import re
