@@ -4,10 +4,7 @@ import Config.sBotDetails as Config
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
 
 import LilyModeration.sLilyModeration as mLily
-import Misc.sLilyEmbed as LilyEmbed
 import LilyBloxFruits.sLilyBloxFruitsCore as LBFC
-import LilyResponse.sLilyResponse as aiLily
-import LilyGAG.sLilyGAGCore as LGAG
 import LilyLeveling.sLilyLevelingCore as LilyLeveling
 import LilyLogging.sLilyLogging as LilyLogging
 import Config.sValueConfig as ValueConfig
@@ -45,7 +42,6 @@ class MyBot(commands.Bot):
             "LilyLogging.sLilyLoggingCommands",
             "LilyBloxFruits.sLilyBloxFruitsCommands",
             "Misc.sLilyEmbedCommands",
-            "LilyResponse.sLilyResponseCommands",
             # "LilyGAG.sLilyGAGCommands",
             "LilyTicketTool.LilyTicketToolCommands",
             # "LilyLeveling.sLilyLevelingCommands",
@@ -167,29 +163,7 @@ class MyBot(commands.Bot):
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
-
-    async def on_guild_channel_create(self, channel):
-        if isinstance(channel, discord.TextChannel):
-            if LilyEmbed.TicketParseRegex.match(channel.name):
-                print(f"Ticket channel created: {channel.name}")
-                try:
-                    await asyncio.sleep(1.5)
-                    async for message in channel.history(oldest_first=False):
-                        if message.author.bot and message.embeds and message.content:
-                            ticket_opener_id, reason, scammer_match = LilyEmbed.ParseTicketEmbed(message)
-                            response_text, channel_id, delete_message, emoji_to_react, medias = aiLily.get_response(reason)
-                            if response_text:
-                                await channel.send(f"<@{ticket_opener_id}> {response_text}")
-
-                except Exception as e:
-                    print(f"Exception here: {e}")
-
-    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        try:
-            await mLily.VerifyVMute(self, bot, member, before, after)
-        except Exception as e:
-            return
-    
+ 
     async def has_role(self, user, role_id):
         role = discord.utils.get(user.roles, id=int(role_id))
         return role is not None
@@ -203,75 +177,6 @@ class MyBot(commands.Bot):
             await channel.send(view=View, file=discord.File("src/ui/Border.png", filename="border.png"))
         except:
             return
-
-    async def ConditionEvaluator(self, user, condition):
-        match = re.match(r'<(hasrole|isuser) (\d+)> \? (.+) : (.+)', condition)
-        if match:
-            check_type, check_value, true_value, false_value = match.groups()
-
-            if check_type == 'hasrole':
-                if await bot.has_role(user, check_value):
-                    return true_value
-                else:
-                    return false_value
-            elif check_type == 'isuser':
-                if await bot.is_user(user, check_value):
-                    return true_value
-                else:
-                    return false_value
-        return condition
-
-    async def RespondProcessor(self, message):
-        try:
-            feature_cache = open("src/Config/BotFeatures.txt", "r")
-            feature_int = feature_cache.read()
-            print(feature_int)
-        except Exception as e:
-            feature_int = 0
-        if int(feature_int) == 0:
-                return
-        response_text, channel_id, delete_message, emoji_to_react, medias,whitelist_roles = aiLily.get_response(message.content)
-        if response_text and (message.channel.id in channel_id or re.match(r"^ticket-\d{4}$", message.channel.name)):
-            if any(role.id in whitelist_roles for role in message.author.roles):
-                return
-            response_text = re.sub(r'\{user\.name}', message.author.name, response_text)
-
-            conditions = re.findall(r'\{(<(hasrole|isuser) \d+> \? .*? : .*?)\}', response_text)
-            for condition_tuple in conditions:
-                condition = condition_tuple[0]
-                evaluated_value = await bot.ConditionEvaluator(message.author, condition)
-                response_text = response_text.replace(f'{{{condition}}}', evaluated_value)
-
-            for media in medias:
-                    m_parser = media.split("=")
-                    if "img" in m_parser:
-                        try:
-                            imglink = m_parser[1]
-                        except Exception as e:
-                            imglink = ""
-                    if "gif" in m_parser:
-                        try:
-                            giflink = m_parser[1]
-                        except Exception as e:
-                            giflink = ""
-            if delete_message.lower() == "false":
-                for emoji in emoji_to_react:
-                    try:
-                        await message.add_reaction(emoji)
-                    except discord.HTTPException as e:
-                        print(f"Failed to add reaction {emoji}: {e}")
-                await message.reply(f'{response_text}')
-                try:
-                    await message.channel.send(giflink)
-                except:
-                    pass
-            else:
-                await message.delete()
-                await message.channel.send(f"{message.author.mention} {response_text}")
-                try:
-                    await message.channel.send(giflink)
-                except Exception as e:
-                    print(e)
 
     async def on_message(self, message:discord.Message): 
         if message.author == self.user:
