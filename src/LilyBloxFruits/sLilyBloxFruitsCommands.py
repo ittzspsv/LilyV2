@@ -22,6 +22,7 @@ class LilyBloxFruits(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    '''
     @commands.hybrid_command(name='combo_lookup_by_id', description='looks for a specific combo, ref=id')
     async def combo_lookup_by_id(self, ctx:commands.Context, id:str=""):
                         try:
@@ -136,7 +137,7 @@ class LilyBloxFruits(commands.Cog):
             await ctx.send("Success!")
         except Exception as e:
             await ctx.send(e)
-
+    '''
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='update_image_blox_fruits', description='reloads combo data if any changes is done')
     async def UpdateImageBloxFruits(self, ctx: commands.Context, name: str = ""):

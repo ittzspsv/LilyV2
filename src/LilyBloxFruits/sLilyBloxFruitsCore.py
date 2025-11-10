@@ -314,6 +314,7 @@ async def MessageEvaluate(self, bot, message):
             view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message)
             await message.reply(view=view)
 
+        '''
         elif LCM.ComboScope(message.content.lower()) != None:
                     try:
                         ctx = await bot.get_context(message)
@@ -468,3 +469,8 @@ async def MessageEvaluate(self, bot, message):
                             await message.reply(f"Exception {e}")
                     else:
                         pass
+                    
+        '''
+                        
+
+                    

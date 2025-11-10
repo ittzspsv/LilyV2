@@ -1,7 +1,6 @@
 import discord
 import os
 import pytz
-import polars as pl
 import re
 import LilyManagement.sLilyStaffManagement as LSM
 
@@ -13,20 +12,6 @@ from datetime import datetime, timedelta, timezone
 from collections import Counter, defaultdict
 from discord.utils import utcnow
 
-
-async def VerifyVMute(self, bot, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        if after.channel and before.channel != after.channel:
-            channel = bot.get_channel(1324581275276935283)
-            await CheckVoiceMuted(member, channel)
-
-def evaluate_log_file(filename):
-    if not os.path.exists(filename):
-        df = pl.DataFrame({
-            "banned_user_id": pl.Series([], dtype=pl.Int64),
-            "reason": pl.Series([], dtype=pl.Utf8),
-            "ban_time": pl.Series([], dtype=pl.Datetime)
-        })
-        df.write_csv(filename)
 
 async def exceeded_ban_limit(ctx: commands.Context, moderator_id: int, moderator_role_ids: list[int]):
     if not moderator_role_ids:
@@ -586,50 +571,6 @@ async def unmute(ctx, user: discord.Member):
     except Exception as e:
         await ctx.send(embed=SimpleEmbed(f"Exception: {e}"))
 
-async def CheckVoiceMuted(member: discord.Member, channel: discord.TextChannel):
-    folder_path = f"storage/{970643838047760384}/vcmutelogs"
-    CSV_PATH = f"{folder_path}/logs.csv"
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-    try:
-        if not os.path.exists(CSV_PATH):
-            df = pl.DataFrame({
-                "user_id": [],
-                "unmute_time": [],
-                "reason": [],
-            })
-            df.write_csv(CSV_PATH)
-
-        df = pl.read_csv(CSV_PATH, try_parse_dates=True)
-
-        user_df = df.filter(
-            pl.col("user_id") == member.id
-        )
-
-        if user_df.is_empty():
-            return
-
-        unmute_time = user_df[0, "unmute_time"]
-        reason = user_df[0, "reason"]
-        if isinstance(unmute_time, str):
-            unmute_time = datetime.fromisoformat(unmute_time)
-
-        now = datetime.now()
-
-        if now >= unmute_time:
-            df = df.filter(~(pl.col("user_id") == member.id))
-            df.write_csv(CSV_PATH)
-
-        else:
-            await member.move_to(None, reason=f"Still muted due to {reason}")
-            remaining = unmute_time - now
-            try:
-                await channel.send(content=f"{member.mention }", embed=SimpleEmbed(f"You have been muted in voice channels until **{str(remaining).split('.')[0]}** due to: {reason}."))
-            except discord.Forbidden:
-                pass
-
-    except Exception as e:
-        print(f"[Voice Mute Error] {e}")
 
 async def warn(ctx: commands.Context, member: discord.Member, reason: str):
     await LilyLogging.LogModerationAction(ctx, ctx.author.id, member.id, "warn", reason)
@@ -648,84 +589,3 @@ async def warn(ctx: commands.Context, member: discord.Member, reason: str):
         await ctx.send(f"Could not DM {member.mention}")
 
     await ctx.send(f"{member.mention} has been warned")
-
-async def VoiceMute(member: discord.Member, mute_duration: str, reason: str, channel: discord.TextChannel):
-    folder_path = f"storage/{970643838047760384}/vcmutelogs"
-    CSV_PATH = f"{folder_path}/logs.csv"
-
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-
-    try:
-        mute_seconds = MuteParser(mute_duration)
-        unmute_time = datetime.now() + timedelta(seconds=mute_seconds)
-        unmute_time_str = unmute_time.isoformat()
-
-        if not os.path.exists(CSV_PATH):
-            df = pl.DataFrame({
-                "user_id": pl.Series([], dtype=pl.Utf8),
-                "unmute_time": pl.Series([], dtype=pl.Utf8),
-                "reason": pl.Series([], dtype=pl.Utf8),
-            })
-            df.write_csv(CSV_PATH)
-
-        df = pl.read_csv(CSV_PATH, try_parse_dates=True)
-
-        df = df.with_columns([
-            pl.col("user_id").cast(pl.Utf8),
-            pl.col("unmute_time").cast(pl.Utf8),
-            pl.col("reason").cast(pl.Utf8),
-        ])
-
-        if df.filter(pl.col("user_id") == str(member.id)).height > 0:
-            await channel.send(embed=SimpleEmbed(f"**{member.mention}** is already muted."))
-            return
-        
-        new_row = pl.DataFrame({
-            "user_id": [str(member.id)],
-            "unmute_time": [unmute_time_str],
-            "reason": [reason],
-        })
-        df = df.vstack(new_row)
-        df.write_csv(CSV_PATH)
-
-        if member.voice:
-            await member.move_to(None, reason=f"Muted for {reason}")
-
-        try:
-            await channel.send(embed=SimpleEmbed(f"Muted **{member.mention}** for **{mute_duration}**. Reason: **{reason}**."))
-        except discord.Forbidden:
-            pass
-
-    except Exception as e:
-        if channel:
-            await channel.send(embed=SimpleEmbed(f"Exception: {e}"))
-
-async def VoiceUnmute(member: discord.Member, channel: discord.TextChannel = None):
-    folder_path = f"storage/{970643838047760384}/vcmutelogs"
-    CSV_PATH = f"{folder_path}/logs.csv"
-
-    if not os.path.exists(CSV_PATH):
-        if channel:
-            await channel.send(embed=SimpleEmbed(f"No mute log found for {member.mention}."))
-        return
-
-    try:
-        df = pl.read_csv(CSV_PATH, try_parse_dates=True)
-
-        original_len = len(df)
-        df = df.filter(pl.col("user_id") != member.id)
-
-        df.write_csv(CSV_PATH)
-
-        if len(df) < original_len:
-            if channel:
-                await channel.send(embed=SimpleEmbed(f"{member.mention} has been **Unmuted** from **Voice Channels**"))
-        else:
-            if channel:
-                await channel.send(embed=SimpleEmbed(f"{member.mention} has not been muted from voice channels"))
-    
-    except Exception as e:
-        print(f"Exception in VoiceUnmute: {e}")
-        if channel:
-            await channel.send(embed=SimpleEmbed(f"Exception {e}"))
