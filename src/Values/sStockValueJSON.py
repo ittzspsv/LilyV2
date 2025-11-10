@@ -1,6 +1,4 @@
 import json
-import aiosqlite
-import asyncio
 try:
     import Config.sValueConfig as VC
     import Config.sBotDetails as Config
