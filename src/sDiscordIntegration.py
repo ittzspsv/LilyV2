@@ -40,7 +40,6 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
         extensions = [
             "LilyModeration.sLilyModerationCommands",
-            "LilyVouch.sLilyVouchCommands",
             "LilyUtility.sLilyUtilityCommands",
             "LilyManagement.sLilyStaffManagementCommands",
             "LilyLogging.sLilyLoggingCommands",

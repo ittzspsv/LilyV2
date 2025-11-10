@@ -242,6 +242,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         self.include_skins = False
         self.overpay = False
         self.neglect_fruits = neglect_fruits
+        self.storage_capacity = 1
 
         self.message = message
 
@@ -265,6 +266,29 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         )
         self.pricing_select.callback = self.pricing_select_callback
 
+        self.storage_select = discord.ui.Select(
+                custom_id="storage_select",
+                options=[
+                    discord.SelectOption(
+                        label="1",
+                        value="1",
+                    ),
+                    discord.SelectOption(
+                        label="2",
+                        value="2",
+                    ),
+                    discord.SelectOption(
+                        label="3",
+                        value="3",
+                    ),
+                    discord.SelectOption(
+                        label="4",
+                        value="4",
+                    ),
+                ],
+            )
+        self.storage_select.callback = self.storage_select_callback
+
         self.suggest_button = discord.ui.Button(
             style=discord.ButtonStyle.secondary,
             label="Suggest Trade",
@@ -278,6 +302,8 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
             discord.ui.ActionRow(self.basic_select),
             discord.ui.TextDisplay(content="**TRADE PRICING SUGGESTIONS**"),
             discord.ui.ActionRow(self.pricing_select),
+            discord.ui.TextDisplay(content="**TOTAL FRUIT CAPACITY**"),
+            discord.ui.ActionRow(self.storage_select),
             discord.ui.ActionRow(self.suggest_button),
             accent_colour=discord.Colour(786687),
         )
@@ -302,6 +328,15 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
             f"You selected: {selected}", ephemeral=True
         )
 
+    async def storage_select_callback(self, interaction: discord.Interaction):
+        selected = self.storage_select.values[0]
+
+        self.storage_capacity = int(selected)
+
+        await interaction.response.send_message(
+            f"Your Max Fruit Storage Capacity is {selected}", ephemeral=True
+        )
+
 
     async def pricing_select_callback(self, interaction: discord.Interaction):
         selected = self.pricing_select.values[0]
@@ -322,7 +357,8 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                 self.include_gamepass,
                 self.include_skins,
                 self.overpay,
-                self.neglect_fruits
+                self.neglect_fruits,
+                self.storage_capacity
             )
 
             if not success:

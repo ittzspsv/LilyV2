@@ -102,71 +102,8 @@ async def BuildFruitFilterationMap(user_fruits,suggest_permanent=False,suggest_g
 
     return pool
 
-def SuggestBuilder(pool, target_value, max_attempts=15000, max_gamepass=2, overpay=False):
-    if not pool:
-        return []
 
-    if not overpay:
-        min_ratio=0.80
-        max_ratio=1.1
-    else:
-        min_ratio=1.03
-        max_ratio=1.1
-
-
-    target_min = int(target_value * min_ratio)
-    target_max = int(target_value * max_ratio)
-
-
-    best_valid = None
-
-    for _ in range(max_attempts):
-        selected = []
-        total = 0
-        perm_count = 0
-        gp_count = 0
-
-        attempt_pool = pool.copy()
-        random.shuffle(attempt_pool)
-
-        while len(selected) < 4 and attempt_pool:
-            item = random.choice(attempt_pool)
-            attempt_pool.remove(item)
-
-            name, ftype, val, category = item
-
-            if any(s[0] == name for s in selected):
-                continue
-
-            if ftype == "permanent" and perm_count >= 1:
-                continue
-            if category == "gamepass" and gp_count >= max_gamepass:
-                continue
-
-            if total + val > target_max:
-                continue
-
-            selected.append(item)
-            total += val
-
-            if ftype == "permanent":
-                perm_count += 1
-            if category == "gamepass":
-                gp_count += 1
-
-            if target_min <= total <= target_max:
-                break
-
-        if target_min <= total <= target_max:
-            return selected
-
-        if total >= target_min and (best_valid is None or abs(total - target_value) < abs(sum(v[2] for v in best_valid) - target_value)):
-            best_valid = selected
-
-    return best_valid or []
-
-'''
-def SuggestBuilder(pool, target_value, max_attempts=15000, max_gamepass=2, overpay=False):
+def SuggestBuilder(pool, target_value, max_gamepass=2, overpay=False,storage_capacity=1, max_items=4):
     if not pool:
         return []
 
@@ -180,82 +117,49 @@ def SuggestBuilder(pool, target_value, max_attempts=15000, max_gamepass=2, overp
     target_min = int(target_value * min_ratio)
     target_max = int(target_value * max_ratio)
 
-    # -----------------------------------------------------------
-    # INTERNAL FUNCTION → used twice (no-duplicate & duplicate mode)
-    # -----------------------------------------------------------
-    def attempt_build(allow_duplicates: bool):
-        best_valid = None
+    expanded_items = []
+    for name, ftype, val, category in pool:
+        for _ in range(storage_capacity):
+            expanded_items.append((name, ftype, val, category))
 
-        for _ in range(max_attempts):
-            selected = []
-            total = 0
-            perm_count = 0
-            gp_count = 0
+    dp = {0: (0, 0, 0, [])}
 
-            attempt_pool = pool.copy()
-            random.shuffle(attempt_pool)
+    for name, ftype, val, category in expanded_items:
+        new_dp = dp.copy()
+        for total, (item_count, perm_count, gp_count, sel) in dp.items():
+            if item_count + 1 > max_items:
+                continue
+            if ftype == "permanent" and perm_count >= 1:
+                continue
+            if category == "gamepass" and gp_count + 1 > max_gamepass:
+                continue
+            new_total = total + val
+            if new_total > target_max:
+                continue
 
-            while len(selected) < 4 and attempt_pool:
-                item = random.choice(attempt_pool)
-                name, ftype, val, category = item
+            new_perm = perm_count + (1 if ftype == "permanent" else 0)
+            new_gp = gp_count + (1 if category == "gamepass" else 0)
+            new_sel = sel + [(name, ftype, val, category)]
 
-                # ✨ Duplicate restriction (only if disabled)
-                if not allow_duplicates:
-                    if any(s[0] == name for s in selected):
-                        attempt_pool.remove(item)
-                        continue
+            if new_total not in new_dp or abs(new_total - target_value) < abs(new_total - target_value):
+                new_dp[new_total] = (item_count + 1, new_perm, new_gp, new_sel)
 
-                # Permanent limit
-                if ftype == "permanent" and perm_count >= 1:
-                    attempt_pool.remove(item)
-                    continue
+        dp = new_dp
 
-                # Gamepass limit
-                if category == "gamepass" and gp_count >= max_gamepass:
-                    attempt_pool.remove(item)
-                    continue
+    best_total = None
+    best_diff = float('inf')
+    best_selection = []
 
-                # Can't exceed max allowed range
-                if total + val > target_max:
-                    attempt_pool.remove(item)
-                    continue
+    for total, (_, _, _, sel) in dp.items():
+        diff = abs(total - target_value)
+        if target_min <= total <= target_max and diff < best_diff:
+            best_diff = diff
+            best_total = total
+            best_selection = sel
 
-                # Accept the fruit
-                selected.append(item)
-                total += val
+    return best_selection
 
-                if ftype == "permanent":
-                    perm_count += 1
-                if category == "gamepass":
-                    gp_count += 1
-
-                # If valid range reached, return immediately
-                if target_min <= total <= target_max:
-                    return selected
-
-            # (keep best attempt even if not perfect)
-            if total >= target_min and (
-                best_valid is None or abs(total - target_value) <
-                abs(sum(v[2] for v in best_valid) - target_value)
-            ):
-                best_valid = selected
-
-        return best_valid or []
-
-    # -----------------------------------------------------------
-    # 1) Try normal mode first (no duplicates)
-    # -----------------------------------------------------------
-    result = attempt_build(allow_duplicates=False)
-    if result:
-        return result
-
-    # -----------------------------------------------------------
-    # 2) Fallback: allow duplicates to improve matching
-    # -----------------------------------------------------------
-    return attempt_build(allow_duplicates=True)
-'''
-
-async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False, overpay=False, neglect_fruits=[]):
+async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False, overpay=False, neglect_fruits=[], storage_capacity=1):
     total_value = 0
 
     for name, ftype in zip(user_fruits, fruit_types):
@@ -265,12 +169,12 @@ async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, sug
         total_value += total_value * 0.15
 
     pool = await BuildFruitFilterationMap(user_fruits, suggest_permanent, suggest_gamepass, suggest_fruit_skins, neglect_fruits)
-    suggestion = SuggestBuilder(pool, total_value)
+    suggestion = SuggestBuilder(pool=pool, target_value=total_value, storage_capacity=storage_capacity)
 
     if not suggestion:
         total_value += total_value * 0.15
         pool = await BuildFruitFilterationMap(user_fruits, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False, neglect_fruits=neglect_fruits)
-        suggestion = SuggestBuilder(pool, total_value)
+        suggestion = SuggestBuilder(pool=pool, target_value=total_value, storage_capacity=storage_capacity)
 
     if not suggestion:
         return [], [], False

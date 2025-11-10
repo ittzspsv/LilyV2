@@ -9,7 +9,6 @@ import Combo.LilyComboManager as LCM
 import ui.sStockGenerator as SG
 import Config.sBotDetails as Config
 import LilyAlgorthims.sTradeFormatAlgorthim as TFA
-from Stock.sCurrentStock import *
 import Values.sStockValueJSON as StockValueJSON
 import Config.sValueConfig as LilyConfig
 from Misc.sFruitImageFetcher import *
