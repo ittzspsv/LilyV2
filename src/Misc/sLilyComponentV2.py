@@ -4,6 +4,34 @@ import io
 import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
 import Values.sStockValueJSON as StockValueJSON
 
+def format_currency(val):
+    value = int(val)
+    if value >= 1_000_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000_000:.1f}DX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000:.1f}NX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000:.1f}OX"
+    elif value >= 1_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000:.1f}SPX"
+    elif value >= 1_000_000_000_000_000_000_000: 
+        return f"{value / 1_000_000_000_000_000_000_000:.1f}SX"
+    elif value >= 1_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000:.1f}QI"
+    elif value >= 1_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000:.1f}QT"
+    elif value >= 1_000_000_000_000: 
+        return f"{value / 1_000_000_000_000:.1f}T"
+    elif value >= 1_000_000_000:  
+        return f"{value / 1_000_000_000:.1f}B"
+    elif value >= 1_000_000:  
+        return f"{value / 1_000_000:.1f}M"
+    elif value >= 1_000:  
+        return f"{value / 1_000:.1f}k"
+    else:
+        return str(int(value))
+
+
 class GAGPetValueComponent(discord.ui.LayoutView):
     def __init__(self, value, weight, age, name,link, mutations, pet_classifications):
         super().__init__()
@@ -224,7 +252,7 @@ class BloxFruitStockComponent(discord.ui.LayoutView):
         return cls(stock_type, container_items)
 
 class TradeSuggestorComponent(discord.ui.LayoutView):
-    def __init__(self, bot, your_fruits, your_types, message, neglect_fruits):
+    def __init__(self, bot, your_fruits, your_types, message, neglect_fruits, type):
         super().__init__()
 
         self.bot = bot
@@ -245,6 +273,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         self.storage_capacity = 1
 
         self.message = message
+        self.type = type
 
         self.basic_select = discord.ui.Select(
             custom_id="basic_select",
@@ -349,6 +378,8 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
 
     async def suggest_button_callback(self, interaction: discord.Interaction):
         try:
+            if interaction.user.id != self.message.author.id:
+                raise ValueError("You Cannot Use this")
             await interaction.response.defer()
 
             their_fruits, their_types, success = await FSA.trade_suggestor(
@@ -364,25 +395,81 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
             if not success:
                 raise ValueError("Trade suggestion failed.")
 
-            image = await StockValueJSON.j_LorW(
-                self.your_fruits, self.your_types,
-                their_fruits, their_types,
-                1, 1
-            )
+            if type == 1:
+                image = await StockValueJSON.j_LorW(
+                    self.your_fruits, self.your_types,
+                    their_fruits, their_types,
+                    1, 1
+                )
 
-            if image is None:
-                raise ValueError("Image generation failed.")
+                if image is None:
+                    raise ValueError("Image generation failed.")
 
-            buffer = io.BytesIO()
-            image.save(buffer, format="PNG")
-            buffer.seek(0)
+                buffer = io.BytesIO()
+                image.save(buffer, format="PNG")
+                buffer.seek(0)
 
-            try:
-                await interaction.delete_original_response()
-            except:
-                pass  
+                try:
+                    await interaction.delete_original_response()
+                except:
+                    pass  
 
-            await self.message.reply(file=discord.File(fp=buffer, filename="trade_result.webp"),)
+                await self.message.reply(file=discord.File(fp=buffer, filename="trade_result.webp"),)
+            else:
+                            ctx = await self.bot.get_context(self.message)
+                            data = image = await StockValueJSON.j_LorW(
+                                self.your_fruits, self.your_types,
+                                their_fruits, their_types, 0
+                            )
+
+                            your_fruit_details = ""
+                            their_fruit_details = ""
+
+                            for i in range(len(self.your_fruits)):
+                                fruit_name = self.your_fruits[i].replace(" ", "")
+                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
+                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+
+                                value = data['Your_IndividualValues'][i]
+                                formatted_value = f"{value:,}"
+                                your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+
+                            for i in range(len(their_fruits)):
+                                fruit_name = their_fruits[i].replace(" ", "")
+                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
+                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+
+                                value = data['Their_IndividualValues'][i]
+                                formatted_value = f"{value:,}"
+                                their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+
+                            embed = discord.Embed(title=data['TradeConclusion'],
+                                description=f"**{data['TradeDescription']}**",
+                                colour=data['ColorKey'])
+
+                            embed.set_author(name="Lily Fruit Suggestor")
+
+                            embed.add_field(name="Your Fruit Values",
+                                            value=your_fruit_details,
+                                            inline=True)
+                            embed.add_field(name="Their Fruit Values",
+                                            value=their_fruit_details,
+                                            inline=True)
+                            embed.add_field(name="Your Total Values:",
+                                            value=format_currency(data['Your_TotalValue']),
+                                            inline=False)
+                            embed.add_field(name="Their Total Values:",
+                                            value=format_currency(data['Their_TotalValue']),
+                                            inline=False)
+                            embed.add_field(name=data['Percentage'],
+                                            value="",
+                                            inline=False)
+                            
+                            try:
+                                await interaction.delete_original_response()
+                            except:
+                                pass
+                            await self.message.reply(content=None, embed=embed)
 
         except Exception as e:
             try:

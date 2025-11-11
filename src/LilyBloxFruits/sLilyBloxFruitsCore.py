@@ -1,9 +1,8 @@
 import discord
 
-import Config.sValueConfig as VC
+
 import LilyAlgorthims.sFruitDetectionAlgorthimEmoji as FDAE
 import LilyAlgorthims.sFruitDetectionAlgorthim as FDA
-import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
 import LilyAlgorthims.sStockProcessorAlgorthim as SPA
 import Combo.LilyComboManager as LCM
 import ui.sStockGenerator as SG
@@ -18,11 +17,46 @@ import ui.sComboImageGenerator as CIG
 import aiohttp
 
 import re
-import json
 import io
-import ast
+
+
+def format_currency(val):
+    value = int(val)
+    if value >= 1_000_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000_000:.1f}DX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000:.1f}NX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000:.1f}OX"
+    elif value >= 1_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000:.1f}SPX"
+    elif value >= 1_000_000_000_000_000_000_000: 
+        return f"{value / 1_000_000_000_000_000_000_000:.1f}SX"
+    elif value >= 1_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000:.1f}QI"
+    elif value >= 1_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000:.1f}QT"
+    elif value >= 1_000_000_000_000: 
+        return f"{value / 1_000_000_000_000:.1f}T"
+    elif value >= 1_000_000_000:  
+        return f"{value / 1_000_000_000:.1f}B"
+    elif value >= 1_000_000:  
+        return f"{value / 1_000_000:.1f}M"
+    elif value >= 1_000:  
+        return f"{value / 1_000:.1f}k"
+    else:
+        return str(int(value))
+
 
 async def MessageEvaluate(self, bot, message):
+        
+        try:
+            cursor1 = await LilyConfig.cdb.execute("SELECT WORLImage, FruitValuesImage FROM GlobalConfigs")
+            config_rows = cursor1.fetchone()
+        except:
+            config_rows = (0, 0)
+
+
         if message.guild and message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.stock_fetch_channel_id:
             try:
                 cursor = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'StockImage'")
@@ -149,7 +183,7 @@ async def MessageEvaluate(self, bot, message):
                 item_name = match.group(1).strip()
                 item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
 
-                cursor = await VC.vdb.execute("SELECT name FROM BF_ItemValues")
+                cursor = await LilyConfig.vdb.execute("SELECT name FROM BF_ItemValues")
                 rows = await cursor.fetchall()
                 fruit_names = [row[0].lower() for row in rows]
                 fruit_names = sorted(fruit_names, key=len, reverse=True)
@@ -170,17 +204,59 @@ async def MessageEvaluate(self, bot, message):
                     "permanent_value": jsonfruitdata['permanent_value'],
                     "value": jsonfruitdata['physical_value'],
                     "demand": jsonfruitdata['physical_demand'],
-                    "demand_type": jsonfruitdata['demand_type']
+                    "demand_type": jsonfruitdata['demand_type'],
+                    "icon_url" : jsonfruitdata['icon_url']
                 }
 
-                img = await FVG.GenerateValueImage(overload_data)
-                buffer = io.BytesIO()
-                img.save(buffer, format="PNG", optimize=True)
-                buffer.seek(0)
+                if int(config_rows[1]) == 1:
+                    img = await FVG.GenerateValueImage(overload_data)
+                    buffer = io.BytesIO()
+                    img.save(buffer, format="PNG", optimize=True)
+                    buffer.seek(0)
 
-                file = discord.File(fp=buffer, filename="trade_result.png")
+                    file = discord.File(fp=buffer, filename="trade_result.png")
 
-                await status_msg.edit(content=None, attachments=[file])
+                    await status_msg.edit(content=None, attachments=[file])
+
+                else:
+                    embed = discord.Embed(title=item_name_capital,
+                      colour=0x1000f5)
+
+                    embed.set_author(name="Item Value Calculator")
+
+                    if jsonfruitdata['physical_value']:
+                        embed.add_field(
+                            name="Physical Value",
+                            value=format_currency(jsonfruitdata['physical_value']),
+                            inline=False
+                        )
+
+                    if jsonfruitdata['permanent_value']:
+                        embed.add_field(
+                            name="Permanent Value",
+                            value=format_currency(jsonfruitdata['permanent_value']),
+                            inline=False
+                        )
+
+                    if jsonfruitdata['physical_demand']:
+                        embed.add_field(
+                            name="Demand",
+                            value=jsonfruitdata['physical_demand'],
+                            inline=False
+                        )
+
+                    if jsonfruitdata['demand_type']:
+                        embed.add_field(
+                            name="Demand Type",
+                            value=jsonfruitdata['demand_type'],
+                            inline=False
+                        )
+
+                    embed.set_thumbnail(url=jsonfruitdata['icon_url'])
+
+                    embed.set_footer(text="Powered By LilyValues")
+
+                    await status_msg.edit(content=None, embed=embed)
 
             except Exception as e:
                 print(e)
@@ -206,22 +282,74 @@ async def MessageEvaluate(self, bot, message):
                     if message.channel == w_or_l_channel:
                         status_msg = await message.reply("Thinking...")
 
-                        image = await StockValueJSON.j_LorW(
-                            your_fruits, your_fruit_types,
-                            their_fruits, their_fruits_types,
-                            1
-                        )
+                        if int(config_rows[0]) == 1:
+                            image = await StockValueJSON.j_LorW(
+                                your_fruits, your_fruit_types,
+                                their_fruits, their_fruits_types,
+                                1
+                            )
 
-                        if image is None:
-                            await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
-                            return
+                            if image is None:
+                                await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
+                                return
 
-                        buffer = io.BytesIO()
-                        image.save(buffer, format="PNG", optimize=True)
-                        buffer.seek(0)
+                            buffer = io.BytesIO()
+                            image.save(buffer, format="PNG", optimize=True)
+                            buffer.seek(0)
 
-                        file = discord.File(fp=buffer, filename="trade_result.png")
-                        await status_msg.edit(content=None, attachments=[file])
+                            file = discord.File(fp=buffer, filename="trade_result.png")
+                            await status_msg.edit(content=None, attachments=[file])
+
+                        else:
+                            data = await StockValueJSON.j_LorW(
+                                your_fruits, your_fruit_types,
+                                their_fruits, their_fruits_types,
+                                0
+                            )
+
+                            your_fruit_details = ""
+                            their_fruit_details = ""
+
+                            for i in range(len(your_fruits)):
+                                fruit_name = your_fruits[i].replace(" ", "")
+                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
+                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+
+                                value = data['Your_IndividualValues'][i]
+                                formatted_value = f"{value:,}"
+                                your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+
+                            for i in range(len(their_fruits)):
+                                fruit_name = their_fruits[i].replace(" ", "")
+                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
+                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+
+                                value = data['Their_IndividualValues'][i]
+                                formatted_value = f"{value:,}"
+                                their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+
+                            embed = discord.Embed(title=data['TradeConclusion'],
+                                description=f"**{data['TradeDescription']}**",
+                                colour=data['ColorKey'])
+
+                            embed.set_author(name="Lily W OR L Calculator")
+
+                            embed.add_field(name="Your Fruit Values",
+                                            value=your_fruit_details,
+                                            inline=True)
+                            embed.add_field(name="Their Fruit Values",
+                                            value=their_fruit_details,
+                                            inline=True)
+                            embed.add_field(name="Your Total Values:",
+                                            value=format_currency(data['Your_TotalValue']),
+                                            inline=False)
+                            embed.add_field(name="Their Total Values:",
+                                            value=format_currency(data['Their_TotalValue']),
+                                            inline=False)
+                            embed.add_field(name=data['Percentage'],
+                                            value="",
+                                            inline=False)
+                            await status_msg.edit(content=None, embed=embed)
 
         elif await TFA.is_valid_emoji_trade_format(message.content):
                     your_fruits = []
@@ -241,22 +369,73 @@ async def MessageEvaluate(self, bot, message):
                     if message.channel == w_or_l_channel:
                         status_msg = await message.reply("Thinking...")
 
-                        image = await StockValueJSON.j_LorW(
-                            your_fruits, your_fruit_types,
-                            their_fruits, their_fruits_types,
-                            1
-                        )
+                        if int(config_rows[0]) == 1: 
+                            image = await StockValueJSON.j_LorW(
+                                your_fruits, your_fruit_types,
+                                their_fruits, their_fruits_types,
+                                1
+                            )
 
-                        if image is None:
-                            await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
-                            return
+                            if image is None:
+                                await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
+                                return
 
-                        buffer = io.BytesIO()
-                        image.save(buffer, format="PNG", optimize=True)
-                        buffer.seek(0)
+                            buffer = io.BytesIO()
+                            image.save(buffer, format="PNG", optimize=True)
+                            buffer.seek(0)
 
-                        file = discord.File(fp=buffer, filename="trade_result.png")
-                        await status_msg.edit(content=None, attachments=[file])
+                            file = discord.File(fp=buffer, filename="trade_result.png")
+                            await status_msg.edit(content=None, attachments=[file])
+                        else:
+                            data = await StockValueJSON.j_LorW(
+                                your_fruits, your_fruit_types,
+                                their_fruits, their_fruits_types,
+                                0
+                            )
+
+                            your_fruit_details = ""
+                            their_fruit_details = ""
+
+                            for i in range(len(your_fruits)):
+                                fruit_name = your_fruits[i].replace(" ", "")
+                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
+                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+
+                                value = data['Your_IndividualValues'][i]
+                                formatted_value = f"{value:,}"
+                                your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+
+                            for i in range(len(their_fruits)):
+                                fruit_name = their_fruits[i].replace(" ", "")
+                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
+                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+
+                                value = data['Their_IndividualValues'][i]
+                                formatted_value = f"{value:,}"
+                                their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+
+                            embed = discord.Embed(title=data['TradeConclusion'],
+                                description=f"**{data['TradeDescription']}**",
+                                colour=data['ColorKey'])
+
+                            embed.set_author(name="Lily W OR L Calculator")
+
+                            embed.add_field(name="Your Fruit Values",
+                                            value=your_fruit_details,
+                                            inline=True)
+                            embed.add_field(name="Their Fruit Values",
+                                            value=their_fruit_details,
+                                            inline=True)
+                            embed.add_field(name="Your Total Values:",
+                                            value=format_currency(data['Your_TotalValue']),
+                                            inline=False)
+                            embed.add_field(name="Their Total Values:",
+                                            value=format_currency(data['Their_TotalValue']),
+                                            inline=False)
+                            embed.add_field(name=data['Percentage'],
+                                            value="",
+                                            inline=False)
+                            await status_msg.edit(content=None, embed=embed)
 
         elif await TFA.is_valid_trade_suggestor_format(message.content.lower()):
             msg = re.sub(r"(for\b.*?\b)nlf\b", r"\1", message.content.lower())
@@ -283,7 +462,7 @@ async def MessageEvaluate(self, bot, message):
                 return
             
             
-            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, neglect_fruits)
+            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, neglect_fruits, config_rows[0])
             await message.reply(view=view)
 
         elif await TFA.is_valid_trade_suggestor_format_emoji(message.content):
@@ -311,7 +490,7 @@ async def MessageEvaluate(self, bot, message):
                 return
             
             
-            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message)
+            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, config_rows[0])
             await message.reply(view=view)
 
         '''
