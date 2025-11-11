@@ -49,14 +49,6 @@ def format_currency(val):
 
 
 async def MessageEvaluate(self, bot, message):
-        
-        try:
-            cursor1 = await LilyConfig.cdb.execute("SELECT WORLImage, FruitValuesImage FROM GlobalConfigs")
-            config_rows = cursor1.fetchone()
-        except:
-            config_rows = (0, 0)
-
-
         if message.guild and message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.stock_fetch_channel_id:
             try:
                 cursor = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'StockImage'")
@@ -161,6 +153,9 @@ async def MessageEvaluate(self, bot, message):
                         continue
 
         if re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
+            cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
+            crow = await cursor1.fetchall()
+            config_rows = (crow[0][0], crow[1][0])
             try:
                 ctx = await bot.get_context(message)
                 cursor = await LilyConfig.cdb.execute(
@@ -265,7 +260,10 @@ async def MessageEvaluate(self, bot, message):
                 except:
                     pass
 
-        elif await TFA.is_valid_trade_format(message.content.lower()): 
+        elif await TFA.is_valid_trade_format(message.content.lower()):       
+                    cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
+                    crow = await cursor1.fetchall()
+                    config_rows = (crow[0][0], crow[1][0])         
                     your_fruits = []
                     your_fruit_types=[]
                     their_fruits = []
@@ -352,6 +350,9 @@ async def MessageEvaluate(self, bot, message):
                             await status_msg.edit(content=None, embed=embed)
 
         elif await TFA.is_valid_emoji_trade_format(message.content):
+                    cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
+                    crow = await cursor1.fetchall()
+                    config_rows = (crow[0][0], crow[1][0])
                     your_fruits = []
                     your_fruit_types=[]
                     their_fruits = []
@@ -438,6 +439,9 @@ async def MessageEvaluate(self, bot, message):
                             await status_msg.edit(content=None, embed=embed)
 
         elif await TFA.is_valid_trade_suggestor_format(message.content.lower()):
+            cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
+            crow = await cursor1.fetchall()
+            config_rows = (crow[0][0], crow[1][0])
             msg = re.sub(r"(for\b.*?\b)nlf\b", r"\1", message.content.lower())
             your_fruits1, your_fruit_types1, neglect_fruits, _ = await FDA.extract_trade_details(msg)
             ctx = await bot.get_context(message)
@@ -466,6 +470,9 @@ async def MessageEvaluate(self, bot, message):
             await message.reply(view=view)
 
         elif await TFA.is_valid_trade_suggestor_format_emoji(message.content):
+            cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
+            crow = await cursor1.fetchall()
+            config_rows = (crow[0][0], crow[1][0])
             your_fruits1, your_fruit_types1, _, _ = await FDAE.extract_fruits_emoji(message.content)
 
             ctx = await bot.get_context(message)

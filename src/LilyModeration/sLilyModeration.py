@@ -571,7 +571,6 @@ async def unmute(ctx, user: discord.Member):
     except Exception as e:
         await ctx.send(embed=SimpleEmbed(f"Exception: {e}"))
 
-
 async def warn(ctx: commands.Context, member: discord.Member, reason: str):
     await LilyLogging.LogModerationAction(ctx, ctx.author.id, member.id, "warn", reason)
 
