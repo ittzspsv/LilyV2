@@ -9,8 +9,12 @@ NUMBER_FONT_PATH = "src/ui/font/Game Bubble.ttf"
 ITEM_IMAGE_FOLDER = "src/ui/fruit_icons"
 
 fruits = {
-    "Blade": 30000,
-    "Rocket": 30000,
+    "Rocket": 5000,
+    "Buddha" : 1200000,
+    "Tiger" : 50000000,
+    "Yeti" : 50000000,
+    "Kitsune" : 80000000,
+    "Dragon" : 150000000,   
 }
 
 def format_currency(val):
@@ -155,14 +159,14 @@ def StockImageGenerator(data_dict, stock_type="normal"):
                 img.paste(icon, (x, row_y + 30), icon)
 
             draw_neon_text(
-            img,
-            (x + icon_size // 2, row_y),
-            name.upper(),
-            item_font,
-            glow_color=(200, 100, 255, 140),
-            text_color=(245, 230, 255),     
-            anchor="mt"
-        )
+                img,
+                (x + icon_size // 2, row_y),
+                name.upper(),
+                item_font,
+                glow_color=(255, 153, 51, 140), 
+                text_color=(255, 224, 102), 
+                anchor="mt"
+            )
 
             price_str = f"${format_currency(price)}"
             price_w, _ = get_text_size(draw, price_str, price_font)
@@ -174,11 +178,13 @@ def StockImageGenerator(data_dict, stock_type="normal"):
                 (price_x + price_w / 2, price_y), 
                 price_str,
                 price_font,
-                glow_color=(190, 90, 255, 140),  
-                text_color=(245, 230, 255),  
+                glow_color=(255, 153, 51, 140), 
+                text_color=(255, 224, 102), 
                 anchor="mt"
             )
 
             item_index += 1
 
     return img
+
+#StockImageGenerator(fruits, "normal").save("CNormalStock.png", "PNG")
