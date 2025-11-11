@@ -187,7 +187,7 @@ class MyBot(commands.Bot):
           
         await LBFC.MessageEvaluate(self, bot, message)
 
-        await LPVBC.MessageEvaluate(self, bot, message)
+        #await LPVBC.MessageEvaluate(self, bot, message)
         
         response_text_parsing = ["{user.name}", "{server}"]
         response_conditions = ["{<hasroll > ? hii : you dont have the role yet}", "{<isuser> ? hii : you dont have the role yet}"]
