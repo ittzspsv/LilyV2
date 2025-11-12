@@ -17,13 +17,13 @@ class LilyManagement(commands.Cog):
     async def staffdata(self, ctx:commands.Context, id:str):
         id = id.replace("<@", "").replace(">", "")
         staff_member = await self.bot.fetch_user(int(id))
-        await ctx.send(view=await smLily.FetchStaffDetail(staff_member))
+        await ctx.send(embed=await smLily.FetchStaffDetail(staff_member))
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)))
     @commands.hybrid_command(name='staffs', description='shows all staff registered name with the count')
     async def staffs(self, ctx:commands.Context):
         try:
-            await ctx.send(embed=await smLily.FetchAllStaffs())
+            await ctx.send(embeds=await smLily.FetchAllStaffs())
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"Exception {e}"))
 

@@ -38,32 +38,26 @@ class LilyModeration(commands.Cog):
                     user_id = int(member)
                     target_user = await ctx.bot.fetch_user(user_id)
                 except ValueError as v:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Value Error {v}"))
+                    await ctx.send(embed=mLily.SimpleEmbed(f"Value Error {v}", 'cross'))
                     return
                 except discord.NotFound:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"User ID {member} not found. Please check the ID."))
+                    await ctx.send(embed=mLily.SimpleEmbed(f"User ID {member} not found. Please check the ID.", 'cross'))
                     return
                 except discord.HTTPException as e:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user data: {e}"))
+                    await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user data: {e}", 'cross'))
                     return
 
             if not target_user:
-                await ctx.send(embed=mLily.SimpleEmbed("No Valid Users to Ban"))
-                return
-            if target_user.id in Config.ids:
-                await ctx.send(embed=mLily.SimpleEmbed(f"you can't use my commands against a developer {ctx.author.mention}"))
+                await ctx.send(embed=mLily.SimpleEmbed("No Valid Users to Ban", 'cross'))
                 return
 
             if not await mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
                 await mLily.ban_user(ctx, target_user, reason, proofs)
             else:
-                await ctx.send(embed=mLily.SimpleEmbed(
-                    f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"
-                    f"You can ban in {await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}"
-                ))
+                await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"You can ban in {await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
 
         except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}", 'cross'))
 
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -157,7 +151,7 @@ class LilyModeration(commands.Cog):
                     await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch member ban logs csv: {e}"))
                     return
 
-            await ctx.send(embed=embed)
+            await ctx.send(embeds=embed)
 
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
@@ -191,30 +185,9 @@ class LilyModeration(commands.Cog):
                 mod_type=mod_type,
                 slice_expr=slice_obj
             )
-            await ctx.send(embed=embed)
+            await ctx.send(embeds=embed)
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch mod logs: {e}"))
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='checkbanlog', description='checks ban log for a particular user')
-    async def checkbanlog(self, ctx, member: str = ""):
-        try:
-            if not member:
-                await ctx.send("No Member has been passed in!")
-            else:
-                try:
-                    await mLily.checklogs(ctx, member)
-                except ValueError:
-                    await ctx.send(embed=mLily.SimpleEmbed("Member ID must be a literal"))
-                    return
-                except Exception as e:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch logs for the member: {e}"))
-                    return
-
-
-        except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
 
 async def setup(bot):
     await bot.add_cog(LilyModeration(bot))

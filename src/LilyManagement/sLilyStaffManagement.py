@@ -1,6 +1,7 @@
 import discord
 import aiosqlite
 import asyncio
+import Config.sBotDetails as Configs
 
 try:
     import Misc.sLilyComponentV2 as CS2
@@ -183,7 +184,7 @@ async def run_query(ctx: commands.Context, query: str):
 async def FetchStaffDetail(staff: discord.Member):
     try:
         query = """
-        SELECT s.name, r.role_name, s.on_loa, s.strikes_count, s.joined_on, s.timezone, s.responsibility
+        SELECT s.name, r.role_name, s.on_loa, s.strikes_count, s.joined_on, s.timezone, s.responsibility, s.retired
         FROM staffs s
         LEFT JOIN roles r ON s.role_id = r.role_id
         WHERE s.staff_id = ?
@@ -194,7 +195,7 @@ async def FetchStaffDetail(staff: discord.Member):
         if not row:
             raise ValueError("Staff data not found in database.")
 
-        name, role_name, is_loa, strikes_count, joined_on_str, timezone, responsibility = row
+        name, role_name, is_loa, strikes_count, joined_on_str, timezone, responsibility, retired = row
 
         joined_on = datetime.strptime(joined_on_str, "%d/%m/%Y")
         current_date = datetime.today()
@@ -210,89 +211,150 @@ async def FetchStaffDetail(staff: discord.Member):
             years -= 1
             months += 12
 
-        view = CS2.StaffDataComponent(
-            name, 
-            role_name or "N/A",
-            responsibility or "N/A",
-            timezone or "Not Given",
-            joined_on.strftime("%d/%m/%Y"),
-            f"{years} years {months} months {days} days",
-            strikes_count,
-            staff.avatar.url,
-            is_loa
+        if is_loa == 1:
+            status_display = f"{Configs.emoji['dnd']} On Leave"
+        elif retired == 1:
+            status_display = f"{Configs.emoji['invisible']} Retired"
+        else:
+            status_display = f"{Configs.emoji['online']} Active"
+
+        embed = discord.Embed(
+            color=0xFFFFFF,
+            title=f"{name}'s Profile",
         )
-        return view
+
+        embed.set_thumbnail(url=staff.avatar.url if staff.avatar else staff.default_avatar.url)
+        embed.set_image(url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png?format=webp&quality=lossless")
+
+        embed.add_field(
+            name="__Basic Information__",
+            value=(
+                f"{Configs.emoji['shield']} **Role:** {role_name or 'N/A'}\n"
+                f"{Configs.emoji['bookmark']} **Responsibilities:** {responsibility or 'N/A'}\n"
+                f"{Configs.emoji['clock']} **Timezone:** {timezone or 'N/A'}\n"
+                f"{Configs.emoji['calender']} **Join Date:** {joined_on.strftime('%d/%m/%Y')}"
+            ),
+            inline=False,
+        )
+
+        embed.add_field(
+            name="__Experience Information__",
+            value=(
+                f"{Configs.emoji['clock']} **Evaluated Experience:** "
+                f"**{years} years {months} months {days} days**"
+            ),
+            inline=False,
+        )
+
+        embed.add_field(
+            name="__Strikes Information__",
+            value=f"{Configs.emoji['logs']} **Strike Count:** **{strikes_count}**",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="__Status__",
+            value=f"{status_display}\n",
+            inline=False,
+        )
+
+        return embed
 
     except Exception as e:
         print(f"Error fetching staff detail: {e}")
-        return CS2.EmptyView()
+        return discord.Embed(
+            color=0xFF0000,
+            description=f"{Configs.emoji['cross']} failed to fetch staff data. please check the database.",
+        )
 
 async def FetchAllStaffs():
     try:
-        query = """
-        SELECT s.staff_id, r.role_name, s.on_loa, r.role_priority
+        count_query = """
+        SELECT 
+            COUNT(*) AS total_staffs,
+            SUM(CASE WHEN s.on_loa = 1 THEN 1 ELSE 0 END) AS loa_staffs,
+            SUM(CASE WHEN s.on_loa = 0 THEN 1 ELSE 0 END) AS active_staffs
+        FROM staffs s
+        WHERE s.retired = 0
+        """
+        cursor = await sdb.execute(count_query)
+        total_staffs, loa_staffs, active_staffs = await cursor.fetchone()
+
+        hierarchy_query = """
+        SELECT s.staff_id, r.role_name, r.role_priority
         FROM staffs s
         LEFT JOIN roles r ON s.role_id = r.role_id
         WHERE s.retired = 0
         ORDER BY r.role_priority ASC
         """
-        async with sdb.execute(query) as cursor:
+        async with sdb.execute(hierarchy_query) as cursor:
             rows = await cursor.fetchall()
 
         if not rows:
             raise ValueError("No active staff data found in database.")
 
-        embed = discord.Embed(
-            title="STAFF LIST",
-            description=f"**Total Count : {len(rows)}**",
-            colour=0x3100f5
-        )
-
         roles = {}
-        active_moderators = 0
-        loa_moderators = 0
-
-        for staff_id, role_name, is_loa, role_priority in rows:
+        for staff_id, role_name, role_priority in rows:
             mention = f"<@{staff_id}>"
             role_name = role_name or "Unknown Role"
-
             if role_name not in roles:
                 roles[role_name] = {
                     "priority": role_priority if role_priority is not None else 999,
                     "mentions": []
                 }
-
             roles[role_name]["mentions"].append(mention)
 
-            if is_loa:
-                loa_moderators += 1
-            else:
-                active_moderators += 1
-
-        sorted_roles = sorted(
-            roles.items(),
-            key=lambda x: x[1]["priority"]
+        overview_embed = (
+            discord.Embed(
+                title=f"{Configs.emoji['arrow']} Staff's List",
+                colour=16777215,
+            )
+            .set_thumbnail(
+                url="https://media.discordapp.net/attachments/1366840025010012321/1438064934574493768/logs.png?format=webp&quality=lossless"
+            )
+            .set_image(
+                url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png?format=webp&quality=lossless"
+            )
+            .add_field(name="On LOA", value=f"**{loa_staffs}**", inline=True)
+            .add_field(name="Active Staffs", value=f"**{active_staffs}**", inline=True)
+            .add_field(name="Total Staffs", value=f"**{total_staffs}**", inline=True)
         )
 
+        hierarchy_embed = (
+            discord.Embed(
+                title=f"{Configs.emoji['arrow']} Staff Hierarchy",
+                colour=16777215,
+            )
+            .set_thumbnail(
+                url="https://media.discordapp.net/attachments/1366840025010012321/1438090416628043866/shield.png?format=webp&quality=lossless"
+            )
+            .set_image(
+                url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png?format=webp&quality=lossless"
+            )
+        )
+
+        sorted_roles = sorted(roles.items(), key=lambda x: x[1]["priority"])
         for role_name, data in sorted_roles:
             mentions = data["mentions"]
             count = len(mentions)
-            embed.add_field(
+            hierarchy_embed.add_field(
                 name=f"__{role_name}__ ({count})",
                 value="- " + "\n- ".join(mentions),
-                inline=False
+                inline=False,
             )
 
-        analysis_text = (
-            f"**Staff Active:** {active_moderators}\n"
-            f"**Staffs in LOA:** {loa_moderators}"
-        )
-        embed.add_field(name="__ANALYSIS__", value=analysis_text, inline=False)
-
-        return embed
+        embeds = [overview_embed, hierarchy_embed]
+        return embeds
 
     except Exception as e:
-        return discord.Embed(title="Error", description=str(e), colour=0xf50000)
+        print(f"Error fetching staff list: {e}")
+        return [
+            discord.Embed(
+                title=f"{Configs.emoji['cross']} Error",
+                description="Failed to fetch staff data. Please check the database.",
+                colour=0xf50000,
+            )
+        ]
 
 async def AddStaff(ctx: commands.Context, staff: discord.Member):
     staff_id = staff.id

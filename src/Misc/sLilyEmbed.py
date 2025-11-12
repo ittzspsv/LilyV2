@@ -1,7 +1,6 @@
 import discord
 import re
 from datetime import datetime
-
 TicketParseRegex = re.compile(r"^ticket-\d+$", re.IGNORECASE)
 
 def EmbedParser(config_str: str, ctx:discord.Member):
@@ -190,4 +189,3 @@ def ParseTicketEmbed(message: discord.Message):
             break
 
     return ticket_opener_id, reason, scammer_match
-

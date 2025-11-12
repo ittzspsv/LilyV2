@@ -479,3 +479,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                 )
             except:
                 print("Cannot send followup; interaction expired:", e)
+
+class ModeratioNStatsComponent(discord.ui.LayoutView):
+    def __init__(self):
+        super().__init__()
