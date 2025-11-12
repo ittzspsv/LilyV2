@@ -69,7 +69,7 @@ class LOAReviewView(discord.ui.View):
             has_permission = await LilyRuleset.rPermissionEvaluator(
                 interaction,
                 PermissionType="role",
-                RoleAllowed=lambda: GetRoles(('Developer', 'Staff Manager', 'TestRole'))
+                RoleAllowed=lambda: GetRoles(('Developer', 'Staff Manager'))
             )
         except commands.CheckFailure as e:
             await interaction.response.send_message(f"❌ {e}", ephemeral=True)
@@ -349,6 +349,38 @@ async def RemoveStaff(ctx: commands.Context, staff_id: int):
         await ctx.send(f"✅ Staff with ID {staff_id} has been marked as retired.")
     else:
         await ctx.send(f"No staff found with ID {staff_id}.")
+
+async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role_id: int = None, joined_on: str = None, Timezone: str = None, responsibility: str = None):
+    cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ?", (staff_id,))
+    row = await cursor.fetchone()
+    await cursor.close()
+
+    if not row:
+        await ctx.send(f"No staff found with ID {staff_id}.")
+        return
+
+    fields = {
+        "name": name,
+        "role_id": role_id,
+        "joined_on": joined_on,
+        "Timezone": Timezone,
+        "responsibility": responsibility
+    }
+    update_columns = {k: v for k, v in fields.items() if v is not None}
+
+    if not update_columns:
+        await ctx.send("No fields provided to update.")
+        return
+
+    set_clause = ", ".join([f"{col} = ?" for col in update_columns.keys()])
+    values = list(update_columns.values())
+    values.append(staff_id)
+
+    query = f"UPDATE staffs SET {set_clause} WHERE staff_id = ?"
+    await sdb.execute(query, values)
+    await sdb.commit()
+
+    await ctx.send(f"Staff ID {staff_id} updated successfully.")
 
 async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
     try:

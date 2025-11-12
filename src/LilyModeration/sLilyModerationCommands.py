@@ -69,15 +69,41 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unban', description='unbans a particular user')
     async def unban(self, ctx, user_id: str):
-        user_id = int(user_id.replace("<@", "").replace(Config.bot_command_prefix, "").replace(">", ""))    
+        user_id = int(user_id.replace("<@", "").replace(Config.bot_command_prefix, "").replace(">", ""))
+        
         try:
             user = await self.bot.fetch_user(user_id)
+        except discord.NotFound:
+            await ctx.send(embed=mLily.SimpleEmbed("User not found."))
+            return
+        except discord.HTTPException as e:
+            await ctx.send(f"Exception Raised: {e}")
+            return
+
+        try:
             await ctx.guild.unban(user)
             await ctx.send(embed=mLily.SimpleEmbed(f"✅ Unbanned {user.mention}"))
         except discord.NotFound:
-            await ctx.send(embed=mLily.SimpleEmbed("This user is not banned!"))
+            quarantine_role = discord.utils.get(ctx.guild.roles, name="Quarantine")
+            if quarantine_role:
+                member_obj = ctx.guild.get_member(user_id)
+                if member_obj and quarantine_role in member_obj.roles:
+                    try:
+                        await member_obj.remove_roles(
+                            quarantine_role,
+                            reason=f"Quarantine removed by {ctx.author} (unban fallback)"
+                        )
+                        await ctx.send(embed=mLily.SimpleEmbed(f"✅ Removed Quarantine from {member_obj.mention}"))
+                        return
+                    except discord.Forbidden:
+                        await ctx.send("I don't have permission to remove the Quarantine role.")
+                        return
+                    except discord.HTTPException as e:
+                        await ctx.send(f"Failed to remove Quarantine role: {e}")
+                        return
+            await ctx.send(embed=mLily.SimpleEmbed("This user is not banned and not quarantined!"))
         except discord.Forbidden:
-            await ctx.send(f"Exception Raised: {discord.Forbidden}")
+            await ctx.send("I don't have permission to unban this user.")
         except discord.HTTPException as e:
             await ctx.send(f"Exception Raised: {e}")
 

@@ -449,6 +449,26 @@ class LilyUtility(commands.Cog):
                 await ValueConfig.cdb.commit()
                 await ctx.send(f"Webhook created: Weather will be sent in {channel_to_assign.name}")
 
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)), allow_per_server_owners=True)
+    @commands.hybrid_command(name='purge',description='Purges Message')
+    @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
+    async def purge(self, ctx, amount: int, member: discord.Member = None):
+        if amount <= 0:
+            await ctx.send("You must delete at least 1 message.")
+            return
+
+        def check(msg):
+            return True if member is None else msg.author == member
+
+        try:
+            deleted = await ctx.channel.purge(limit=amount, check=check, bulk=True)
+            await ctx.send(f"✅ Deleted {len(deleted)} message(s).", delete_after=5)
+        except discord.Forbidden:
+            await ctx.send("I do not have permission to delete messages.")
+        except discord.HTTPException as e:
+            await ctx.send(f"Exception: {e}")
+
     '''
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

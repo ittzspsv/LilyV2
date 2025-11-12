@@ -1,15 +1,14 @@
 import discord
-import os
+import Config.sValueConfig as VC
 import pytz
 import re
 import LilyManagement.sLilyStaffManagement as LSM
 
 import Config.sBotDetails as Config
-from collections import Counter
 import LilyLogging.sLilyLogging as LilyLogging
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
-from collections import Counter, defaultdict
+from collections import defaultdict
 from discord.utils import utcnow
 
 
@@ -416,19 +415,21 @@ def MuteParser(duration: str):
         raise ValueError(f"Unsupported unit: {unit}")
 
 async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = []):
-    author_role_ids = [role.id for role in ctx.author.roles]
+    try:
+        cur = await VC.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'Jail'")
+        row = await cur.fetchone()
+        jail_value = int(row[0]) if row and row[0] is not None else 0
+    except Exception:
+        jail_value = 0
 
+    author_role_ids = [role.id for role in ctx.author.roles]
     role_ids = [str(rid) for rid in author_role_ids]
     if role_ids:
         placeholders = ",".join("?" * len(role_ids))
-        query = f"""
-            SELECT role_id
-            FROM roles
-            WHERE ban_limit > 0 AND role_id IN ({placeholders})
-        """
+        query = f"SELECT role_id FROM roles WHERE ban_limit > 0 AND role_id IN ({placeholders})"
         cursor = await LSM.sdb.execute(query, role_ids)
         rows = await cursor.fetchall()
-        valid_limit_roles = [row[0] for row in rows]  # flatten
+        valid_limit_roles = [row[0] for row in rows]
     else:
         valid_limit_roles = []
 
@@ -443,61 +444,57 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
         return
 
     member_obj = ctx.guild.get_member(user_id)
-    if member_obj:
-        target_user = member_obj
-    else:
+    if not member_obj:
         try:
-            target_user = await ctx.bot.fetch_user(user_id)
+            member_obj = await ctx.guild.fetch_member(user_id)
         except discord.NotFound:
-            await ctx.send(embed=SimpleEmbed("User not found."))
+            await ctx.send(embed=SimpleEmbed("User not found in this guild."))
             return
         except discord.HTTPException as e:
-            await ctx.send(embed=SimpleEmbed(f"Exception: HTTPException {e}"))
+            await ctx.send(embed=SimpleEmbed(f"Exception fetching member: {e}"))
             return
 
     if member_obj:
         if member_obj.top_role >= ctx.guild.me.top_role:
-            await ctx.send(embed=SimpleEmbed("I cannot ban this user because their role is higher than mine!"))
+            await ctx.send(embed=SimpleEmbed("I cannot moderate this user; their role is higher than mine!"))
             return
         if member_obj.top_role >= ctx.author.top_role:
-            await ctx.send(embed=SimpleEmbed("You cannot ban a user with a role equal to or higher than yours."))
+            await ctx.send(embed=SimpleEmbed("You cannot moderate a user with an equal or higher role."))
             return
         if member_obj.id in {ctx.guild.owner_id, ctx.bot.user.id, ctx.author.id}:
-            await ctx.send(embed=SimpleEmbed("You cannot ban the owner, yourself, or me!"))
+            await ctx.send(embed=SimpleEmbed("You cannot moderate the owner, yourself, or the bot!"))
             return
 
     if await exceeded_ban_limit(ctx, ctx.author.id, valid_limit_roles):
-        await ctx.send(embed=SimpleEmbed("Cannot ban the user! You have exceeded your daily limit."))
+        await ctx.send(embed=SimpleEmbed("You have exceeded your daily ban limit."))
         return
 
     try:
-        if member_obj:
-            try:
-                await member_obj.send(embed=BanEmbed(ctx.author, reason, Config.appeal_server_link, ctx.guild.name))
-            except Exception as e:
-                print("DM failed:", e)
-            await ctx.guild.ban(member_obj, reason=reason)
-        else:
-            await ctx.guild.ban(discord.Object(id=user_id), reason=reason)
-
-        remaining = await remaining_ban_count(ctx, ctx.author.id, valid_limit_roles)
-        await ctx.send(embed=SimpleEmbed(
-            f"✅ Banned: <@{user_id}>\n**Bans Remaining:** {remaining}"
-        ))
-
-        await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "ban", reason)
-
         try:
-            with open("src/LilyModeration/logchannelid.log", "r") as file:
-                logs_channel_id = int(file.read().strip())
-            log_channel = ctx.guild.get_channel(logs_channel_id)
-            if log_channel:
-                await log_channel.send(embed=LogEmbed(target_user, ctx.author, reason), files=proofs)
-        except Exception as e:
-            print("Error sending to log channel:", e)
+            await member_obj.send(embed=BanEmbed(ctx.author, reason, Config.appeal_server_link, ctx.guild.name))
+        except Exception:
+            pass
+
+        if jail_value == 0:
+            await ctx.guild.ban(member_obj,reason=f"By {ctx.author} (ID: {ctx.author.id}) | Reason: {reason}")
+            await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "ban", reason)
+            remaining = await remaining_ban_count(ctx, ctx.author.id, valid_limit_roles)
+            await ctx.send(embed=SimpleEmbed(f"✅ Banned: <@{user_id}>\n**Bans Remaining:** {remaining}"))
+        else:
+            quarantine_role = discord.utils.get(ctx.guild.roles, name="Quarantine")
+            if not quarantine_role:
+                await ctx.send(embed=SimpleEmbed("Quarantine role not found. Cannot apply quarantine."))
+                return
+            if quarantine_role >= ctx.guild.me.top_role:
+                await ctx.send(embed=SimpleEmbed("Cannot assign quarantine role; it is higher than my top role."))
+                return
+
+            await member_obj.add_roles(quarantine_role, reason=f"Quarantine applied by {ctx.author} | {reason}")
+            await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "quarantine", reason)
+            await ctx.send(embed=SimpleEmbed(f"Quarantined: <@{user_id}>"))
 
     except discord.HTTPException as e:
-        await ctx.send(embed=SimpleEmbed(f"Failed to ban the user. {e}"))
+        await ctx.send(embed=SimpleEmbed(f"Failed to perform moderation action: {e}"))
     except Exception as e:
         await ctx.send(embed=SimpleEmbed(f"Unhandled Exception: {e}"))
 
@@ -528,7 +525,7 @@ async def mute_user(ctx, user: discord.Member, duration: str, reason: str = "No 
         await user.edit(timed_out_until=until, reason=reason)
 
         await ctx.send(embed=SimpleEmbed(
-            f"✅Muted: <@{user.id}> for **Duration:** {duration}"
+            f"✅ Muted: <@{user.id}> for **Duration:** {duration}"
         ))
 
         await LilyLogging.LogModerationAction(ctx, ctx.author.id, user.id, "mute", reason)
