@@ -394,7 +394,7 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
             await ctx.send(f"✅ Staff {staff.name}'s role has been updated.")
     else:
         await sdb.execute(
-            "INSERT INTO staffs (staff_id, name, role_id, on_loa, strikes_count, retired) VALUES (?, ?, ?, 0, 0, 0)",
+            "INSERT INTO staffs (staff_id, name, role_id, on_loa, strikes_count, retired, Timezone, responsibility) VALUES (?, ?, ?, 0, 0, 0, 'Default', 'None')",
             (staff_id, name, role_id)
         )
         await ctx.send(f"✅ Staff {staff.name} has been added with role.")
