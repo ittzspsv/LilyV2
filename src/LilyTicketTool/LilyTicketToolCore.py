@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 import Misc.sLilyEmbed as LilyEmbed
 import asyncio
 import json
+import Config.sBotDetails as Configs
 
 TICKET_VIEWS_PATH = Path("storage/view/TicketViews.json")
 TICKET_CHANNEL_LOG_PATH = Path("storage/view/TicketChannelViews.json")
@@ -188,8 +189,23 @@ class BaseModal(discord.ui.Modal):
 
         for field_dict in fields:
             for label, max_length in field_dict.items():
-                safe_label = label[:45]
+                parts = label.split(":", 1)
+
+                if len(parts) > 1:
+                    emoji_part = parts[1].strip()
+                    clean_label = parts[0].strip()
+                    
+                    if emoji_part:
+                        final_label = f"{emoji_part} {clean_label}"
+                    else:
+                        final_label = clean_label
+                else:
+                    final_label = label.strip()
+
+                safe_label = final_label[:45]
+
                 style = discord.TextStyle.paragraph if max_length > 100 else discord.TextStyle.short
+
                 input_field = discord.ui.TextInput(
                     label=safe_label,
                     placeholder=f"Max {max_length} characters",
@@ -198,6 +214,7 @@ class BaseModal(discord.ui.Modal):
                     style=style,
                     custom_id=safe_label[:100]
                 )
+
                 self.inputs[safe_label] = input_field
                 self.add_item(input_field)
 
@@ -279,8 +296,11 @@ async def TicketConstructor(values: dict, moderator_roles: list, staff_manager_r
     embed = discord.Embed(
         title=field_details['Title'],
         description="\n".join(f"**{k}**: ```{v}```" for k, v in values.items()),
-        color=discord.Color.blue()
+        color=16777215
     )
+
+    embed.set_image(url=Configs.img['border'])
+    embed.set_thumbnail(url = Configs.img['logs'])
 
     content, embeds = LilyEmbed.ParseAdvancedEmbed(field_details['TEmbed'])
     embeds.append(embed)
@@ -454,16 +474,27 @@ class SelectorType(discord.ui.View):
 
     class ModalSelect(discord.ui.Select):
         def __init__(self, options: list[str], modals: list, moderator_roles: list[int], staff_manager_roles: list[int], field_details: dict):
-            select_options = [
-                discord.SelectOption(label=opt, value=str(i)) for i, opt in enumerate(options)
-            ]
+            select_options = []
+            name_label = []
+            for i, opt in enumerate(options):
+                parts = opt.split(":", 1)
+
+                label = parts[0].strip()
+                emoji = parts[1].strip() if len(parts) > 1 and parts[1].strip() else None
+                name_label.append(label)
+
+                if emoji:
+                    select_options.append(discord.SelectOption(label=label, value=str(i), emoji=emoji))
+                else:
+                    select_options.append(discord.SelectOption(label=label, value=str(i)))
+
             super().__init__(placeholder="Choose a ticket type...", options=select_options, custom_id="ticket_selector")
 
             self.modals = modals
             self.moderator_roles = moderator_roles
             self.staff_manager_roles = staff_manager_roles
             self.field_details = field_details
-            self.labels = options
+            self.labels = name_label
 
         async def callback(self, interaction: discord.Interaction):
             index = int(self.values[0])
@@ -487,21 +518,6 @@ async def SpawnTickets(ctx: commands.Context, json_data):
 
     staff_roles = [ctx.guild.get_role(r) for r in json_data['Configs'].get('StaffManagerRoles', [])]
     mod_roles = [ctx.guild.get_role(r) for r in json_data['Configs'].get('ModeratorRoles', [])]
-
-    overwrites = {}
-
-    overwrites[ctx.guild.default_role] = discord.PermissionOverwrite(view_channel=False)
-
-    for role in staff_roles:
-        if role:
-            overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True)
-
-
-    for role in mod_roles:
-        if role:
-            overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=False)
-
-    await channel.edit(overwrites=overwrites)
 
     ticket_type = json_data['Configs']['TicketType']
     if ticket_type[0] == 'Button':

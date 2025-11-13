@@ -66,4 +66,12 @@ emoji = {
     'dnd' : '<:dnd:1438081053095890996>',
     'cross' : '<:cross:1438078467257143379>',
     'checked' : '<:checked:1438078165372243978>',
+    'bot' : '<:bot:1438504383397494896>'
+}
+
+img = {
+    'border' : 'https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69172232&is=6915d0b2&hm=6fc4724fb6fb44c83c8fb82425f287c19c762d161ff882420f69abaaf725ad3a&',
+    'warn' : 'https://media.discordapp.net/attachments/1438505067341680690/1438505320237236345/warn.png?ex=69171ffa&is=6915ce7a&hm=e25be9dacbbb4e718bd6d339c6a41c1740999e8ebacd6cff6bf12d9c4dd537f1&=&format=webp&quality=lossless',
+    'member' : 'https://media.discordapp.net/attachments/1438505067341680690/1438505287052169259/member.png?ex=69171ff2&is=6915ce72&hm=bb90f5f2aaed4b7f0a50741e05e3e94d790596f44a99590a430a82fe500800e1&=&format=webp&quality=lossless',
+    'logs' : 'https://media.discordapp.net/attachments/1438505067341680690/1438505245625024512/logs.png?ex=69171fe8&is=6915ce68&hm=3530c689a64656f50a78ddafa82138bd2c0d22e92d2ca281eb00423bea7cc7be&=&format=webp&quality=lossless'
 }
