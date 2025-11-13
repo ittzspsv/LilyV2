@@ -229,7 +229,7 @@ class BaseModal(discord.ui.Modal):
         else:
             await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
 
-async def SendTicketLog(guild: discord.Guild, config: dict, *, opener=None, claimer=None, closer=None, modal_data: dict = None):
+async def SendTicketLog(guild: discord.Guild,config: dict,*,opener=None,claimer=None,closer=None,modal_data: dict = None):
     log_channel_id = config.get("LogChannel") or config.get("log_channel")
     if not log_channel_id:
         return
@@ -238,18 +238,44 @@ async def SendTicketLog(guild: discord.Guild, config: dict, *, opener=None, clai
     if not log_channel:
         return
 
-    embed = discord.Embed(title="Ticket Log", color=discord.Color.dark_purple())
+    embed = (
+        discord.Embed(
+            color=0xFFFFFF, 
+            title=f"{Configs.emoji['ticket']}Ticket Logs",
+        )
+        .set_image(
+            url=Configs.img['border']
+        )
+    )
 
     if opener:
-        embed.add_field(name="Opened By", value=f"{opener.mention} ({opener.id})", inline=False)
+        embed.add_field(
+            name=f"{Configs.emoji['member']} Opened By",
+            value=f"{opener.mention} ({opener.id})",
+            inline=False,
+        )
+
     if claimer:
-        embed.add_field(name="Claimed By", value=f"{claimer.mention} ({claimer.id})", inline=False)
+        embed.add_field(
+            name=f"{Configs.emoji['staff']} Claimed By",
+            value=f"{claimer.mention} ({claimer.id})",
+            inline=False,
+        )
+
     if closer:
-        embed.add_field(name="Closed By", value=f"{closer.mention} ({closer.id})", inline=False)
+        embed.add_field(
+            name=f"{Configs.emoji['dnd']} Closed By",
+            value=f"{closer.mention} ({closer.id})",
+            inline=False,
+        )
 
     if modal_data:
         description = "\n".join(f"**{k}**: `{v}`" for k, v in modal_data.items())
-        embed.add_field(name="Form Responses", value=description or "None", inline=False)
+        embed.add_field(
+            name=f"{Configs.emoji['bookmark']} Form Responses",
+            value=description or "None",
+            inline=False,
+        )
 
     embed.set_footer(text="Lily Ticket Handler")
     embed.timestamp = discord.utils.utcnow()

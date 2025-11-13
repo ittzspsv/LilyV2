@@ -914,3 +914,307 @@ discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
 2025-11-10 12:25:04,583 - INFO - logging in using static token
 2025-11-10 12:25:07,840 - INFO - logging in using static token
 2025-11-10 12:25:13,835 - INFO - Shard ID None has connected to Gateway (Session ID: 56b843da58304c59b471c10f2295a6ae).
+2025-11-10 18:35:27,272 - INFO - logging in using static token
+2025-11-10 18:35:32,435 - INFO - Shard ID None has connected to Gateway (Session ID: d677f5546328903fe1c90515f58fc716).
+2025-11-10 18:35:43,936 - WARNING - Somehow timed out waiting for chunks for guild ID 1099482621161001113.
+2025-11-10 18:36:10,135 - INFO - logging in using static token
+2025-11-10 18:36:46,038 - INFO - logging in using static token
+2025-11-10 18:37:32,542 - INFO - Shard ID None has connected to Gateway (Session ID: 13f7eed7e0309daee0a09c759c4ee6cb).
+2025-11-10 18:37:44,697 - WARNING - Somehow timed out waiting for chunks for guild ID 1099482621161001113.
+2025-11-10 18:39:18,930 - INFO - logging in using static token
+2025-11-10 18:39:22,434 - INFO - Shard ID None has connected to Gateway (Session ID: ef07ba2e83a112113c2cdb7100bb76f4).
+2025-11-10 18:41:09,084 - INFO - logging in using static token
+2025-11-10 18:41:31,306 - INFO - Shard ID None has connected to Gateway (Session ID: aa811849e5469f078fbe8d83e166998c).
+2025-11-10 18:43:39,482 - INFO - logging in using static token
+2025-11-10 18:43:42,841 - INFO - Shard ID None has connected to Gateway (Session ID: 482305f400954787326a0e1036b2b18e).
+2025-11-11 16:48:25,374 - INFO - logging in using static token
+2025-11-11 16:48:30,972 - INFO - Shard ID None has connected to Gateway (Session ID: ae9b337bd0538e918e20df35d1ac27f1).
+2025-11-11 16:50:50,532 - INFO - logging in using static token
+2025-11-11 16:50:54,362 - INFO - Shard ID None has connected to Gateway (Session ID: 739158e8778f7b73cc55a14fc7aedc1d).
+2025-11-11 16:52:03,325 - INFO - logging in using static token
+2025-11-11 16:52:07,081 - INFO - Shard ID None has connected to Gateway (Session ID: a51d28d8c436f518c58ea23ea88f5e3d).
+2025-11-11 16:53:23,332 - INFO - logging in using static token
+2025-11-11 16:53:29,275 - INFO - Shard ID None has connected to Gateway (Session ID: a5cad41453c0526dc4735763ca127ed1).
+2025-11-11 16:54:20,373 - INFO - logging in using static token
+2025-11-11 16:55:50,534 - INFO - logging in using static token
+2025-11-11 16:55:55,063 - INFO - Shard ID None has connected to Gateway (Session ID: 139c80cb3adb06707da315ced281a59a).
+2025-11-11 16:57:24,112 - INFO - logging in using static token
+2025-11-11 16:57:29,477 - INFO - Shard ID None has connected to Gateway (Session ID: 6aabd7e99c7004caffde9df99ea40c91).
+2025-11-11 17:00:52,778 - INFO - logging in using static token
+2025-11-11 17:01:01,857 - INFO - Shard ID None has connected to Gateway (Session ID: 3b1f550e715ba67de228ae2ea99b3569).
+2025-11-11 17:02:23,395 - INFO - logging in using static token
+2025-11-11 17:02:27,862 - INFO - Shard ID None has connected to Gateway (Session ID: ecf65d2e66a13c8cf192ea6c99ad0923).
+2025-11-11 17:04:24,070 - INFO - logging in using static token
+2025-11-11 17:04:27,256 - INFO - Shard ID None has connected to Gateway (Session ID: b199a862fe3ca0c47588c6b7d68b2820).
+2025-11-11 17:06:46,701 - INFO - logging in using static token
+2025-11-11 17:06:53,819 - INFO - Shard ID None has connected to Gateway (Session ID: 60deea6fd8a0d29a45913d1b1e0249e4).
+2025-11-11 17:18:20,625 - INFO - logging in using static token
+2025-11-11 17:18:28,644 - INFO - Shard ID None has connected to Gateway (Session ID: 8a5e7b8d07eea75030d2df37516538fe).
+2025-11-11 17:21:41,924 - INFO - logging in using static token
+2025-11-11 17:21:45,930 - INFO - Shard ID None has connected to Gateway (Session ID: fa9cac8f3d377822a4927a8c62bb00d0).
+2025-11-11 17:25:18,147 - INFO - logging in using static token
+2025-11-11 17:25:23,035 - INFO - Shard ID None has connected to Gateway (Session ID: 5e782cde3c20efa3a94dbaaa2e19b943).
+2025-11-11 20:12:16,533 - INFO - logging in using static token
+2025-11-11 20:12:19,990 - INFO - Shard ID None has connected to Gateway (Session ID: d09954b58e95fde95fbd20980a3f574f).
+2025-11-11 20:12:55,073 - INFO - logging in using static token
+2025-11-11 20:13:51,054 - INFO - Shard ID None has connected to Gateway (Session ID: dea27dc36afe92d3e39c4c1ed05b35f7).
+2025-11-11 20:15:14,085 - INFO - logging in using static token
+2025-11-11 20:15:17,897 - INFO - Shard ID None has connected to Gateway (Session ID: 9afae7020ed65661bee6ab3f749ad5fd).
+2025-11-11 20:15:49,679 - INFO - logging in using static token
+2025-11-11 20:16:59,480 - INFO - logging in using static token
+2025-11-11 20:17:02,802 - INFO - Shard ID None has connected to Gateway (Session ID: 86c22623fe5c197440be3e3d6690591b).
+2025-11-11 20:18:58,523 - INFO - logging in using static token
+2025-11-11 20:19:01,020 - INFO - Shard ID None has connected to Gateway (Session ID: 3b918864df65cbc818f4e2108402a352).
+2025-11-11 20:19:45,823 - INFO - logging in using static token
+2025-11-11 20:19:48,590 - INFO - Shard ID None has connected to Gateway (Session ID: 2417b283646977b2427a5af787a3b410).
+2025-11-11 20:19:55,604 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 188, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 52, in MessageEvaluate
+    cursor1 = await LilyConfig.cdb.execute("SELECT WORLImage, FruitValuesImage FROM GlobalConfigs")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: WORLImage
+2025-11-11 20:22:21,144 - INFO - logging in using static token
+2025-11-11 20:22:23,961 - INFO - Shard ID None has connected to Gateway (Session ID: ef2a5ac24f3d2ec9a33b8e42af6ea208).
+2025-11-11 20:22:40,396 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 188, in on_message
+    await LBFC.MessageEvaluate(self, bot, message)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilyBloxFruits\sLilyBloxFruitsCore.py", line 262, in MessageEvaluate
+    cursor1 = await LilyConfig.cdb.execute("SELECT WORLImage, FruitValuesImage FROM GlobalConfigs")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: WORLImage
+2025-11-11 20:25:54,393 - INFO - logging in using static token
+2025-11-11 20:25:57,313 - INFO - Shard ID None has connected to Gateway (Session ID: 5b01f0ea5065547323c67044a446e35f).
+2025-11-11 20:32:15,462 - INFO - logging in using static token
+2025-11-11 20:32:35,213 - INFO - Shard ID None has connected to Gateway (Session ID: b4fd3d9fe4abf7deff213c123131efc1).
+2025-11-11 21:14:31,982 - INFO - logging in using static token
+2025-11-11 21:14:36,114 - INFO - Shard ID None has connected to Gateway (Session ID: d0bd625c64a89e16f3201f75536fc119).
+2025-11-11 21:17:03,858 - INFO - logging in using static token
+2025-11-11 21:17:07,076 - INFO - Shard ID None has connected to Gateway (Session ID: 63819d85be309c66fc73d4b3f03feabf).
+2025-11-11 21:38:54,684 - INFO - logging in using static token
+2025-11-11 21:38:57,903 - INFO - Shard ID None has connected to Gateway (Session ID: 930deb6a34a6832886b7219dc29ec82d).
+2025-11-11 21:40:26,634 - INFO - logging in using static token
+2025-11-11 21:40:30,422 - INFO - Shard ID None has connected to Gateway (Session ID: 6d13fd13dd2a236ae950dd2ebb82fbcc).
+2025-11-12 12:05:11,303 - INFO - logging in using static token
+2025-11-12 12:05:16,966 - INFO - Shard ID None has connected to Gateway (Session ID: 6ff67f3e789ff8c41e081f4fc1b247b0).
+2025-11-12 12:10:28,277 - INFO - logging in using static token
+2025-11-12 12:10:32,061 - INFO - Shard ID None has connected to Gateway (Session ID: 93359f36d9094a4b7d877f78024c7326).
+2025-11-12 12:12:29,961 - INFO - logging in using static token
+2025-11-12 12:12:33,742 - INFO - Shard ID None has connected to Gateway (Session ID: 2bbb71daa821901a1c725f759c435e4b).
+2025-11-12 12:14:29,887 - INFO - logging in using static token
+2025-11-12 12:14:33,569 - INFO - Shard ID None has connected to Gateway (Session ID: c49eb327bcbe8740462cb91885a5e18f).
+2025-11-12 12:15:26,429 - INFO - logging in using static token
+2025-11-12 12:16:04,000 - INFO - Shard ID None has connected to Gateway (Session ID: 4199ebd37ca563928cc3f13b77a5dd54).
+2025-11-12 12:19:33,004 - INFO - logging in using static token
+2025-11-12 12:19:37,529 - INFO - Shard ID None has connected to Gateway (Session ID: eee1b8c7d0c7def490be6d1588e142e5).
+2025-11-12 12:22:43,696 - INFO - logging in using static token
+2025-11-12 12:22:48,149 - INFO - Shard ID None has connected to Gateway (Session ID: cde94515ba5fe4ca60b00616c9d0121e).
+2025-11-12 12:30:57,419 - INFO - logging in using static token
+2025-11-12 12:31:01,293 - INFO - Shard ID None has connected to Gateway (Session ID: 088ba581d4d38aa5cf8faf67d9ed35e8).
+2025-11-12 12:31:59,919 - INFO - logging in using static token
+2025-11-12 12:32:03,878 - INFO - Shard ID None has connected to Gateway (Session ID: eef1fe6e51c4e4362ceebe3df4af77fc).
+2025-11-12 12:33:56,379 - INFO - logging in using static token
+2025-11-12 12:34:01,552 - INFO - Shard ID None has connected to Gateway (Session ID: 1d2ba63b1ac5e406dd744252b891f1bb).
+2025-11-12 12:36:51,678 - INFO - logging in using static token
+2025-11-12 12:36:54,740 - INFO - Shard ID None has connected to Gateway (Session ID: c31c0a1dbcbe3b5512926231f034841c).
+2025-11-12 12:38:14,026 - INFO - logging in using static token
+2025-11-12 12:38:17,413 - INFO - Shard ID None has connected to Gateway (Session ID: a99dc55f9ea1e73f999f8e5eb42b448e).
+2025-11-12 12:50:05,077 - INFO - logging in using static token
+2025-11-12 12:50:08,965 - INFO - Shard ID None has connected to Gateway (Session ID: 483f9ad83c1238d8dbea859068ba0924).
+2025-11-12 14:13:23,197 - INFO - logging in using static token
+2025-11-12 14:13:27,078 - INFO - Shard ID None has connected to Gateway (Session ID: a2de61d13e24689fcb83909c04503690).
+2025-11-12 14:15:30,228 - INFO - logging in using static token
+2025-11-12 14:15:33,946 - INFO - Shard ID None has connected to Gateway (Session ID: d5d0291d54fe709b009800e4e0f05b5d).
+2025-11-12 14:16:59,036 - INFO - logging in using static token
+2025-11-12 14:17:02,922 - INFO - Shard ID None has connected to Gateway (Session ID: d5906bb0ac31c3a8f11fd57703f4739b).
+2025-11-12 14:17:55,695 - INFO - logging in using static token
+2025-11-12 14:18:32,425 - INFO - logging in using static token
+2025-11-12 14:18:36,448 - INFO - Shard ID None has connected to Gateway (Session ID: 6d5d89226f9674d28cf9ef749f65df46).
+2025-11-12 14:21:52,318 - INFO - logging in using static token
+2025-11-12 14:21:55,939 - INFO - Shard ID None has connected to Gateway (Session ID: 778f269c2ed57b6cdc6be1700706c4fa).
+2025-11-12 14:22:33,297 - INFO - logging in using static token
+2025-11-12 14:23:26,412 - INFO - Shard ID None has connected to Gateway (Session ID: 80ecffb0c23eee1c43d8f99137d2eb42).
+2025-11-12 14:24:27,737 - INFO - logging in using static token
+2025-11-12 14:24:31,146 - INFO - Shard ID None has connected to Gateway (Session ID: 536e7c7a9f184f5d475b47c1fad06d2d).
+2025-11-12 14:36:49,006 - INFO - logging in using static token
+2025-11-12 14:36:53,396 - INFO - Shard ID None has connected to Gateway (Session ID: 89dbecf889c73db1db597908eaadddf4).
+2025-11-12 14:37:18,001 - INFO - logging in using static token
+2025-11-12 14:37:20,275 - WARNING - We are being rate limited. PUT https://discord.com/api/v10/applications/1240222509811499050/commands responded with 429. Retrying in 1.03 seconds.
+2025-11-12 14:37:36,022 - INFO - logging in using static token
+2025-11-12 14:37:38,632 - INFO - Shard ID None has connected to Gateway (Session ID: 93201ff6dce56b6b0e622fb59ca3d34b).
+2025-11-12 14:39:04,751 - INFO - logging in using static token
+2025-11-12 14:39:07,686 - INFO - Shard ID None has connected to Gateway (Session ID: a2796832f946fceb9619234f45e4bb69).
+2025-11-12 14:49:41,170 - INFO - logging in using static token
+2025-11-12 14:49:49,014 - INFO - Shard ID None has connected to Gateway (Session ID: 828a67d8bbb4e9f25d81e1d90552ea09).
+2025-11-12 14:54:10,269 - INFO - logging in using static token
+2025-11-12 14:54:12,944 - INFO - Shard ID None has connected to Gateway (Session ID: 8c0ec2491c7673f07e6ba6fd35943cb2).
+2025-11-12 14:57:22,043 - INFO - logging in using static token
+2025-11-12 14:57:56,238 - INFO - logging in using static token
+2025-11-12 14:58:00,532 - INFO - Shard ID None has connected to Gateway (Session ID: 26fb7e55618e50852e11483397a97289).
+2025-11-12 15:01:58,243 - INFO - logging in using static token
+2025-11-12 15:02:00,651 - INFO - Shard ID None has connected to Gateway (Session ID: 3736cee432e150115de19bd0c1dcb3b2).
+2025-11-12 15:03:31,375 - INFO - logging in using static token
+2025-11-12 15:03:34,388 - INFO - Shard ID None has connected to Gateway (Session ID: f22cb03dbbde071d7f666a219e209907).
+2025-11-12 21:41:45,616 - INFO - logging in using static token
+2025-11-12 21:41:48,933 - INFO - Shard ID None has connected to Gateway (Session ID: 89789342a7945f16250fc9f89a1d4d27).
+2025-11-12 22:00:02,463 - INFO - logging in using static token
+2025-11-12 22:00:07,238 - INFO - Shard ID None has connected to Gateway (Session ID: 2c4b5f97255665ec68e5f9480bdb3798).
+2025-11-12 22:13:19,299 - INFO - logging in using static token
+2025-11-12 22:13:22,269 - INFO - Shard ID None has connected to Gateway (Session ID: 3348d88c3147bc3f6fcf5d42c0485259).
+2025-11-12 22:46:21,930 - INFO - logging in using static token
+2025-11-12 22:46:24,703 - INFO - Shard ID None has connected to Gateway (Session ID: f3592aaa0acd9f7b7408efddb6aa14d0).
+2025-11-13 18:09:59,000 - INFO - logging in using static token
+2025-11-13 18:10:04,306 - INFO - Shard ID None has connected to Gateway (Session ID: c0d002c9ffe3afd6718f1b3d33c70a04).
+2025-11-13 18:12:30,205 - INFO - logging in using static token
+2025-11-13 18:12:32,838 - INFO - Shard ID None has connected to Gateway (Session ID: 591216af0688b5f1e6ecdfca8a1cbbdd).
+2025-11-13 18:13:33,196 - INFO - logging in using static token
+2025-11-13 18:13:35,639 - INFO - Shard ID None has connected to Gateway (Session ID: 069ad8a015e0cc752762f15d54dced34).
+2025-11-13 18:45:12,638 - INFO - logging in using static token
+2025-11-13 18:45:17,255 - INFO - Shard ID None has connected to Gateway (Session ID: d4613e0ff6f577c523ea349b18a42387).
+2025-11-13 18:48:49,857 - INFO - logging in using static token
+2025-11-13 18:48:52,783 - INFO - Shard ID None has connected to Gateway (Session ID: 60e6298ac1166c69348e7a2e4643d699).
+2025-11-13 18:49:42,914 - INFO - logging in using static token
+2025-11-13 18:49:45,256 - INFO - Shard ID None has connected to Gateway (Session ID: b69202b831219b97140fbc826a8844d0).
+2025-11-13 19:17:05,722 - INFO - logging in using static token
+2025-11-13 19:17:08,056 - INFO - Shard ID None has connected to Gateway (Session ID: 10ee87f62c0afc05b9bdc7fbca6612ac).
+2025-11-13 19:18:55,112 - INFO - logging in using static token
+2025-11-13 19:18:58,793 - INFO - Shard ID None has connected to Gateway (Session ID: 20d499c89107eca96ba40ab4962393ac).
+2025-11-13 19:20:43,478 - INFO - logging in using static token
+2025-11-13 19:21:39,411 - INFO - logging in using static token
+2025-11-13 19:21:41,714 - INFO - Shard ID None has connected to Gateway (Session ID: 7be8533e5fd0e0455ba2d12a431996a1).
+2025-11-13 19:23:56,667 - INFO - logging in using static token
+2025-11-13 19:23:59,125 - INFO - Shard ID None has connected to Gateway (Session ID: 428aff27d2121d6ab109c8efacd45881).
+2025-11-13 19:26:27,413 - INFO - logging in using static token
+2025-11-13 19:26:29,651 - INFO - Shard ID None has connected to Gateway (Session ID: 05d6e949e5d171488c18afb0c94e3069).
+2025-11-13 19:30:58,976 - INFO - logging in using static token
+2025-11-13 19:31:01,348 - INFO - Shard ID None has connected to Gateway (Session ID: d1ea94fa16da0cfd9eb5321f0097549b).
+2025-11-13 19:40:45,581 - INFO - logging in using static token
+2025-11-13 19:40:47,954 - INFO - Shard ID None has connected to Gateway (Session ID: acfae018cf1b4318677b16825c55a0fe).
+2025-11-13 19:43:33,027 - INFO - logging in using static token
+2025-11-13 19:43:35,691 - INFO - Shard ID None has connected to Gateway (Session ID: e72dbaf397a0067ce0645975e7cc0c7c).
+2025-11-13 19:46:17,042 - INFO - logging in using static token
+2025-11-13 19:46:19,353 - INFO - Shard ID None has connected to Gateway (Session ID: 156bcfdfbabba014529dab9f1e802cf8).
+2025-11-13 19:48:58,161 - INFO - logging in using static token
+2025-11-13 19:49:01,185 - INFO - Shard ID None has connected to Gateway (Session ID: 4c2fe107ce8e32de5fa99236f3419033).
+2025-11-13 19:51:21,620 - INFO - logging in using static token
+2025-11-13 19:51:24,019 - INFO - Shard ID None has connected to Gateway (Session ID: a9097b4437397b9920c4c733b9ca888f).
+2025-11-13 19:51:56,461 - INFO - logging in using static token
+2025-11-13 19:51:59,343 - INFO - Shard ID None has connected to Gateway (Session ID: 54a69116112277d81532355794a3ec14).
+2025-11-13 20:02:47,073 - INFO - logging in using static token
+2025-11-13 20:02:49,518 - INFO - Shard ID None has connected to Gateway (Session ID: 0c2d038d022740817cb33c4a3ffff25f).
+2025-11-13 20:04:36,620 - INFO - logging in using static token
+2025-11-13 20:04:38,984 - INFO - Shard ID None has connected to Gateway (Session ID: 2d0cec45177d687d538e125406c482b1).
+2025-11-13 20:06:54,966 - INFO - logging in using static token
+2025-11-13 20:06:57,147 - INFO - Shard ID None has connected to Gateway (Session ID: 7a295c2d3f1b74a26afad07f30afff8e).
+2025-11-13 20:10:35,952 - INFO - logging in using static token
+2025-11-13 20:10:38,416 - INFO - Shard ID None has connected to Gateway (Session ID: 20e958cb3d3302d7403ff19d612f56cd).
+2025-11-13 20:13:16,699 - INFO - logging in using static token
+2025-11-13 20:13:18,910 - INFO - Shard ID None has connected to Gateway (Session ID: 3f5cee10a8050093ad9e645e1d31f6b7).
+2025-11-13 20:16:10,068 - INFO - logging in using static token
+2025-11-13 20:16:12,252 - INFO - Shard ID None has connected to Gateway (Session ID: 743e741803f9b3fcddf4c5ed005fcf93).
+2025-11-13 20:20:12,605 - INFO - logging in using static token
+2025-11-13 20:20:14,947 - INFO - Shard ID None has connected to Gateway (Session ID: 94fd2559a6f7f5a49bf2bfc4f60253d4).
+2025-11-13 20:20:25,343 - INFO - logging in using static token
+2025-11-13 20:20:27,950 - INFO - Shard ID None has connected to Gateway (Session ID: b33efd9fbf07bdce89dd8d52b11f7c17).
+2025-11-13 20:20:31,898 - INFO - Shard ID None has successfully RESUMED session b33efd9fbf07bdce89dd8d52b11f7c17.
+2025-11-13 20:26:37,664 - INFO - logging in using static token
+2025-11-13 20:26:39,917 - INFO - Shard ID None has connected to Gateway (Session ID: e01804f84093e2d862bcd327cd84c832).
+2025-11-13 20:27:55,113 - INFO - logging in using static token
+2025-11-13 20:27:57,357 - INFO - Shard ID None has connected to Gateway (Session ID: c9cbd346463528eeaf46f75220ee6b62).
+2025-11-14 00:02:14,272 - INFO - logging in using static token
+2025-11-14 00:02:17,464 - INFO - Shard ID None has connected to Gateway (Session ID: 93e9a325efb821b99985f38feda6ee93).
+2025-11-14 00:03:06,178 - ERROR - Ignoring exception in on_guild_channel_delete
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+TypeError: MyBot.on_guild_channel_delete() takes 1 positional argument but 2 were given
+2025-11-14 00:03:10,507 - ERROR - Ignoring exception in on_guild_channel_delete
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+TypeError: MyBot.on_guild_channel_delete() takes 1 positional argument but 2 were given
+2025-11-14 00:03:15,217 - ERROR - Ignoring exception in on_guild_channel_delete
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+TypeError: MyBot.on_guild_channel_delete() takes 1 positional argument but 2 were given
+2025-11-14 00:03:20,359 - ERROR - Ignoring exception in on_guild_channel_delete
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+TypeError: MyBot.on_guild_channel_delete() takes 1 positional argument but 2 were given
+2025-11-14 00:03:26,082 - ERROR - Ignoring exception in on_guild_channel_delete
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+TypeError: MyBot.on_guild_channel_delete() takes 1 positional argument but 2 were given
+2025-11-14 00:04:06,334 - INFO - logging in using static token
+2025-11-14 00:04:08,710 - INFO - Shard ID None has connected to Gateway (Session ID: 11da2a5e068b27a681424504e35875a9).
+2025-11-14 00:04:54,336 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 186, in on_message
+    await LSecurity.LilySecurityEvaluate(self, bot, message)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: LilySecurityEvaluate() takes 2 positional arguments but 3 were given
+2025-11-14 00:04:59,800 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 186, in on_message
+    await LSecurity.LilySecurityEvaluate(self, bot, message)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: LilySecurityEvaluate() takes 2 positional arguments but 3 were given
+2025-11-14 00:04:59,829 - ERROR - Ignoring exception in on_guild_channel_delete
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\sDiscordIntegration.py", line 201, in on_guild_channel_delete
+    await LSecurity.LilyEventActionChannelDelete(channel)
+  File "e:\Spsv\DCIM\Visual Studio Project Files\LilyV2\src\LilySecurity\sLilySecurity.py", line 94, in LilyEventActionChannelDelete
+    cursor = await VC.cdb.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 183, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 122, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python312\Lib\site-packages\aiosqlite\core.py", line 105, in run
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such table: Configs
+2025-11-14 00:07:28,908 - INFO - logging in using static token
+2025-11-14 00:07:31,966 - INFO - Shard ID None has connected to Gateway (Session ID: 7de39e3757a94abc857523f6f647b5f6).
+2025-11-14 00:12:04,462 - INFO - logging in using static token
+2025-11-14 00:12:08,400 - INFO - Shard ID None has connected to Gateway (Session ID: 762f483721ba4de043088ac36fea8691).

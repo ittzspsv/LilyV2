@@ -600,5 +600,22 @@ class LilyUtility(commands.Cog):
             await user.add_roles(role, reason=f"Role given by {ctx.author}")
             return await ctx.send(f"Added role **{role.name}** to **{user.name}**.")
 
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Manager')))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='setup_logging',description='assign logs channel')
+    async def setup_logging(self, ctx: commands.Context, channel: discord.TextChannel):
+        await VC.cdb.execute(
+            "INSERT OR IGNORE INTO ConfigData (guild_id) VALUES (?)",
+            (ctx.guild.id,)
+        )
+        
+        await VC.cdb.execute(
+            "UPDATE ConfigData SET logs_channel = ? WHERE guild_id = ?",
+            (channel.id, ctx.guild.id)
+        )
+        await VC.cdb.commit()
+        
+        await ctx.send(embed=mLily.SimpleEmbed("Successfully Assigned Log Channel!"))
+
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))
