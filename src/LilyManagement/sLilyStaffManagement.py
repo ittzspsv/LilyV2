@@ -2,6 +2,7 @@ import discord
 import aiosqlite
 import asyncio
 import Config.sBotDetails as Configs
+import LilyModeration.sLilyModeration as mLily
 
 try:
     import Misc.sLilyComponentV2 as CS2
@@ -232,7 +233,7 @@ async def FetchStaffDetail(staff: discord.Member):
                 f"{Configs.emoji['shield']} **Role:** {role_name or 'N/A'}\n"
                 f"{Configs.emoji['bookmark']} **Responsibilities:** {responsibility or 'N/A'}\n"
                 f"{Configs.emoji['clock']} **Timezone:** {timezone or 'N/A'}\n"
-                f"{Configs.emoji['calender']} **Join Date:** {joined_on.strftime('%d/%m/%Y')}"
+                f"{Configs.emoji['calender']} **Join Date:** {joined_on.strftime('%d/%m/%Y') or '0/0/0000'}"
             ),
             inline=False,
         )
@@ -257,8 +258,8 @@ async def FetchStaffDetail(staff: discord.Member):
             value=f"{status_display}\n",
             inline=False,
         )
-
         return embed
+
 
     except Exception as e:
         print(f"Error fetching staff detail: {e}")
@@ -373,7 +374,7 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
             break
 
     if not matching_role:
-        await ctx.send(f"Staff {staff.name} does not have any role registered in the database.")
+        await ctx.send(embed=mLily.SimpleEmbed(f"Staff {staff.name} does not have any role registered in the database.", 'cross'))
         return
 
     role_id = matching_role.id
@@ -385,19 +386,19 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
                 "UPDATE staffs SET retired = 0, role_id = ?, name = ? WHERE staff_id = ?",
                 (role_id, name, staff_id)
             )
-            await ctx.send(f"✅ Staff {staff.name} was retired and is now reactivated with updated role.")
+            await ctx.send(embed=mLily.SimpleEmbed(f"Staff {staff.name} was retired and is now reactivated with updated role <@&{role_id}>"))
         else:
             await sdb.execute(
                 "UPDATE staffs SET role_id = ?, name = ? WHERE staff_id = ?",
                 (role_id, name, staff_id)
             )
-            await ctx.send(f"✅ Staff {staff.name}'s role has been updated.")
+            await ctx.send(embed=mLily.SimpleEmbed(f"Staff {staff.name}'s role has been updated to <@&{role_id}>"))
     else:
         await sdb.execute(
             "INSERT INTO staffs (staff_id, name, role_id, on_loa, strikes_count, retired, Timezone, responsibility) VALUES (?, ?, ?, 0, 0, 0, 'Default', 'None')",
             (staff_id, name, role_id)
         )
-        await ctx.send(f"✅ Staff {staff.name} has been added with role.")
+        await ctx.send(embed=mLily.SimpleEmbed(f"Staff {staff.name} has been added with role <@&{role_id}>"))
 
     await sdb.commit()
 
@@ -408,9 +409,9 @@ async def RemoveStaff(ctx: commands.Context, staff_id: int):
     if exists:
         await sdb.execute("UPDATE staffs SET retired = 1 WHERE staff_id = ?", (staff_id,))
         await sdb.commit()
-        await ctx.send(f"✅ Staff with ID {staff_id} has been marked as retired.")
+        await ctx.send(embed=mLily.SimpleEmbed(f"Staff <@{staff_id}> has been marked as retired."))
     else:
-        await ctx.send(f"No staff found with ID {staff_id}.")
+        await ctx.send(embed=mLily.SimpleEmbed(f"No staff found with ID `{staff_id}`.", 'cross'))
 
 async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role_id: int = None, joined_on: str = None, Timezone: str = None, responsibility: str = None):
     cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ?", (staff_id,))
@@ -418,7 +419,7 @@ async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role
     await cursor.close()
 
     if not row:
-        await ctx.send(f"No staff found with ID {staff_id}.")
+        await ctx.send(embed=mLily.SimpleEmbed(f"No staff found with ID {staff_id}.", 'cross'))
         return
 
     fields = {
@@ -431,7 +432,7 @@ async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role
     update_columns = {k: v for k, v in fields.items() if v is not None}
 
     if not update_columns:
-        await ctx.send("No fields provided to update.")
+        await ctx.send(embed=mLily.SimpleEmbed(f"No Fields Provided to update", 'cross'))
         return
 
     set_clause = ", ".join([f"{col} = ?" for col in update_columns.keys()])
@@ -442,7 +443,7 @@ async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role
     await sdb.execute(query, values)
     await sdb.commit()
 
-    await ctx.send(f"Staff ID {staff_id} updated successfully.")
+    await ctx.send(embed=mLily.SimpleEmbed(f"Staff ID {staff_id} updated successfully."))
 
 async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
     try:
@@ -463,13 +464,10 @@ async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
         )
 
         await sdb.commit()
-        return discord.Embed(
-            description=f"✅ **Successfully Striked Staff <@{staff_id}>**",
-            colour=0xf50000
-        )
+        return mLily.SimpleEmbed(f'**Successfully Striked Staff <@{staff_id}>**')
 
     except Exception as e:
-        return discord.Embed(title=f"Exception: {e}", colour=0xf50000)
+        return mLily.SimpleEmbed(f'Exception : {e}', 'cross')
 
 async def RemoveStrikeStaff(ctx: commands.Context, strike_id: str):
     try:
@@ -506,13 +504,10 @@ async def RemoveStrikeStaff(ctx: commands.Context, strike_id: str):
 
         await sdb.commit()
 
-        return discord.Embed(
-            description=f"✅ Strike {target_id} removed from <@{staff_id}>",
-            colour=0x00ff00
-        )
+        return mLily.SimpleEmbed(f"Strike `{target_id}` removed from <@{staff_id}>")
 
     except Exception as e:
-        return discord.Embed(title=f"Exception: {e}", colour=0xf50000)
+        return mLily.SimpleEmbed(f"Exception: {e}", 'cross')
 
 async def ListStrikes(staff: discord.Member):
     try:
@@ -523,39 +518,51 @@ async def ListStrikes(staff: discord.Member):
             rows = await cursor.fetchall()
 
         if not rows:
-            return discord.Embed(
-                title="No Strikes Found",
-                description=f"No strikes found for {staff.mention}",
-                colour=0xf50000
-            ).set_thumbnail(url=staff.display_avatar.url)
+            embed = (
+                discord.Embed(
+                    color=0xf50000,
+                    title=f"{Configs.emoji['cross']} No Strikes Found",
+                    description=f"No strikes found for {staff.mention}.",
+                )
+                .set_thumbnail(url=staff.display_avatar.url or Configs.img['member'])
+                .set_footer(text="Immutable Records • Managed by Lily System")
+            )
+            return embed
 
-        embed = discord.Embed(
-            title=f"Strikes for {staff.display_name}",
-            description=f"Listing all strikes issued to {staff.mention}",
-            colour=0xf50000
+
+        embed = (
+            discord.Embed(
+                color=0xFFFFFF,
+                title=f"{Configs.emoji['arrow']} {staff.display_name}'s Strike Information",
+                description=f"{Configs.emoji['bookmark']} Listing all strikes issued to {staff.mention}",
+            )
+            .set_thumbnail(url=staff.display_avatar.url)
+            .set_image(
+                url=Configs.img['border']
+            )
         )
-        embed.set_thumbnail(url=staff.display_avatar.url)
 
         for strike_id, reason, date, manager in rows:
             embed.add_field(
-                name=f"__Strike ID: {strike_id}__",  # underline
+                name=f"{Configs.emoji['pencil']} __Strike ID: {strike_id}__",
                 value=(
-                    f"**Reason:** {reason}\n"
-                    f"**Date:** {date}\n"
-                    f"**Manager:** <@{manager}>"
+                    f"> {Configs.emoji['bookmark']} **Reason** : {reason}\n"
+                    f"> {Configs.emoji['shield']} **Manager** : <@{manager}>\n"
+                    f"> {Configs.emoji['calender']} **Date** : {date}"
                 ),
-                inline=False
+                inline=False,
             )
 
-        embed.set_footer(text="Immutable Records Can only be removed by Higher Staffs")
+        embed.set_footer(text="Immutable Records • Can only be removed by higher staff")
         return embed
 
     except Exception as e:
         return discord.Embed(
-            title=f"Exception: {e}",
+            title=f"{Configs.emoji['cross']} Exception Occurred",
+            description=f"```{e}```",
             colour=0xf50000
         )
-    
+
 async def AssignLoa(staff_id: str, reason: str, days: int):
     try:
         await sdb.execute(

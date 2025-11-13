@@ -122,7 +122,7 @@ class LilyModeration(commands.Cog):
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ms', description='checks logs for a particular moderator')
-    async def ms(self, ctx, slice_exp: str = None, member: discord.Member=None):
+    async def ms(self, ctx, member: discord.Member=None, slice_exp: str = '0:0'):
         try:
             try:
                 start, stop = (int(x) if x else 0 for x in slice_exp.split(":"))
@@ -154,7 +154,7 @@ class LilyModeration(commands.Cog):
             await ctx.send(embeds=embed)
 
         except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"An unexpected error occurred: {e}"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"No Modlogs Available", 'cross'))
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

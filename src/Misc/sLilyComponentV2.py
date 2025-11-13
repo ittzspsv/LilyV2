@@ -258,6 +258,8 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         self.bot = bot
         self.your_fruits = your_fruits
         self.your_types = your_types
+        self.message = message
+        self.type = type
 
         self.permanent_emoji = discord.utils.get(bot.emojis, name="perm") or "✅"
         self.gamepass_emoji = discord.utils.get(bot.emojis, name="gamepass") or "🎟️"
@@ -271,9 +273,6 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         self.overpay = False
         self.neglect_fruits = neglect_fruits
         self.storage_capacity = 1
-
-        self.message = message
-        self.type = type
 
         self.basic_select = discord.ui.Select(
             custom_id="basic_select",
@@ -296,26 +295,9 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         self.pricing_select.callback = self.pricing_select_callback
 
         self.storage_select = discord.ui.Select(
-                custom_id="storage_select",
-                options=[
-                    discord.SelectOption(
-                        label="1",
-                        value="1",
-                    ),
-                    discord.SelectOption(
-                        label="2",
-                        value="2",
-                    ),
-                    discord.SelectOption(
-                        label="3",
-                        value="3",
-                    ),
-                    discord.SelectOption(
-                        label="4",
-                        value="4",
-                    ),
-                ],
-            )
+            custom_id="storage_select",
+            options=[discord.SelectOption(label=str(i), value=str(i)) for i in range(1, 5)]
+        )
         self.storage_select.callback = self.storage_select_callback
 
         self.suggest_button = discord.ui.Button(
@@ -339,37 +321,44 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
 
         self.add_item(container)
 
+    def check_user(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.message.author.id
+
+    async def reject_user(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            "Only the original user can use this configuration.",
+            ephemeral=True
+        )
+
     async def basic_select_callback(self, interaction: discord.Interaction):
+        if not self.check_user(interaction):
+            return await self.reject_user(interaction)
+
         selected = self.basic_select.values[0]
-
-        self.include_permanent = False
-        self.include_gamepass = False
-        self.include_skins = False
-
-        if selected == "permanent":
-            self.include_permanent = True
-        elif selected == "gamepass":
-            self.include_gamepass = True
-        elif selected == "fruit_skins":
-            self.include_skins = True
+        self.include_permanent = selected == "permanent"
+        self.include_gamepass = selected == "gamepass"
+        self.include_skins = selected == "fruit_skins"
 
         await interaction.response.send_message(
             f"You selected: {selected}", ephemeral=True
         )
 
     async def storage_select_callback(self, interaction: discord.Interaction):
-        selected = self.storage_select.values[0]
+        if not self.check_user(interaction):
+            return await self.reject_user(interaction)
 
+        selected = self.storage_select.values[0]
         self.storage_capacity = int(selected)
 
         await interaction.response.send_message(
             f"Your Max Fruit Storage Capacity is {selected}", ephemeral=True
         )
 
-
     async def pricing_select_callback(self, interaction: discord.Interaction):
-        selected = self.pricing_select.values[0]
+        if not self.check_user(interaction):
+            return await self.reject_user(interaction)
 
+        selected = self.pricing_select.values[0]
         self.overpay = selected == "overpay"
 
         await interaction.response.send_message(
@@ -377,9 +366,10 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         )
 
     async def suggest_button_callback(self, interaction: discord.Interaction):
+        if not self.check_user(interaction):
+            return await self.reject_user(interaction)
+
         try:
-            if interaction.user.id != self.message.author.id:
-                raise ValueError("You Cannot Use this")
             await interaction.response.defer()
 
             their_fruits, their_types, success = await FSA.trade_suggestor(
@@ -395,81 +385,27 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
             if not success:
                 raise ValueError("Trade suggestion failed.")
 
-            if type == 1:
-                image = await StockValueJSON.j_LorW(
-                    self.your_fruits, self.your_types,
-                    their_fruits, their_types,
-                    1, 1
-                )
+            image = await StockValueJSON.j_LorW(
+                self.your_fruits, self.your_types,
+                their_fruits, their_types,
+                1, 1
+            )
 
-                if image is None:
-                    raise ValueError("Image generation failed.")
+            if image is None:
+                raise ValueError("Image generation failed.")
 
-                buffer = io.BytesIO()
-                image.save(buffer, format="PNG")
-                buffer.seek(0)
+            buffer = io.BytesIO()
+            image.save(buffer, format="PNG")
+            buffer.seek(0)
 
-                try:
-                    await interaction.delete_original_response()
-                except:
-                    pass  
+            try:
+                await interaction.delete_original_response()
+            except:
+                pass
 
-                await self.message.reply(file=discord.File(fp=buffer, filename="trade_result.webp"),)
-            else:
-                            ctx = await self.bot.get_context(self.message)
-                            data = image = await StockValueJSON.j_LorW(
-                                self.your_fruits, self.your_types,
-                                their_fruits, their_types, 0
-                            )
-
-                            your_fruit_details = ""
-                            their_fruit_details = ""
-
-                            for i in range(len(self.your_fruits)):
-                                fruit_name = self.your_fruits[i].replace(" ", "")
-                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
-                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
-
-                                value = data['Your_IndividualValues'][i]
-                                formatted_value = f"{value:,}"
-                                your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
-
-                            for i in range(len(their_fruits)):
-                                fruit_name = their_fruits[i].replace(" ", "")
-                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
-                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
-
-                                value = data['Their_IndividualValues'][i]
-                                formatted_value = f"{value:,}"
-                                their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
-
-                            embed = discord.Embed(title=data['TradeConclusion'],
-                                description=f"**{data['TradeDescription']}**",
-                                colour=data['ColorKey'])
-
-                            embed.set_author(name="Lily Fruit Suggestor")
-
-                            embed.add_field(name="Your Fruit Values",
-                                            value=your_fruit_details,
-                                            inline=True)
-                            embed.add_field(name="Their Fruit Values",
-                                            value=their_fruit_details,
-                                            inline=True)
-                            embed.add_field(name="Your Total Values:",
-                                            value=format_currency(data['Your_TotalValue']),
-                                            inline=False)
-                            embed.add_field(name="Their Total Values:",
-                                            value=format_currency(data['Their_TotalValue']),
-                                            inline=False)
-                            embed.add_field(name=data['Percentage'],
-                                            value="",
-                                            inline=False)
-                            
-                            try:
-                                await interaction.delete_original_response()
-                            except:
-                                pass
-                            await self.message.reply(content=None, embed=embed)
+            await self.message.reply(
+                file=discord.File(fp=buffer, filename="trade_result.webp"),
+            )
 
         except Exception as e:
             try:

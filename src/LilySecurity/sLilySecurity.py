@@ -1,9 +1,14 @@
 import discord
 from discord.ext import commands
+from collections import deque
 
-class LilySecurity(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+security_info = {
+    'channel_deletion_limit' : 3,
+    'channel_deletion_cooldown' : 8,
+    'role_deletion_limit' : 3,
+    'role_deletion_cooldown' : 8
+}
 
-async def setup(bot):
-    await bot.add_cog(LilySecurity(bot))
+
+async def SecurityEvaluate(self, bot, message):
+    pass

@@ -180,11 +180,11 @@ async def ms(ctx: commands.Context, moderator_id: int, user: discord.User, slice
 
         embed1 = (
             discord.Embed(
-                title=f"{Config.emoji['arrow']} ShreeSPSV'S Moderation Stats",
+                title=f"{Config.emoji['arrow']} {user.display_name}'s Moderation Stats",
                 colour=16777215,
             )
-            .set_thumbnail(url=user.avatar.url if user.avatar else "https://example.com/default_avatar.png")
-            .set_image(url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png")
+            .set_thumbnail(url=user.avatar.url if user.avatar else Config.img['member'])
+            .set_image(url=Config.img['border'])
             .add_field(name=f"{Config.emoji['logs']} Total Logs", value=str(total_logs), inline=True)
             .add_field(name=f"{Config.emoji['shield']} Moderator ID", value=str(moderator_id), inline=True)
             .add_field(name=f"{Config.emoji['calender']} Date", value=now.strftime("%Y-%m-%d"), inline=True)
@@ -309,8 +309,8 @@ async def mod_logs(ctx: commands.Context, target_user_id: int, user: discord.Use
                 color=16777215,
                 title=f"{Config.emoji['arrow']} {user.display_name}'s Moderation Logs",
             )
-            .set_thumbnail(url=user.avatar.url if user.avatar else "https://example.com/default_avatar.png")
-            .set_image(url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png")
+            .set_thumbnail(url=user.avatar.url if user.avatar else Config.img['member'])
+            .set_image(url=Config.img['border'])
             .add_field(name="Total Logs", value=str(total_count), inline=True)
             .add_field(name="Date", value=now.strftime("%Y-%m-%d"), inline=True)
         )
@@ -326,8 +326,8 @@ async def mod_logs(ctx: commands.Context, target_user_id: int, user: discord.Use
                 color=16777215,
                 title=f"{Config.emoji['arrow']} Log's Overview",
             )
-            .set_thumbnail(url="https://media.discordapp.net/attachments/1366840025010012321/1438064934574493768/logs.png")
-            .set_image(url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png")
+            .set_thumbnail(url=Config.img['logs'])
+            .set_image(url=Config.img['border'])
         )
 
         for index, log in enumerate(display_logs, start=1):
@@ -352,28 +352,42 @@ async def mod_logs(ctx: commands.Context, target_user_id: int, user: discord.Use
 
     except Exception as e:
         print("Error in mod_logs:", e)
-        return SimpleEmbed(f"Something went wrong while retrieving logs: {e}")
+        return SimpleEmbed(f"Exception {e}", 'cross')
 
 def SimpleEmbed(message: str, s_emoji: str='checked'):
     return discord.Embed(
         color=16777215,
-        description=f"{Configs.emoji[s_emoji]} **{message}**",
+        description=f"{Configs.emoji[s_emoji.lower()]} **{message}**",
     )
 
 def BanEmbed(moderator: discord.Member, reason, appealLink, server_name):
-    embed = discord.Embed(title=f"BANNED FROM {server_name}",
-                      description="You have been banned!",
-                      colour=0x00f5cc)
-    embed.add_field(name="Moderator",
-                    value=moderator.name,
-                    inline=False)
-    embed.add_field(name="Reason",
-                    value=reason,
-                    inline=False)
-    embed.add_field(name="Appeal your Ban",
-                    value=f"if you think your ban is wrongly done please make an appel here {appealLink}",
-                    inline=False)
-
+    embed = (
+        discord.Embed(
+            color=0xFFFFFF,
+            title=f"{Config.emoji['arrow']} YOU HAVE BEEN BANNED!",
+        )
+        .set_image(url=Config.img['Border'])
+        .add_field(
+            name=f"Config.emoji['bookmark'] Reason",
+            value=reason,
+            inline=False,
+        )
+        .add_field(
+            name=f"{Config.emoji['shield']} Moderator",
+            value=moderator.name,
+            inline=False,
+        )
+        .add_field(
+            name=f"{Config.emoji['bot']} Server",
+            value=server_name,
+            inline=False,
+        )
+        .add_field(
+            name=f"{Config.emoji['ban_hammer']} Appeal Your Ban Here",
+            value=f"If you think your ban was wrongly done, please make an appeal here: {appealLink}",
+            inline=False,
+        )
+    )
     return embed
 
 def MuteParser(duration: str):
@@ -521,7 +535,7 @@ async def mute_user(ctx, user: discord.Member, duration: str, reason: str = "No 
         await user.edit(timed_out_until=until, reason=reason)
 
         await ctx.send(embed=SimpleEmbed(
-            f"✅ Muted: <@{user.id}> for **Duration:** {duration}"
+            f"Muted: <@{user.id}>"
         ))
 
         await LilyLogging.LogModerationAction(ctx, ctx.author.id, user.id, "mute", reason)
@@ -535,32 +549,45 @@ async def mute_user(ctx, user: discord.Member, duration: str, reason: str = "No 
 
 async def unmute(ctx, user: discord.Member):
     if not user.timed_out_until or user.timed_out_until <= discord.utils.utcnow():
-        await ctx.send(embed=SimpleEmbed("That user is not muted currently"))
+        await ctx.send(embed=SimpleEmbed("That user is not muted currently", 'cross'))
         return
 
     try:
         await user.edit(timed_out_until=None, reason="Manual unmute by moderator")
-        await ctx.send(embed=SimpleEmbed(f"✅ Unmuted: <@{user.id}>"))
+        await ctx.send(embed=SimpleEmbed(f"Unmuted: <@{user.id}>"))
 
     except discord.HTTPException as e:
-        await ctx.send(embed=SimpleEmbed(f"Failed to unmute user. {e}"))
+        await ctx.send(embed=SimpleEmbed(f"Failed to unmute user. {e}", 'cross'))
     except Exception as e:
-        await ctx.send(embed=SimpleEmbed(f"Exception: {e}"))
+        await ctx.send(embed=SimpleEmbed(f"Exception: {e}", 'cross'))
 
 async def warn(ctx: commands.Context, member: discord.Member, reason: str):
     await LilyLogging.LogModerationAction(ctx, ctx.author.id, member.id, "warn", reason)
 
     embed = discord.Embed(
-        title="You have been warned",
-        color=discord.Color.orange()
+        color=16777215,
+        title=f"{Config.emoji['arrow']} You Have Been Warned!",
     )
-    embed.add_field(name="Server", value=ctx.guild.name, inline=False)
-    embed.add_field(name="Warned By", value=ctx.author.mention, inline=False)
-    embed.add_field(name="Reason", value=reason, inline=False)
+    embed.set_thumbnail(url=Config.img['warn'])
+    embed.add_field(
+        name=f"{Config.emoji['bookmark']} Reason",
+        value=reason,
+        inline=False,
+    )
+    embed.add_field(
+        name=f"{Config.emoji['shield']} Moderator",
+        value=f"<@{ctx.author.id}>",
+        inline=False,
+    )
+    embed.add_field(
+        name=f"{Config.emoji['bot']} Server",
+        value=ctx.guild.name,
+        inline=False,
+    )
 
     try:
         await member.send(embed=embed)
     except discord.Forbidden:
-        await ctx.send(f"Could not DM {member.mention}")
+        pass
 
-    await ctx.send(f"{member.mention} has been warned")
+    await ctx.send(embed=SimpleEmbed(f"{member.mention} has been warned"))
