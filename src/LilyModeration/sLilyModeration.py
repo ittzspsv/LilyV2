@@ -364,11 +364,11 @@ def BanEmbed(moderator: discord.Member, reason, appealLink, server_name):
     embed = (
         discord.Embed(
             color=0xFFFFFF,
-            title=f"{Config.emoji['arrow']} YOU HAVE BEEN BANNED!",
+            title=f"{Config.emoji['arrow']} You Have Been Banned!",
         )
-        .set_image(url=Config.img['Border'])
+        .set_image(url=Config.img['border'])
         .add_field(
-            name=f"Config.emoji['bookmark'] Reason",
+            name=f"{Config.emoji['bookmark']} Reason",
             value=reason,
             inline=False,
         )
@@ -483,7 +483,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
             await ctx.guild.ban(discord.Object(id=user_id),
                 reason=f"By {ctx.author} (ID: {ctx.author.id}) | Reason: {reason}"
             )
-            await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "ban", reason)
+            await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "ban", reason, proofs)
             remaining = await remaining_ban_count(ctx, ctx.author.id, valid_limit_roles)
             await ctx.send(embed=SimpleEmbed(f"Banned: <@{user_id}>\n**Bans Remaining:** {remaining}"))
         else:
@@ -508,17 +508,17 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
     except Exception as e:
         await ctx.send(embed=SimpleEmbed(f"Unhandled Exception: {e}"))
 
-async def mute_user(ctx, user: discord.Member, duration: str, reason: str = "No reason provided"):
+async def mute_user(ctx: commands.Context, user: discord.Member, duration: str, reason: str = "No reason provided", proofs: list = []):
     if user.top_role >= ctx.guild.me.top_role:
         await ctx.send(embed=SimpleEmbed("I cannot mute this user"))
         return
 
     if user.top_role >= ctx.author.top_role:
-        await ctx.send(embed=SimpleEmbed("I cannot mute a user with a role equal to or higher than yours."))
+        await ctx.send(embed=SimpleEmbed("I cannot mute a user with a role equal to or higher than yours.", 'cross'))
         return
 
     if user.id in {ctx.guild.owner_id, ctx.bot.user.id, ctx.author.id}:
-        await ctx.send(embed=SimpleEmbed("Exception!. Stupid action detected errno 77777"))
+        await ctx.send(embed=SimpleEmbed("Exception!. Stupid action detected errno 77777", 'cross'))
         return
 
     try:
@@ -526,9 +526,35 @@ async def mute_user(ctx, user: discord.Member, duration: str, reason: str = "No 
         until = utcnow() + timedelta(seconds=seconds)
 
         try:
-            await user.send(embed=SimpleEmbed(
-                f"You have been muted in **{ctx.guild.name}**\n**Duration:** {duration}\n**Reason:** {reason}"
-            ))
+            embed = (
+                discord.Embed(
+                    color=0xFFFFFF,
+                    title=f"{Config.emoji['arrow']} YOU HAVE BEEN MUTED!",
+                )
+                .set_image(url=Config.img['border'])
+                .add_field(
+                    name=f"Config.emoji['bookmark'] Reason",
+                    value=reason,
+                    inline=False,
+                )
+                .add_field(
+                    name=f"{Config.emoji['shield']} Moderator",
+                    value=ctx.author.mention,
+                    inline=False,
+                )
+                .add_field(
+                    name=f"{Config.emoji['bot']} Server",
+                    value=ctx.guild.name,
+                    inline=False,
+                )
+                .add_field(
+                    name=f"{Config.emoji['ban_hammer']} Appeal Your Ban Here",
+                    value=f"If you think your mute was wrongly done, please make an appeal here: {Config.appeal_server_link}",
+                    inline=False,
+                )
+            )
+
+            await user.send(embed=embed)
         except Exception as e:
             print("DM failed:", e)
 
@@ -538,7 +564,7 @@ async def mute_user(ctx, user: discord.Member, duration: str, reason: str = "No 
             f"Muted: <@{user.id}>"
         ))
 
-        await LilyLogging.LogModerationAction(ctx, ctx.author.id, user.id, "mute", reason)
+        await LilyLogging.LogModerationAction(ctx, ctx.author.id, user.id, "mute", reason, proofs)
 
     except ValueError as ve:
         await ctx.send(embed=SimpleEmbed(str(ve)))
@@ -547,13 +573,13 @@ async def mute_user(ctx, user: discord.Member, duration: str, reason: str = "No 
     except Exception as e:
         await ctx.send(embed=SimpleEmbed(f"Exception: {e}"))
 
-async def unmute(ctx, user: discord.Member):
+async def unmute(ctx: commands.Context, user: discord.Member):
     if not user.timed_out_until or user.timed_out_until <= discord.utils.utcnow():
         await ctx.send(embed=SimpleEmbed("That user is not muted currently", 'cross'))
         return
 
     try:
-        await user.edit(timed_out_until=None, reason="Manual unmute by moderator")
+        await user.edit(timed_out_until=None, reason=f"Manual unmute by moderator {ctx.author.mention}")
         await ctx.send(embed=SimpleEmbed(f"Unmuted: <@{user.id}>"))
 
     except discord.HTTPException as e:
@@ -561,8 +587,8 @@ async def unmute(ctx, user: discord.Member):
     except Exception as e:
         await ctx.send(embed=SimpleEmbed(f"Exception: {e}", 'cross'))
 
-async def warn(ctx: commands.Context, member: discord.Member, reason: str):
-    await LilyLogging.LogModerationAction(ctx, ctx.author.id, member.id, "warn", reason)
+async def warn(ctx: commands.Context, member: discord.Member, reason: str, proofs=[]):
+    await LilyLogging.LogModerationAction(ctx, ctx.author.id, member.id, "warn", reason, proofs)
 
     embed = discord.Embed(
         color=16777215,
@@ -587,7 +613,7 @@ async def warn(ctx: commands.Context, member: discord.Member, reason: str):
 
     try:
         await member.send(embed=embed)
-    except discord.Forbidden:
-        pass
+    except Exception as e:
+        print(e)
 
     await ctx.send(embed=SimpleEmbed(f"{member.mention} has been warned"))

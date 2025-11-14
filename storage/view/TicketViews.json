@@ -1,47 +1,63 @@
 [
     {
-        "channel_id": 1370395716106588241,
-        "message_id": 1421841571908944064,
+        "channel_id": 1438543148208095304,
+        "message_id": 1438543537938632865,
         "config": {
             "Configs": {
                 "Embed": {
                     "embeds": [
                         {
+                            "color": 16777215,
                             "author": {
-                                "name": "BloxTrade Support"
+                                "name": "Support Tickets"
                             },
-                            "title": "Support Ticket",
-                            "description": "Explore our various ticket options for tailored assistance. Whether it's giveaways, trading, or moderation concerns, we're here to help. Choose the right ticket, and we'll assist you promptly.",
-                            "footer": {
-                                "text": "Made using LilyV2"
+                            "title": "<:arrow:1438045578721493062> Need Assistance? Use our ticket system to get direct support!",
+                            "description": "- Our ticketing system makes it easy to reach the right team for your needs. Simply open a ticket to get direct, personalized support from our staff.",
+                            "fields": [
+                                {
+                                    "name": "How to Open?",
+                                    "value": "- Choose the Selector Menu to start your Interaction.  Choose appropriate options for your needs!"
+                                }
+                            ],
+                            "image": {
+                                "url": "https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69172232&is=6915d0b2&hm=6fc4724fb6fb44c83c8fb82425f287c19c762d161ff882420f69abaaf725ad3a&"
+                            },
+                            "thumbnail": {
+                                "url": "https://media.discordapp.net/attachments/1438505067341680690/1438505245625024512/logs.png?ex=69171fe8&is=6915ce68&hm=3530c689a64656f50a78ddafa82138bd2c0d22e92d2ca281eb00423bea7cc7be&=&format=webp&quality=lossless"
                             }
                         }
                     ]
                 },
                 "TicketEmbedFields": {
-                    "Title": "Support Ticket",
+                    "Title": "Ticket Information",
                     "TEmbed": {
                         "embeds": [
                             {
-                                "title": "Support Ticket Instructions",
-                                "description": "Thank you for contacting Support\n\n**Benefits of our support team**",
+                                "description": "Our Staff-Team will look into it as soon as possible.",
+                                "title": "<:arrow:1438045578721493062> Thanks for Creating the ticket!",
+                                "color": 16777215,
+                                "image": {
+                                    "url": "https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69172232&is=6915d0b2&hm=6fc4724fb6fb44c83c8fb82425f287c19c762d161ff882420f69abaaf725ad3a&"
+                                },
                                 "fields": [
                                     {
-                                        "name": "",
-                                        "value": "Nothing will be done\nidk why tf u wasting ur time"
+                                        "name": "<:bookmark:1438048772939583571> General Informations",
+                                        "value": "- While waiting for staff to arrive, please provide all relevant information or proof you have.\n- Our staff usually responds within 30 minutes.\n- Clearly explain your issue so the staff can understand it better!"
                                     }
                                 ]
                             }
                         ]
                     },
-                    "LogChannel": 1421841285253431408
+                    "LogChannel": 123456789012345678
                 },
                 "TicketType": [
-                    "Button",
-                    "Create Ticket",
-                    "Secondary"
+                    "Selector",
+                    "Scam Report Ticket : <:warn:1438045607116668948>",
+                    "Abusive Moderator Ticket: <:ban_hammer:1438045582139719770>",
+                    "Server issue Ticket: <:bookmark:1438048772939583571>",
+                    "Claim Giveaway : <:gift:1438045585570791555>"
                 ],
-                "Channel_To_Spawn": 1370395716106588241,
+                "Channel_To_Spawn": 1438543148208095304,
                 "ModeratorRoles": [
                     1421829879510601738
                 ],
@@ -53,68 +69,19 @@
                 {
                     "Discord ID | Username of that scammer": 600,
                     "Please explain what he did": 600
-                }
-            ],
-            "view_type": "ButtonType"
-        }
-    },
-    {
-        "channel_id": 1370395716106588241,
-        "message_id": 1422295627693428879,
-        "config": {
-            "Configs": {
-                "Embed": {
-                    "embeds": [
-                        {
-                            "author": {
-                                "name": "BloxTrade Support"
-                            },
-                            "title": "Support Ticket",
-                            "description": "Explore our various ticket options for tailored assistance. Whether it's giveaways, trading, or moderation concerns, we're here to help. Choose the right ticket, and we'll assist you promptly.",
-                            "footer": {
-                                "text": "Made using LilyV2"
-                            }
-                        }
-                    ]
                 },
-                "TicketEmbedFields": {
-                    "Title": "Support Ticket",
-                    "TEmbed": {
-                        "embeds": [
-                            {
-                                "title": "Support Ticket Instructions",
-                                "description": "Thank you for contacting Support\n\n**Benefits of our support team**",
-                                "fields": [
-                                    {
-                                        "name": "",
-                                        "value": "Nothing will be done\nidk why tf u wasting ur time"
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    "LogChannel": 1421841285253431408
-                },
-                "TicketType": [
-                    "Button",
-                    "Create Ticket",
-                    "Secondary"
-                ],
-                "Channel_To_Spawn": 1370395716106588241,
-                "ModeratorRoles": [
-                    1421829879510601738
-                ],
-                "StaffManagerRoles": [
-                    1421829900016287854
-                ]
-            },
-            "Modal": [
                 {
-                    "Discord ID | Username of that scammer": 600,
-                    "Please explain what he did": 600
+                    "Discord ID | Username of that moderator": 600,
+                    "What unfair actions did the moderator take?": 600
+                },
+                {
+                    "What server issue would you like to report?": 1000
+                },
+                {
+                    "Which giveaway did you win??": 200
                 }
             ],
-            "view_type": "ButtonType"
+            "view_type": "SelectorType"
         }
     }
 ]

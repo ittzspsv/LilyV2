@@ -48,7 +48,7 @@ def format_currency(val):
         return str(int(value))
 
 
-async def MessageEvaluate(self, bot, message):
+async def MessageEvaluate(bot, message):
         if message.guild and message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.stock_fetch_channel_id:
             try:
                 cursor = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'StockImage'")
@@ -166,7 +166,7 @@ async def MessageEvaluate(self, bot, message):
                 if not row or not row[0]:
                     return
 
-                fChannel = self.get_channel(int(row[0]))
+                fChannel = bot.get_channel(int(row[0]))
                 if message.channel != fChannel:
                     return
                 status_msg = await message.reply("Thinking...")
@@ -274,7 +274,7 @@ async def MessageEvaluate(self, bot, message):
                     cursor = await LilyConfig.cdb.execute("SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
                     row = await cursor.fetchone()
                     if row and row[0]:
-                        w_or_l_channel = self.get_channel(row[0])
+                        w_or_l_channel = bot.get_channel(row[0])
                     else:
                         return
                     if message.channel == w_or_l_channel:
@@ -364,7 +364,7 @@ async def MessageEvaluate(self, bot, message):
                     cursor = await LilyConfig.cdb.execute("SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
                     row = await cursor.fetchone()
                     if row and row[0]:
-                        w_or_l_channel = self.get_channel(row[0])
+                        w_or_l_channel = bot.get_channel(row[0])
                     else:
                         return
                     if message.channel == w_or_l_channel:
@@ -457,7 +457,7 @@ async def MessageEvaluate(self, bot, message):
             if not row or not row[0]:
                 return
             
-            _w_or_l_channel = self.get_channel(row[0])
+            _w_or_l_channel = bot.get_channel(row[0])
             if not _w_or_l_channel:
                 return
             
@@ -488,7 +488,7 @@ async def MessageEvaluate(self, bot, message):
             if not row or not row[0]:
                 return
             
-            _w_or_l_channel = self.get_channel(row[0])
+            _w_or_l_channel = bot.get_channel(row[0])
             if not _w_or_l_channel:
                 return
             

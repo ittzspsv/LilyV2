@@ -19,15 +19,8 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ban', description='bans a user with config = limited')
     async def ban(self, ctx:commands.Context, member: str = "", *, reason="No reason provided"):
-        proofs = []
+        proofs = proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
         role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
-
-        for attachment in ctx.message.attachments:
-            if attachment.content_type and any(attachment.content_type.startswith(t) for t in ["image/", "video/"]):
-                file = await attachment.to_file()
-                proofs.append(file)
-            else:
-                await ctx.send(f"File type {attachment.filename} Not Supported, so it will not be sent to logs channel")
 
         try:
             target_user = None
@@ -105,13 +98,15 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='mute', description='mutes a user with desired input')
     async def mute(self, ctx:commands.Context, member:discord.Member=None, duration:str="1",*, reason="No reason provided"):
-        await mLily.mute_user(ctx, member, duration, reason)
+        proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
+        await mLily.mute_user(ctx, member, duration, reason, proofs)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='warn', description='warns a user')
     async def warn(self, ctx:commands.Context, member:discord.Member=None,*, reason="No reason provided"):
-        await mLily.warn(ctx, member, reason)
+        proofs = proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
+        await mLily.warn(ctx, member, reason, proofs)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

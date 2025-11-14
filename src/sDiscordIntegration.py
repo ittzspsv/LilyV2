@@ -183,7 +183,7 @@ class MyBot(commands.Bot):
         if message.author == self.user:
               return         
 
-        await LSecurity.LilySecurityEvaluate(self, bot, message)
+        await LSecurity.LilySecurityEvaluate(bot, message)
 
         if message.channel.id in LilyLeveling.config['AllowedChannels']:
             await LilyLeveling.LevelProcessor(message)
@@ -194,7 +194,7 @@ class MyBot(commands.Bot):
        
         await self.process_commands(message)
 
-    async def on_member_join(member: discord.Member):
+    async def on_member_join(self, member: discord.Member):
         await LSecurity.LilySecurityJoinWindow(bot, member)
 
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):

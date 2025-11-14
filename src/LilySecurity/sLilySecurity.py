@@ -17,8 +17,6 @@ guild_role_deletions = defaultdict(lambda: defaultdict(lambda: deque()))
 
 
 async def LilySecurityJoinWindow(bot, member: discord.Member):
-
-    # Kick Unwanted Bot
     if member.bot:
         try:
             if not member.public_flags.verified_bot:
