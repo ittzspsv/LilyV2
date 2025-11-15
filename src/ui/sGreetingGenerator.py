@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import io
-import tkinter as tk
+import re
 import discord
 
 def draw_gradient_text(
@@ -57,7 +57,6 @@ def draw_gradient_text(
 async def GenerateWelcome(member: discord.Member):
     background_img = 'src/ui/Greetings/Welcome.png'
     TEXT_FONT_PATH = "src/ui/font/Berlin Sans FB Bold.ttf"
-    NUMBER_FONT_PATH = "src/ui/font/Game Bubble.ttf"
 
     base = Image.open(background_img).convert("RGBA")
 
@@ -75,13 +74,23 @@ async def GenerateWelcome(member: discord.Member):
     AVATAR_POS = (220, 125)
     base.paste(avatar, AVATAR_POS, mask)
 
-    username_font = ImageFont.truetype(TEXT_FONT_PATH, 52)
+    draw = ImageDraw.Draw(base)
+
+    username_text = re.sub(r'[^A-Za-z ]', '', member.name.replace('_', ' ').upper())
+    username_font_size = 52
+    MAX_USERNAME_WIDTH = 500
+    username_font = ImageFont.truetype(TEXT_FONT_PATH, username_font_size)
+    while draw.textlength(username_text, font=username_font) > MAX_USERNAME_WIDTH and username_font_size > 10:
+        username_font_size -= 1
+        username_font = ImageFont.truetype(TEXT_FONT_PATH, username_font_size)
+
     member_font = ImageFont.truetype(TEXT_FONT_PATH, 27)
 
     username_gradient = [(200, 160, 255), (255, 50, 50)]
     member_gradient   = [(200, 160, 255), (255, 50, 50)]
+
     USERNAME_POS = (395, 135)
-    draw_gradient_text(base, USERNAME_POS, member.name.upper(), username_font, username_gradient, anchor="lt")
+    draw_gradient_text(base, USERNAME_POS, username_text, username_font, username_gradient, anchor="lt")
 
     MEMBER_POS = (494, 222)
     draw_gradient_text(base, MEMBER_POS, f"MEMBER #{member.guild.member_count}", member_font, member_gradient, anchor="lt")
