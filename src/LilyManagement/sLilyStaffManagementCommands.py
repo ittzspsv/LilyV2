@@ -46,8 +46,8 @@ class LilyManagement(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Developer')))
     @commands.hybrid_command(name='edit_staff', description='edits a staff data')
-    async def EditStaff(self, ctx: commands.Context, staff_id: int, name: str = None, role_id: int = None, joined_on: str = None, Timezone: str = None, responsibility: str = None):
-        await smLily.EditStaff(ctx, staff_id, name, role_id, joined_on, Timezone, responsibility)
+    async def EditStaff(self, ctx: commands.Context, staff_id: int, name: str = None, role_id: int = None, joined_on: str = None, timezone: str = None, responsibility: str = None):
+        await smLily.EditStaff(ctx, staff_id, name, role_id, joined_on, timezone, responsibility)
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)))
     @commands.hybrid_command(name='strikes', description='shows strikes for a concurrent staff')

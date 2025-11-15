@@ -413,7 +413,7 @@ async def RemoveStaff(ctx: commands.Context, staff_id: int):
     else:
         await ctx.send(embed=mLily.SimpleEmbed(f"No staff found with ID `{staff_id}`.", 'cross'))
 
-async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role_id: int = None, joined_on: str = None, Timezone: str = None, responsibility: str = None):
+async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role_id: int = None, joined_on: str = None, timezone: str = None, responsibility: str = None):
     cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ?", (staff_id,))
     row = await cursor.fetchone()
     await cursor.close()
@@ -426,7 +426,7 @@ async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role
         "name": name,
         "role_id": role_id,
         "joined_on": joined_on,
-        "Timezone": Timezone,
+        "timezone": timezone,
         "responsibility": responsibility
     }
     update_columns = {k: v for k, v in fields.items() if v is not None}

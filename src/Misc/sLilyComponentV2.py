@@ -416,6 +416,18 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
             except:
                 print("Cannot send followup; interaction expired:", e)
 
-class ModeratioNStatsComponent(discord.ui.LayoutView):
-    def __init__(self):
+class GreetingComponent(discord.ui.LayoutView):
+    def __init__(self, member: discord.Member):
+        self.member = member
         super().__init__()
+        container1 = discord.ui.Container(
+            discord.ui.MediaGallery(
+                discord.MediaGalleryItem(
+                    media="attachment://welcome.png",
+                ),
+            ),
+            discord.ui.TextDisplay(content=f"{member.mention}"),
+            accent_colour=discord.Colour(16711680),
+        )
+
+        self.add_item(container1)

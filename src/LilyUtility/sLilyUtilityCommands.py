@@ -4,12 +4,12 @@ import LilyLeveling.sLilyLevelingCore as LLC
 import LilyModeration.sLilyModeration as mLily
 import re
 
-import json
+import Misc.sLilyComponentV2 as CV2
 import Config.sValueConfig as ValueConfig
 import Config.sValueConfig as VC
 import LilyManagement.sLilyStaffManagement as LSM
 import Misc.sLilyEmbed as LE
-import aiohttp
+import ui.sGreetingGenerator as GG
 
 import discord
 from discord.ext import commands
@@ -616,6 +616,30 @@ class LilyUtility(commands.Cog):
         await VC.cdb.commit()
         
         await ctx.send(embed=mLily.SimpleEmbed("Successfully Assigned Log Channel!"))
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Manager')))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='setup_welcome',description='setup welcome messages channel')
+    async def setup_welcome(self, ctx: commands.Context, channel: discord.TextChannel):
+        await VC.cdb.execute(
+            "INSERT OR IGNORE INTO ConfigData (guild_id) VALUES (?)",
+            (ctx.guild.id,)
+        )
+        
+        await VC.cdb.execute(
+            "UPDATE ConfigData SET welcome_channel = ? WHERE guild_id = ?",
+            (channel.id, ctx.guild.id)
+        )
+        await VC.cdb.commit()
+        
+        await ctx.send(embed=mLily.SimpleEmbed("Successfully Assigned Welcome Channel!"))
+
+    @commands.hybrid_command(name='welcome_demo', description='Assign logs channel')
+    async def welcome_demo(self, ctx: commands.Context, member: discord.Member):
+        buffer = await GG.GenerateWelcome(member)
+        file = discord.File(fp=buffer, filename="welcome.png")
+        view = CV2.GreetingComponent(member)
+        await ctx.send(view=view, file=file)
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

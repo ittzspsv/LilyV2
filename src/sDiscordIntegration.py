@@ -13,6 +13,7 @@ import LilyManagement.sLilyStaffManagement as LSM
 import LilyPVB.LilyPVBCore as LPVBC
 import LilySubstring.sLilySubstring as LS
 import logging
+import LilyUtility.sLilyGreetings as LG
 import LilySecurity.sLilySecurity as LSecurity
 
 
@@ -52,7 +53,7 @@ class MyBot(commands.Bot):
         for ext in extensions:
             if ext not in self.extensions:
                 await self.load_extension(ext)
-        #await self.tree.sync()
+        await self.tree.sync()
 
     async def BotInitialize(self):
         for guild in self.guilds:
@@ -160,7 +161,7 @@ class MyBot(commands.Bot):
         await self.ConnectDatabase()
         await self.BotInitialize()
         await LilyTTCore.InitializeView(self)
-        #await self.tree.sync()
+        await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -195,6 +196,7 @@ class MyBot(commands.Bot):
         await self.process_commands(message)
 
     async def on_member_join(self, member: discord.Member):
+        await LG.PostWelcomeGreeting(self, member)
         await LSecurity.LilySecurityJoinWindow(bot, member)
 
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
