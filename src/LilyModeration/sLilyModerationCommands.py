@@ -168,7 +168,7 @@ class LilyModeration(commands.Cog):
         try:
             user = await self.bot.fetch_user(target_id)
         except Exception:
-            await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user with ID {target_id}"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"No Mod Logs Returned", 'cross'))
             return
 
         try:
@@ -182,7 +182,7 @@ class LilyModeration(commands.Cog):
             )
             await ctx.send(embeds=embed)
         except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch mod logs: {e}"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"No Mod Logs Returned", 'cross'))
 
 async def setup(bot):
     await bot.add_cog(LilyModeration(bot))

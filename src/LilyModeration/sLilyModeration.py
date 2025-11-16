@@ -428,7 +428,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
         valid_limit_roles = []
 
     if not valid_limit_roles:
-        await ctx.send(embed=SimpleEmbed("You don't have permission to perform a ban."))
+        await ctx.send(embed=SimpleEmbed("You don't have permission to perform a ban.", 'cross'))
         return
 
     try:

@@ -29,12 +29,11 @@ logging.basicConfig(filename='storage/LilyLogs.txt', level=logging.ERROR, format
 
 class MyBot(commands.Bot):
     def __init__(self):
-        intents = discord.Intents.all() 
+        intents = discord.Intents.none() 
         intents.message_content = True
         intents.members = True
-        intents.presences = True 
         intents.guilds = True
-        super().__init__(command_prefix=Config.bot_command_prefix,intents=discord.Intents.all(),help_command=None)
+        super().__init__(command_prefix=Config.bot_command_prefix,intents=intents,help_command=None)
 
     async def setup_hook(self):
         extensions = [
@@ -225,7 +224,6 @@ async def on_presence_update(before, after):
         pass
 
 load_dotenv("token.env")
-
 bot.run(os.getenv("token"))
 
 
