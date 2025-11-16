@@ -85,34 +85,6 @@ class GAGFruitValueComponent(discord.ui.LayoutView):
 
         self.add_item(self.container1)
 
-class StaffDataComponent(discord.ui.LayoutView):    
-    def __init__(self, name: str = "", role: str = "", responsibilities: str = "",timezone: str = "",
-                 join_date: str = "", experience: str = "", strike_count: int = 0, profile_link:str = "", on_leave:int = 0):
-        super().__init__()
-        self.name = name
-        self.role = role
-        self.responsibilities = responsibilities
-        self.timezone = timezone
-        self.join_date = join_date
-        self.experience = experience
-        self.strike_count = strike_count
-        self.profile_link = profile_link
-        self.on_leave = on_leave
-
-        
-        self.container1 = discord.ui.Container(
-            discord.ui.TextDisplay(content=f"# {self.name.upper()}"),
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(
-                    media=self.profile_link,
-                ),
-            ),
-            discord.ui.TextDisplay(content=f"- 🛡️ Role : **{self.role}**\n- 🔖Responsibilities : **{self.responsibilities}**\n- ⏲️Time Zone : **{self.timezone}**\n- 📅 Join Date : **{self.join_date}**\n- 📆 Evaluated Experience In Server : **{self.experience}**\n- 📜Strike Count : **{self.strike_count}**\n- 🏠 On Leave **{"Yes" if self.on_leave == 1 else "No"}**"),
-            accent_colour=discord.Colour(16711813),
-        )
-
-        self.add_item(self.container1)
-
 class EmptyView(discord.ui.LayoutView):
     def __init__(self):
         self.text_display1 = discord.ui.TextDisplay(content="hi")
