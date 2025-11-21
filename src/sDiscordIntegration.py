@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
 import Config.sBotDetails as Config
-from LilyRulesets.sLilyRulesets import PermissionEvaluator
 
+import LilyTicketTool.LilyTicketToolCore as LTTC
 import LilyModeration.sLilyModeration as mLily
 import LilyBloxFruits.sLilyBloxFruitsCore as LBFC
 import LilyLeveling.sLilyLevelingCore as LilyLeveling
@@ -183,26 +183,27 @@ class MyBot(commands.Bot):
         if message.author == self.user:
               return         
 
-        await LSecurity.LilySecurityEvaluate(bot, message)
+        #await LSecurity.LilySecurityEvaluate(bot, message)
 
         if message.channel.id in LilyLeveling.config['AllowedChannels']:
             await LilyLeveling.LevelProcessor(message)
 
         await LBFC.MessageEvaluate(bot, message)
-
-        #await LPVBC.MessageEvaluate(self, bot, message)
-       
+        await LTTC.TicketTranscript(bot, message)
         await self.process_commands(message)
 
     async def on_member_join(self, member: discord.Member):
+        pass
         await LG.PostWelcomeGreeting(self, member)
-        await LSecurity.LilySecurityJoinWindow(bot, member)
+        #await LSecurity.LilySecurityJoinWindow(bot, member)
 
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
-        await LSecurity.LilyEventActionChannelDelete(channel)
+        pass
+        #await LSecurity.LilyEventActionChannelDelete(channel)
 
     async def on_guild_role_delete(self, role: discord.Role):
-        await LSecurity.LilyEventActionRoleDelete(role)
+        pass
+        #await LSecurity.LilyEventActionRoleDelete(role)
     
 
 bot = MyBot()

@@ -1,11 +1,13 @@
 import discord
 import json
 from pathlib import Path
-from discord.ext import tasks, commands
+from discord.ext import commands
+import LilyLogging.sLilyLogging as LilyLogging
 from datetime import datetime, timedelta, timezone
 import Misc.sLilyEmbed as LilyEmbed
 import asyncio
 import json
+import io
 import Config.sBotDetails as Configs
 import LilyModeration.sLilyModeration as mLily
 
@@ -232,7 +234,7 @@ class BaseModal(discord.ui.Modal):
         else:
             await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
 
-async def SendTicketLog(guild: discord.Guild,config: dict,*,opener=None,claimer=None,closer=None,modal_data: dict = None):
+async def SendTicketLog(guild: discord.Guild,config: dict,*,opener=None,claimer=None,closer=None,modal_data: dict = None, log_message: str="No Messages"):
     log_channel_id = config.get("LogChannel") or config.get("log_channel")
     if not log_channel_id:
         return
@@ -283,8 +285,13 @@ async def SendTicketLog(guild: discord.Guild,config: dict,*,opener=None,claimer=
     embed.set_footer(text="Lily Ticket Handler")
     embed.timestamp = discord.utils.utcnow()
 
+    file = discord.File(
+        io.BytesIO(log_message.encode("utf-8")),
+        filename="transcript.txt"
+    )
+
     try:
-        await log_channel.send(embed=embed)
+        await log_channel.send(embed=embed, file=file)
     except Exception:
         pass
 
@@ -432,13 +439,26 @@ async def TicketConstructor(values: dict, moderator_roles: list, staff_manager_r
 
             embed = mLily.SimpleEmbed(f"Ticket has been closed by {user.mention}")
             await interaction.response.send_message(embed=embed, ephemeral=False)
+
+            cursor = await LilyLogging.mdb.execute(
+                "SELECT user_name, message, timestamp FROM transcripts WHERE channel_id = ?",
+                (interaction.channel.id,)
+            )
+            rows = await cursor.fetchall()
+
+            log_message = "\n".join(
+                f"Timestamp: {ts} | {name}: {msg}"
+                for name, _, msg, ts in rows
+            )
+
             await SendTicketLog(
                 guild,
                 log_data,
                 opener=opened_user,
                 claimer=self.claimer,
                 closer=user,
-                modal_data=values
+                modal_data=values,
+                log_message=log_message
             )
 
             if private_channel.id in claimed_tickets and claimed_tickets[private_channel.id].get("task"):
@@ -554,9 +574,6 @@ async def SpawnTickets(ctx: commands.Context, json_data):
     content, embed = LilyEmbed.ParseAdvancedEmbed(json_data['Configs']['Embed'])
     channel = ctx.guild.get_channel(json_data['Configs']['Channel_To_Spawn'])
 
-    staff_roles = [ctx.guild.get_role(r) for r in json_data['Configs'].get('StaffManagerRoles', [])]
-    mod_roles = [ctx.guild.get_role(r) for r in json_data['Configs'].get('ModeratorRoles', [])]
-
     ticket_type = json_data['Configs']['TicketType']
     if ticket_type[0] == 'Button':
         view = ButtonType(
@@ -585,3 +602,19 @@ async def SpawnTickets(ctx: commands.Context, json_data):
 
     else:
         await channel.send("Invalid Ticket Type")
+
+async def TicketTranscript(bot, message: discord.Message):
+    if message.channel.name.startswith('ticket-'):
+        if message.content:
+            await LilyLogging.mdb.execute(
+                "INSERT INTO transcripts (channel_id, user_name, user_id, message, timestamp) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (
+                    message.channel.id,
+                    message.author.name,
+                    message.author.id,
+                    message.content,
+                    discord.utils.utcnow(),
+                )
+            )
+            await LilyLogging.mdb.commit()

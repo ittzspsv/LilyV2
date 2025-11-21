@@ -160,7 +160,7 @@ async def LilyEventActionRoleDelete(role: discord.Role):
 
         queue.clear()
 
-async def LilySecurityEvaluate(message: discord.Message):
+async def LilySecurityEvaluate(bot, message: discord.Message):
 
     if message.author.bot:
         return
@@ -198,7 +198,7 @@ async def LilySecurityEvaluate(message: discord.Message):
 
         try:
             await member.timeout(
-                discord.utils.utcnow() + discord.timedelta(seconds=timeout_seconds),
+                discord.utils.utcnow() + timedelta(seconds=timeout_seconds),
                 reason="Excessive ping usage"
             )
         except Exception as e:

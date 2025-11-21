@@ -7,22 +7,11 @@ import Config.sBotDetails as Configs
 import aiosqlite
 import pytz
 
-bdb = None
 mdb = None
 
 async def initialize():
-    global bdb, mdb
-    bdb = await aiosqlite.connect("storage/logs/BotLogs.db")
-    mdb = await aiosqlite.connect("storage/logs/Modlogs.db")
-    await bdb.execute("""
-        CREATE TABLE IF NOT EXISTS botlogs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            guild_id INTEGER,
-            user_id INTEGER,
-            timestamp TEXT,
-            log TEXT
-        )
-    """)
+    global mdb
+    mdb = await aiosqlite.connect("storage/logs/Logs.db")
     await mdb.execute("""
         CREATE TABLE IF NOT EXISTS modlogs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,19 +23,17 @@ async def initialize():
             timestamp TEXT
         )
     """)
-    await bdb.commit()
     await mdb.commit()
 
-
 async def WriteLog(ctx: commands.Context, user_id: int, log_txt: str):
-    global bdb
+    global mdb
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    await bdb.execute("""
+    await mdb.execute("""
         INSERT INTO botlogs (guild_id, user_id, timestamp, log)
         VALUES (?, ?, ?, ?)
     """, (ctx.guild.id, user_id, timestamp, log_txt))
-    await bdb.commit()
+    await mdb.commit()
 
     cursor = await VC.cdb.execute(
         "SELECT logs_channel FROM ConfigData WHERE guild_id = ? AND logs_channel IS NOT NULL",
