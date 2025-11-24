@@ -536,7 +536,6 @@ async def MessageEvaluate(bot, message):
                         cid = await LCM.RegisterCombo(str(message.author.id), parsed_build, combo_data)
                         combo = await LCM.ComboLookupByID(cid)
 
-                        # Prepare icons
                         combo_data_text = combo.get('combo_data', '[]')
                         Item_List = {}
                         for key_type in ["fruit", "sword", "fighting_style", "gun"]:
@@ -600,7 +599,7 @@ async def MessageEvaluate(bot, message):
                         combo_text = ""
                         for base, nested in ast.literal_eval(combo_data_text):
                             combo_ = " ".join(nested)
-                            combo_text += f"- **{base.title()}: {combo_}**\n"
+                            combo_text += f"{base.title()}: {combo_}\n"
 
                         img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text)
                         img_byte_arr = io.BytesIO()

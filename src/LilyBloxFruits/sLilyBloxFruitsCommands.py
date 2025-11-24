@@ -1,12 +1,12 @@
 from discord.ext import commands
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
-import Values.sStockValueJSON as StockValueJSON
-import LilyLogging.sLilyLogging as LilyLogging
+import Config.sValueConfig as LilyConfig
+from discord import File
 import LilyManagement.sLilyStaffManagement as LSM
 import re
 
 import Combo.LilyComboManager as LCM
-import Config.sBotDetails as Config
+import Misc.sLilyComponentV2 as CV2
 
 import ui.sComboImageGenerator as CIG
 import Config.sValueConfig as VC
@@ -112,6 +112,119 @@ class LilyBloxFruits(commands.Cog):
         except Exception as e:
             print(e)
             await ctx.send(f"An error occurred: {e}")
+
+    @commands.hybrid_command(name='add_combo', description='Adds a combo to the database')
+    async def add_combo(self, ctx: commands.Context, *, combo: str = None):
+        await ctx.defer()
+        if not combo:
+            await ctx.reply("Please provide a combo string to add.")
+            return
+
+        try:
+            cursor = await LilyConfig.cdb.execute(
+                "SELECT bf_combo_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,)
+            )
+            row = await cursor.fetchone()
+        except Exception:
+            await ctx.reply("Database error occurred.")
+            return
+
+        if not row or ctx.channel.id != row[0]:
+            await ctx.reply("Combos can only be added in the configured combo channel.")
+            return
+
+        try:
+            message_refined = " ".join(line.strip() for line in combo.splitlines() if line.strip()).lower()
+            parsed_build, combo_data = await LCM.ComboPatternParser(message_refined)
+            data = (parsed_build, combo_data)
+        except Exception as e:
+            await ctx.reply(f"Parsing failed: {e}")
+            return
+
+        try:
+            if await LCM.ValidComboDataType(data):
+                cid = await LCM.RegisterCombo(str(ctx.author.id), parsed_build, combo_data)
+                combo = await LCM.ComboLookupByID(cid)
+
+                combo_data_text = combo.get('combo_data', '[]')
+                Item_List = {}
+                for key_type in ["fruit", "sword", "fighting_style", "gun"]:
+                    if combo.get(key_type):
+                        mapping = {
+                            "fruit": "fruit_icons",
+                            "sword": "sword_icons",
+                            "fighting_style": "fighting_styles",
+                            "gun": "gun_icons"
+                        }
+                        Item_List[combo[key_type]] = mapping[key_type]
+
+                Item_Icon_List = [
+                    f'src/ui/{value}/{key.replace(" ", "_")}.png'
+                    for key, value in Item_List.items() if key and key.strip()
+                ]
+
+                combo_text = ""
+                for base, nested in ast.literal_eval(combo_data_text):
+                    combo_ = " ".join(nested)
+                    combo_text += f"{base.title()}: {combo_}\n"
+
+                img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text)
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format='PNG')
+                img_byte_arr.seek(0)
+
+                imgfile = File(img_byte_arr, filename="image.png")
+                await ctx.reply(content='Success! Here is the preview of your combo', file=imgfile)
+            else:
+                await ctx.reply("Error parsing combo structure.")
+        except Exception as e:
+            await ctx.reply(f"Unexpected error: {e}")
+
+    @commands.hybrid_command(name='find_combo', description='Finds a combo in the database')
+    async def find_combo(self, ctx: commands.Context, *, build: str = None):
+        await ctx.defer()
+        if not build:
+            await ctx.reply("Please provide a combo name to search.")
+            return
+
+        try:
+            combo_obj = await LCM.ComboLookup(build.lower())
+            if not combo_obj:
+                await ctx.reply("No matching combo found.")
+                return
+
+            combo_data_text = combo_obj.get('combo_data', '[]')
+            Item_List = {}
+            for key_type in ["fruit", "sword", "fighting_style", "gun"]:
+                if combo_obj.get(key_type):
+                    mapping = {
+                        "fruit": "fruit_icons",
+                        "sword": "sword_icons",
+                        "fighting_style": "fighting_styles",
+                        "gun": "gun_icons"
+                    }
+                    Item_List[combo_obj[key_type]] = mapping[key_type]
+
+            Item_Icon_List = [
+                f'src/ui/{value}/{key.replace(" ", "_")}.png'
+                for key, value in Item_List.items() if key and key.strip()
+            ]
+
+            combo_text = ""
+            for base, nested in ast.literal_eval(combo_data_text):
+                combo_ = " ".join(nested)
+                combo_text += f"{base.title()}: {combo_}\n"
+
+            img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text)
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format='PNG')
+            img_byte_arr.seek(0)
+
+            imgfile = File(img_byte_arr, filename="image.png")
+            view = CV2.RatingComponent(ctx.author, combo_obj['combo_id'])
+            await ctx.reply(file=imgfile, view=view)
+        except Exception as e:
+            await ctx.reply(f"Exception: {e}")
 
 async def setup(bot):
     await bot.add_cog(LilyBloxFruits(bot))

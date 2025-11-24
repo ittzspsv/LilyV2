@@ -454,20 +454,13 @@ class RateComboModal(Modal):
                 ephemeral=True
             )
 
-class RatingComponent(View):
+class RatingComponent(discord.ui.View):
     def __init__(self, member: discord.Member, combo_id: int):
         super().__init__(timeout=300)
         self.member = member
         self.combo_id = combo_id
 
-        self.add_item(
-            Button(
-                label="Rate Combo",
-                style=discord.ButtonStyle.primary,
-                custom_id="rate_combo_btn"
-            )
-        )
-    @discord.ui.button(label="Rate Combo", style=discord.ButtonStyle.primary, custom_id="rate_combo_btn")
-    async def rate_combo_callback(self, button: Button, interaction: discord.Interaction):
+    @discord.ui.button(label="Rate Combo", style=discord.ButtonStyle.secondary, custom_id="rate_combo_btn")
+    async def rate_combo_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = RateComboModal(self.combo_id)
         await interaction.response.send_modal(modal)
