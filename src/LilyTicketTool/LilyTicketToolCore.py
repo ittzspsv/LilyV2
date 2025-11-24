@@ -448,7 +448,7 @@ async def TicketConstructor(values: dict, moderator_roles: list, staff_manager_r
 
             log_message = "\n".join(
                 f"Timestamp: {ts} | {name}: {msg}"
-                for name, _, msg, ts in rows
+                for name, msg, ts in rows
             )
 
             await SendTicketLog(

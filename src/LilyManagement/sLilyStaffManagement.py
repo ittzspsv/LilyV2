@@ -614,3 +614,11 @@ async def RequestLoa(ctx: commands.Context):
     else:
         await ctx.send("Opening LOA request modal...")
         await ctx.send_modal(LOAModal())
+
+async def AddRole(ctx: commands.Context, role: discord.Role, priority: int):
+    try:
+        await sdb.execute("INSERT INTO roles VALUES (?, ?, ?, ?)", (role.id, role.name, priority, 0))
+        await sdb.commit()
+        await mLily.SimpleEmbed(f"Successfully Added {role.name} to the List")
+    except Exception as e:
+        await mLily.SimpleEmbed(f"Error Adding {role.name} to the List")

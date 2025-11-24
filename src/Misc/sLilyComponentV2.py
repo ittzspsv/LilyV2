@@ -1,6 +1,7 @@
 import discord
 import Config.sValueConfig as VC
 import io
+from discord.ui import View, Button, Modal, TextInput
 import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
 import Values.sStockValueJSON as StockValueJSON
 
@@ -388,18 +389,85 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
             except:
                 print("Cannot send followup; interaction expired:", e)
 
-class GreetingComponent(discord.ui.LayoutView):
+class GreetingComponent(View):
     def __init__(self, member: discord.Member):
+        super().__init__(timeout=None)
         self.member = member
-        super().__init__()
-        container1 = discord.ui.Container(
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(
-                    media="attachment://welcome.png",
-                ),
-            ),
-            discord.ui.TextDisplay(content=f"{member.mention}"),
-            accent_colour=discord.Colour(16711680),
+
+        self.add_item(
+            Button(
+                label="Check Rules",
+                url="https://discord.com/channels/1092742448545026138/1093409671240499260",
+                style=discord.ButtonStyle.link
+            )
         )
 
-        self.add_item(container1)
+class RateComboModal(Modal):
+    def __init__(self, combo_id: int):
+        super().__init__(title="Rate This Combo")
+        self.combo_id = combo_id
+
+        self.rating_input = TextInput(
+            label="Your rating (1-10)",
+            placeholder="Enter a number between 1 and 10",
+            style=discord.TextStyle.short,
+            required=True,
+            max_length=2
+        )
+        self.add_item(self.rating_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            new_rating = int(self.rating_input.value)
+            if not (1 <= new_rating <= 10):
+                await interaction.response.send_message(
+                    "Please enter a number between 1 and 10!",
+                    ephemeral=True
+                )
+                return
+
+            cursor = await VC.combo_db.execute(
+                "SELECT rating FROM Combos WHERE combo_id = ?",
+                (self.combo_id,)
+            )
+            row = await cursor.fetchone()
+            old_avg = row[0] or 0
+            if old_avg == 0:
+                average = new_rating
+            else:
+                average = (old_avg + new_rating) / 2
+
+            await VC.combo_db.execute(
+                "UPDATE Combos SET rating = ? WHERE combo_id = ?",
+                (average, self.combo_id)
+            )
+            await VC.combo_db.commit()
+
+            await interaction.response.send_message(
+                f"Thanks! You rated the combo: {new_rating}/10",
+                ephemeral=True
+            )
+
+        except Exception as e:
+            await interaction.response.send_message(
+                f"An error occurred while rating the combo!",
+                ephemeral=True
+            )
+
+class RatingComponent(View):
+    def __init__(self, member: discord.Member, combo_id: int):
+        super().__init__(timeout=300)
+        self.member = member
+        self.combo_id = combo_id
+
+        self.add_item(
+            Button(
+                label="Rate Combo",
+                style=discord.ButtonStyle.primary,
+                custom_id="rate_combo_btn"
+            )
+        )
+    @discord.ui.button(label="Rate Combo", style=discord.ButtonStyle.primary, custom_id="rate_combo_btn")
+    async def rate_combo_callback(self, button: Button, interaction: discord.Interaction):
+        modal = RateComboModal(self.combo_id)
+        await interaction.response.send_modal(modal)

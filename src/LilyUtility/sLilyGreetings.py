@@ -20,6 +20,6 @@ async def PostWelcomeGreeting(bot, member: discord.Member):
         if row and row[0]:
             channel = bot.get_channel(row[0]) 
             if channel:
-                await channel.send(file=file, view=view)
+                await channel.send(content=member.mention, file=file, view=view)
     except Exception as e:
         print(f"Exception: {e}")

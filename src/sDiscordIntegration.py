@@ -29,10 +29,7 @@ logging.basicConfig(filename='storage/LilyLogs.txt', level=logging.ERROR, format
 
 class MyBot(commands.Bot):
     def __init__(self):
-        intents = discord.Intents.none() 
-        intents.message_content = True
-        intents.members = True
-        intents.guilds = True
+        intents = discord.Intents.all() 
         super().__init__(command_prefix=Config.bot_command_prefix,intents=intents,help_command=None)
 
     async def setup_hook(self):
@@ -52,7 +49,7 @@ class MyBot(commands.Bot):
         for ext in extensions:
             if ext not in self.extensions:
                 await self.load_extension(ext)
-        await self.tree.sync()
+        #await self.tree.sync()
 
     async def BotInitialize(self):
         for guild in self.guilds:
@@ -160,7 +157,7 @@ class MyBot(commands.Bot):
         await self.ConnectDatabase()
         await self.BotInitialize()
         await LilyTTCore.InitializeView(self)
-        await self.tree.sync()
+        #await self.tree.sync()
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -183,7 +180,7 @@ class MyBot(commands.Bot):
         if message.author == self.user:
               return         
 
-        #await LSecurity.LilySecurityEvaluate(bot, message)
+        await LSecurity.LilySecurityEvaluate(bot, message)
 
         if message.channel.id in LilyLeveling.config['AllowedChannels']:
             await LilyLeveling.LevelProcessor(message)
@@ -193,7 +190,6 @@ class MyBot(commands.Bot):
         await self.process_commands(message)
 
     async def on_member_join(self, member: discord.Member):
-        pass
         await LG.PostWelcomeGreeting(self, member)
         #await LSecurity.LilySecurityJoinWindow(bot, member)
 
@@ -225,16 +221,5 @@ async def on_presence_update(before, after):
         pass
 
 load_dotenv("token.env")
+
 bot.run(os.getenv("token"))
-
-
-'''
-
-async def main():
-    import LilyAlgorthims.sTradeFormatAlgorthim as TFA
-    await ValueConfig.initialize()
-    result = await TFA.is_valid_trade_suggestor_format("werewolf for")
-    print(result)
-
-asyncio.run(main())
-'''

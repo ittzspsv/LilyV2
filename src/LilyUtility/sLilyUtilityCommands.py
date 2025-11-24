@@ -634,12 +634,16 @@ class LilyUtility(commands.Cog):
         
         await ctx.send(embed=mLily.SimpleEmbed("Successfully Assigned Welcome Channel!"))
 
-    @commands.hybrid_command(name='welcome_demo', description='Assign logs channel')
+    @commands.hybrid_command(name='welcome_demo', description='Welcome Demo')
     async def welcome_demo(self, ctx: commands.Context, member: discord.Member):
-        buffer = await GG.GenerateWelcome(member)
-        file = discord.File(fp=buffer, filename="welcome.png")
-        view = CV2.GreetingComponent(member)
-        await ctx.send(view=view, file=file)
+        try:
+            await ctx.defer()
+            buffer = await GG.GenerateWelcome(member)
+            view = CV2.GreetingComponent(member)
+            file = discord.File(fp=buffer, filename="welcome.png")
+            await ctx.send(content=member.mention, view=view,file=file)
+        except Exception as e:
+            print(e)
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

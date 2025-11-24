@@ -1,141 +1,155 @@
-from PIL import Image, ImageDraw, ImageFont
-from ui.sWinOrLossImageGenerator import add_glow_border, draw_neon_text
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
 
 
-def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt", stretch_height=1.0):
-    temp_img = Image.new("RGBA", (1000, 500), (0, 0, 0, 0))
-    draw_temp = ImageDraw.Draw(temp_img)
-    text_bbox = draw_temp.textbbox((0, 0), text, font=font)
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = int((text_bbox[3] - text_bbox[1]) * stretch_height)
+def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt", stretch_height=1.2, scale=1.0):
+    temp_img = Image.new("RGBA", (10, 10), (0, 0, 0, 0))
+    temp_draw = ImageDraw.Draw(temp_img)
+    x0, y0, x1, y1 = temp_draw.textbbox((0, 0), text, font=font)
+    text_w, text_h = x1 - x0, y1 - y0
 
-    padding = 15
+    mask = Image.new("L", (text_w, text_h), 0)
+    mask_draw = ImageDraw.Draw(mask)
+    mask_draw.text((-x0, -y0), text, font=font, fill=255)
 
-    text_mask = Image.new("L", (text_width, text_height + padding * 2), 0)
-    draw_mask = ImageDraw.Draw(text_mask)
-    draw_mask.text((0, padding), text, font=font, fill=255)
+    if scale != 1.0 or stretch_height != 1.0:
+        new_w = max(1, int(text_w * scale))
+        new_h = max(1, int(text_h * stretch_height * scale))
+        mask = mask.resize((new_w, new_h), resample=Image.LANCZOS)
+        text_w, text_h = new_w, new_h
 
-    gradient = Image.new("RGBA", (text_width, text_height + padding * 2), color=0)
-    for y in range(text_height + padding * 2):
-        ratio = y / (text_height + padding * 2)
-        r = int(gradient_colors[0][0] * (1 - ratio) + gradient_colors[1][0] * ratio)
-        g = int(gradient_colors[0][1] * (1 - ratio) + gradient_colors[1][1] * ratio)
-        b = int(gradient_colors[0][2] * (1 - ratio) + gradient_colors[1][2] * ratio)
-        ImageDraw.Draw(gradient).line([(0, y), (text_width, y)], fill=(r, g, b), width=1)
+    gradient = Image.new("RGBA", (text_w, text_h))
+    grad_draw = ImageDraw.Draw(gradient)
+    c0, c1 = gradient_colors[0], gradient_colors[1]
 
-    gradient.putalpha(text_mask)
+    for y in range(text_h):
+        t = y / float(text_h - 1) if text_h > 1 else 0
+        r = int(c0[0] * (1 - t) + c1[0] * t)
+        g = int(c0[1] * (1 - t) + c1[1] * t)
+        b = int(c0[2] * (1 - t) + c1[2] * t)
+        grad_draw.line([(0, y), (text_w, y)], fill=(r, g, b))
+
+    gradient.putalpha(mask)
 
     x, y = position
     if anchor in ("mm", "mt", "mb"):
-        x -= text_width // 2
+        x -= text_w // 2
     elif anchor in ("rm", "rt", "rb"):
-        x -= text_width
+        x -= text_w
     if anchor in ("mm", "lm", "rm"):
-        y -= (text_height + padding * 2) // 2
+        y -= text_h // 2
     elif anchor in ("mb", "lb", "rb"):
-        y -= (text_height + padding * 2)
+        y -= text_h
 
     image.paste(gradient, (int(x), int(y)), gradient)
 
 
-def CreateBaseComboImage(icons, font_path="src/ui/font/Game Bubble.ttf", combo_text=None):
+def CreateBaseBuildIcon(icons,combo_text="Ice V\nIce C\nIce Z\nGodhuman X\nGodhuman C\nGodhuman Z",rating_text="10/10",rating_pos=(940, 990),font_path="src/ui/font/Berlin Sans FB Bold.ttf"):
     if not 1 <= len(icons) <= 4:
         raise ValueError("You must provide between 1 and 4 icons.")
+    
+    bg_image_path = "src/ui/Combo.png"
+    if not os.path.isfile(bg_image_path):
+        raise FileNotFoundError(f"Background file not found: {bg_image_path}")
 
-    try:
-        bg = Image.open("src/ui/ComboBase.png").convert("RGBA")
-    except FileNotFoundError:
-        raise FileNotFoundError("Background image 'src/ui/ComboBase.png' not found.")
-
+    bg = Image.open(bg_image_path).convert("RGBA").copy()
     draw = ImageDraw.Draw(bg)
+    bg_w, bg_h = bg.size
 
-    icon_size = (130, 130)
-    icon_y = 210
-    spacing_x = 160
+    icon_size = (280, 280)
+    spacing_x = 40
+    padding_x = 80
 
-    total_width = (len(icons) - 1) * spacing_x
-    base_x = (bg.width - icon_size[0] - total_width) // 2
+    icon_shift_y = -430  
+
+    total_width = len(icons) * icon_size[0] + (len(icons) - 1) * spacing_x
+    total_icon_height = icon_size[1]
+    padding_y = (bg_h - total_icon_height) // 2
+    icon_y = padding_y + icon_shift_y
+
+    start_x = (bg_w - total_width) // 2
 
     for i, icon_path in enumerate(icons):
-        if not icon_path or not isinstance(icon_path, str):
-            raise ValueError(f"[Icon Error] Invalid path at index {i}: {icon_path!r}")
-
         if not os.path.isfile(icon_path):
-            raise FileNotFoundError(f"[Icon Error] File not found at index {i}: '{icon_path}'")
+            raise FileNotFoundError(f"[Icon Error] Missing icon: '{icon_path}'")
 
-        try:
-            icon = Image.open(icon_path).convert("RGBA").resize(icon_size)
-        except Exception as e:
-            raise IOError(f"[Icon Error] Failed to open or process image '{icon_path}': {e}")
+        icon = Image.open(icon_path).convert("RGBA").resize(icon_size)
 
-        icon_glow = add_glow_border(icon, glow_color=(0, 255, 255), blur_radius=8, glow_alpha=150)
-        x = base_x + i * spacing_x
-        glow_offset = (x - 10, icon_y - 10)
-        bg.alpha_composite(icon_glow, glow_offset)
-        bg.paste(icon, (x, icon_y), icon)
+        x = start_x + i * (icon_size[0] + spacing_x)
+
+        glow_opacity = 120
+        glow_size = (int(icon_size[0] * 2.5), int(icon_size[1] * 2.5))
+        glow_img = Image.new("RGBA", glow_size, (0, 0, 0, 0))
+        glow_draw = ImageDraw.Draw(glow_img)
+
+        avg_color_img = icon.resize((1, 1))
+        avg_color = avg_color_img.getpixel((0, 0))[:3]
+
+        ellipse_bbox = (glow_size[0] // 4, glow_size[1] // 4,
+                        3 * glow_size[0] // 4, 3 * glow_size[1] // 4)
+        glow_draw.ellipse(ellipse_bbox, fill=avg_color + (glow_opacity,))
+
+        glow = glow_img.filter(ImageFilter.GaussianBlur(40))
+
+        glow_x = x + icon_size[0] // 2 - glow.width // 2
+        glow_y = icon_y + icon_size[1] // 2 - glow.height // 2
+        icon_x = x + icon_size[0] // 2 - icon.width // 2
+        icon_y_final = icon_y + icon_size[1] // 2 - icon.height // 2
+
+        bg.paste(glow, (glow_x, glow_y), glow)
+        bg.alpha_composite(icon, (icon_x, icon_y_final))
 
     if combo_text:
         lines = combo_text.strip().split("\n")
-        line_spacing = 8
 
-        box_top = 400
-        box_bottom = 860
-        box_height = box_bottom - box_top
-        max_font_size = 36
-        min_font_size = 14
+        box_x = 65
+        box_y = 870
+        box_w = 760 - 65
+        box_h = 1350 - 500
 
-        for font_size in range(max_font_size, min_font_size - 1, -1):
-            try:
-                font = ImageFont.truetype(font_path, font_size)
-            except OSError:
-                font = ImageFont.load_default()
+        max_font = 100
+        min_font = 25
+        line_spacing = 15
 
-            total_height = sum(font.getbbox(line)[3] - font.getbbox(line)[1] + line_spacing for line in lines) - line_spacing
-            if total_height <= box_height:
+        for font_size in range(max_font, min_font - 1, -1):
+            font = ImageFont.truetype(font_path, font_size)
+
+            longest = max(lines, key=len)
+            w = font.getbbox(longest)[2] - font.getbbox(longest)[0]
+            if w > box_w - 50: 
+                continue
+            total_height = sum(
+                (font.getbbox(line)[3] - font.getbbox(line)[1] + line_spacing)
+                for line in lines
+            ) - line_spacing
+
+            if total_height <= box_h:
                 break
 
-        start_y = box_top + 1
-        left_margin = 180
-
-        gradient_colors = [(135, 206, 250), (180, 150, 255)]
-
+        y = box_y + 20
         for line in lines:
-            draw_gradient_text(bg, (left_margin, start_y), line, font, gradient_colors, anchor="lt", stretch_height=1.0)
-            start_y += font.getbbox(line)[3] - font.getbbox(line)[1] + line_spacing
+            draw.text(
+                (box_x + 40, y),
+                line,
+                font=font,
+                fill=(230, 230, 255, 255),
+            )
+            y += (font.getbbox(line)[3] - font.getbbox(line)[1]) + line_spacing
 
-    return bg
 
-def CreateBaseBuildIcon(icons):
-    if not 1 <= len(icons) <= 4:
-        raise ValueError("You must provide between 1 and 4 icons.")
-    icon_size = (280, 280)
-    spacing_x = 40 
-    padding_x = 80
-    padding_y = 50
-
-    total_width = len(icons) * icon_size[0] + (len(icons) - 1) * spacing_x
-    width = total_width + 2 * padding_x
-    height = icon_size[1] + 2 * padding_y
-
-    bg = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    icon_y = padding_y
-
-    for i, icon_path in enumerate(icons):
-        if not icon_path or not isinstance(icon_path, str):
-            raise ValueError(f"[Icon Error] Invalid path at index {i}: {icon_path!r}")
-        if not os.path.isfile(icon_path):
-            raise FileNotFoundError(f"[Icon Error] File not found at index {i}: '{icon_path}'")
-
+    if rating_text:
+        rx, ry = rating_pos
         try:
-            icon = Image.open(icon_path).convert("RGBA").resize(icon_size)
-        except Exception as e:
-            raise IOError(f"[Icon Error] Failed to open or process image '{icon_path}': {e}")
+            rating_font = ImageFont.truetype(font_path, 95)
+        except:
+            rating_font = ImageFont.load_default()
 
-        icon_glow = add_glow_border(icon, glow_color=(0, 255, 255), blur_radius=8, glow_alpha=150)
-        x = padding_x + i * (icon_size[0] + spacing_x)
-        glow_offset = (x - 10, icon_y - 10)
-        bg.alpha_composite(icon_glow, glow_offset)
-        bg.paste(icon, (x, icon_y), icon)
+        draw.text(
+            (rx, ry),
+            rating_text,
+            font=rating_font,
+            fill=(240, 200, 255, 255),
+            anchor="lt"
+        )
 
     return bg

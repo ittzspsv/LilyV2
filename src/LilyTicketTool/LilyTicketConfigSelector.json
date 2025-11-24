@@ -1,1 +1,66 @@
-{}
+{
+    "Configs" : {
+        "Embed" : {
+            "embeds": [
+                {
+                        "title": "<:ticket:1438584946997592114> Texioverse Support Ticket",
+                        "color": 16777215,
+                        "description": "- If you are seeking out for any support from our side Please open  an ticket.",
+                        "footer": {
+                            "text": "Lily Ticketing"
+                        },
+                        "thumbnail": {
+                            "url": "https://media.discordapp.net/attachments/1438505067341680690/1438505245625024512/logs.png?ex=6921abe8&is=69205a68&hm=54821ef6720a0816a70e3d55232f67bde2da6e2dcc9c55a0468a1e2a330cc68b&=&format=webp&quality=lossless"
+                        },
+                        "fields": [
+                            {
+                                "name": "<:member:1438045591098753104> Member Report",
+                                "value": "- To Report any members"
+                            },
+                            {
+                                "name": "<:bot:1438504383397494896> Partnership Ticket",
+                                "value": "- If you want to partnership with our server"
+                            },
+                            {
+                                "name": "<:gift:1438045585570791555> Claim Giveaway",
+                                "value": "- If you won an giveaway and willing to claim it"
+                            }
+                ]
+                }
+            ]
+        },
+        "TicketEmbedFields" : {
+            "Title" : "Ticket Information",
+            "TEmbed" : {
+                "embeds": [
+                    {
+                    "description": "Our Staff-Team will look into it as soon as possible.",
+                    "title": "<:arrow:1438045578721493062> Thanks for Creating the ticket!",
+                    "color": 16777215,
+                    "image": {
+                        "url": "https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69172232&is=6915d0b2&hm=6fc4724fb6fb44c83c8fb82425f287c19c762d161ff882420f69abaaf725ad3a&"
+                    },
+                    "fields": [
+                        {
+                        "name": "<:bookmark:1438048772939583571> General Informations",
+                        "value": "- While waiting for staff to arrive, please provide all relevant information or proof you have.\n- Our staff usually responds within 30 minutes.\n- Clearly explain your issue so the staff can understand it better!"
+                        }
+                    ]
+                    }
+                ]
+            },
+
+            "LogChannel": 1441442754029682768
+        },
+        "TicketType" : ["Selector", "Report an Member : <:member:1438045591098753104>", "Partnership Ticket: <:bot:1438504383397494896>", "Claim Giveaway : <:gift:1438045585570791555>"],
+        "Channel_To_Spawn" : 1359208429486608505,
+        "ModeratorRoles" : [1441442983064109200], 
+        "StaffManagerRoles" : [1441443047949729946]
+    },
+
+    "Modal" : [
+            {"Discord ID | Username of that Member" : 600, "Please explain what he did" : 600},
+            {"Server Member Count" : 1000, "Server Invite Link" : 1000},
+            {"Mention the giveaway" : 200}
+    ]
+}

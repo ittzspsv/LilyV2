@@ -1,90 +1,87 @@
-'''
 import json
 import re
 import string
-import polars as pl
-import os
 import random
+import Config.sValueConfig as VC
 
 from rapidfuzz.fuzz import ratio
-from itertools import islice
+from rapidfuzz import fuzz, process
 from difflib import SequenceMatcher
+
 
 
 ComboData = {}
 
 
-def LoadComboData():
-    global ComboData
-    with open("src/Config/JSONData/FightingStyleData.json", "r") as fdata:
-        ComboData["FightingStyle"] = json.load(fdata)
-    with open("src/ValueData.json", "r") as frdata:
-        fruit_data = json.load(frdata)
-        ComboData["Fruit"] = {i['name']: i['aliases'] for i in fruit_data}
-    
-    with open("src/Config/JSONData/GunData.json", "r") as gdata:
-        ComboData["Guns"] = json.load(gdata)
-    with open("src/Config/JSONData/SwordData.json", "r") as sdata:
-        ComboData["Swords"] = json.load(sdata)
-    with open("src/Config/JSONData/MiscData.json", "r") as miscdata:
-        ComboData["MiscData"] = json.load(miscdata)
-
-LoadComboData()
-
 def ratio(a, b):
     return SequenceMatcher(None, a, b).ratio() * 100
 
-def ComboPatternParser(message: str, threshold=95):
-    message = re.sub(f"[{re.escape(string.punctuation)}]", "", message)
 
-    known_phrases = (
-        list(ComboData["Guns"].keys()) +
-        list(ComboData["Swords"].keys()) +
-        list(ComboData["FightingStyle"].keys()) +
-        list(ComboData["Fruit"].keys()) +
-        list(ComboData["MiscData"].keys())
-    )
-    
-    known_phrases = sorted(known_phrases, key=lambda p: len(p.split()), reverse=True)
-    
+async def ComboPatternParser(message: str, threshold=95):
+    message = re.sub(f"[{re.escape(string.punctuation)}]", " ", message).lower()
+    words = message.split()
+
+    cursor = await VC.combo_db.execute("SELECT name, aliases, type FROM ItemData")
+    rows = await cursor.fetchall()
+
+    ComboData = {}
+    known_phrases = []
     reverse_map = {}
-    for category, items in ComboData.items():
-        for display_name, shorthands in items.items():
-            for shorthand in shorthands:
-                reverse_map[shorthand.lower()] = (category, display_name)
-    
-    words = message.title().split()
+
+    for name, aliases_json, item_type in rows:
+        aliases = json.loads(aliases_json) if aliases_json else []
+
+        if item_type not in ComboData:
+            ComboData[item_type] = {}
+
+        ComboData[item_type][name] = aliases
+        known_phrases.append(name)
+
+        for shorthand in aliases:
+            for part in re.split(r',|\|', shorthand):
+                clean_shorthand = re.sub(f"[{re.escape(string.punctuation)}]", "", part).lower().strip()
+                if clean_shorthand:
+                    reverse_map[clean_shorthand] = (item_type, name)
+
+    known_phrases = sorted(known_phrases, key=lambda p: len(p.split()), reverse=True)
+    all_items_set = set([p.lower() for p in known_phrases])
+    max_words = max(len(p.split()) for p in known_phrases)
+
     result = []
     i = 0
-    
     while i < len(words):
-        matched_phrase = None
+        matched_item = None
         matched_length = 0
-        highest_score = 0
-        
-        for phrase in known_phrases:
-            phrase_words = phrase.title().split()
-            length = len(phrase_words)
-            segment = list(islice(words, i, i + length))
-            
-            if len(segment) < length:
+
+        for window in range(max_words, 0, -1):
+            if i + window > len(words):
                 continue
-            
-            segment_str = " ".join(segment).lower()
-            phrase_str = " ".join(phrase_words).lower()
-            
-            score = ratio(segment_str, phrase_str)
-            
-            if score >= threshold and score > highest_score:
-                matched_phrase = phrase
-                matched_length = length
-                highest_score = score
-        
-        if matched_phrase:
-            result.append(matched_phrase)
+            candidate = " ".join(words[i:i+window]).strip()
+
+            if candidate in reverse_map:
+                matched_item = reverse_map[candidate][1]
+                matched_length = len(candidate.split())
+                break
+
+            if candidate in all_items_set:
+                matched_item = candidate.title()
+                matched_length = len(candidate.split())
+                break
+
+            filtered_candidates = [f.lower() for f in all_items_set.union(reverse_map.keys()) if f and f[0] == candidate[0]]
+            if filtered_candidates:
+                match = process.extractOne(candidate, filtered_candidates, scorer=fuzz.ratio)
+                if match and match[1] >= threshold:
+                    best_match = match[0]
+                    matched_item = reverse_map.get(best_match, (None, best_match.title()))[1]
+                    matched_length = len(best_match.split())
+                    break
+
+        if matched_item:
+            result.append(matched_item)
             i += matched_length
         else:
-            result.append(words[i])
+            result.append(words[i].title())
             i += 1
 
     parsed_build = {}
@@ -93,59 +90,53 @@ def ComboPatternParser(message: str, threshold=95):
         "Fruit": "Fruit",
         "Swords": "Sword",
         "Guns": "Gun",
-        "MiscData" : "MiscData"
+        "MiscData": "MiscData"
     }
-    
     found_categories = set()
-    
     for item in result:
-        shorthand_match = reverse_map.get(item.lower())
-        if shorthand_match:
-            category, display_name = shorthand_match
-            label = pretty_labels.get(category, category)
-            if label not in parsed_build:
-                parsed_build[label] = display_name
-                found_categories.add(category)
+        key = item.lower()
+        if key in reverse_map:
+            category, display_name = reverse_map[key]
         else:
-            for category in ComboData:
-                if category in found_categories:
-                    continue
-                if item in ComboData[category]:
-                    label = pretty_labels.get(category, category)
-                    parsed_build[label] = item
-                    found_categories.add(category)
+            display_name = item
+            category = None
+            for cat, items in ComboData.items():
+                if item in items:
+                    category = cat
                     break
-    
-    valid_keys = set(known_phrases)
+
+        label = pretty_labels.get(category, category) if category else None
+        if label and label not in parsed_build:
+            parsed_build[label] = display_name
+            found_categories.add(category)
+
     combo_data = []
     current_key = None
     current_values = []
-    
+
+    valid_keys = set([p.lower() for p in known_phrases])
     for word in result:
-        if word in valid_keys:
+        key = word.lower()
+        if key in valid_keys or key in reverse_map:
             if current_key is not None:
                 combo_data.append((current_key, current_values))
-            current_key = word
+            if key in reverse_map:
+                current_key = reverse_map[key][1]
+            else:
+                current_key = word
             current_values = []
-        else:
-            shorthand_match = reverse_map.get(word.lower())
-            if shorthand_match:
-                if current_key is not None:
-                    combo_data.append((current_key, current_values))
-                _, display_name = shorthand_match
-                current_key = display_name
-                current_values = []
-            elif current_key:
-                if word and word[0] in ['Z', 'X', 'C', 'V', 'F', 'M1']:
-                    current_values.append(word[0])
-                else:
-                    current_values.append(random.choice(['Z', 'X', 'C', 'V', 'F', 'M1']))
-    
+        elif current_key:
+            if word.upper()[0] in ['Z', 'X', 'C', 'V', 'F', 'M1']:
+                current_values.append(word.upper()[0])
+            else:
+                current_values.append(random.choice(['Z', 'X', 'C', 'V', 'F', 'M1']))
+
     if current_key is not None:
         combo_data.append((current_key, current_values))
+
     return parsed_build, tuple(combo_data)
 
-def ValidComboDataType(data):
+async def ValidComboDataType(data):
     if not isinstance(data, tuple) or len(data) != 2:
         return False
 
@@ -199,86 +190,42 @@ def ComboScope(message: str, threshold=80):
     else:
         return None
 
-def RegisterCombo(user_id: str = "", parsed_build: dict = None, combo_data: tuple = None):
-    csv_path = "storage/common/Comboes/Comboes.csv"
+async def RegisterCombo(user_id: str = "", parsed_build: dict = None, combo_data: tuple = None):
     parsed_build = parsed_build or {}
-    combo_data_str = str(combo_data) if combo_data is not None else ""
 
-    base_columns = ["id", "user_id", "combo_data"]
-    parsed_columns = list(parsed_build.keys())
-    all_columns = base_columns + parsed_columns
+    combo_data_str = str(combo_data) if combo_data else ""
 
-    if os.path.exists(csv_path):
-        existing_df = pl.read_csv(csv_path)
-        if "id" in existing_df.columns:
-            existing_ids = existing_df["id"].to_list()
-            existing_ids_int = [int(x) for x in existing_ids if str(x).isdigit()]
-            next_id = max(existing_ids_int, default=0) + 1
-        else:
-            next_id = 1
-    else:
-        existing_df = None
-        next_id = 1
-
-    id_str = f"{next_id:07d}"
-
-    row_data = {
-        "id": id_str,
-        "user_id": user_id,
-        "combo_data": combo_data_str,
-        **parsed_build,
+    db_columns = {
+        "fighting_style": None,
+        "fruit": None,
+        "sword": None,
+        "gun": None
     }
 
-    if existing_df is not None:
-        final_columns = set(existing_df.columns).union(all_columns)
-        sorted_columns = existing_df.columns + sorted(final_columns - set(existing_df.columns))
-    else:
-        sorted_columns = all_columns
+    key_map = {
+        "Fighting Style": "fighting_style",
+        "Fruit": "fruit",
+        "Sword": "sword",
+        "Gun": "gun"
+    }
 
-    row_complete = {col: row_data.get(col, "") for col in sorted_columns}
-    new_row_df = pl.DataFrame([row_complete])
+    for key, value in parsed_build.items():
+        if key in key_map:
+            db_columns[key_map[key]] = value
 
-    if existing_df is None:
-        new_row_df.write_csv(csv_path)
-        return
+    async with VC.combo_db.execute("INSERT INTO Combos (combo_author, fighting_style, fruit, sword, gun, combo_data) VALUES (?, ?, ?, ?, ?, ?)", (user_id,db_columns["fighting_style"],db_columns["fruit"],db_columns["sword"],db_columns["gun"],combo_data_str)) as cursor:
+        await VC.combo_db.commit()
+        return cursor.lastrowid
 
-    for col in sorted_columns:
-        if col not in existing_df.columns:
-            existing_df = existing_df.with_columns(pl.lit("").alias(col))
-
-    for col in sorted_columns:
-        if col in existing_df.columns:
-            try:
-                existing_dtype = existing_df.schema[col]
-                new_row_df = new_row_df.with_columns(
-                    new_row_df[col].cast(existing_dtype)
-                )
-            except Exception as e:
-                print(f"Warning: Could not cast column '{col}' to {existing_dtype}. Error: {e}")
-        else:
-            new_row_df = new_row_df.with_columns(pl.col(col).cast(pl.Utf8))
-
-    for col in sorted_columns:
-        if col not in new_row_df.columns:
-            new_row_df = new_row_df.with_columns(pl.lit("").alias(col))
-
-    existing_df = existing_df.select(sorted_columns)
-    new_row_df = new_row_df.select(sorted_columns)
-    updated_df = pl.concat([existing_df, new_row_df], how="vertical")
-    updated_df.write_csv(csv_path)
-
-    return int(id_str)
-
-def ComboLookup(message: str = ""):
-    parser_build, _ = ComboPatternParser(message)
-    df = pl.read_csv("storage/common/Comboes/Comboes.csv")
+async def ComboLookup(message: str = ""):
+    parsed_build, _ = await ComboPatternParser(message)
 
     def normalize(s):
         return str(s).strip().lower()
 
-    parser_items = {normalize(k): normalize(v) for k, v in parser_build.items()}
+    parser_items = {normalize(k): normalize(v) for k, v in parsed_build.items()}
 
-    matchable_keys = ['Fighting Style', 'Fruit', 'Sword', 'Gun']
+    matchable_keys = ["Fighting Style", "Fruit", "Sword", "Gun"]
     normalized_match_keys = [normalize(k) for k in matchable_keys]
 
     valid_parser_items = {
@@ -288,36 +235,57 @@ def ComboLookup(message: str = ""):
     if not valid_parser_items:
         return None
 
-    key_map = {normalize(k): k for k in matchable_keys}
+    key_map = {
+        normalize("Fighting Style"): "fighting_style",
+        normalize("Fruit"): "fruit",
+        normalize("Sword"): "sword",
+        normalize("Gun"): "gun",
+    }
 
-    mask = pl.Series([True] * df.height)
+    where_clauses = []
+    values = []
 
     for norm_key, value in valid_parser_items.items():
-        col = key_map[norm_key]
-        mask &= (df[col].str.to_lowercase().str.strip_chars() == value)
+        column = key_map[norm_key]
+        where_clauses.append(f"LOWER({column}) = ?")
+        values.append(value)
 
-    matched_rows = df.filter(mask)
+    where_sql = " AND ".join(where_clauses)
 
-    if matched_rows.height > 0:
-        return matched_rows.sample(n=1).to_dicts()[0]
+    query = f"SELECT * FROM Combos WHERE {where_sql}"
 
-    return None
+    cursor = await VC.combo_db.execute(query, values)
+    rows = await cursor.fetchall()
 
-def ComboLookupByID(combo_id):
+    if not rows:
+        return None
+
+    chosen_row = random.choice(rows)
+
+    columns = [col[0] for col in cursor.description]
+    return dict(zip(columns, chosen_row))
+
+async def ComboLookupByID(combo_id: int):
     if combo_id is None:
         return None
 
-    df = pl.read_csv("storage/common/Comboes/Comboes.csv")
-    matched_rows = df.filter(pl.col("id") == combo_id)
+    cursor = await VC.combo_db.execute(
+        "SELECT * FROM Combos WHERE combo_id = ?",
+        (combo_id,)
+    )
+    row = await cursor.fetchone()
 
-    if matched_rows.height > 0:
-        return matched_rows.to_dicts()[0]
-    else:
+    if not row:
         return None
+
+    columns = [col[0] for col in cursor.description]
+    return dict(zip(columns, row))
     
-def DeleteComboByID(combo_id):
-    csv_path = "storage/common/Comboes/Comboes.csv"
-    df = pl.read_csv(csv_path)
-    df_filtered = df.filter(pl.col("id") != combo_id)
-    df_filtered.write_csv(csv_path)
-'''
+async def DeleteComboByID(combo_id: int):
+    cursor = await VC.combo_db.execute(
+        "DELETE FROM Combos WHERE combo_id = ?",
+        (combo_id,)
+    )
+    await VC.combo_db.commit()
+
+    return cursor.rowcount

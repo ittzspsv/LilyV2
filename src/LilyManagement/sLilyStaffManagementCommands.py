@@ -89,7 +89,10 @@ class LilyManagement(commands.Cog):
     async def request_loa(self, ctx: commands.Context):
         await smLily.RequestLoa(ctx)
 
-
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Developer', 'Staff Manager')))
+    @commands.hybrid_command(name='add_role', description='adds a role to the role list')
+    async def add_role(self, ctx: commands.Context, role: discord.Role, priority: int):
+        await smLily.AddRole(ctx, role, priority)
 
 
 async def setup(bot):
