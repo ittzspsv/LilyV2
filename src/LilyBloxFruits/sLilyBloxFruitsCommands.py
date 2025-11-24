@@ -3,6 +3,7 @@ from LilyRulesets.sLilyRulesets import PermissionEvaluator
 import Config.sValueConfig as LilyConfig
 from discord import File
 import LilyManagement.sLilyStaffManagement as LSM
+import LilyModeration.sLilyModeration as mLily
 import re
 
 import Combo.LilyComboManager as LCM
@@ -167,8 +168,9 @@ class LilyBloxFruits(commands.Cog):
                 for base, nested in ast.literal_eval(combo_data_text):
                     combo_ = " ".join(nested)
                     combo_text += f"{base.title()}: {combo_}\n"
-
-                img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text)
+                name_raw = ctx.author.name or "Unknown"
+                name = re.sub(r'[^A-Za-z ]+', '', name_raw)
+                img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text, rating_text=f'{combo.get('rating', '0')}/10', combo_id=str(combo['combo_id']), combo_by=name)
                 img_byte_arr = io.BytesIO()
                 img.save(img_byte_arr, format='PNG')
                 img_byte_arr.seek(0)
@@ -189,6 +191,74 @@ class LilyBloxFruits(commands.Cog):
 
         try:
             combo_obj = await LCM.ComboLookup(build.lower())
+            if not combo_obj:
+                await ctx.reply("No matching combo found.")
+                return
+
+            combo_data_text = combo_obj.get('combo_data', '[]')
+            Item_List = {}
+            for key_type in ["fruit", "sword", "fighting_style", "gun"]:
+                if combo_obj.get(key_type):
+                    mapping = {
+                        "fruit": "fruit_icons",
+                        "sword": "sword_icons",
+                        "fighting_style": "fighting_styles",
+                        "gun": "gun_icons"
+                    }
+                    Item_List[combo_obj[key_type]] = mapping[key_type]
+
+            Item_Icon_List = [
+                f'src/ui/{value}/{key.replace(" ", "_")}.png'
+                for key, value in Item_List.items() if key and key.strip()
+            ]
+
+            combo_text = ""
+            for base, nested in ast.literal_eval(combo_data_text):
+                combo_ = " ".join(nested)
+                combo_text += f"{base.title()}: {combo_}\n"
+
+            combo_author_id = combo_obj.get("combo_author")
+            combo_by = None
+
+            if combo_author_id:
+                combo_by = ctx.guild.get_member(int(combo_author_id))
+                if combo_by is None:
+                            try:
+                                combo_by = await ctx.guild.fetch_member(int(combo_author_id))
+                            except discord.NotFound:
+                                    combo_by = None
+
+            name_raw = combo_by.name if combo_by else "Unknown"
+            name = re.sub(r'[^A-Za-z ]+', '', name_raw)
+            img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text)
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format='PNG')
+            img_byte_arr.seek(0)
+
+            imgfile = File(img_byte_arr, filename="image.png")
+            view = CV2.RatingComponent(ctx.author, combo_obj['combo_id'])
+            await ctx.reply(file=imgfile, view=view)
+        except Exception as e:
+            await ctx.reply(f"Exception: {e}")
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @commands.hybrid_command(name='delete_combo', description='deletes a combo by its id')
+    async def delete_combo(self, ctx: commands.Context, combo_id: str):
+        try:
+            row = await LCM.DeleteComboByID(combo_id)
+            if row:
+                await ctx.reply(embed=mLily.SimpleEmbed(f"Successfully deleted combo id {row}"))
+            else:
+                await ctx.reply(embed=mLily.SimpleEmbed(f"Cannot find the combo ID", 'cross'))
+        except Exception as e:
+            await ctx.reply(embed=mLily.SimpleEmbed(f"Exception Occured {e}", 'cross'))
+    
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
+    @commands.hybrid_command(name='combo_lookup_by_id', description='Lookup a combo by its id')
+    async def combo_lookup_by_id(self, ctx: commands.Context, combo_id: str):
+        await ctx.defer()
+        try:
+            combo_obj = await LCM.ComboLookupByID(combo_id)
             if not combo_obj:
                 await ctx.reply("No matching combo found.")
                 return

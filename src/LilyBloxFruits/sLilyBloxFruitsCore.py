@@ -558,8 +558,9 @@ async def MessageEvaluate(bot, message):
                             combo_ = " ".join(nested)
                             combo_text += f"{base.title()}: {combo_}\n"
 
-
-                        img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text)
+                        name_raw = message.author.name or "Unknown"
+                        name = re.sub(r'[^A-Za-z ]+', '', name_raw)
+                        img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text, rating_text=f'{combo.get('rating', '0')}/10', combo_id=str(combo['combo_id']), combo_by=name)
                         img_byte_arr = io.BytesIO()
                         img.save(img_byte_arr, format='PNG')
                         img_byte_arr.seek(0)
@@ -601,7 +602,21 @@ async def MessageEvaluate(bot, message):
                             combo_ = " ".join(nested)
                             combo_text += f"{base.title()}: {combo_}\n"
 
-                        img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text)
+                        combo_author_id = combo.get("combo_author")
+                        combo_by = None
+
+                        if combo_author_id:
+                            combo_by = message.guild.get_member(int(combo_author_id))
+                            if combo_by is None:
+                                try:
+                                    combo_by = await message.guild.fetch_member(int(combo_author_id))
+                                except discord.NotFound:
+                                    combo_by = None
+
+                        name_raw = combo_by.name if combo_by else "Unknown"
+                        name = re.sub(r'[^A-Za-z ]+', '', name_raw)
+
+                        img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text, rating_text=f'{combo.get('rating', '0')}/10', combo_id=str(combo['combo_id']), combo_by=name)
                         img_byte_arr = io.BytesIO()
                         img.save(img_byte_arr, format='PNG')
                         img_byte_arr.seek(0)

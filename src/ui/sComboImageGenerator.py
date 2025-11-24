@@ -44,7 +44,10 @@ def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt"
     image.paste(gradient, (int(x), int(y)), gradient)
 
 
-def CreateBaseBuildIcon(icons,combo_text="Ice V\nIce C\nIce Z\nGodhuman X\nGodhuman C\nGodhuman Z",rating_text="10/10",rating_pos=(940, 990),font_path="src/ui/font/Berlin Sans FB Bold.ttf"):
+def CreateBaseBuildIcon(icons,combo_text="Ice V\nIce C\nIce Z\nGodhuman X\nGodhuman C\nGodhuman Z",rating_text="10/10",combo_by="shreespsv",combo_id='1',font_path="src/ui/font/Berlin Sans FB Bold.ttf"):
+    rating_pos=(920, 850)
+    combo_by_pos=(920, 1220)
+    combo_id_pos=(749, 702)
     if not 1 <= len(icons) <= 4:
         raise ValueError("You must provide between 1 and 4 icons.")
     
@@ -147,6 +150,34 @@ def CreateBaseBuildIcon(icons,combo_text="Ice V\nIce C\nIce Z\nGodhuman X\nGodhu
         draw.text(
             (rx, ry),
             rating_text,
+            font=rating_font,
+            fill=(240, 200, 255, 255),
+            anchor="lt"
+        )
+    if combo_by:
+        rx, ry = combo_by_pos
+        try:
+            rating_font = ImageFont.truetype(font_path, 95)
+        except:
+            rating_font = ImageFont.load_default()
+
+        draw.text(
+            (rx, ry),
+            combo_by,
+            font=rating_font,
+            fill=(240, 200, 255, 255),
+            anchor="lt"
+        )
+    if combo_id:
+        rx, ry = combo_id_pos
+        try:
+            rating_font = ImageFont.truetype("src/ui/font/Game Bubble.ttf", 40)
+        except:
+            rating_font = ImageFont.load_default()
+
+        draw.text(
+            (rx, ry),
+            combo_id,
             font=rating_font,
             fill=(240, 200, 255, 255),
             anchor="lt"
