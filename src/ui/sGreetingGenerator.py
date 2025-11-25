@@ -86,8 +86,8 @@ async def GenerateWelcome(member: discord.Member):
 
     member_font = ImageFont.truetype(TEXT_FONT_PATH, 27)
 
-    username_gradient = [(200, 160, 255), (255, 50, 50)]
-    member_gradient   = [(200, 160, 255), (255, 50, 50)]
+    username_gradient = [(255, 80, 160), (140, 0, 255)]
+    member_gradient = [(255, 80, 160), (140, 0, 255)]
 
     USERNAME_POS = (395, 135)
     draw_gradient_text(base, USERNAME_POS, username_text, username_font, username_gradient, anchor="lt")

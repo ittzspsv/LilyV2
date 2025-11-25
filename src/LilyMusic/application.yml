@@ -1,0 +1,16 @@
+server:
+  port: 2333
+  address: 0.0.0.0
+
+lavalink:
+  server:
+    password: "Lily"
+    sources:
+      youtube: false
+      spotify: true
+      soundcloud: true
+
+  plugins:
+    youtube:
+      enabled: true
+      version: 1.16.0

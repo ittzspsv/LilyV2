@@ -10,3 +10,4 @@ aiosqlite
 Unidecode
 aiohttp
 aiofiles
+lavalink

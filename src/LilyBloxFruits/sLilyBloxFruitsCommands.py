@@ -230,7 +230,7 @@ class LilyBloxFruits(commands.Cog):
 
             name_raw = combo_by.name if combo_by else "Unknown"
             name = re.sub(r'[^A-Za-z ]+', '', name_raw)
-            img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text)
+            img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text, rating_text=f"{combo_obj.get('rating', '0')}/10", combo_id=str(combo_obj['combo_id']), combo_by=name)
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format='PNG')
             img_byte_arr.seek(0)
