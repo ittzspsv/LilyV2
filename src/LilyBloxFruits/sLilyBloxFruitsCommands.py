@@ -170,7 +170,7 @@ class LilyBloxFruits(commands.Cog):
                     combo_text += f"{base.title()}: {combo_}\n"
                 name_raw = ctx.author.name or "Unknown"
                 name = re.sub(r'[^A-Za-z ]+', '', name_raw)
-                img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text, rating_text=f'{combo.get('rating', '0')}/10', combo_id=str(combo['combo_id']), combo_by=name)
+                img = CIG.CreateBaseBuildIcon(Item_Icon_List, combo_text=combo_text, rating_text=f'{combo.get("rating", "0")}/10', combo_id=str(combo['combo_id']), combo_by=name)
                 img_byte_arr = io.BytesIO()
                 img.save(img_byte_arr, format='PNG')
                 img_byte_arr.seek(0)
