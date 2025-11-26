@@ -191,8 +191,47 @@ async def FetchLevelDetails(ctx: commands.Context, member: discord.Member = None
         await ctx.reply(file=file)
 
     except Exception as e:
-        await ctx.reply(embed=mLily.SimpleEmbed('Cannot Fetch your Level, Please Speak Atleast Once!', 'cross'))    
+        await ctx.reply(embed=mLily.SimpleEmbed('Cannot Fetch your Level, Please Chat Atleast Once!', 'cross'))    
         print(e)       
+
+async def FetchProfileDetails(ctx: commands.Context, member: discord.Member = None):
+    try:
+        if member is None:
+            member = ctx.author
+
+        cursor = await ldb.execute(
+            "SELECT Daily, Weekly, Total FROM message_counts WHERE Guild_ID = ? AND User_ID = ?",
+            (ctx.guild.id, member.id)
+        )
+        row = await cursor.fetchone()
+        daily, weekly, total = row if row else (0, 0, 0)
+
+        cursor1 = await ldb.execute(
+            "SELECT Coins FROM levels WHERE Guild_ID = ? AND User_ID = ?",
+            (ctx.guild.id, member.id)
+        )
+        row1 = await cursor1.fetchone()
+        coins = row1[0] if row1 else 0
+
+        final_buffer = await PCG.CreateProfileCard(
+            member,
+            str(daily),
+            str(weekly),
+            str(total),
+            ShortNumber(int(coins))
+        )
+
+        file = discord.File(final_buffer, filename="profile_card.png")
+        await ctx.reply(file=file)
+
+    except Exception as e:
+        await ctx.reply(
+            embed=mLily.SimpleEmbed(
+                'Cannot Fetch your Profile, Please Chat Atleast Once!',
+                'cross'
+            )
+        )
+        print(e)
 
 async def _exp_background_worker(message: discord.Message):
     global exp_worker_running

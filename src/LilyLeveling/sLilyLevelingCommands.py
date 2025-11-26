@@ -20,6 +20,12 @@ class LilyLeveling(commands.Cog):
     async def level(self, ctx: commands.Context, member:discord.Member=None):
             await ctx.defer()
             await LilyLevelCore.FetchLevelDetails(ctx, member)
+    
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='profile', description='Get Your Profile Information')
+    async def profile(self, ctx: commands.Context, member:discord.Member=None):
+            await ctx.defer()
+            await LilyLevelCore.FetchProfileDetails(ctx, member)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
