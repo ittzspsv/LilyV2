@@ -500,8 +500,8 @@ class MusicPlayerView(discord.ui.View):
     async def repeat(self, interaction: discord.Interaction, button: discord.ui.Button):
         player = self.lavalink.player_manager.get(self.guild_id)
 
-        player.loop = not getattr(player, "loop", False)
-        await player.set_loop(player.loop)
+        player.repeat = not getattr(player, "repeat", False)
 
-        status = "enabled" if player.loop else "disabled"
+        status = "enabled" if player.repeat else "disabled"
+
         await interaction.response.send_message(f"Repeat {status}", ephemeral=True)

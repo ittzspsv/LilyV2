@@ -47,7 +47,7 @@ class MyBot(commands.Bot):
             "LilyTicketTool.LilyTicketToolCommands",
             # "LilyLeveling.sLilyLevelingCommands",
             # "LilyMiddleman.sLilyMiddlemanCommands"
-            "LilyMusic.sLilyMusicCommands"
+            #"LilyMusic.sLilyMusicCommands"
         ]
 
         for ext in extensions:
@@ -184,7 +184,7 @@ class MyBot(commands.Bot):
         if message.author == self.user:
               return         
 
-        await LSecurity.LilySecurityEvaluate(bot, message)
+        #await LSecurity.LilySecurityEvaluate(bot, message)
 
         if message.channel.id in LilyLeveling.config['AllowedChannels']:
             await LilyLeveling.LevelProcessor(message)
