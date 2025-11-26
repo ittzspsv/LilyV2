@@ -45,7 +45,7 @@ class MyBot(commands.Bot):
             "Misc.sLilyEmbedCommands",
             # "LilyGAG.sLilyGAGCommands",
             "LilyTicketTool.LilyTicketToolCommands",
-            # "LilyLeveling.sLilyLevelingCommands",
+            "LilyLeveling.sLilyLevelingCommands",
             # "LilyMiddleman.sLilyMiddlemanCommands"
             #"LilyMusic.sLilyMusicCommands"
         ]

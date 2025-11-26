@@ -16,7 +16,6 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 - Lily Utility : focused based on general purpose
 - Lily Ticketing Tool : Focused on ticket system
 - Lily Leveling | Economy system : Focused on gaining levels / currency
-- Lily Vouch : focused based on vouching
 - Lily Algorthims : focused based on sanitizing a given string to appropriate data
 
 ## LIST OF AVAILABLE GAME SUPPORT
@@ -35,24 +34,39 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 - rapidfuzz
 - aiosqlite
 
-## BOT - PREVIEW
-| ![Stock](misc/Stock.png) | ![Moderation](misc/Moderation.jpg) | ![Management](misc/Management.jpg) |
-|:--:|:--:|:--:|
-| **Stock System** | **Moderation Tools** | **Staff Management** |
+# __BOT PREVIEW__
+## BLOX FRUITS Modules
 
-| ![FruitValues](misc/FruitValues.png) | ![WinLoss](misc/WinLoss.png) | |
-|:--:|:--:|:--:|
-| **Fruit Values** | **Win / Loss** |  |
+| ![Stock](misc/Stock.png) | ![Moderation](misc/FruitSuggestor.webp) |
+|:--:|:--:|
+| **Stock System** | **Fruit Suggestor** |
 
-## LEVELING (Based on the famous anime __One Piece__)
+<br>
+
+| ![FruitValues](misc/FruitValues.png) | ![WinLoss](misc/WinLoss.png) |
+|:--:|:--:|
+| **Fruit Values** | **Win / Loss** |
+
+## MODERATION TOOLS
+![Preview](misc/Moderation.jpg)
+
+## STAFF MANAGEMENT TOOLS
+| ![Preview](misc/Management.jpg) | ![Preview](misc/ManagementList.jpg)
+|:--:|:--:|
+<br>
+| **Staff Profile** | **Staff List** |
+
+## LEVELING MODULE
 ![Preview](misc/wanted.png)
+
+## Greeting Module : __Welcome and Goodbye__
+![Preview](misc/welcome.png)
 
 
 ## CURRENTLY USED
 This bot is currently up and running on these servers [mainly designed for those] [no support for multi-servers until now (WIP!)]
 
 [Blox Trade | Roblox Blox Fruits](https://discord.gg/bloxtrade)<br>
-[Life Times | Blox Fruits Trading Server](https://discord.gg/lfts)
 
 # SUPPORT
 Feel free to contact me personally through my discord [shreespsv] if you guys want more games to be added on the discord bot

@@ -16,29 +16,10 @@ class LilyLeveling(commands.Cog):
         self.bot = bot
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='profile', description='Generates a wanted poster image')
-    async def profile(self, ctx: commands.Context, member:discord.Member=None):
-            try:
-                message = await ctx.reply("Thinking......")
-                if not member:
-                    input_image = ctx.author.display_avatar.url
-                    name, description, role, stamp ,current_level, bounty= await LilyLevelCore.FetchProfileDetails(ctx, ctx.author)
-                else:
-                    input_image = member.display_avatar.url
-                    name, description, role, stamp ,current_level, bounty= await LilyLevelCore.FetchProfileDetails(ctx, member)
-                if stamp:
-                    poster = await PosterGeneration(input_image, name, "", bounty, current_level, description, role, True, stamp)
-                else:
-                    poster = await PosterGeneration(input_image, name, "", bounty, current_level, description, role, False, None)
-
-                buffer = io.BytesIO()
-                poster.save(buffer, format="PNG")
-                buffer.seek(0)
-
-                await message.edit(content=None, attachments=[discord.File(buffer, filename="wanted.png")])
-
-            except Exception as e:
-                await message.edit(content=f"Exception {e}")
+    @commands.hybrid_command(name='level', description='Get Your Current leveling info')
+    async def level(self, ctx: commands.Context, member:discord.Member=None):
+            await ctx.defer()
+            await LilyLevelCore.FetchLevelDetails(ctx, member)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -46,23 +27,6 @@ class LilyLeveling(commands.Cog):
     async def set_level(self, ctx:commands.Context, member:discord.Member, level:int):
         await LilyLevelCore.SetLevel(ctx, member, level)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='add_bounty', description='adds a bounty for user')
-    async def add_bounty(self, ctx:commands.Context, member:discord.Member, amount:int):
-        await LilyLevelCore.AddCoins(ctx, member, amount)
-
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='set_profile', description='updates or adds a new profile')
-    async def set_profile(self, ctx:commands.Context, name:str, role:str,* ,description:str):
-        await LilyLevelCore.UpdateProfile(ctx, name, role,description)
-
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
-    @commands.hybrid_command(name='set_profile_for', description='updates or adds a new profile for a given member')
-    async def set_profile_for(self, ctx:commands.Context, member:discord.Member=None,name:str=None, role:str=None,* ,description:str=None, stamp:str=None):
-        await LilyLevelCore.UpdateProfileFor(ctx, member,name,role ,description, stamp)
-        
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
     @commands.hybrid_command(name='update_leveling_config', description='updates or adds a new profile for a given member')

@@ -1,6 +1,8 @@
 import aiosqlite
 import asyncio
 import json
+import LilyModeration.sLilyModeration as mLily
+import ui.sProfileCardGenerator as PCG
 import discord
 import Config.sBotDetails as BotConfig
 from discord.ext import commands
@@ -17,42 +19,6 @@ message_worker_running = False
 async def initialize():
     global ldb
     ldb = await aiosqlite.connect("storage/levels/Levels.db")
-    await ldb.execute("""
-    CREATE TABLE IF NOT EXISTS levels (
-        ID INTEGER PRIMARY KEY AUTOINCREMENT,
-        Guild_ID TEXT NOT NULL,
-        User_ID TEXT NOT NULL,
-        Current_Level INTEGER DEFAULT 0,
-        Level_Exp INTEGER DEFAULT 0,
-        Max_Level_Exp INTEGER DEFAULT 100,
-        Coins INTEGER DEFAULT 0
-    )
-""")
-    
-    await ldb.execute("""
-    CREATE TABLE IF NOT EXISTS message_counts (
-        Guild_ID TEXT NOT NULL,
-        User_ID TEXT NOT NULL,
-        Total INTEGER DEFAULT 0,
-        Weekly INTEGER DEFAULT 0,
-        Daily INTEGER DEFAULT 0,
-        Last_Update INTEGER DEFAULT 0,
-        PRIMARY KEY (Guild_ID, User_ID)
-    )
-    """)
-
-    await ldb.execute("""
-    CREATE TABLE IF NOT EXISTS bio (
-        Guild_ID TEXT NOT NULL,
-        Name TEXT NOT NULL,
-        User_ID TEXT NOT NULL,
-        Role TEXT NOT NULL,
-        Description TEXT DEFAULT "DESCRIPTION HERE",
-        Stamp TEXT DEFAULT "None",
-        PRIMARY KEY (Guild_ID, User_ID)
-    )
-    """)
-    await ldb.commit()
 
 def InitializeConfig():
     global config
@@ -61,7 +27,35 @@ def InitializeConfig():
             config = json.load(Config)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         config = {}
+
 InitializeConfig()
+
+def ShortNumber(val):
+    value = int(val)
+    if value >= 1_000_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000_000:.1f}DX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000:.1f}NX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000:.1f}OX"
+    elif value >= 1_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000:.1f}SPX"
+    elif value >= 1_000_000_000_000_000_000_000: 
+        return f"{value / 1_000_000_000_000_000_000_000:.1f}SX"
+    elif value >= 1_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000:.1f}QI"
+    elif value >= 1_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000:.1f}QT"
+    elif value >= 1_000_000_000_000: 
+        return f"{value / 1_000_000_000_000:.1f}T"
+    elif value >= 1_000_000_000:  
+        return f"{value / 1_000_000_000:.1f}B"
+    elif value >= 1_000_000:  
+        return f"{value / 1_000_000:.1f}M"
+    elif value >= 1_000:  
+        return f"{value / 1_000:.1f}k"
+    else:
+        return str(value)
 
 async def LevelProcessor(message: discord.Message):
     if message.author.bot:
@@ -151,113 +145,54 @@ async def AddCoins(ctx:commands.Context, member: discord.Member, amount: int):
     except Exception as e:
             await ctx.send(f"Exception {e}")
 
-async def UpdateProfile(ctx: commands.Context, name: str, role:str,description: str):
-    global ldb
+async def FetchLevelDetails(ctx: commands.Context, member: discord.Member = None):
     try:
-        guild_id = str(ctx.guild.id)
-        user_id = str(ctx.author.id)
+        if member is None:
+            member = ctx.author
 
-        cursor = await ldb.execute("""
-            SELECT Name, Description
-            FROM bio
-            WHERE Guild_ID = ? AND User_ID = ?
-        """, (guild_id, user_id))
+        cursor = await ldb.execute(
+            "SELECT Current_Level, Level_Exp, Max_Level_Exp FROM levels WHERE User_ID = ? AND Guild_ID = ?",
+            (str(member.id), str(ctx.guild.id))
+        )
         row = await cursor.fetchone()
 
         if not row:
-            await ldb.execute("""
-                INSERT INTO bio (Guild_ID, Name, User_ID, Role ,Description)
-                VALUES (?, ?, ?, ?, ?)
-            """, (guild_id, ctx.author.name, user_id, "Mortal","Sample Description Here"))
+            return await ctx.reply("No leveling data found for this user.")
 
-        await ldb.execute("""
-            UPDATE bio
-            SET Name = ?, Description = ?, Role = ?
-            WHERE Guild_ID = ? AND User_ID = ?
-        """, (name, description, role ,guild_id, user_id))
+        CurrentLevel, LevelEXP, MaxLevelEXP = row
 
-        await ldb.commit()
-        await ctx.send("Success")
+        rank_cursor = await ldb.execute(
+            """
+            SELECT rank FROM (
+                SELECT User_ID,
+                       ROW_NUMBER() OVER (ORDER BY Current_Level DESC) AS rank
+                FROM levels
+                WHERE Guild_ID = ?
+            ) WHERE User_ID = ?
+            """,
+            (str(ctx.guild.id), str(member.id))
+        )
 
-    except Exception as e:
-        await ctx.send(f"Exception: {e}")
+        rank_row = await rank_cursor.fetchone()
+        rank = rank_row[0] if rank_row else 0
 
-async def UpdateProfileFor(ctx: commands.Context, members:discord.Member,name: str, role: str,description: str, stamp: str):
-    global ldb
-    try:
-        guild_id = str(ctx.guild.id)
-        user_id = str(members.id)
+        rank_display = ShortNumber(rank)
 
-        cursor = await ldb.execute("""
-            SELECT Name, Description
-            FROM bio
-            WHERE Guild_ID = ? AND User_ID = ?
-        """, (guild_id, user_id))
-        row = await cursor.fetchone()
+        final_buffer = await PCG.CreateLevelCard(
+            member,
+            member.name,
+            rank_display,
+            ShortNumber(LevelEXP),
+            ShortNumber(MaxLevelEXP),
+            str(CurrentLevel)
+        )
 
-        if not row:
-            await ldb.execute("""
-                INSERT INTO bio (Guild_ID, Name, User_ID, Role,Description, Stamp)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (guild_id, members.name, user_id, "Mortal","Sample Description Here", None))
-
-        await ldb.execute("""
-            UPDATE bio
-            SET Name = ?, Description = ?, Role = ?, Stamp = ?
-            WHERE Guild_ID = ? AND User_ID = ?
-        """, (name, description,role,stamp, guild_id, user_id))
-
-        await ldb.commit()
-        await ctx.send("Success")
+        file = discord.File(final_buffer, filename="levelcard.png")
+        await ctx.reply(file=file)
 
     except Exception as e:
-        await ctx.send(f"Exception: {e}")
-
-async def FetchProfileDetails(ctx: commands.Context, member: discord.Member = None):
-    global ldb
-    try:
-        guild_id = str(ctx.guild.id)
-        if member:
-            user_id = str(member.id)
-            name = member.name
-        else:
-            user_id = str(ctx.author.id)
-            name = ctx.author.name
-
-        cursor = await ldb.execute("""
-            SELECT Name, Description, Role, Stamp
-            FROM bio
-            WHERE Guild_ID = ? AND User_ID = ?
-        """, (guild_id, user_id))
-        row = await cursor.fetchone()
-
-        cursor = await ldb.execute("""
-            SELECT Current_Level, Coins
-            FROM levels
-            WHERE Guild_ID = ? AND User_ID = ?
-        """, (guild_id, user_id)) 
-        row1 = await cursor.fetchone()       
-
-        if row and row1:
-            return row + row1
-
-        if not row:
-            await ldb.execute("""
-                INSERT INTO bio (Guild_ID, Name, User_ID, Role, Description, Stamp)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (guild_id, name, user_id, "Mortal", "Sample Description Here", ""))
-            await ldb.commit()
-
-            if not row1:
-                return (name, "Sample Description Here", "Mortal", 1, 0)
-            else:
-                return (name, "Sample Description Here", "Mortal") + row1
-
-        if row and not row1:
-            return row + (1, 0)
-
-    except Exception as e:
-        await ctx.send(f"Exception {e}")
+        await ctx.reply(embed=mLily.SimpleEmbed('Cannot Fetch your Level, Please Speak Atleast Once!', 'cross'))    
+        print(e)       
 
 async def _exp_background_worker(message: discord.Message):
     global exp_worker_running
