@@ -67,7 +67,13 @@ emoji = {
     'cross' : '<:cross:1438078467257143379>',
     'checked' : '<:checked:1438078165372243978>',
     'bot' : '<:bot:1438504383397494896>',
-    'ticket' : '<:ticket:1438584946997592114>' 
+    'ticket' : '<:ticket:1438584946997592114>',
+    'music_play' : '<:MusicPlay:1443189668307931268>',
+    'music_shuffle' : '<:MusicShuffle:1443189671105400896>',
+    'music_repeat' : '<:MusicRepeat:1443189674897182841>',
+    'music_author' : '<:MusicAuthor:1443189678269268019>',
+    'music_folder' : '<:MusicFolder:1443189682077962312>',
+    'music_playlist' : '<:MusicPlaylist:1443189686712537098>'
 }
 
 img = {

@@ -16,7 +16,7 @@ Compatibility with Python 3.5 should be possible if f-strings are removed.
 """
 import re
 import LilyModeration.sLilyModeration as mLily
-import Config.sBotDetails as Configs
+import Misc.sLilyComponentV2 as CV2
 
 import discord
 import lavalink
@@ -26,8 +26,9 @@ from lavalink.errors import ClientError
 from lavalink.filters import LowPass
 from lavalink.server import LoadType
 
-url_rx = re.compile(r'https?://(?:www\.)?.+')
+import Config.sBotDetails as Configs
 
+url_rx = re.compile(r'https?://(?:www\.)?.+')
 
 class LavalinkVoiceClient(discord.VoiceProtocol):
     """
@@ -48,8 +49,8 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
             # We store it in `self.client` so that it may persist across cog reloads,
             # however this is not mandatory.
             self.client.lavalink = lavalink.Client(client.user.id)
-            self.client.lavalink.add_node(host='localhost', port=2333, password='youshallnotpass',
-                                          region='us', name='default-node')
+            self.client.lavalink.add_node(host='217.154.161.167', port=9885, password='Lily',
+                                          region='ro', name='default-node')
 
         # Create a shortcut to the Lavalink client here.
         self.lavalink = self.client.lavalink
@@ -131,8 +132,8 @@ class Music(commands.Cog):
 
         if not hasattr(bot, 'lavalink'):
             bot.lavalink = lavalink.Client(bot.user.id)
-            bot.lavalink.add_node(host='localhost', port=2333, password='Lily',
-                                  region='us', name='default-node')
+            bot.lavalink.add_node(host='217.154.161.167', port=9885, password='Lily',
+                                  region='ro', name='default-node')
 
         self.lavalink: lavalink.Client = bot.lavalink
         self.lavalink.add_event_hooks(self)
@@ -229,18 +230,18 @@ class Music(commands.Cog):
                 text="Lily Music",
             )
             embed.add_field(
-                name="Playing",
-                value=event.track.title,
+                name=f"{Configs.emoji['music_play']} Playing",
+                value=f'- {event.track.title}',
                 inline=False,
             )
             embed.add_field(
-                name="Author",
-                value=event.track.author,
+                name=f"{Configs.emoji['music_author']} Author",
+                value=f'- {event.track.author}',
                 inline=False,
             )
-
+            view = CV2.MusicPlayerView(self.lavalink, guild_id)
             embed.set_image(url=Configs.img['border'])
-            await channel.send(embed=embed)
+            await channel.send(embed=embed, view=view)
 
     @lavalink.listener(QueueEndEvent)
     async def on_queue_end(self, event: QueueEndEvent):
@@ -276,7 +277,7 @@ class Music(commands.Cog):
         #   EMPTY    - no results for the query (result.tracks will be empty)
         #   ERROR    - the track encountered an exception during loading
         if results.load_type == LoadType.EMPTY:
-            await channel.send(embed=mLily.SimpleEmbed("I couldn`t find any tracks for that query.", 'cross'))
+            await ctx.send(embed=mLily.SimpleEmbed("I couldn`t find any tracks for that query.", 'cross'))
         elif results.load_type == LoadType.PLAYLIST:
             tracks = results.tracks
 
@@ -362,7 +363,6 @@ class Music(commands.Cog):
         # Disconnect from the voice channel.
         await ctx.voice_client.disconnect(force=True)
         await ctx.send(embed=mLily.SimpleEmbed('Disconnected Successfully'))
-
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
