@@ -58,5 +58,11 @@ class LilyLeveling(commands.Cog):
             await ctx.send("Leveling config updated successfully.")
         except Exception as e:
             await ctx.send(f"Exception  {e}")
+
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
+    @commands.hybrid_command(name='leaderboard', description='Show Top 10 Leaderboard')
+    async def leaderboard(self, ctx: commands.Context):
+         await ctx.defer()
+         await LilyLevelCore.FetchLeaderBoard(ctx)
 async def setup(bot):
     await bot.add_cog(LilyLeveling(bot))

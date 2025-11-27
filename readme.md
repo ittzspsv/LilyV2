@@ -9,7 +9,6 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 
 ## LIST OF AVAILABLE MODULES
 - Lily Moderation : focused on moderation
-- Lily Response : focused on auto-responsing system
 - Lily Management : focused on staff management 
 - Lily Rulesets : focused on permission allotment
 - Lily Logging : focused on error loggings | debugging
@@ -48,23 +47,29 @@ Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/blo
 | **Fruit Values** | **Win / Loss** |
 
 ## MODERATION TOOLS
-![Preview](misc/Moderation.jpg)
+| ![Preview](misc/Moderation.jpg) | ![Preview](misc/Modstats.jpg)
+|:--:|:--:|
+| **Mod Logs** | **Mod Stats** |
+
+### MODERATION LOGGING
+![Preview](misc/Logging.jpg)
 
 ## STAFF MANAGEMENT TOOLS
 | ![Preview](misc/Management.jpg) | ![Preview](misc/ManagementList.jpg)
 |:--:|:--:|
-<br>
 | **Staff Profile** | **Staff List** |
 
 ## LEVELING MODULE
-![Preview](misc/wanted.png)
+| ![Preview](misc/levelcard.webp) | ![Preview](misc/profile_card.webp)
+|:--:|:--:|
+| **Leveling** | **Profile** |
 
 ## Greeting Module : __Welcome and Goodbye__
 ![Preview](misc/welcome.png)
 
 
 ## CURRENTLY USED
-This bot is currently up and running on these servers [mainly designed for those] [no support for multi-servers until now (WIP!)]
+This bot is currently up and running on these servers [mainly designed for those] [Multi-Server Support]
 
 [Blox Trade | Roblox Blox Fruits](https://discord.gg/bloxtrade)<br>
 

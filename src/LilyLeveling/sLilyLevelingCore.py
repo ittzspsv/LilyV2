@@ -1,6 +1,7 @@
 import aiosqlite
 import asyncio
 import json
+import re
 import LilyModeration.sLilyModeration as mLily
 import ui.sProfileCardGenerator as PCG
 import discord
@@ -232,6 +233,38 @@ async def FetchProfileDetails(ctx: commands.Context, member: discord.Member = No
             )
         )
         print(e)
+
+async def FetchLeaderBoard(ctx: commands.Context):
+    cursor = await ldb.execute(
+        "SELECT User_ID FROM levels WHERE Guild_ID = ? ORDER BY Current_Level DESC LIMIT 10",
+        (ctx.guild.id,)
+    )
+    rows = await cursor.fetchall()
+
+    if not rows:
+        await ctx.reply(
+            embed=mLily.SimpleEmbed(
+                'Error Fetching Leaderboard!',
+                'cross'
+            )
+        )
+        return
+
+    rank_list = []
+    for row in rows:
+        user_id = row[0]
+        user_member = ctx.guild.get_member(user_id)
+        if not user_member:
+            try:
+                user_member = await ctx.guild.fetch_member(user_id)
+            except discord.NotFound:
+                continue
+        name = re.sub(r'[^A-Za-z ]+', '', user_member.name)
+        rank_list.append({'name': user_member.name, 'member': user_member})
+
+    final_buffer = await PCG.CreateLeaderBoardCard(rank_list)
+    file = discord.File(final_buffer, filename="profile_card.png")
+    await ctx.reply(file=file)
 
 async def _exp_background_worker(message: discord.Message):
     global exp_worker_running

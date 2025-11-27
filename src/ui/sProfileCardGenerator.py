@@ -2,6 +2,8 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 import discord
 import re
+import random
+import string
 import io
 
 
@@ -243,4 +245,87 @@ async def CreateProfileCard(member: discord.Member=None, today="66", weekly="16,
     bg.save(final_buffer, format="PNG")
     final_buffer.seek(0)
 
+    return final_buffer
+
+async def CreateLeaderBoardCard(rank_dict=[]):
+    bg_image_path = "src/ui/Greetings/LeaderBoard.png"
+    TEXT_FONT_PATH = "src/ui/font/Berlin Sans FB Bold.ttf"
+    NUMBER_FONT_PATH = "src/ui/font/Game Bubble.ttf"
+    CROWN_PATH = "src/ui/misc_icons/CrownSecondary.png"
+    DEFAULT_AVATAR = "src/ui/bot_icons/Bot PFP.png"
+
+    if not os.path.isfile(bg_image_path):
+        raise FileNotFoundError(f"Background file not found: {bg_image_path}")
+
+    bg = Image.open(bg_image_path).convert("RGBA").copy()
+    draw = ImageDraw.Draw(bg)
+
+    AVATAR_SIZE = (220, 220)
+    CROWN_SIZE = (180, 120)
+    GRID_COLS = 3
+    START_X = 175
+    START_Y = 260
+    GAP_X = 440
+    GAP_Y = 350
+
+    mask = Image.new("L", AVATAR_SIZE, 0)
+    mask_draw = ImageDraw.Draw(mask)
+    mask_draw.ellipse((0, 0, AVATAR_SIZE[0], AVATAR_SIZE[1]), fill=255)
+
+    async def DrawAvatarCard():
+        for index, data in enumerate(rank_dict[:10], start=1):
+            name = data.get("name", "Lily").upper()
+            member = data.get("member", None)
+
+
+            if index == 10:
+                AVATAR_POS = (START_X + GAP_X, START_Y + 3 * GAP_Y)
+            else:
+                col = (index - 1) % GRID_COLS
+                row = (index - 1) // GRID_COLS
+                AVATAR_POS = (START_X + col * GAP_X, START_Y + row * GAP_Y)
+
+            if member:
+                avatar_asset = member.avatar.replace(format="png", size=256)
+                avatar_bytes = await avatar_asset.read()
+                avatar = Image.open(io.BytesIO(avatar_bytes)).convert("RGBA")
+            else:
+                avatar = Image.open(DEFAULT_AVATAR).convert("RGBA")
+
+            avatar = avatar.resize(AVATAR_SIZE, Image.LANCZOS)
+            bg.paste(avatar, AVATAR_POS, mask)
+
+            if index == 1:
+                crown = Image.open(CROWN_PATH).convert("RGBA").resize(CROWN_SIZE, Image.LANCZOS)
+                CROWN_POS = (AVATAR_POS[0] + 20, AVATAR_POS[1] - 100)
+                bg.paste(crown, CROWN_POS, crown)
+
+            try:
+                num_font = ImageFont.truetype(NUMBER_FONT_PATH, 185)
+            except:
+                num_font = ImageFont.load_default()
+            NUM_POS = (AVATAR_POS[0] - 140 if index != 10 else AVATAR_POS[0] - 235, AVATAR_POS[1])
+            draw.text(NUM_POS, str(index), font=num_font, fill=(255, 255, 255, 255))
+
+            max_width = AVATAR_SIZE[0]
+            font_size = 60
+            while font_size > 10:
+                try:
+                    font = ImageFont.truetype(TEXT_FONT_PATH, font_size)
+                except:
+                    font = ImageFont.load_default()
+                bbox = draw.textbbox((0, 0), name, font=font)
+                text_w = bbox[2] - bbox[0]
+                if text_w <= max_width:
+                    break
+                font_size -= 2
+            NAME_POS = (AVATAR_POS[0] + (AVATAR_SIZE[0] // 2) - (text_w // 2),
+                        AVATAR_POS[1] + AVATAR_SIZE[1] + 20)
+            draw.text(NAME_POS, name, font=font, fill=(240, 200, 255, 255))
+
+    await DrawAvatarCard()
+
+    final_buffer = io.BytesIO()
+    bg.save(final_buffer, format="PNG")
+    final_buffer.seek(0)
     return final_buffer

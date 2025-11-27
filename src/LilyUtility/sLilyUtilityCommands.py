@@ -180,7 +180,7 @@ class LilyUtility(commands.Cog):
                 rows = None
                 columns = []
 
-            await VC.vdb.commit()
+            await LLC.ldb.commit()
 
             if rows:
                 max_rows = 30
@@ -226,7 +226,7 @@ class LilyUtility(commands.Cog):
                 rows = None
                 columns = []
 
-            await VC.vdb.commit()
+            await ValueConfig.cdb.commit()
 
             if rows:
                 max_rows = 30
@@ -272,7 +272,7 @@ class LilyUtility(commands.Cog):
                 rows = None
                 columns = []
 
-            await VC.vdb.commit()
+            await LilyLogging.bdb.commit()
 
             if rows:
                 max_rows = 30
@@ -318,7 +318,7 @@ class LilyUtility(commands.Cog):
                 rows = None
                 columns = []
 
-            await VC.vdb.commit()
+            await LilyLogging.mdb.commit()
 
             if rows:
                 max_rows = 30
