@@ -1,12 +1,8 @@
 from discord.ext import commands
 import discord
-import io
 import LilyLeveling.sLilyLevelingCore as LilyLevelCore
-from ui.sWantedPoster import PosterGeneration
 import LilyManagement.sLilyStaffManagement as LSM
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
-import Config.sBotDetails as Config
-import ui.sProfileCardGenerator as PCG
 import os
 import json
 

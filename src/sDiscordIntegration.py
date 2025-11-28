@@ -8,11 +8,9 @@ import LilyBloxFruits.sLilyBloxFruitsCore as LBFC
 import LilyLeveling.sLilyLevelingCore as LilyLeveling
 import LilyLogging.sLilyLogging as LilyLogging
 import Config.sValueConfig as ValueConfig
-import lavalink
 import LilyTicketTool.LilyTicketToolCore as LilyTTCore
 import LilyManagement.sLilyStaffManagement as LSM
 import LilyPVB.LilyPVBCore as LPVBC
-import subprocess
 import os
 import LilySubstring.sLilySubstring as LS
 import logging
@@ -33,6 +31,7 @@ logging.basicConfig(filename='storage/LilyLogs.txt', level=logging.ERROR, format
 class MyBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all() 
+        intents.presences = False
         super().__init__(command_prefix=Config.bot_command_prefix,intents=intents,help_command=None)
 
     async def setup_hook(self):
