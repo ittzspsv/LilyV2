@@ -91,15 +91,8 @@ class LilyForgeCommands(commands.Cog):
         await ctx.defer()
         try:
             result_dict = LFC.ParseOres(ores)
-            result = LFC.suggest_best_crafts(result_dict)
 
-            filtered_result = [item for item in result if item['category'].lower() == item_type.name.lower()]
-
-            if not filtered_result:
-                await ctx.send(f"No items found for category **{item_type.name}**.", ephemeral=True)
-                return
-
-            view = CV2.ForgeSuggestorView(filtered_result)
+            view = CV2.ForgeSuggestorView(result_dict, item_type)
             await ctx.send(view=view)
 
         except Exception as e:

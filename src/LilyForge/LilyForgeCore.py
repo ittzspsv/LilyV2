@@ -712,25 +712,43 @@ def get_forge_chances_from_selection(selected_ores, category):
 
 def example_usage_print():
     inv = {
-        "tin" : 2,
-        "obsidian" : 4,
-        "amethyst" : 4,
-        "topaz" : 4
+    "tin": 2,
+    "obsidian": 4,
+    "amethyst": 4,
+    "topaz": 4
+}
 
-    }
-    print(get_forge_chances_from_selection(inv, "Weapon"))
-    print("Loaded inventory:", inv)
-    print("\nSuggesting best setups (based on meta compositions):\n")
-    setups = suggest_best_crafts(inv)
-    for s in setups:
-        if not s.get("available"):
-            print(f"{s['category']} - {s['cls']['name']}: unavailable ({s.get('reason')})")
+    crafts = suggest_best_crafts(inv)
+
+    for c in crafts:
+        if c["category"] != "Armor":
             continue
-        comp = ", ".join(f"{c['count']}x {ore_by_id[c['id']]['name']}" for c in s["composition"])
-        print(f"{s['category']} - {s['cls']['name']}: {s['chance']:.1f}% @ {s['count']} ores - avg {s['avgMultiplier']:.2f}x traits +{s['traitScore']:.1f}% use: {comp}")
+
+        cls_name = c["cls"]["name"]
+        chance = c["chance"]
+        avg = c["avgMultiplier"]
+
+        comp_str = ", ".join(f"{i['count']}× {ore_by_id[i['id']]['name']}" for i in c["composition"])
+
+        hp = get_health_range_for_armor_class(c["cls"]["id"])
+        vitality = compute_vitality_bonus_for_composition_array(c["composition"], "Armor")
+
+        hp_min = hp["min"] + vitality
+        hp_max = hp["max"] + vitality
+
+        trait_lines = get_trait_lines_for_composition_array(c["composition"], "Armor")
+
+        print(f"Armor – {cls_name}")
+        print(f"{chance:.1f}% @ {c['count']} ores – ~{avg:.2f}x multiplier")
+        print("Forge item (Removes used ores from inventory)")
+        print(f"Use: {comp_str}")
+        print(f"Estimated health (incl. Vitality): {hp_min:.3f}% – {hp_max:.3f}% (traits +{vitality:.2f}%)")
+        for tl in trait_lines:
+            print(tl)
+        print()
 
 def ParseOres(message: str):
-    ore_names = {o["name"]: o["id"] for o in ore_list}
+    ore_names = {o["name"].lower(): o["id"] for o in ore_list}
     result_dict = {}
 
     parts = [p.strip() for p in message.split(",")]
@@ -738,8 +756,8 @@ def ParseOres(message: str):
     for part in parts:
         numbers = re.findall(r"\d+", part)
         count = int(numbers[0]) if numbers else 1
-
-        match = process.extractOne(part, ore_names.keys(), scorer=fuzz.token_set_ratio)
+        part_text = re.sub(r"\d+", "", part).strip().lower()
+        match = process.extractOne(part_text, [k.lower() for k in ore_names.keys()], scorer=fuzz.ratio)
         if match and match[1] > 80:
             ore_name = match[0]
             result_dict[ore_names[ore_name]] = count

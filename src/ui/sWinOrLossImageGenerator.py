@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 import os
 
 
+optimised = False
 
 def format_value(val):
     value = int(val)
@@ -31,121 +32,166 @@ def format_value(val):
         return str(value)
 
 def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm"):
-    draw = ImageDraw.Draw(img)
-    glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    glow_draw = ImageDraw.Draw(glow)
+    if not optimised:
+        draw = ImageDraw.Draw(img)
+        glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        glow_draw = ImageDraw.Draw(glow)
 
-    for offset in range(1, 4):
-        glow_draw.text(position, text, font=font, fill=glow_color, anchor=anchor, stroke_width=offset)
+        for offset in range(1, 4):
+            glow_draw.text(position, text, font=font,
+                           fill=glow_color, anchor=anchor,
+                           stroke_width=offset)
 
-    blurred_glow = glow.filter(ImageFilter.GaussianBlur(radius=5))
-    img.paste(blurred_glow, (0, 0), blurred_glow)
+        blurred_glow = glow.filter(ImageFilter.GaussianBlur(radius=5))
+        img.paste(blurred_glow, (0, 0), blurred_glow)
 
-    draw.text(position, text, font=font, fill=text_color, anchor=anchor)
+        draw.text(position, text, font=font, fill=text_color, anchor=anchor)
 
-def draw_gradient_text(
-    image, 
-    position, 
-    text, 
-    font, 
-    gradient_colors, 
-    anchor="lt", 
-    stretch_height=1.0, 
-    scale=1.0
-):
-    temp_img = Image.new("RGBA", (10, 10), (0, 0, 0, 0))
-    temp_draw = ImageDraw.Draw(temp_img)
-    x0, y0, x1, y1 = temp_draw.textbbox((0, 0), text, font=font)
-    text_w, text_h = x1 - x0, y1 - y0
-
-    mask = Image.new("L", (text_w, text_h), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.text((-x0, -y0), text, font=font, fill=255)
-
-    if scale != 1.0 or stretch_height != 1.0:
-        new_w = max(1, int(text_w * scale))
-        new_h = max(1, int(text_h * stretch_height * scale))
-        mask = mask.resize((new_w, new_h), resample=Image.LANCZOS)
-        text_w, text_h = new_w, new_h
-
-    gradient = Image.new("RGBA", (text_w, text_h))
-    grad_draw = ImageDraw.Draw(gradient)
-    c0, c1 = gradient_colors[0], gradient_colors[1]
-
-    for y in range(text_h):
-        t = y / float(text_h - 1) if text_h > 1 else 0
-        r = int(c0[0] * (1 - t) + c1[0] * t)
-        g = int(c0[1] * (1 - t) + c1[1] * t)
-        b = int(c0[2] * (1 - t) + c1[2] * t)
-        grad_draw.line([(0, y), (text_w, y)], fill=(r, g, b))
-
-    gradient.putalpha(mask)
-
-    x, y = position
-    if anchor in ("mm", "mt", "mb"):
-        x -= text_w // 2
-    elif anchor in ("rm", "rt", "rb"):
-        x -= text_w
-    if anchor in ("mm", "lm", "rm"):
-        y -= text_h // 2
-    elif anchor in ("mb", "lb", "rb"):
-        y -= text_h
-
-    image.paste(gradient, (int(x), int(y)), gradient)
-
-def draw_gradient_bar(img, x, y, width, height, percent,color_start, color_end,corner_radius=4,glow_intensity=0.3):
-    from PIL import ImageDraw, ImageFilter
+    else:
+        draw = ImageDraw.Draw(img)
+        draw.text(position, text, font=font, fill=text_color, anchor=anchor)
 
 
-    bar_base = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(bar_base)
+def draw_gradient_text(image, position, text, font, gradient_colors,
+                       anchor="lt", stretch_height=1.0, scale=1.0):
+
+    if not optimised:
+        temp_img = Image.new("RGBA", (10, 10), (0, 0, 0, 0))
+        temp_draw = ImageDraw.Draw(temp_img)
+        x0, y0, x1, y1 = temp_draw.textbbox((0, 0), text, font=font)
+        text_w, text_h = x1 - x0, y1 - y0
+
+        mask = Image.new("L", (text_w, text_h), 0)
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.text((-x0, -y0), text, font=font, fill=255)
+
+        if scale != 1.0 or stretch_height != 1.0:
+            new_w = max(1, int(text_w * scale))
+            new_h = max(1, int(text_h * stretch_height * scale))
+            mask = mask.resize((new_w, new_h), resample=Image.LANCZOS)
+            text_w, text_h = new_w, new_h
+
+        gradient = Image.new("RGBA", (text_w, text_h))
+        grad_draw = ImageDraw.Draw(gradient)
+        c0, c1 = gradient_colors[0], gradient_colors[1]
+
+        for y in range(text_h):
+            t = y / float(text_h - 1) if text_h > 1 else 0
+            r = int(c0[0] * (1 - t) + c1[0] * t)
+            g = int(c0[1] * (1 - t) + c1[1] * t)
+            b = int(c0[2] * (1 - t) + c1[2] * t)
+            grad_draw.line([(0, y), (text_w, y)], fill=(r, g, b))
+
+        gradient.putalpha(mask)
+
+        x, y = position
+
+        if anchor in ("mm", "mt", "mb"):
+            x -= text_w // 2
+        elif anchor in ("rm", "rt", "rb"):
+            x -= text_w
+        if anchor in ("mm", "lm", "rm"):
+            y -= text_h // 2
+        elif anchor in ("mb", "lb", "rb"):
+            y -= text_h
+
+        image.paste(gradient, (int(x), int(y)), gradient)
+
+    else:
+        draw = ImageDraw.Draw(image)
+        flat_color = gradient_colors[0]
+
+        draw.text(position, text, font=font, fill=flat_color, anchor=anchor)
 
 
-    for i in range(width):
-        t = i / (width - 1)
-        r = int(color_start[0] * (1 - t) + color_end[0] * t)
-        g = int(color_start[1] * (1 - t) + color_end[1] * t)
-        b = int(color_start[2] * (1 - t) + color_end[2] * t)
-        draw.line([(i, 0), (i, height)], fill=(r, g, b))
+def draw_gradient_bar(img, x, y, width, height, percent, color_start, color_end,
+                      corner_radius=4, glow_intensity=0.3):
+    if not optimised:
+        bar_base = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(bar_base)
 
+        for i in range(width):
+            t = i / (width - 1)
+            r = int(color_start[0] * (1 - t) + color_end[0] * t)
+            g = int(color_start[1] * (1 - t) + color_end[1] * t)
+            b = int(color_start[2] * (1 - t) + color_end[2] * t)
+            draw.line([(i, 0), (i, height)], fill=(r, g, b))
 
-    progress_mask = Image.new("L", (width, height), 0)
-    mask_draw = ImageDraw.Draw(progress_mask)
-    progress_width = max(1, int(width * (percent / 100)))
-    mask_draw.rounded_rectangle((0, 0, progress_width, height), radius=corner_radius, fill=255)
+        progress_mask = Image.new("L", (width, height), 0)
+        mask_draw = ImageDraw.Draw(progress_mask)
+        progress_width = max(1, int(width * (percent / 100)))
+        mask_draw.rounded_rectangle((0, 0, progress_width, height),
+                                    radius=corner_radius, fill=255)
 
+        track = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        track_draw = ImageDraw.Draw(track)
+        track_color = tuple(int(c * glow_intensity) for c in color_end) + (180,)
+        track_draw.rounded_rectangle((0, 0, width, height),
+                                     radius=corner_radius, fill=track_color)
 
-    track = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    track_draw = ImageDraw.Draw(track)
-    track_color = tuple(int(c * glow_intensity) for c in color_end) + (180,)
-    track_draw.rounded_rectangle((0, 0, width, height), radius=corner_radius, fill=track_color)
+        glow = track.filter(ImageFilter.GaussianBlur(radius=6))
+        img.alpha_composite(glow, dest=(x, y))
 
+        img.alpha_composite(track, dest=(x, y))
+        img.paste(bar_base, (x, y), progress_mask)
 
-    glow = track.filter(ImageFilter.GaussianBlur(radius=6))
-    img.alpha_composite(glow, dest=(x, y))
+    else:
+        gradient = Image.linear_gradient("L").resize((width, 1))
+        gradient = gradient.resize((width, height))
+        r1, g1, b1 = color_start
+        r2, g2, b2 = color_end
 
+        gradient_rgb = Image.merge(
+            "RGB",
+            (
+                gradient.point(lambda v: r1 + (r2 - r1) * (v / 255)),
+                gradient.point(lambda v: g1 + (g2 - g1) * (v / 255)),
+                gradient.point(lambda v: b1 + (b2 - b1) * (v / 255)),
+            )
+        ).convert("RGBA")
 
-    img.alpha_composite(track, dest=(x, y))
-    img.paste(bar_base, (x, y), progress_mask)
+        progress_width = max(1, int(width * (percent / 100)))
+        progress_mask = Image.new("L", (width, height), 0)
+        mask_draw = ImageDraw.Draw(progress_mask)
+        mask_draw.rounded_rectangle((0, 0, progress_width, height),
+                                    radius=corner_radius, fill=255)
+
+        track = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        track_draw = ImageDraw.Draw(track)
+        track_color = tuple(int(c * glow_intensity) for c in (r2, g2, b2)) + (180,)
+        track_draw.rounded_rectangle((0, 0, width, height),
+                                     radius=corner_radius, fill=track_color)
+
+        glow = track.filter(ImageFilter.GaussianBlur(radius=6))
+
+        img.alpha_composite(glow, dest=(x, y))
+        img.alpha_composite(track, dest=(x, y))
+        img.paste(gradient_rgb, (x, y), progress_mask)
 
 def add_glow_border(icon, glow_color=(255, 255, 255), blur_radius=6, glow_alpha=150):
-    glow_size = (icon.size[0] + 20, icon.size[1] + 20)
-    glow = Image.new("RGBA", glow_size, (0, 0, 0, 0))
+    if not optimised:
+        glow_size = (icon.size[0] + 20, icon.size[1] + 20)
+        glow = Image.new("RGBA", glow_size, (0, 0, 0, 0))
 
-    offset = (10, 10)
-    temp_icon = Image.new("RGBA", glow_size, (0, 0, 0, 0))
-    temp_icon.paste(icon, offset, icon)
+        offset = (10, 10)
+        temp_icon = Image.new("RGBA", glow_size, (0, 0, 0, 0))
+        temp_icon.paste(icon, offset, icon)
 
-    mask = temp_icon.split()[-1]
-    solid_color = Image.new("RGBA", glow_size, glow_color + (0,))
-    solid_color.putalpha(mask)
+        mask = temp_icon.split()[-1]
+        solid_color = Image.new("RGBA", glow_size, glow_color + (0,))
+        solid_color.putalpha(mask)
 
-    blurred = solid_color.filter(ImageFilter.GaussianBlur(blur_radius))
+        blurred = solid_color.filter(ImageFilter.GaussianBlur(blur_radius))
 
-    alpha = blurred.split()[-1].point(lambda x: x * (glow_alpha / 255))
-    blurred.putalpha(alpha)
+        alpha = blurred.split()[-1].point(lambda x: x * (glow_alpha / 255))
+        blurred.putalpha(alpha)
 
-    return blurred
+        return blurred
+    else:
+        glow_img = Image.new("RGBA", (0, 0), (0, 0, 0, 0))
+
+        return glow_img
+
 
 def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values,your_fruit_types,their_fruit_types,trade_winorlose="WIN", trade_conclusion="YOUR TRADE IS A L", percentage_Calculation=77, winorloseorfair = 0, background_type=0):
     icon_size = 120
@@ -195,18 +241,19 @@ def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values,your_
                     avg_color_img = icon.resize((1, 1))
                     avg_color = avg_color_img.getpixel((0, 0))[:3]
 
-                    glow_scale = 2.5
-                    glow_size = int(icon_size * glow_scale)
-                    glow_img = Image.new("RGBA", (glow_size, glow_size), (0, 0, 0, 0))
-                    glow_draw = ImageDraw.Draw(glow_img)
+                    if not optimised:
+                        glow_scale = 2.5
+                        glow_size = int(icon_size * glow_scale)
+                        glow_img = Image.new("RGBA", (glow_size, glow_size), (0, 0, 0, 0))
+                        glow_draw = ImageDraw.Draw(glow_img)
 
-                    ellipse_bbox = (glow_size // 4, glow_size // 4, 3 * glow_size // 4, 3 * glow_size // 4)
-                    glow_draw.ellipse(ellipse_bbox, fill=avg_color + (120,))
+                        ellipse_bbox = (glow_size // 4, glow_size // 4, 3 * glow_size // 4, 3 * glow_size // 4)
+                        glow_draw.ellipse(ellipse_bbox, fill=avg_color + (120,))
 
-                    glow = glow_img.filter(ImageFilter.GaussianBlur(20))
+                        glow = glow_img.filter(ImageFilter.GaussianBlur(20))
 
-                    glow_pos = (coord[0] - (glow.width - icon_size)//2, coord[1] - (glow.height - icon_size)//2)
-                    img.paste(glow, glow_pos, glow)
+                        glow_pos = (coord[0] - (glow.width - icon_size)//2, coord[1] - (glow.height - icon_size)//2)
+                        img.paste(glow, glow_pos, glow)
 
 
                     img.paste(icon, coord, icon)
@@ -242,14 +289,17 @@ def GenerateWORLImage(your_fruits, your_values, their_fruits, their_values,your_
                 except FileNotFoundError:
                     print(f"Missing icon: {fruit}")
             else:
-                glow_size = int(icon_size * 2.5)
-                placeholder = Image.new("RGBA", (glow_size, glow_size), (0, 0, 0, 0))
-                draw = ImageDraw.Draw(placeholder)
-                draw.ellipse((glow_size//4, glow_size//4, 3*glow_size//4, 3*glow_size//4), fill=(255, 255, 255, 30))
+                if not optimised:
+                    glow_size = int(icon_size * 2.5)
+                    placeholder = Image.new("RGBA", (glow_size, glow_size), (0, 0, 0, 0))
+                    draw = ImageDraw.Draw(placeholder)
+                    draw.ellipse((glow_size//4, glow_size//4, 3*glow_size//4, 3*glow_size//4), fill=(255, 255, 255, 30))
 
-                blurred = placeholder.filter(ImageFilter.GaussianBlur(40))
-                blurred_pos = (coord[0] - (blurred.width - icon_size)//2, coord[1] - (blurred.height - icon_size)//2)
-                img.paste(blurred, blurred_pos, blurred)
+                    blurred = placeholder.filter(ImageFilter.GaussianBlur(40))
+                    blurred_pos = (coord[0] - (blurred.width - icon_size)//2, coord[1] - (blurred.height - icon_size)//2)
+                    img.paste(blurred, blurred_pos, blurred)
+                else:
+                    pass
 
 
     paste_fruits(your_fruits, your_coords, your_values, your_fruit_types)

@@ -508,44 +508,84 @@ class MusicPlayerView(discord.ui.View):
         await interaction.response.send_message(f"Repeat {status}", ephemeral=True)
 
 class ForgeSuggestorView(discord.ui.LayoutView):
-    def __init__(self, suggestion_result):
+    def __init__(self, inv, item_type):
         super().__init__()
-        self.suggestion_result = suggestion_result
 
-        itycc = ""
-        itycac = ""
+        self.suggestion_result_unfilter = LFC.suggest_best_crafts(inv)
+        self.item_type = item_type
 
-        for item in suggestion_result:
-            name = item['cls']['name']
-            if item['available']:
-                count = item.get('count', 'N/A')
-                chance = item.get('chance', 'N/A')
-                score = item.get('score', 'N/A')
-                composition = ", ".join(f"{c['count']}x {c['id']}" for c in item.get('composition', []))
+        self.suggestion_result = [
+            item for item in self.suggestion_result_unfilter
+            if item['available'] and item['category'] == self.item_type.value
+        ]
 
-                itycc += f'### {name} {chance}%\n- Count : {count}\n- Score : {round(score)} \n- Composition : {composition}\n'
-            else:
-                reason = item.get('reason', 'N/A')
-                itycac += f"### {name}\n- Reason : {reason}\n"
-
-        container1 = discord.ui.Container(
-        discord.ui.TextDisplay(content="# Craft Suggester\n- Suggests best Crafts Based on your Inventory"),
-        discord.ui.MediaGallery(
-            discord.MediaGalleryItem(
-                media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69318032&is=69302eb2&hm=8e7bf4fdd2446197dcc41dcd747900c80afba2ea82a68a7b257cc3dd2888f58a&",
+        container_items = [
+            discord.ui.TextDisplay(content="# Craft Suggester\n- Suggests best Crafts Based on your Inventory"),
+            discord.ui.MediaGallery(
+                discord.MediaGalleryItem(
+                    media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png"
+                )
             ),
-        ),
-        discord.ui.TextDisplay(content="## Items that you can Craft"),
-        discord.ui.TextDisplay(content=itycc),
-        discord.ui.MediaGallery(
-            discord.MediaGalleryItem(
-                media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69318032&is=69302eb2&hm=8e7bf4fdd2446197dcc41dcd747900c80afba2ea82a68a7b257cc3dd2888f58a&",
-            ),
-        ),
-        discord.ui.TextDisplay(content="## Items that you cannot Craft"),
-        discord.ui.TextDisplay(content=itycac),
-        accent_colour=discord.Colour(16777215),
-        )
+            discord.ui.TextDisplay(content="## Items that you can Craft"),
+        ]
+
+        for item in self.suggestion_result:
+            if not item['available']:
+                continue
+
+            if item["category"] == "Armor":
+                cls_name = item["cls"]["name"]
+                chance = item["chance"]
+                avg = item["avgMultiplier"]
+                comp_str = ", ".join(f"{i['count']}× {LFC.ore_by_id[i['id']]['name']}" for i in item["composition"])
+
+                hp = LFC.get_health_range_for_armor_class(item["cls"]["id"])
+                vitality = LFC.compute_vitality_bonus_for_composition_array(item["composition"], "Armor")
+                hp_min = hp["min"] + vitality
+                hp_max = hp["max"] + vitality
+
+                armor_text = (
+                    f'### {cls_name} {chance:.1f}% @ {item["count"]} ores – ~{avg:.2f}x multiplier\n'
+                    f'- Estimated Health (incl. Vitality) : **{hp_min}% - {hp_max}%**\n'
+                    f'- Traits : **{vitality:.2f}**\n'
+                    f'- Use : **{comp_str}**'
+                )
+                container_items.append(discord.ui.TextDisplay(content=armor_text))
+
+                container_items.append(
+                    discord.ui.MediaGallery(
+                        discord.MediaGalleryItem(
+                            media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png"
+                        )
+                    )
+                )
+
+            elif item["category"] == "Weapon":
+                cls_name = item["cls"]["name"]
+                chance = item["chance"]
+                avg = item["avgMultiplier"]
+                comp_str = ", ".join(f"{i['count']}× {LFC.ore_by_id[i['id']]['name']}" for i in item["composition"])
+
+                dmg_range = LFC.get_damage_range_for_class(item["cls"]["id"], avg)
+                dmg_min = dmg_range["min"] if dmg_range else 0
+                dmg_max = dmg_range["max"] if dmg_range else 0
+
+                weapon_text = (
+                    f'### {cls_name} {chance:.1f}% @ {item["count"]} ores – ~{avg:.2f}x multiplier\n'
+                    f'- Estimated Damage: **{dmg_min:.1f} - {dmg_max:.1f}**\n'
+                    f'- Use : **{comp_str}**'
+                )
+                container_items.append(discord.ui.TextDisplay(content=weapon_text))
+
+                container_items.append(
+                    discord.ui.MediaGallery(
+                        discord.MediaGalleryItem(
+                            media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png"
+                        )
+                    )
+                )
+
+        container1 = discord.ui.Container(*container_items, accent_colour=discord.Colour(0xFFFFFF))
 
         self.add_item(container1)
     
