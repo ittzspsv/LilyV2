@@ -1,4 +1,5 @@
 from discord.ext import commands
+import random
 import discord
 import LilyLeveling.sLilyLevelingCore as LilyLevelCore
 import LilyManagement.sLilyStaffManagement as LSM
@@ -27,12 +28,14 @@ class LilyLeveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='set_level', description='sets a level for user')
     async def set_level(self, ctx:commands.Context, member:discord.Member, level:int):
+        await ctx.defer()
         await LilyLevelCore.SetLevel(ctx, member, level)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
     @commands.hybrid_command(name='update_leveling_config', description='updates or adds a new profile for a given member')
     async def update_leveling_config(self, ctx: commands.Context):
+        await ctx.defer()
         path = "src/LilyLeveling/LevelingConfig.json"
         if not ctx.message.attachments:
             return await ctx.send("Please attach a JSON file")
@@ -60,5 +63,10 @@ class LilyLeveling(commands.Cog):
     async def leaderboard(self, ctx: commands.Context):
          await ctx.defer()
          await LilyLevelCore.FetchLeaderBoard(ctx)
+
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
+    @commands.hybrid_command(name='daily', description='daily bonus coins')
+    async def daily(self, ctx: commands.Context):
+         await LilyLevelCore.daily(ctx)
 async def setup(bot):
     await bot.add_cog(LilyLeveling(bot))

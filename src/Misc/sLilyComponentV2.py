@@ -5,6 +5,7 @@ import io
 from discord.ui import View, Button, Modal, TextInput
 import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
 import Values.sStockValueJSON as StockValueJSON
+import LilyForge.LilyForgeCore as LFC
 
 def format_currency(val):
     value = int(val)
@@ -505,3 +506,46 @@ class MusicPlayerView(discord.ui.View):
         status = "enabled" if player.repeat else "disabled"
 
         await interaction.response.send_message(f"Repeat {status}", ephemeral=True)
+
+class ForgeSuggestorView(discord.ui.LayoutView):
+    def __init__(self, suggestion_result):
+        super().__init__()
+        self.suggestion_result = suggestion_result
+
+        itycc = ""
+        itycac = ""
+
+        for item in suggestion_result:
+            name = item['cls']['name']
+            if item['available']:
+                count = item.get('count', 'N/A')
+                chance = item.get('chance', 'N/A')
+                score = item.get('score', 'N/A')
+                composition = ", ".join(f"{c['count']}x {c['id']}" for c in item.get('composition', []))
+
+                itycc += f'### {name} {chance}%\n- Count : {count}\n- Score : {round(score)} \n- Composition : {composition}\n'
+            else:
+                reason = item.get('reason', 'N/A')
+                itycac += f"### {name}\n- Reason : {reason}\n"
+
+        container1 = discord.ui.Container(
+        discord.ui.TextDisplay(content="# Craft Suggester\n- Suggests best Crafts Based on your Inventory"),
+        discord.ui.MediaGallery(
+            discord.MediaGalleryItem(
+                media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69318032&is=69302eb2&hm=8e7bf4fdd2446197dcc41dcd747900c80afba2ea82a68a7b257cc3dd2888f58a&",
+            ),
+        ),
+        discord.ui.TextDisplay(content="## Items that you can Craft"),
+        discord.ui.TextDisplay(content=itycc),
+        discord.ui.MediaGallery(
+            discord.MediaGalleryItem(
+                media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69318032&is=69302eb2&hm=8e7bf4fdd2446197dcc41dcd747900c80afba2ea82a68a7b257cc3dd2888f58a&",
+            ),
+        ),
+        discord.ui.TextDisplay(content="## Items that you cannot Craft"),
+        discord.ui.TextDisplay(content=itycac),
+        accent_colour=discord.Colour(16777215),
+        )
+
+        self.add_item(container1)
+    

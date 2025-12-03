@@ -10,7 +10,6 @@ import LilyLogging.sLilyLogging as LilyLogging
 import Config.sValueConfig as ValueConfig
 import LilyTicketTool.LilyTicketToolCore as LilyTTCore
 import LilyManagement.sLilyStaffManagement as LSM
-import LilyPVB.LilyPVBCore as LPVBC
 import os
 import LilySubstring.sLilySubstring as LS
 import logging
@@ -47,6 +46,7 @@ class MyBot(commands.Bot):
             "LilyLeveling.sLilyLevelingCommands",
             # "LilyMiddleman.sLilyMiddlemanCommands"
             #"LilyMusic.sLilyMusicCommands"
+            "LilyForge.LilyForgeCommands"
         ]
 
         for ext in extensions:

@@ -1,77 +1,98 @@
 # LILY V2
 
-Multi-purpose discord bot mainly designed to support [Blox Trade](discord.gg/bloxtrade)
+Multi-purpose Discord bot designed to do almost any stuffs
+
+---
 
 ## MODULES
-- __Modules__ are the __core__ features of the bot. Each modules consists of different features of the bot that are used generally or specifically depending on the used cases
+Modules are the **core features** of the bot. Each module consists of different features of the bot that are used generally or specifically depending on the use case.  
 
-- All modules are based on __Cogs__, meaning they can be removed or placed depending on the used cases
+All modules are based on **Cogs**, meaning they can be removed or placed depending on the use case.
+
+---
 
 ## LIST OF AVAILABLE MODULES
-- Lily Moderation : focused on moderation
-- Lily Management : focused on staff management 
-- Lily Rulesets : focused on permission allotment
-- Lily Logging : focused on error loggings | debugging
-- Lily Utility : focused based on general purpose
-- Lily Ticketing Tool : Focused on ticket system
-- Lily Leveling | Economy system : Focused on gaining levels / currency
-- Lily Algorthims : focused based on sanitizing a given string to appropriate data
+- **Lily Moderation**: focused on moderation  
+- **Lily Management**: focused on staff management  
+- **Lily Rulesets**: focused on permission allotment  
+- **Lily Logging**: focused on error logging and debugging  
+- **Lily Utility**: focused on general purpose utilities  
+- **Lily Ticketing Tool**: focused on ticket system  
+- **Lily Leveling | Economy System**: focused on gaining levels / currency  
+- **Lily Algorithms**: focused on sanitizing a given string to appropriate data  
+
+---
 
 ## LIST OF AVAILABLE GAME SUPPORT
-- Lily Blox Fruits : A module dedicated for one of the most famous game of roblox "Blox Fruits"
+- **Lily Blox Fruits**: A module dedicated for one of the most famous Roblox games, "Blox Fruits"  
+- **Lily Grow a Garden**: A module dedicated for the currently most played Roblox game, "Grow a Garden" with up to 20M concurrent players  
 
-- Lily Grow a Garden : A module dedicated for the current most played game on roblox Grow a garden with highest of 20m active Concurrent Players
-
+---
 
 ## MAIN TECH STACK USED
-- Discord.py
-- websocket-client
-- Beautiful Soup (bs4)
-- requests
-- polars
-- pillow
-- rapidfuzz
-- aiosqlite
+- Discord.py  
+- requests    
+- pillow  
+- rapidfuzz  
+- aiosqlite  
 
-# __BOT PREVIEW__
+---
+
+# BOT PREVIEW
+
 ## BLOX FRUITS Modules
 
-| ![Stock](misc/Stock.png) | ![Moderation](misc/FruitSuggestor.webp) |
+| ![Stock](misc/Stock.png) | ![Moderation](misc/Combo.webp) | 
 |:--:|:--:|
-| **Stock System** | **Fruit Suggestor** |
+| **Stock System** | **Combo System** |
 
-<br>
+| ![FruitValues](misc/FruitValues.png) | ![WinLoss](misc/WinLoss.png) | ![Combo System](misc/FruitSuggestor.webp) |
+|:--:|:--:|:--:|
+| **Fruit Values** | **Win / Loss** | **Fruit Suggestor**| 
 
-| ![FruitValues](misc/FruitValues.png) | ![WinLoss](misc/WinLoss.png) |
-|:--:|:--:|
-| **Fruit Values** | **Win / Loss** |
+---
 
 ## MODERATION TOOLS
-| ![Preview](misc/Moderation.jpg) | ![Preview](misc/Modstats.jpg)
+
+| ![Preview](misc/Moderation.jpg) | ![Preview](misc/Modstats.jpg) |
 |:--:|:--:|
 | **Mod Logs** | **Mod Stats** |
 
 ### MODERATION LOGGING
 ![Preview](misc/Logging.jpg)
 
+---
+
 ## STAFF MANAGEMENT TOOLS
-| ![Preview](misc/Management.jpg) | ![Preview](misc/ManagementList.jpg)
+
+| ![Preview](misc/Management.jpg) | ![Preview](misc/ManagementList.jpg) |
 |:--:|:--:|
 | **Staff Profile** | **Staff List** |
 
-## LEVELING MODULE
-| ![Preview](misc/levelcard.webp) | ![Preview](misc/profile_card.webp)
+---
+
+## LEVELING / ECONOMY MODULE
+
+| ![Preview](misc/levelcard.webp) | ![Preview](misc/profile_card.webp) |
 |:--:|:--:|
 | **Leveling** | **Profile** |
 
-## Greeting Module : __Welcome and Goodbye__
+![Preview](misc/Leaderboard.webp)  
+**Leaderboard**
+
+---
+
+## GREETING MODULE: WELCOME AND GOODBYE
 ![Preview](misc/welcome.png)
 
+---
 
 ## CURRENTLY USED
-This bot is currently up and running on these servers [mainly designed for those] [Multi-Server Support]
+This bot is currently up and running on these servers (mainly designed for those with **Multi-Server Support**):
 
-[Blox Trade | Roblox Blox Fruits](https://discord.gg/bloxtrade)<br>
+[Blox Trade | Roblox Blox Fruits](https://discord.gg/bloxtrade)
 
-# SUPPORT
-Feel free to contact me personally through my discord [shreespsv] if you guys want more games to be added on the discord bot
+---
+
+## SUPPORT
+Feel free to contact me personally through my Discord **[shreespsv]** if you want more games to be added to the bot.

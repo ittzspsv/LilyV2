@@ -19,6 +19,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ban', description='bans a user with config = limited')
     async def ban(self, ctx:commands.Context, member: str = "", *, reason="No reason provided"):
+        await ctx.defer()
         proofs = proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
         role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
 
@@ -56,6 +57,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unban', description='unbans a particular user')
     async def unban(self, ctx, user_id: str):
+        await ctx.defer()
         user_id = int(user_id.replace("<@", "").replace(Config.bot_command_prefix, "").replace(">", ""))
         
         try:
@@ -98,6 +100,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='mute', description='mutes a user with desired input')
     async def mute(self, ctx:commands.Context, member:discord.Member=None, duration:str="1",*, reason="No reason provided"):
+        await ctx.defer()
         proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
         await mLily.mute_user(ctx, member, duration, reason, proofs)
 
@@ -105,6 +108,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='warn', description='warns a user')
     async def warn(self, ctx:commands.Context, member:discord.Member=None,*, reason="No reason provided"):
+        await ctx.defer()
         proofs = proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
         await mLily.warn(ctx, member, reason, proofs)
 
@@ -112,12 +116,14 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unmute', description='unmutes a user with desired input')
     async def unmute(self, ctx:commands.Context, member:discord.Member=None):
+        await ctx.defer()
         await mLily.unmute(ctx, member)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ms', description='checks logs for a particular moderator')
     async def ms(self, ctx, member: discord.Member=None, slice_exp: str = '0:0'):
+        await ctx.defer()
         try:
             try:
                 start, stop = (int(x) if x else 0 for x in slice_exp.split(":"))
@@ -155,6 +161,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='modlogs', description='Checks logs for a particular user')
     async def modlogs(self, ctx, mod_type: str = "all", slice_exp: str = None, member: discord.User = None, moderator: discord.User = None):
+        await ctx.defer()
         slice_obj = None
         if slice_exp:
             try:

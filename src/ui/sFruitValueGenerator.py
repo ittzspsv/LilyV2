@@ -6,6 +6,8 @@ NUMBER_FONT_PATH = "src/ui/font/Game Bubble.ttf"
 ITEM_IMAGE_FOLDER = "src/ui/fruit_icons"
 BACKGROUND = "src/ui/FruitValues.png"
 
+optimised = False
+
 def load_font(path, size):
     try:
         return ImageFont.truetype(path, size)
@@ -56,59 +58,75 @@ def get_text_size(draw, text, font):
     return bbox[2] - bbox[0], bbox[3] - bbox[1]
 
 def draw_neon_text(img, position, text, font, glow_color, text_color, anchor="mm"):
-    draw = ImageDraw.Draw(img)
-    glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    glow_draw = ImageDraw.Draw(glow)
+    if not optimised:
+        draw = ImageDraw.Draw(img)
+        glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        glow_draw = ImageDraw.Draw(glow)
 
-    for offset in range(1, 4):
-        glow_draw.text(position, text, font=font,
-                       fill=glow_color[:3] + (100,),
-                       anchor=anchor, stroke_width=offset)
+        for offset in range(1, 4):
+            glow_draw.text(
+                position, text, font=font,
+                fill=glow_color[:3] + (100,),
+                anchor=anchor, stroke_width=offset
+            )
 
-    blurred_glow = glow.filter(ImageFilter.GaussianBlur(radius=4))
-    img.paste(blurred_glow, (0, 0), blurred_glow)
-    draw.text(position, text, font=font, fill=text_color, anchor=anchor)
+        blurred_glow = glow.filter(ImageFilter.GaussianBlur(radius=4))
+        img.paste(blurred_glow, (0, 0), blurred_glow)
+        draw.text(position, text, font=font, fill=text_color, anchor=anchor)
 
-def draw_gradient_text(image, position, text, font, gradient_colors, anchor="lt", stretch_height=1.2, scale=1.0):
-    temp_img = Image.new("RGBA", (10, 10), (0, 0, 0, 0))
-    temp_draw = ImageDraw.Draw(temp_img)
-    x0, y0, x1, y1 = temp_draw.textbbox((0, 0), text, font=font)
-    text_w, text_h = x1 - x0, y1 - y0
+    else:
+        draw = ImageDraw.Draw(img)
+        draw.text(position, text, font=font, fill=text_color, anchor=anchor)
 
-    mask = Image.new("L", (text_w, text_h), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.text((-x0, -y0), text, font=font, fill=255)
+def draw_gradient_text(image, position, text, font, gradient_colors,
+                       anchor="lt", stretch_height=1.2, scale=1.0):
+    if not optimised:
+        temp_img = Image.new("RGBA", (10, 10), (0, 0, 0, 0))
+        temp_draw = ImageDraw.Draw(temp_img)
+        x0, y0, x1, y1 = temp_draw.textbbox((0, 0), text, font=font)
+        text_w, text_h = x1 - x0, y1 - y0
 
-    if scale != 1.0 or stretch_height != 1.0:
-        new_w = max(1, int(text_w * scale))
-        new_h = max(1, int(text_h * stretch_height * scale))
-        mask = mask.resize((new_w, new_h), resample=Image.LANCZOS)
-        text_w, text_h = new_w, new_h
+        mask = Image.new("L", (text_w, text_h), 0)
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.text((-x0, -y0), text, font=font, fill=255)
 
-    gradient = Image.new("RGBA", (text_w, text_h))
-    grad_draw = ImageDraw.Draw(gradient)
-    c0, c1 = gradient_colors[0], gradient_colors[1]
+        if scale != 1.0 or stretch_height != 1.0:
+            new_w = max(1, int(text_w * scale))
+            new_h = max(1, int(text_h * stretch_height * scale))
+            mask = mask.resize((new_w, new_h), resample=Image.LANCZOS)
+            text_w, text_h = new_w, new_h
 
-    for y in range(text_h):
-        t = y / float(text_h - 1) if text_h > 1 else 0
-        r = int(c0[0] * (1 - t) + c1[0] * t)
-        g = int(c0[1] * (1 - t) + c1[1] * t)
-        b = int(c0[2] * (1 - t) + c1[2] * t)
-        grad_draw.line([(0, y), (text_w, y)], fill=(r, g, b))
+        gradient = Image.new("RGBA", (text_w, text_h))
+        grad_draw = ImageDraw.Draw(gradient)
+        c0, c1 = gradient_colors[0], gradient_colors[1]
 
-    gradient.putalpha(mask)
+        for y in range(text_h):
+            t = y / float(text_h - 1) if text_h > 1 else 0
+            r = int(c0[0] * (1 - t) + c1[0] * t)
+            g = int(c0[1] * (1 - t) + c1[1] * t)
+            b = int(c0[2] * (1 - t) + c1[2] * t)
+            grad_draw.line([(0, y), (text_w, y)], fill=(r, g, b))
 
-    x, y = position
-    if anchor in ("mm", "mt", "mb"):
-        x -= text_w // 2
-    elif anchor in ("rm", "rt", "rb"):
-        x -= text_w
-    if anchor in ("mm", "lm", "rm"):
-        y -= text_h // 2
-    elif anchor in ("mb", "lb", "rb"):
-        y -= text_h
+        gradient.putalpha(mask)
 
-    image.paste(gradient, (int(x), int(y)), gradient)
+        x, y = position
+        if anchor in ("mm", "mt", "mb"):
+            x -= text_w // 2
+        elif anchor in ("rm", "rt", "rb"):
+            x -= text_w
+        if anchor in ("mm", "lm", "rm"):
+            y -= text_h // 2
+        elif anchor in ("mb", "lb", "rb"):
+            y -= text_h
+
+        image.paste(gradient, (int(x), int(y)), gradient)
+
+    else:
+        flat_color = gradient_colors[0]
+
+        draw = ImageDraw.Draw(image)
+        draw.text(position, text, font=font, fill=flat_color, anchor=anchor)
+
 
 def get_icon_path(folder, fruit_name):
     for ext in [".png", ".webp", ".jpg", ".jpeg"]:
@@ -143,7 +161,7 @@ async def GenerateValueImage(data, output="card.png"):
 
     icon_file = get_icon_path(ITEM_IMAGE_FOLDER, fruit_name)
 
-    glow_opacity = 120 
+    glow_opacity = 120
 
     if icon_file:
         icon_size = 220
@@ -153,38 +171,43 @@ async def GenerateValueImage(data, output="card.png"):
         avg_color_img = icon.resize((1, 1))
         avg_color = avg_color_img.getpixel((0, 0))[:3]
 
-        glow_size = (int(icon_size * 2.5), int(icon_size * 2.5))
-        glow_img = Image.new("RGBA", glow_size, (0, 0, 0, 0))
-        glow_draw = ImageDraw.Draw(glow_img)
+        if not optimised:
+            glow_size = (int(icon_size * 2.5), int(icon_size * 2.5))
+            glow_img = Image.new("RGBA", glow_size, (0, 0, 0, 0))
+            glow_draw = ImageDraw.Draw(glow_img)
 
-        ellipse_bbox = (glow_size[0] // 4, glow_size[1] // 4,
-                        3 * glow_size[0] // 4, 3 * glow_size[1] // 4)
-        glow_draw.ellipse(ellipse_bbox, fill=avg_color + (glow_opacity,))
+            ellipse_bbox = (
+                glow_size[0] // 4, glow_size[1] // 4,
+                3 * glow_size[0] // 4, 3 * glow_size[1] // 4
+            )
 
+            glow_draw.ellipse(ellipse_bbox, fill=avg_color + (glow_opacity,))
 
-        glow = glow_img.filter(ImageFilter.GaussianBlur(40))
+            glow = glow_img.filter(ImageFilter.GaussianBlur(40))
 
+            angle = 6
+            glow = glow.rotate(angle, expand=True, resample=Image.BICUBIC)
+            icon = icon.rotate(angle, expand=True, resample=Image.BICUBIC)
 
-        angle = 6
-        glow = glow.rotate(angle, expand=True, resample=Image.BICUBIC)
-        icon = icon.rotate(angle, expand=True, resample=Image.BICUBIC)
+            glow_x = 60 + icon_size // 2 - glow.width // 2
+            glow_y = 260 + icon_size // 2 - glow.height // 2
+            canvas.paste(glow, (glow_x, glow_y), glow)
 
+            icon_x = 60 + icon_size // 2 - icon.width // 2
+            icon_y = 260 + icon_size // 2 - icon.height // 2
+            canvas.alpha_composite(icon, (icon_x, icon_y))
 
-        glow_x = 60 + icon_size // 2 - glow.width // 2
-        glow_y = 260 + icon_size // 2 - glow.height // 2
-        canvas.paste(glow, (glow_x, glow_y), glow)
+        else:
+            icon_x = 60 + icon_size // 2 - icon.width // 2
+            icon_y = 260 + icon_size // 2 - icon.height // 2
+            canvas.alpha_composite(icon, (icon_x, icon_y))
 
-
-        icon_x = 60 + icon_size // 2 - icon.width // 2
-        icon_y = 260 + icon_size // 2 - icon.height // 2
-        canvas.alpha_composite(icon, (icon_x, icon_y))
     else:
         print(f"[WARN] Missing icon for {fruit_name}")
 
-
-    max_name_width = 300 
-    big_font = fit_font_size(draw, fruit_name.upper(), FONT_PATH, max_name_width, starting_size=46, min_size=28)
-
+    max_name_width = 300
+    big_font = fit_font_size(draw, fruit_name.upper(), FONT_PATH, max_name_width,
+                             starting_size=46, min_size=28)
 
     gradient_colors = [(100, 200, 255), (180, 150, 255)]
 
@@ -244,7 +267,5 @@ async def GenerateValueImage(data, output="card.png"):
         row("Demand Type", demand_type.upper(),
             start_y + row_gap * (offset + 1), glow_color=(255, 200, 50), text_color=(255, 220, 150))
 
-
     img = canvas.convert("RGB")
-    #img_resized = img.resize((int(img.width * 0.7), int(img.height * 0.7)), Image.Resampling.LANCZOS)
     return img

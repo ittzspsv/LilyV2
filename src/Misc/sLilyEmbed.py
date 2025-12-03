@@ -1,6 +1,7 @@
 import discord
 import re
 from datetime import datetime
+import Config.sBotDetails as Configs
 TicketParseRegex = re.compile(r"^ticket-\d+$", re.IGNORECASE)
 
 def EmbedParser(config_str: str, ctx:discord.Member):

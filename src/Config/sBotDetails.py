@@ -73,7 +73,8 @@ emoji = {
     'music_repeat' : '<:MusicRepeat:1443189674897182841>',
     'music_author' : '<:MusicAuthor:1443189678269268019>',
     'music_folder' : '<:MusicFolder:1443189682077962312>',
-    'music_playlist' : '<:MusicPlaylist:1443189686712537098>'
+    'music_playlist' : '<:MusicPlaylist:1443189686712537098>',
+    'coin' : '<:coin:1444123040538693662>'
 }
 
 img = {
@@ -83,3 +84,7 @@ img = {
     'logs' : 'https://media.discordapp.net/attachments/1438505067341680690/1438505245625024512/logs.png?ex=69171fe8&is=6915ce68&hm=3530c689a64656f50a78ddafa82138bd2c0d22e92d2ca281eb00423bea7cc7be&=&format=webp&quality=lossless'
 }
 
+
+expressions = {
+    
+}
