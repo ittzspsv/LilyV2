@@ -70,65 +70,65 @@ ore_trait_meta = {
 }
 
 weapon_classes = [
-    {"id": "dagger", "name": "Dagger"},
-    {"id": "straight", "name": "Straight Sword"},
-    {"id": "gauntlet", "name": "Gauntlets"},
-    {"id": "katana", "name": "Katana"},
-    {"id": "greatsword", "name": "Greatsword"},
-    {"id": "greataxe", "name": "Great Axe"},
-    {"id": "colossal", "name": "Colossal Sword"},
+    {"id": "dagger", "name": "Dagger", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/dagger-weapons-the-forge.webp"},
+    {"id": "straight", "name": "Straight Sword", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/falchion-sword-weapons-the-forge.webp"},
+    {"id": "gauntlet", "name": "Gauntlets", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/ironhand-weapons-the-forge.webp"},
+    {"id": "katana", "name": "Katana", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/uchigatana-weapons-the-forge.webp"},
+    {"id": "greatsword", "name": "Greatsword", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/crusaders-sword-weapons-the-forge.webp"},
+    {"id": "greataxe", "name": "Great Axe", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/double-battle-axe-weapons-the-forge.webp"},
+    {"id": "colossal", "name": "Colossal Sword", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/skull-crusher-weapons-the-forge.webp"},
 ]
 
 weapon_variants = {
     "dagger": [
-        {"name": "Dagger", "label": "1/1", "baseDmg": 5, "atkTime": 0.35},
-        {"name": "Falchion Knife", "label": "1/2", "baseDmg": 5, "atkTime": 0.35},
-        {"name": "Gladius Daggers", "label": "1/4", "baseDmg": 5, "atkTime": 0.32},
-        {"name": "Hook", "label": "1/16", "baseDmg": 5, "atkTime": 0.35},
+        {"name": "Dagger", "label": "1/1", "baseDmg": 4.3, "atkTime": 0.35},
+        {"name": "Falchion Knife", "label": "1/2", "baseDmg": 4.3, "atkTime": 0.35},
+        {"name": "Gladius Dagger", "label": "1/4", "baseDmg": 4.3, "atkTime": 0.32},
+        {"name": "Hook", "label": "1/16", "baseDmg": 4.3, "atkTime": 0.35},
     ],
     "straight": [
-        {"name": "Falchion Sword", "label": "1/1", "baseDmg": 7.5, "atkTime": 0.50},
-        {"name": "Gladius Sword", "label": "1/2", "baseDmg": 7.5, "atkTime": 0.50},
-        {"name": "Cutlass", "label": "1/4", "baseDmg": 7.5, "atkTime": 0.50},
-        {"name": "Rapier", "label": "1/8", "baseDmg": 7.5, "atkTime": 0.50},
-        {"name": "Chaos", "label": "1/64", "baseDmg": 9.75, "atkTime": 0.50},
+        {"name": "Falchion Sword", "label": "1/1", "baseDmg": 7.5, "atkTime": 0.59},
+        {"name": "Gladius Sword", "label": "1/2", "baseDmg": 7.875, "atkTime": 0.62},
+        {"name": "Cutlass", "label": "1/4", "baseDmg": 9.375, "atkTime": 0.66},
+        {"name": "Rapier", "label": "1/8", "baseDmg": 7.5, "atkTime": 0.49},
+        {"name": "Chaos", "label": "1/16", "baseDmg": 9.375, "atkTime": 0.59},
     ],
     "gauntlet": [
-        {"name": "Ironhand", "label": "1/1", "baseDmg": 7.6, "atkTime": 0.50},
+        {"name": "Ironhand", "label": "1/1", "baseDmg": 7.6, "atkTime": 0.51},
         {"name": "Boxing Gloves", "label": "1/4", "baseDmg": 8.0, "atkTime": 0.59},
         {"name": "Relevator", "label": "1/16", "baseDmg": 9.6, "atkTime": 0.69},
     ],
     "katana": [
-        {"name": "Uchigatana", "label": "1/1", "baseDmg": 8.5, "atkTime": 0.60},
-        {"name": "Tachi", "label": "1/2", "baseDmg": 8.93, "atkTime": 0.63},
+        {"name": "Uchigatana", "label": "1/1", "baseDmg": 8.5, "atkTime": 0.6},
+        {"name": "Tachi", "label": "1/2", "baseDmg": 8.925, "atkTime": 0.63},
     ],
     "greatsword": [
-        {"name": "Crusader Sword", "label": "1/1", "baseDmg": 12, "atkTime": 1.00},
-        {"name": "Long Sword", "label": "1/2", "baseDmg": 12, "atkTime": 1.10},
+        {"name": "Crusaders Sword", "label": "1/1", "baseDmg": 12, "atkTime": 1.0},
+        {"name": "Long Sword", "label": "1/2", "baseDmg": 12, "atkTime": 1.1},
     ],
     "greataxe": [
         {"name": "Double Battle Axe", "label": "1/1", "baseDmg": 15.75, "atkTime": 1.05},
         {"name": "Scythe", "label": "1/2", "baseDmg": 14.25, "atkTime": 0.95},
     ],
     "colossal": [
-        {"name": "Great Sword", "label": "1/1", "baseDmg": 20, "atkTime": 1.20},
-        {"name": "Hammer", "label": "1/2", "baseDmg": 20, "atkTime": 1.24},
-        {"name": "Skull Crusher", "label": "1/2", "baseDmg": 24, "atkTime": 1.40},
-        {"name": "Dragon Slayer", "label": "1/3", "baseDmg": 22, "atkTime": 1.20},
-        {"name": "Comically Large Spoon", "label": "1/16", "baseDmg": 18, "atkTime": 1.20},
+        {"name": "Great Sword", "label": "1/1", "baseDmg": 20, "atkTime": 1.12},
+        {"name": "Hammer", "label": "1/2", "baseDmg": 22, "atkTime": 1.24},
+        {"name": "Skull Crusher", "label": "1/2", "baseDmg": 24, "atkTime": 1.4},
+        {"name": "Dragon Slayer", "label": "1/3", "baseDmg": 22, "atkTime": 1.12},
+        {"name": "Comically Large Spoon", "label": "1/16", "baseDmg": 18, "atkTime": 1.2},
     ],
 }
 
 armor_classes = [
-    {"id": "light_helm", "name": "Light Helmet"},
-    {"id": "light_legs", "name": "Light Leggings"},
-    {"id": "light_chest", "name": "Light Chestplate"},
-    {"id": "medium_helm", "name": "Medium Helmet"},
-    {"id": "medium_legs", "name": "Medium Leggings"},
-    {"id": "medium_chest", "name": "Medium Chestplate"},
-    {"id": "heavy_helm", "name": "Heavy Helmet"},
-    {"id": "heavy_legs", "name": "Heavy Leggings"},
-    {"id": "heavy_chest", "name": "Heavy Chestplate"},
+    {"id": "light_helm", "name": "Light Helmet", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/light-helmet-thee-forge.jpg"},
+    {"id": "light_legs", "name": "Light Leggings", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/light-leggings-the-forge.jpg"},
+    {"id": "light_chest", "name": "Light Chestplate", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/light-chestplate-the-forge.jpg"},
+    {"id": "medium_helm", "name": "Medium Helmet", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/medium-helmet-the-forge.jpg"},
+    {"id": "medium_legs", "name": "Medium Leggings", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/medium-leggings-the-forge.jpg"},
+    {"id": "medium_chest", "name": "Medium Chestplate", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/medium-chestplate-the-forge.jpg"},
+    {"id": "heavy_helm", "name": "Heavy Helmet", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/knights-helmet-armors-the-forge.png"},
+    {"id": "heavy_legs", "name": "Heavy Leggings", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/knight-heavy-leggings-the-forge.jpg"},
+    {"id": "heavy_chest", "name": "Heavy Chestplate", "icon" : "https://bloxinformer-cdn.b-cdn.net/wp-content/uploads/2025/11/knight-heavy-chestplate-the-forge.jpg"},
 ]
 
 armor_variants = {
@@ -656,18 +656,42 @@ def get_damage_range_for_class(class_id, multiplier):
     variants = weapon_variants.get(class_id)
     if not variants:
         return None
-    mins = []
-    maxs = []
-    for v in variants:
-        base = v.get("baseDmg")
-        if base is None:
-            continue
-        dmg = base * multiplier
-        mins.append(dmg * 0.9)
-        maxs.append(dmg * 1.1)
-    if not mins:
+
+    filtered = [v for v in variants if isinstance(v.get("baseDmg"), (int,float)) and isinstance(v.get("atkTime"), (int,float)) and v.get("atkTime") > 0]
+    if not filtered:
         return None
-    return {"min": min(mins), "max": max(maxs)}
+
+    min_base = min(v["baseDmg"] for v in filtered)
+    max_base = max(v["baseDmg"] for v in filtered)
+
+    dmg_min = min_base * multiplier
+    dmg_max = max_base * multiplier * 2 
+
+    min_dps = float('inf')
+    max_dps = float('-inf')
+    min_dps_variant = None
+    max_dps_variant = None
+
+    for v in filtered:
+        dps = v["baseDmg"] / v["atkTime"]
+        if dps < min_dps:
+            min_dps = dps
+            min_dps_variant = v
+        if dps > max_dps:
+            max_dps = dps
+            max_dps_variant = v
+
+    min_dps_value = min_dps * multiplier
+    max_dps_value = max_dps * multiplier * 2
+
+    return {
+        "min": dmg_min,
+        "max": dmg_max,
+        "minDps": min_dps_value,
+        "maxDps": max_dps_value,
+        "minDpsVariant": min_dps_variant,
+        "maxDpsVariant": max_dps_variant
+    }
 
 def get_health_range_for_armor_class(class_id):
     variants = armor_variants.get(class_id)

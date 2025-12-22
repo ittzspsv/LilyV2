@@ -23,7 +23,7 @@ class LilyManagement(commands.Cog):
     @commands.hybrid_command(name='staffs', description='shows all staff registered name with the count')
     async def staffs(self, ctx:commands.Context):
         try:
-            await ctx.send(embeds=await smLily.FetchAllStaffs())
+            await ctx.send(embeds=await smLily.FetchAllStaffs(ctx))
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"Exception {e}"))
 
@@ -46,14 +46,19 @@ class LilyManagement(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Developer')))
     @commands.hybrid_command(name='edit_staff', description='edits a staff data')
-    async def EditStaff(self, ctx: commands.Context, staff_id: int, name: str = None, role_id: int = None, joined_on: str = None, timezone: str = None, responsibility: str = None):
-        await smLily.EditStaff(ctx, staff_id, name, role_id, joined_on, timezone, responsibility)
+    async def EditStaff(self, ctx: commands.Context, staff_id: str,name: str = None, role_id: str = None,joined_on: str = None, timezone: str = None,responsibility: str = None):
+        staff_id = int(staff_id)
+        role_id = int(role_id) if role_id else None
+        await smLily.EditStaff(
+            ctx, staff_id, name, role_id, joined_on, timezone, responsibility
+        )
+
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)))
     @commands.hybrid_command(name='strikes', description='shows strikes for a concurrent staff')
     async def strikes(self, ctx: commands.Context, id: discord.Member):
         try:
-            await ctx.send(embed=await smLily.ListStrikes(id))
+            await ctx.send(embed=await smLily.ListStrikes(ctx, id))
         except Exception as e:
             await ctx.send(f"Exception {e}")
 
@@ -78,7 +83,7 @@ class LilyManagement(commands.Cog):
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Developer', 'Staff Manager')))
     @commands.hybrid_command(name='remove_loa', description='Removes LOA from a staff member')
     async def remove_loa(self, ctx: commands.Context, staff: discord.Member):
-        result = await smLily.RemoveLoa(staff.id)
+        result = await smLily.RemoveLoa(ctx, staff.id)
         if result:
             await ctx.reply("LOA Removed Successfully")
         else:
@@ -91,8 +96,8 @@ class LilyManagement(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Developer', 'Staff Manager')))
     @commands.hybrid_command(name='add_role', description='adds a role to the role list')
-    async def add_role(self, ctx: commands.Context, role: discord.Role, priority: int):
-        await smLily.AddRole(ctx, role, priority)
+    async def add_role(self, ctx: commands.Context, role: discord.Role, priority: int, ban_limit: int):
+        await smLily.AddRole(ctx, role, priority, ban_limit)
 
 
 async def setup(bot):

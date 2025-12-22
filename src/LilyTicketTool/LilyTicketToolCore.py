@@ -56,6 +56,32 @@ def save_ticket_channel(channel_id: int, config: dict):
     with open(TICKET_CHANNEL_LOG_PATH, "w") as f:
         json.dump(all_data, f, indent=4)
 
+def remove_ticket_channel(channel_id: int):
+    if not TICKET_CHANNEL_LOG_PATH.exists():
+        return False
+
+    try:
+        with open(TICKET_CHANNEL_LOG_PATH, "r") as f:
+            content = f.read().strip()
+            all_data = json.loads(content) if content else []
+    except json.JSONDecodeError:
+        return False
+
+    original_len = len(all_data)
+
+    all_data = [
+        entry for entry in all_data
+        if entry.get("channel_id") != channel_id
+    ]
+
+    if len(all_data) == original_len:
+        return False
+
+    with open(TICKET_CHANNEL_LOG_PATH, "w") as f:
+        json.dump(all_data, f, indent=4)
+
+    return True
+
 async def InitializeView(bot: commands.Bot):
     if TICKET_VIEWS_PATH.exists():
         try:
@@ -285,6 +311,7 @@ async def SendTicketLog(guild: discord.Guild,config: dict,*,opener=None,claimer=
     embed.set_footer(text="Lily Ticket Handler")
     embed.timestamp = discord.utils.utcnow()
 
+
     file = discord.File(
         io.BytesIO(log_message.encode("utf-8")),
         filename="transcript.txt"
@@ -409,7 +436,7 @@ async def TicketConstructor(values: dict, moderator_roles: list, staff_manager_r
                 return
 
             claimer_id = claimed_tickets[private_channel.id]["staff_id"]
-            claimer = guild.get_member(claimer_id)
+            claimer = await guild.fetch_member(claimer_id)
 
             if claimer:
                 await private_channel.set_permissions(claimer, overwrite=None)
@@ -460,6 +487,10 @@ async def TicketConstructor(values: dict, moderator_roles: list, staff_manager_r
                 modal_data=values,
                 log_message=log_message
             )
+
+            remove_ticket_channel(interaction.channel.id)
+            await LilyLogging.mdb.execute("DELETE FROM transcripts WHERE channel_id = ?", (interaction.channel.id,))
+            await LilyLogging.mdb.commit()
 
             if private_channel.id in claimed_tickets and claimed_tickets[private_channel.id].get("task"):
                 claimed_tickets[private_channel.id]["task"].cancel()
@@ -604,17 +635,28 @@ async def SpawnTickets(ctx: commands.Context, json_data):
         await channel.send("Invalid Ticket Type")
 
 async def TicketTranscript(bot, message: discord.Message):
-    if message.channel.name.startswith('ticket-'):
-        if message.content:
-            await LilyLogging.mdb.execute(
-                "INSERT INTO transcripts (channel_id, user_name, user_id, message, timestamp) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (
-                    message.channel.id,
-                    message.author.name,
-                    message.author.id,
-                    message.content,
-                    discord.utils.utcnow(),
-                )
-            )
-            await LilyLogging.mdb.commit()
+    channel = message.channel
+
+    if not isinstance(channel, discord.TextChannel):
+        return
+
+    if not channel.name.startswith('ticket-'):
+        return
+
+    if not message.content:
+        return
+
+    await LilyLogging.mdb.execute(
+        """
+        INSERT INTO transcripts (channel_id, user_name, user_id, message, timestamp)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            channel.id,
+            message.author.name,
+            message.author.id,
+            message.content,
+            discord.utils.utcnow(),
+        )
+    )
+    await LilyLogging.mdb.commit()

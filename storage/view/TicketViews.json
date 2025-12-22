@@ -1,30 +1,39 @@
 [
     {
-        "channel_id": 1438543148208095304,
-        "message_id": 1438543537938632865,
+        "channel_id": 1450587693468614776,
+        "message_id": 1452248115318100009,
         "config": {
             "Configs": {
                 "Embed": {
                     "embeds": [
                         {
+                            "title": "<:ticket:1438584946997592114> BloxTrade Support Ticket",
                             "color": 16777215,
-                            "author": {
-                                "name": "Support Tickets"
-                            },
-                            "title": "<:arrow:1438045578721493062> Need Assistance? Use our ticket system to get direct support!",
-                            "description": "- Our ticketing system makes it easy to reach the right team for your needs. Simply open a ticket to get direct, personalized support from our staff.",
-                            "fields": [
-                                {
-                                    "name": "How to Open?",
-                                    "value": "- Choose the Selector Menu to start your Interaction.  Choose appropriate options for your needs!"
-                                }
-                            ],
-                            "image": {
-                                "url": "https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69172232&is=6915d0b2&hm=6fc4724fb6fb44c83c8fb82425f287c19c762d161ff882420f69abaaf725ad3a&"
+                            "description": "- If you are seeking out for any support from our side Please open an ticket.",
+                            "footer": {
+                                "text": "Lily Ticketing"
                             },
                             "thumbnail": {
-                                "url": "https://media.discordapp.net/attachments/1438505067341680690/1438505245625024512/logs.png?ex=69171fe8&is=6915ce68&hm=3530c689a64656f50a78ddafa82138bd2c0d22e92d2ca281eb00423bea7cc7be&=&format=webp&quality=lossless"
-                            }
+                                "url": "https://media.discordapp.net/attachments/1438505067341680690/1438505245625024512/logs.png?ex=6921abe8&is=69205a68&hm=54821ef6720a0816a70e3d55232f67bde2da6e2dcc9c55a0468a1e2a330cc68b&=&format=webp&quality=lossless"
+                            },
+                            "fields": [
+                                {
+                                    "name": "<:member:1438045591098753104> Member Report",
+                                    "value": "- To Report any members"
+                                },
+                                {
+                                    "name": "<:gift:1438045585570791555> Claim Giveaway",
+                                    "value": "- If you won an giveaway and willing to claim it"
+                                },
+                                {
+                                    "name": "<:bot:1438504383397494896> Server-Issue Ticket",
+                                    "value": "- If you face any issues on our server"
+                                },
+                                {
+                                    "name": "<:gift:1438045585570791555> Host Giveaway Ticket",
+                                    "value": "- If you wish to host a giveaway for our server"
+                                }
+                            ]
                         }
                     ]
                 },
@@ -48,37 +57,39 @@
                             }
                         ]
                     },
-                    "LogChannel": 123456789012345678
+                    "LogChannel": 1449918663632355499
                 },
                 "TicketType": [
                     "Selector",
-                    "Scam Report Ticket : <:warn:1438045607116668948>",
-                    "Abusive Moderator Ticket: <:ban_hammer:1438045582139719770>",
-                    "Server issue Ticket: <:bookmark:1438048772939583571>",
-                    "Claim Giveaway : <:gift:1438045585570791555>"
+                    "Report an Member : <:member:1438045591098753104>",
+                    "Claim Giveaway : <:gift:1438045585570791555>",
+                    "Server Issues : <:bot:1438504383397494896>",
+                    "Host Giveaway : <:gift:1438045585570791555>"
                 ],
-                "Channel_To_Spawn": 1438543148208095304,
+                "Channel_To_Spawn": 1450587693468614776,
                 "ModeratorRoles": [
-                    1421829879510601738
+                    1431433056098713611
                 ],
                 "StaffManagerRoles": [
-                    1421829900016287854
+                    1431980481532002334,
+                    1431451555973959731,
+                    1431978067336892426
                 ]
             },
             "Modal": [
                 {
-                    "Discord ID | Username of that scammer": 600,
+                    "Discord ID | Username of that Member": 600,
                     "Please explain what he did": 600
                 },
                 {
-                    "Discord ID | Username of that moderator": 600,
-                    "What unfair actions did the moderator take?": 600
+                    "Mention the giveaway": 200
                 },
                 {
-                    "What server issue would you like to report?": 1000
+                    "Mention the Server issue": 1000
                 },
                 {
-                    "Which giveaway did you win??": 200
+                    "Fruits to host": 200,
+                    "Requirements?": 500
                 }
             ],
             "view_type": "SelectorType"

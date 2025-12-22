@@ -1218,3 +1218,2072 @@ sqlite3.OperationalError: no such table: Configs
 2025-11-14 00:07:31,966 - INFO - Shard ID None has connected to Gateway (Session ID: 7de39e3757a94abc857523f6f647b5f6).
 2025-11-14 00:12:04,462 - INFO - logging in using static token
 2025-11-14 00:12:08,400 - INFO - Shard ID None has connected to Gateway (Session ID: 762f483721ba4de043088ac36fea8691).
+2025-11-28 18:01:20,567 - INFO - logging in using static token
+2025-11-28 18:01:22,665 - INFO - Shard ID None has connected to Gateway (Session ID: cb8c9f71f183c82a2da53ec819855d15).
+2025-11-28 18:08:08,958 - INFO - logging in using static token
+2025-11-28 18:08:10,244 - INFO - Shard ID None has connected to Gateway (Session ID: a948a976ea39fe1ced506a2d38ad019b).
+2025-11-28 19:38:28,560 - INFO - Shard ID None has successfully RESUMED session a948a976ea39fe1ced506a2d38ad019b.
+2025-11-28 20:06:56,752 - INFO - Shard ID None has successfully RESUMED session a948a976ea39fe1ced506a2d38ad019b.
+2025-11-28 21:44:36,364 - INFO - Shard ID None has successfully RESUMED session a948a976ea39fe1ced506a2d38ad019b.
+2025-11-28 22:28:52,710 - INFO - Shard ID None has successfully RESUMED session a948a976ea39fe1ced506a2d38ad019b.
+2025-11-29 00:02:17,050 - INFO - logging in using static token
+2025-11-29 00:02:18,573 - INFO - Shard ID None has connected to Gateway (Session ID: fbc2832e94f4cf76853ac4bd17f098b6).
+2025-11-29 00:56:15,758 - INFO - logging in using static token
+2025-11-29 00:56:17,657 - INFO - Shard ID None has connected to Gateway (Session ID: e3213393c84ae74e8fe32604c9ccaa9f).
+2025-11-29 01:02:21,073 - INFO - logging in using static token
+2025-11-29 01:02:22,834 - INFO - Shard ID None has connected to Gateway (Session ID: da692745d1db4a6899cbd7369fc825fd).
+2025-11-29 01:08:15,167 - INFO - logging in using static token
+2025-11-29 01:08:16,550 - INFO - Shard ID None has connected to Gateway (Session ID: 648810f1c4dd75cc8070fe44193fa8fb).
+2025-11-29 01:11:29,164 - INFO - logging in using static token
+2025-11-29 01:11:30,709 - INFO - Shard ID None has connected to Gateway (Session ID: b760e49a927c0b84c05a1d951c7c13e1).
+2025-11-29 03:17:57,042 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 03:46:03,514 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 04:38:49,999 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 07:10:12,132 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 09:25:52,759 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 11:53:12,992 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 15:30:24,589 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 16:17:43,518 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 16:56:28,026 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 17:44:30,234 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 21:02:14,728 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 23:14:53,061 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-29 23:58:38,268 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 02:13:02,640 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 03:22:57,021 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 04:37:50,247 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 08:07:39,913 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 08:36:38,548 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 08:57:51,046 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 10:03:01,781 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 13:47:35,765 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 16:42:59,343 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 19:24:40,138 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-11-30 22:46:25,988 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-12-01 02:08:50,083 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-12-01 03:59:21,846 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-12-01 05:21:47,713 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-12-01 06:46:07,051 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-12-01 09:36:15,497 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-12-01 13:23:59,108 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-12-01 15:17:35,896 - INFO - Shard ID None has successfully RESUMED session b760e49a927c0b84c05a1d951c7c13e1.
+2025-12-01 16:02:30,755 - INFO - logging in using static token
+2025-12-01 16:02:32,526 - INFO - Shard ID None has connected to Gateway (Session ID: 1f9a660cf5199b418ba9746a75629e51).
+2025-12-01 16:55:28,288 - INFO - Shard ID None has successfully RESUMED session 1f9a660cf5199b418ba9746a75629e51.
+2025-12-01 17:28:40,058 - INFO - Shard ID None has successfully RESUMED session 1f9a660cf5199b418ba9746a75629e51.
+2025-12-01 18:07:37,224 - INFO - Shard ID None has successfully RESUMED session 1f9a660cf5199b418ba9746a75629e51.
+2025-12-01 18:57:06,919 - INFO - Shard ID None has successfully RESUMED session 1f9a660cf5199b418ba9746a75629e51.
+2025-12-01 20:00:29,178 - INFO - logging in using static token
+2025-12-01 20:00:30,812 - INFO - Shard ID None has connected to Gateway (Session ID: 8819c233ca911daaf8c8263cd1e77d65).
+2025-12-01 21:47:40,793 - INFO - Shard ID None has successfully RESUMED session 8819c233ca911daaf8c8263cd1e77d65.
+2025-12-02 00:17:42,204 - INFO - Shard ID None has successfully RESUMED session 8819c233ca911daaf8c8263cd1e77d65.
+2025-12-02 00:48:23,043 - INFO - Shard ID None has successfully RESUMED session 8819c233ca911daaf8c8263cd1e77d65.
+2025-12-02 03:49:08,410 - INFO - Shard ID None has successfully RESUMED session 8819c233ca911daaf8c8263cd1e77d65.
+2025-12-02 04:34:25,350 - INFO - Shard ID None has successfully RESUMED session 8819c233ca911daaf8c8263cd1e77d65.
+2025-12-02 06:33:44,164 - INFO - Shard ID None has successfully RESUMED session 8819c233ca911daaf8c8263cd1e77d65.
+2025-12-02 08:28:53,608 - INFO - Shard ID None has successfully RESUMED session 8819c233ca911daaf8c8263cd1e77d65.
+2025-12-02 10:13:18,090 - INFO - Shard ID None has successfully RESUMED session 8819c233ca911daaf8c8263cd1e77d65.
+2025-12-02 11:23:39,599 - INFO - Shard ID None has successfully RESUMED session 8819c233ca911daaf8c8263cd1e77d65.
+2025-12-02 13:41:48,751 - INFO - logging in using static token
+2025-12-02 13:41:50,222 - INFO - Shard ID None has connected to Gateway (Session ID: e5740acdef14ca84f65cf0939783372c).
+2025-12-02 14:21:36,079 - INFO - Shard ID None has successfully RESUMED session e5740acdef14ca84f65cf0939783372c.
+2025-12-02 15:29:17,020 - INFO - Shard ID None has successfully RESUMED session e5740acdef14ca84f65cf0939783372c.
+2025-12-02 15:57:12,656 - INFO - Shard ID None has successfully RESUMED session e5740acdef14ca84f65cf0939783372c.
+2025-12-02 16:03:03,387 - INFO - Shard ID None has successfully RESUMED session e5740acdef14ca84f65cf0939783372c.
+2025-12-02 17:36:48,658 - INFO - Shard ID None has successfully RESUMED session e5740acdef14ca84f65cf0939783372c.
+2025-12-02 19:20:37,102 - INFO - Shard ID None has successfully RESUMED session e5740acdef14ca84f65cf0939783372c.
+2025-12-02 19:38:26,025 - INFO - Shard ID None has successfully RESUMED session e5740acdef14ca84f65cf0939783372c.
+2025-12-02 22:35:56,755 - INFO - Shard ID None has successfully RESUMED session e5740acdef14ca84f65cf0939783372c.
+2025-12-03 00:06:41,565 - INFO - logging in using static token
+2025-12-03 00:06:43,594 - INFO - Shard ID None has connected to Gateway (Session ID: a73e0a88b8ca2d510e222b9a54420ac2).
+2025-12-03 01:11:19,509 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 03:48:11,070 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 06:33:17,380 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 06:59:49,072 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 08:45:40,955 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 11:08:44,068 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 12:43:53,229 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 14:18:45,480 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 15:01:19,979 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 15:56:21,894 - INFO - Shard ID None has successfully RESUMED session a73e0a88b8ca2d510e222b9a54420ac2.
+2025-12-03 19:33:54,263 - INFO - logging in using static token
+2025-12-03 19:33:55,913 - INFO - Shard ID None has connected to Gateway (Session ID: 0a92313ced558997a8810cab2f41a682).
+2025-12-03 19:53:53,960 - INFO - logging in using static token
+2025-12-03 19:53:55,344 - INFO - Shard ID None has connected to Gateway (Session ID: 44d41e4e7ef49e45c79eb3db546952f6).
+2025-12-03 20:00:09,457 - INFO - logging in using static token
+2025-12-03 20:00:44,358 - INFO - logging in using static token
+2025-12-03 20:01:40,249 - INFO - logging in using static token
+2025-12-03 20:01:41,465 - INFO - Shard ID None has connected to Gateway (Session ID: 4120fce9bdf98e3f3f0a8c609bd7cc6d).
+2025-12-03 20:03:28,948 - INFO - logging in using static token
+2025-12-03 20:03:30,072 - INFO - Shard ID None has connected to Gateway (Session ID: 66974e456483a60fbe611cf079b4042f).
+2025-12-03 20:07:09,558 - INFO - logging in using static token
+2025-12-03 20:07:10,629 - INFO - Shard ID None has connected to Gateway (Session ID: 4a5660170b8f64ec72c70da49916fbaf).
+2025-12-03 20:49:42,194 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 00:38:24,415 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 03:41:53,122 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 04:36:27,654 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 07:56:49,645 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 08:22:16,523 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 08:43:58,217 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 11:32:19,161 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 12:09:59,024 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 12:55:00,225 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 13:18:11,891 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 13:36:36,982 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 14:11:04,116 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 15:23:11,459 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 16:41:00,410 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 16:43:51,338 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 17:05:42,005 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 17:41:51,077 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 18:21:25,727 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 20:32:47,780 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 21:46:04,510 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 22:42:53,999 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-04 23:02:21,826 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 01:46:50,775 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 02:29:21,682 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 04:25:24,998 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 06:03:43,988 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 06:57:00,437 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 09:58:25,366 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 10:27:22,999 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 11:48:18,135 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 192, in on_message
+    await LTTC.TicketTranscript(bot, message)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 607, in TicketTranscript
+    if message.channel.name.startswith('ticket-'):
+       ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'DMChannel' object has no attribute 'name'
+2025-12-05 11:48:29,019 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 192, in on_message
+    await LTTC.TicketTranscript(bot, message)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 607, in TicketTranscript
+    if message.channel.name.startswith('ticket-'):
+       ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'DMChannel' object has no attribute 'name'
+2025-12-05 12:38:19,334 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 13:13:18,499 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 15:14:05,934 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 18:12:46,002 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-05 21:32:17,003 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 01:04:50,612 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 01:20:48,665 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 192, in on_message
+    await LTTC.TicketTranscript(bot, message)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 607, in TicketTranscript
+    if message.channel.name.startswith('ticket-'):
+       ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'DMChannel' object has no attribute 'name'
+2025-12-06 03:36:33,601 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 05:46:19,092 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 07:22:19,296 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 10:19:36,631 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 11:15:56,206 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 14:48:34,466 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 18:18:55,189 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 20:28:38,209 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-06 22:52:25,881 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-07 00:30:21,406 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-07 01:35:50,922 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-07 02:02:52,186 - INFO - Shard ID None has successfully RESUMED session 4a5660170b8f64ec72c70da49916fbaf.
+2025-12-07 08:22:39,262 - INFO - logging in using static token
+2025-12-07 08:22:40,527 - INFO - Shard ID None has connected to Gateway (Session ID: d65abfd5bb0806226f999de57fa5fe47).
+2025-12-07 09:33:42,878 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-07 12:43:16,219 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-07 15:46:06,890 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-07 17:51:51,317 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-07 21:02:06,296 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-07 23:21:57,760 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 01:51:50,462 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 02:38:08,882 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 04:59:59,143 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 08:41:29,968 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 11:14:16,728 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 11:37:48,687 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 12:09:28,780 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 13:18:33,290 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 15:55:35,552 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 16:04:13,152 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 17:19:58,699 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 20:32:35,338 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 21:03:05,579 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-08 22:43:03,089 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 00:06:03,850 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 01:30:06,711 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 02:20:04,818 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 04:31:53,570 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 05:52:52,503 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 07:22:11,534 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 09:09:40,368 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 09:25:22,894 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 11:32:05,970 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 12:38:28,337 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 13:00:43,304 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 15:18:42,947 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 15:36:20,786 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 19:32:27,641 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-09 21:37:37,523 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 01:00:23,172 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 03:36:35,969 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 04:50:32,513 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 07:33:03,509 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 10:42:46,252 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 11:04:54,711 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 11:57:51,857 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 12:18:54,724 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 15:46:44,121 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 16:41:18,069 - INFO - Shard ID None has successfully RESUMED session d65abfd5bb0806226f999de57fa5fe47.
+2025-12-10 17:42:11,057 - INFO - logging in using static token
+2025-12-10 17:42:14,460 - INFO - Shard ID None has connected to Gateway (Session ID: 6066292786a503d15b0ca266d8a33d0f).
+2025-12-10 17:52:14,857 - INFO - logging in using static token
+2025-12-10 17:52:16,034 - INFO - Shard ID None has connected to Gateway (Session ID: f5e7bbec68ada725963b35b68bc24633).
+2025-12-10 17:57:16,863 - INFO - logging in using static token
+2025-12-10 17:57:18,278 - INFO - Shard ID None has connected to Gateway (Session ID: 684d8d5fea0f4fa389f8a1eacf246a35).
+2025-12-10 18:03:43,250 - INFO - logging in using static token
+2025-12-10 18:03:46,043 - INFO - Shard ID None has connected to Gateway (Session ID: c2a4a869ddd7500c7ecc2c233e1e03ba).
+2025-12-10 18:20:32,564 - INFO - logging in using static token
+2025-12-10 18:20:33,744 - INFO - Shard ID None has connected to Gateway (Session ID: 749191294ba3d493299b994c9e5dccd2).
+2025-12-10 18:24:44,054 - INFO - logging in using static token
+2025-12-10 18:24:45,421 - INFO - Shard ID None has connected to Gateway (Session ID: bcbd626664b947848753732d61a84670).
+2025-12-10 18:27:26,458 - INFO - logging in using static token
+2025-12-10 18:27:27,615 - INFO - Shard ID None has connected to Gateway (Session ID: 8d3475c963c29619bd65b3a2be2fb432).
+2025-12-10 18:38:31,669 - INFO - logging in using static token
+2025-12-10 18:38:32,786 - INFO - Shard ID None has connected to Gateway (Session ID: d432df1916e7186dbb11255f056ac6e0).
+2025-12-10 18:40:33,152 - INFO - logging in using static token
+2025-12-10 18:40:35,134 - INFO - Shard ID None has connected to Gateway (Session ID: 63f774538ef2e036c4b98f4b41f2aee1).
+2025-12-10 18:40:40,525 - ERROR - Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 163, in on_ready
+    await self.ModifyStatus()
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ext/tasks/__init__.py", line 383, in __call__
+    return await self.coro(*args, **kwargs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: MyBot.ModifyStatus() takes 0 positional arguments but 1 was given
+2025-12-10 18:41:57,566 - INFO - logging in using static token
+2025-12-10 18:41:59,018 - INFO - Shard ID None has connected to Gateway (Session ID: edc336e90cc0258d5e8b2dd6d9088dbe).
+2025-12-10 18:43:53,554 - INFO - logging in using static token
+2025-12-10 18:43:55,092 - INFO - Shard ID None has connected to Gateway (Session ID: 2dbda9ba719346c1c6821ae079ef6c9e).
+2025-12-10 18:46:06,856 - INFO - logging in using static token
+2025-12-10 18:46:10,917 - INFO - Shard ID None has connected to Gateway (Session ID: c223fb27ab0027b921d907e7d79b763c).
+2025-12-10 18:50:03,069 - INFO - logging in using static token
+2025-12-10 18:50:04,816 - INFO - Shard ID None has connected to Gateway (Session ID: dc8e64629e7feb6558e215bc4b30ff41).
+2025-12-10 19:18:30,925 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-10 22:24:54,243 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 00:51:34,605 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 02:43:35,450 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 03:19:16,195 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 04:51:58,849 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 06:07:09,526 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 07:52:49,531 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 08:54:23,629 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 12:34:33,131 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 14:23:01,005 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 16:45:12,713 - INFO - Shard ID None has successfully RESUMED session dc8e64629e7feb6558e215bc4b30ff41.
+2025-12-11 17:02:37,866 - INFO - logging in using static token
+2025-12-11 17:02:39,644 - INFO - Shard ID None has connected to Gateway (Session ID: fc077ec094ebc652b3d58bc40a3038b9).
+2025-12-11 17:13:53,464 - INFO - logging in using static token
+2025-12-11 17:13:55,519 - INFO - Shard ID None has connected to Gateway (Session ID: 4ef31b32372a11206d31d30f4749575d).
+2025-12-11 17:29:59,455 - INFO - logging in using static token
+2025-12-11 17:30:00,851 - INFO - Shard ID None has connected to Gateway (Session ID: 707fdae590721155b7e361b964065949).
+2025-12-11 17:39:29,948 - INFO - logging in using static token
+2025-12-11 17:39:31,319 - INFO - Shard ID None has connected to Gateway (Session ID: 3f9121ebe93358cef20e3f685af0db5b).
+2025-12-11 18:55:01,388 - INFO - Shard ID None has successfully RESUMED session 3f9121ebe93358cef20e3f685af0db5b.
+2025-12-11 20:30:00,892 - INFO - Shard ID None has successfully RESUMED session 3f9121ebe93358cef20e3f685af0db5b.
+2025-12-12 00:12:25,215 - INFO - Shard ID None has successfully RESUMED session 3f9121ebe93358cef20e3f685af0db5b.
+2025-12-12 00:44:28,705 - INFO - Shard ID None has successfully RESUMED session 3f9121ebe93358cef20e3f685af0db5b.
+2025-12-12 01:48:31,467 - INFO - logging in using static token
+2025-12-12 01:48:32,990 - INFO - Shard ID None has connected to Gateway (Session ID: 3bae59c3b468b39865cc16c33b22b6ae).
+2025-12-12 01:51:46,955 - INFO - logging in using static token
+2025-12-12 01:51:49,799 - INFO - Shard ID None has connected to Gateway (Session ID: f5447afceed175ef9a86c455f47707f1).
+2025-12-12 03:06:24,086 - INFO - Shard ID None has successfully RESUMED session f5447afceed175ef9a86c455f47707f1.
+2025-12-12 04:22:44,978 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-12 04:23:10,041 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-12 04:32:57,878 - INFO - Shard ID None has successfully RESUMED session f5447afceed175ef9a86c455f47707f1.
+2025-12-12 08:31:17,215 - INFO - Shard ID None has successfully RESUMED session f5447afceed175ef9a86c455f47707f1.
+2025-12-12 08:34:45,554 - INFO - Shard ID None has successfully RESUMED session f5447afceed175ef9a86c455f47707f1.
+2025-12-12 09:15:02,802 - INFO - Shard ID None has successfully RESUMED session f5447afceed175ef9a86c455f47707f1.
+2025-12-12 11:56:42,642 - INFO - Shard ID None has successfully RESUMED session f5447afceed175ef9a86c455f47707f1.
+2025-12-12 12:35:19,751 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-12 14:05:07,100 - INFO - Shard ID None has successfully RESUMED session f5447afceed175ef9a86c455f47707f1.
+2025-12-12 16:01:45,265 - INFO - logging in using static token
+2025-12-12 16:01:47,266 - INFO - Shard ID None has connected to Gateway (Session ID: f5f38618071225c32982a845b67d6614).
+2025-12-12 16:01:48,349 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 82, in MessageEvaluate
+    async with LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'BF_Normal_GoodFruits'") as cursor:
+               ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-12-12 16:02:32,756 - INFO - logging in using static token
+2025-12-12 16:03:17,269 - INFO - Shard ID None has connected to Gateway (Session ID: 7b556e01dc143d9e74e72bb842ca1ece).
+2025-12-12 16:21:14,229 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443331393953206323 responded with 429. Retrying in 0.30 seconds.
+2025-12-12 16:21:14,971 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443331343114047520 responded with 429. Retrying in 0.31 seconds.
+2025-12-12 16:21:15,662 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443308588490817650 responded with 429. Retrying in 0.62 seconds.
+2025-12-12 16:21:16,672 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443308549659693288 responded with 429. Retrying in 0.61 seconds.
+2025-12-12 16:21:17,822 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443302065378955275 responded with 429. Retrying in 0.46 seconds.
+2025-12-12 16:21:18,655 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443284781227053166 responded with 429. Retrying in 0.63 seconds.
+2025-12-12 16:21:19,946 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443276997605195786 responded with 429. Retrying in 0.34 seconds.
+2025-12-12 16:21:20,721 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443260471405838396 responded with 429. Retrying in 0.56 seconds.
+2025-12-12 16:21:21,714 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443259132315439196 responded with 429. Retrying in 0.58 seconds.
+2025-12-12 16:21:22,795 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443259043039940851 responded with 429. Retrying in 0.50 seconds.
+2025-12-12 16:21:23,740 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258986827747469 responded with 429. Retrying in 0.55 seconds.
+2025-12-12 16:21:24,651 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258881361969364 responded with 429. Retrying in 0.63 seconds.
+2025-12-12 16:21:25,821 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258668224090254 responded with 429. Retrying in 0.47 seconds.
+2025-12-12 16:21:26,834 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258636599033927 responded with 429. Retrying in 0.45 seconds.
+2025-12-12 16:21:27,754 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258539937366199 responded with 429. Retrying in 0.53 seconds.
+2025-12-12 16:21:28,700 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258425218699325 responded with 429. Retrying in 0.58 seconds.
+2025-12-12 16:21:29,788 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258365680681203 responded with 429. Retrying in 0.49 seconds.
+2025-12-12 16:21:30,950 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258319455387699 responded with 429. Retrying in 0.51 seconds.
+2025-12-12 16:21:31,939 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258298424889354 responded with 429. Retrying in 0.36 seconds.
+2025-12-12 16:21:32,896 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258294675439759 responded with 429. Retrying in 0.39 seconds.
+2025-12-12 16:21:33,713 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258266275807285 responded with 429. Retrying in 0.57 seconds.
+2025-12-12 16:21:34,709 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258245828448367 responded with 429. Retrying in 0.57 seconds.
+2025-12-12 16:21:35,654 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258194679042069 responded with 429. Retrying in 0.63 seconds.
+2025-12-12 16:21:36,637 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443258148478521355 responded with 429. Retrying in 0.65 seconds.
+2025-12-12 16:21:37,794 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443257951036112946 responded with 429. Retrying in 0.50 seconds.
+2025-12-12 16:21:38,738 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1443257739726815463 responded with 429. Retrying in 0.54 seconds.
+2025-12-12 16:22:36,819 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 225, in on_command_error
+    await ctx.send(f"So fast Try after {error.retry_after:.1f} seconds.")
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ext/commands/context.py", line 1102, in send
+    return await super().send(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/abc.py", line 1703, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 709, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 429 Too Many Requests (error code: 0): {"message":"Your bot is rate-limited by KataProxy"}
+
+2025-12-12 16:24:25,857 - INFO - logging in using static token
+2025-12-12 16:24:55,449 - INFO - logging in using static token
+2025-12-12 16:24:57,408 - INFO - Shard ID None has connected to Gateway (Session ID: 5caddb9ab903d649f5fd4b62de8c8fd2).
+2025-12-12 16:24:58,947 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 157, in MessageEvaluate
+    cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
+                    ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-12-12 16:28:46,388 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442632310016053288 responded with 429. Retrying in 0.34 seconds.
+2025-12-12 16:28:47,162 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442628911446888550 responded with 429. Retrying in 0.56 seconds.
+2025-12-12 16:28:48,135 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442603706204950629 responded with 429. Retrying in 0.59 seconds.
+2025-12-12 16:28:49,098 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442603696738406501 responded with 429. Retrying in 0.62 seconds.
+2025-12-12 16:28:50,170 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442603667793383584 responded with 429. Retrying in 0.55 seconds.
+2025-12-12 16:28:51,466 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442603607055798333 responded with 429. Retrying in 0.30 seconds.
+2025-12-12 16:28:52,134 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442585325472845854 responded with 429. Retrying in 0.59 seconds.
+2025-12-12 16:28:53,090 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442585277649391696 responded with 429. Retrying in 0.64 seconds.
+2025-12-12 16:28:54,057 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442564285271380061 responded with 429. Retrying in 0.66 seconds.
+2025-12-12 16:28:56,327 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563964750794752 responded with 429. Retrying in 0.40 seconds.
+2025-12-12 16:28:57,153 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563889408774216 responded with 429. Retrying in 0.57 seconds.
+2025-12-12 16:28:58,093 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563806072148059 responded with 429. Retrying in 0.62 seconds.
+2025-12-12 16:28:59,265 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563555319877694 responded with 429. Retrying in 0.46 seconds.
+2025-12-12 16:29:00,126 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563540304134235 responded with 429. Retrying in 0.59 seconds.
+2025-12-12 16:29:01,238 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563469332320398 responded with 429. Retrying in 0.48 seconds.
+2025-12-12 16:29:02,185 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563449904304208 responded with 429. Retrying in 0.54 seconds.
+2025-12-12 16:29:03,220 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563398113034330 responded with 429. Retrying in 0.53 seconds.
+2025-12-12 16:29:04,199 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563362419511346 responded with 429. Retrying in 0.52 seconds.
+2025-12-12 16:29:05,174 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563333558632649 responded with 429. Retrying in 0.54 seconds.
+2025-12-12 16:29:06,348 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563251496812728 responded with 429. Retrying in 0.37 seconds.
+2025-12-12 16:29:07,167 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563211286020156 responded with 429. Retrying in 0.56 seconds.
+2025-12-12 16:29:08,249 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563193540186162 responded with 429. Retrying in 0.47 seconds.
+2025-12-12 16:29:09,119 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563168105791529 responded with 429. Retrying in 0.61 seconds.
+2025-12-12 16:29:10,198 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442563126229995752 responded with 429. Retrying in 0.52 seconds.
+2025-12-12 16:29:11,385 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442554487427436594 responded with 429. Retrying in 0.34 seconds.
+2025-12-12 16:29:12,172 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442499570574688296 responded with 429. Retrying in 0.55 seconds.
+2025-12-12 16:29:13,089 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442478746698252388 responded with 429. Retrying in 0.64 seconds.
+2025-12-12 16:29:14,117 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442477140892454992 responded with 429. Retrying in 0.61 seconds.
+2025-12-12 16:29:15,310 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442275990167490723 responded with 429. Retrying in 0.41 seconds.
+2025-12-12 16:29:16,107 - WARNING - We are being rate limited. DELETE https://discord.com/api/v10/channels/1423789067652304906/messages/1442273659476643992 responded with 429. Retrying in 0.61 seconds.
+2025-12-12 16:30:24,960 - INFO - logging in using static token
+2025-12-12 16:32:01,262 - INFO - logging in using static token
+2025-12-12 16:32:32,448 - INFO - logging in using static token
+2025-12-12 16:32:34,340 - INFO - Shard ID None has connected to Gateway (Session ID: 1f81192577701bb9b7fed3a520527b46).
+2025-12-12 16:33:44,123 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-12 19:20:03,546 - INFO - Shard ID None has successfully RESUMED session 1f81192577701bb9b7fed3a520527b46.
+2025-12-12 20:22:46,268 - INFO - Shard ID None has successfully RESUMED session 1f81192577701bb9b7fed3a520527b46.
+2025-12-12 20:33:37,293 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LTTC.TicketTranscript(bot, message)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 607, in TicketTranscript
+    if message.channel.name.startswith('ticket-'):
+       ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'DMChannel' object has no attribute 'name'
+2025-12-12 20:42:16,873 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LTTC.TicketTranscript(bot, message)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 607, in TicketTranscript
+    if message.channel.name.startswith('ticket-'):
+       ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'DMChannel' object has no attribute 'name'
+2025-12-12 20:43:03,973 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LTTC.TicketTranscript(bot, message)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 607, in TicketTranscript
+    if message.channel.name.startswith('ticket-'):
+       ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'DMChannel' object has no attribute 'name'
+2025-12-12 20:52:09,369 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LTTC.TicketTranscript(bot, message)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 607, in TicketTranscript
+    if message.channel.name.startswith('ticket-'):
+       ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'DMChannel' object has no attribute 'name'
+2025-12-12 21:54:43,072 - INFO - logging in using static token
+2025-12-12 21:54:44,818 - INFO - Shard ID None has connected to Gateway (Session ID: 0850aeec6ef3d451cf62ba9ccebaad44).
+2025-12-12 21:59:11,660 - INFO - logging in using static token
+2025-12-12 21:59:13,117 - INFO - Shard ID None has connected to Gateway (Session ID: 723eab9e350d1248d6020572b20b66be).
+2025-12-12 22:01:47,247 - INFO - logging in using static token
+2025-12-12 22:01:48,699 - INFO - Shard ID None has connected to Gateway (Session ID: ad6d526fae4ac5068d6476699a07bfe5).
+2025-12-12 22:06:55,358 - INFO - logging in using static token
+2025-12-12 22:06:57,013 - INFO - Shard ID None has connected to Gateway (Session ID: 0a99678aa77b710104565405ab2d704f).
+2025-12-12 22:10:51,659 - INFO - logging in using static token
+2025-12-12 22:10:53,200 - INFO - Shard ID None has connected to Gateway (Session ID: 00cd43858833cbf7970f421ff93f1bb9).
+2025-12-12 22:16:00,558 - INFO - logging in using static token
+2025-12-12 22:16:02,571 - INFO - Shard ID None has connected to Gateway (Session ID: 09e7b9381387ccfb34267123d30595e6).
+2025-12-12 22:18:10,204 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-12 22:18:55,662 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-12 22:22:06,453 - INFO - logging in using static token
+2025-12-12 22:22:08,461 - INFO - Shard ID None has connected to Gateway (Session ID: 85abb8b9fdfb2b184777a1feaa9063b9).
+2025-12-13 00:51:09,331 - INFO - Shard ID None has successfully RESUMED session 85abb8b9fdfb2b184777a1feaa9063b9.
+2025-12-13 02:10:24,624 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 02:11:16,001 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 02:46:06,848 - INFO - Shard ID None has successfully RESUMED session 85abb8b9fdfb2b184777a1feaa9063b9.
+2025-12-13 04:38:57,284 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-13 06:11:03,343 - INFO - Shard ID None has successfully RESUMED session 85abb8b9fdfb2b184777a1feaa9063b9.
+2025-12-13 08:09:49,734 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 08:11:18,513 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 08:37:45,959 - INFO - Shard ID None has successfully RESUMED session 85abb8b9fdfb2b184777a1feaa9063b9.
+2025-12-13 09:47:04,238 - INFO - Shard ID None has successfully RESUMED session 85abb8b9fdfb2b184777a1feaa9063b9.
+2025-12-13 10:49:28,500 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 12:06:43,714 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 13:01:29,767 - INFO - Shard ID None has successfully RESUMED session 85abb8b9fdfb2b184777a1feaa9063b9.
+2025-12-13 15:00:49,975 - INFO - Shard ID None has successfully RESUMED session 85abb8b9fdfb2b184777a1feaa9063b9.
+2025-12-13 15:06:31,806 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 406, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 15:07:42,564 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 18:05:58,590 - INFO - Shard ID None has successfully RESUMED session 85abb8b9fdfb2b184777a1feaa9063b9.
+2025-12-13 19:00:56,270 - INFO - logging in using static token
+2025-12-13 19:00:59,073 - INFO - Shard ID None has connected to Gateway (Session ID: 707f76c9012bf2c6de3c4dd8152d2a8a).
+2025-12-13 19:22:28,602 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 19:24:20,421 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-13 22:06:18,104 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 01:05:27,315 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 02:08:57,917 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 03:43:52,960 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 05:51:16,776 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 501, in MessageEvaluate
+    view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, config_rows[0])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: TradeSuggestorComponent.__init__() missing 1 required positional argument: 'type'
+2025-12-14 06:12:26,503 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-14 06:15:16,433 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-14 06:30:55,152 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 09:59:52,775 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 10:52:13,247 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 14:36:50,346 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 15:03:33,239 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 16:40:49,673 - INFO - Shard ID None has successfully RESUMED session 707f76c9012bf2c6de3c4dd8152d2a8a.
+2025-12-14 17:45:22,260 - INFO - logging in using static token
+2025-12-14 17:45:24,302 - INFO - Shard ID None has connected to Gateway (Session ID: 75e88274d6766b5d0c5b3dcb961fd326).
+2025-12-14 18:25:19,458 - INFO - logging in using static token
+2025-12-14 18:25:21,113 - INFO - Shard ID None has connected to Gateway (Session ID: c55fbef6bf6989c3d59d25d493b957f0).
+2025-12-14 18:30:12,454 - INFO - logging in using static token
+2025-12-14 18:30:13,989 - INFO - Shard ID None has connected to Gateway (Session ID: 4edbb39c0583e0c17161d2c05ee16df1).
+2025-12-14 19:28:36,663 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-14 20:20:25,763 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-14 20:20:59,529 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-14 20:52:54,575 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 00:11:19,396 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 00:29:20,001 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 03:01:36,629 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 03:31:44,190 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-15 04:45:05,633 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 501, in MessageEvaluate
+    view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, config_rows[0])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: TradeSuggestorComponent.__init__() missing 1 required positional argument: 'type'
+2025-12-15 05:49:15,700 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 06:22:39,010 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 06:44:55,470 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 08:32:29,724 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 11:51:58,077 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 12:58:46,974 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 13:19:20,625 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 15:46:34,469 - INFO - Shard ID None has successfully RESUMED session 4edbb39c0583e0c17161d2c05ee16df1.
+2025-12-15 17:00:58,062 - INFO - logging in using static token
+2025-12-15 17:00:59,909 - INFO - Shard ID None has connected to Gateway (Session ID: 6e46a00df047f7401aa5684b5efcea59).
+2025-12-15 18:02:41,732 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-15 18:03:30,245 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-15 20:09:13,756 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-15 20:17:49,775 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-15 22:58:03,179 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 00:08:07,188 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 02:39:28,770 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 03:52:54,596 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 07:06:26,572 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 10:59:34,219 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 12:20:01,866 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 12:40:31,332 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 223, in on_command_error
+    await ctx.send(f"Exception {error}")
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ext/commands/context.py", line 1102, in send
+    return await super().send(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/abc.py", line 1703, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 767, in request
+    raise Forbidden(response, data)
+discord.errors.Forbidden: 403 Forbidden (error code: 50013): Missing Permissions
+2025-12-16 16:10:06,796 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 16:49:42,534 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-16 17:14:54,082 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 19:51:17,431 - INFO - Shard ID None has successfully RESUMED session 6e46a00df047f7401aa5684b5efcea59.
+2025-12-16 20:31:30,475 - INFO - logging in using static token
+2025-12-16 20:31:33,136 - INFO - Shard ID None has connected to Gateway (Session ID: 34b7571339d71a28a9cc56b12f7d7e6c).
+2025-12-16 20:44:39,548 - INFO - logging in using static token
+2025-12-16 20:44:41,520 - INFO - Shard ID None has connected to Gateway (Session ID: ee3af089b60c79b669f4c3576d00b869).
+2025-12-16 20:49:15,704 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 235, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 471, in TicketConstructor
+    await private_channel.send(content=f"{user.mention} your ticket has been created.", embeds=embeds, view=view)
+  File "/home/container/.local/lib/python3.12/site-packages/discord/abc.py", line 1703, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 767, in request
+    raise Forbidden(response, data)
+discord.errors.Forbidden: 403 Forbidden (error code: 50013): Missing Permissions
+2025-12-16 20:51:04,156 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 235, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 471, in TicketConstructor
+    await private_channel.send(content=f"{user.mention} your ticket has been created.", embeds=embeds, view=view)
+  File "/home/container/.local/lib/python3.12/site-packages/discord/abc.py", line 1703, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 767, in request
+    raise Forbidden(response, data)
+discord.errors.Forbidden: 403 Forbidden (error code: 50013): Missing Permissions
+2025-12-16 21:04:14,854 - INFO - logging in using static token
+2025-12-16 21:04:17,176 - INFO - Shard ID None has connected to Gateway (Session ID: 87f2441e3a2641e77ec75be0e5eebb57).
+2025-12-16 21:10:05,360 - INFO - logging in using static token
+2025-12-16 21:10:07,355 - INFO - Shard ID None has connected to Gateway (Session ID: 763c161c7cde0c88ad542ac6fde399a9).
+2025-12-16 21:10:09,344 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 157, in MessageEvaluate
+    cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
+                    ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-12-16 21:13:03,046 - INFO - logging in using static token
+2025-12-16 21:13:04,815 - INFO - Shard ID None has connected to Gateway (Session ID: b85174fed5f46035f30ea35719aa3c2a).
+2025-12-16 21:20:26,173 - INFO - logging in using static token
+2025-12-16 21:20:27,936 - INFO - Shard ID None has connected to Gateway (Session ID: dc2d7aa8339a9f35fa568c6367f74f75).
+2025-12-16 21:25:40,455 - ERROR - Ignoring exception in view <BasicTicketer timeout=None children=3> for item <Button style=<ButtonStyle.danger: 4> url=None disabled=False label='Revoke Claim' emoji=None row=None sku_id=None id=3>
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 442, in revoke_claim_button
+    await private_channel.set_permissions(claimer, overwrite=None)
+  File "/home/container/.local/lib/python3.12/site-packages/discord/abc.py", line 1010, in set_permissions
+    raise ValueError('target parameter must be either Member or Role')
+ValueError: target parameter must be either Member or Role
+2025-12-16 21:28:16,170 - INFO - logging in using static token
+2025-12-16 21:28:17,665 - INFO - Shard ID None has connected to Gateway (Session ID: bbfc47a65cd127aca8c81ee6356cee62).
+2025-12-16 22:57:20,033 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-16 23:37:31,883 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 01:06:46,489 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 01:55:39,467 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 05:33:54,833 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 06:31:06,988 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 08:45:36,273 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 09:43:18,855 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 11:17:02,658 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 406, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-17 11:19:20,295 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-17 11:21:05,411 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-17 12:07:44,856 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 12:55:39,301 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 14:50:44,670 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 16:48:35,921 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 149, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-17 17:25:12,021 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 19:28:41,303 - INFO - Shard ID None has successfully RESUMED session bbfc47a65cd127aca8c81ee6356cee62.
+2025-12-17 20:58:41,181 - INFO - logging in using static token
+2025-12-17 20:58:42,811 - INFO - Shard ID None has connected to Gateway (Session ID: f8fd49cc347fcbff0a43aee6946dce09).
+2025-12-17 21:17:37,463 - INFO - logging in using static token
+2025-12-17 21:17:39,331 - INFO - Shard ID None has connected to Gateway (Session ID: 5b6f37ad3ba24d462c16ca15f016cd61).
+2025-12-17 22:45:04,421 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 00:13:30,581 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 02:59:14,516 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 05:04:21,720 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 05:16:23,740 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 05:35:19,025 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 06:25:10,531 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 07:00:37,920 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 09:36:06,316 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 10:33:37,373 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 12:19:04,478 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 14:18:28,134 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 17:00:09,720 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 17:17:05,642 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 17:52:08,350 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 406, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-18 17:52:39,924 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 406, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-18 17:53:51,763 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-18 21:40:12,151 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 00:33:25,463 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 03:14:44,697 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 05:24:51,846 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-19 05:26:06,338 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-19 06:13:53,035 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 08:51:36,450 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 10:59:50,717 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-19 11:01:04,662 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-19 11:03:26,784 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 14:12:32,850 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 16:53:33,058 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 16:56:11,765 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-19 17:15:23,651 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 17:36:16,619 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 17:57:08,394 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 18:52:37,696 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 406, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-19 19:47:16,404 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 21:53:17,572 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-19 22:02:26,109 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-19 22:27:56,960 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-20 00:50:26,945 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-20 01:12:24,184 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-20 03:00:21,865 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-20 04:12:43,299 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-20 06:18:35,294 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-20 08:20:02,763 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-20 10:06:16,011 - INFO - Shard ID None has successfully RESUMED session 5b6f37ad3ba24d462c16ca15f016cd61.
+2025-12-20 12:07:20,373 - INFO - logging in using static token
+2025-12-20 12:07:21,950 - INFO - Shard ID None has connected to Gateway (Session ID: 86eb44e1029255d6763d2902b527cd82).
+2025-12-20 12:10:24,071 - INFO - logging in using static token
+2025-12-20 12:10:25,599 - INFO - Shard ID None has connected to Gateway (Session ID: b76d23c8ef26cbef08857b2186781629).
+2025-12-20 12:12:55,961 - INFO - logging in using static token
+2025-12-20 12:12:57,628 - INFO - Shard ID None has connected to Gateway (Session ID: 5fbcc72385c728e3f3e88f46a270a2f1).
+2025-12-20 16:09:17,228 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 223, in on_command_error
+    await ctx.send(f"Exception {error}")
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ext/commands/context.py", line 1102, in send
+    return await super().send(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/abc.py", line 1703, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 767, in request
+    raise Forbidden(response, data)
+discord.errors.Forbidden: 403 Forbidden (error code: 50013): Missing Permissions
+2025-12-20 16:09:35,365 - ERROR - Ignoring exception in on_command_error
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 223, in on_command_error
+    await ctx.send(f"Exception {error}")
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ext/commands/context.py", line 1102, in send
+    return await super().send(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/abc.py", line 1703, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 767, in request
+    raise Forbidden(response, data)
+discord.errors.Forbidden: 403 Forbidden (error code: 50013): Missing Permissions
+2025-12-20 16:10:54,601 - INFO - Shard ID None has successfully RESUMED session 5fbcc72385c728e3f3e88f46a270a2f1.
+2025-12-20 19:52:01,762 - INFO - Shard ID None has successfully RESUMED session 5fbcc72385c728e3f3e88f46a270a2f1.
+2025-12-20 23:05:15,385 - INFO - Shard ID None has successfully RESUMED session 5fbcc72385c728e3f3e88f46a270a2f1.
+2025-12-21 01:09:40,873 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:09:48,875 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:09:54,174 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:10:13,740 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:10:48,616 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:10:53,806 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:10:58,967 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:12:52,454 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:16:48,792 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:16:53,957 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:19:46,162 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:26:54,597 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:26:59,438 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:27:06,542 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:27:12,410 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:27:17,672 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:27:22,875 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 01:38:49,188 - INFO - Shard ID None has successfully RESUMED session 5fbcc72385c728e3f3e88f46a270a2f1.
+2025-12-21 03:22:34,733 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 03:22:39,879 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 03:22:45,302 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 03:25:00,826 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 03:25:06,266 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 03:28:05,563 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 03:52:49,235 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 03:52:54,589 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=1>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    private_channel = await guild.create_text_channel(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/guild.py", line 1532, in create_text_channel
+    data = await self._create_channel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In parent_id: Maximum number of channels in category reached (50)
+2025-12-21 05:13:57,651 - INFO - Shard ID None has successfully RESUMED session 5fbcc72385c728e3f3e88f46a270a2f1.
+2025-12-21 05:29:51,720 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 201, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 501, in MessageEvaluate
+    view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, config_rows[0])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: TradeSuggestorComponent.__init__() missing 1 required positional argument: 'type'
+2025-12-21 05:56:50,750 - INFO - logging in using static token
+2025-12-21 05:56:52,545 - INFO - Shard ID None has connected to Gateway (Session ID: 7aaa24fdda263c16c78e39f7698f8734).
+2025-12-21 05:58:06,444 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 261, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 352, in TicketConstructor
+    existing_channel = get(guild.channels, name=channel_name)
+                       ^^^
+NameError: name 'get' is not defined. Did you mean: 'set'?
+2025-12-21 05:59:43,954 - INFO - logging in using static token
+2025-12-21 05:59:45,413 - INFO - Shard ID None has connected to Gateway (Session ID: c74ac8a047ba813338c440f17617e651).
+2025-12-21 06:08:25,149 - INFO - logging in using static token
+2025-12-21 06:08:26,822 - INFO - Shard ID None has connected to Gateway (Session ID: 9ef831573133cfe37df2f4e5cec91f78).
+2025-12-21 06:50:53,368 - INFO - logging in using static token
+2025-12-21 06:50:55,613 - INFO - Shard ID None has connected to Gateway (Session ID: bc8414f8be295eaf5f7d358003fa67c0).
+2025-12-21 07:01:32,167 - INFO - logging in using static token
+2025-12-21 07:01:33,992 - INFO - Shard ID None has connected to Gateway (Session ID: b971a0e035aa74725c61813eda859bb9).
+2025-12-21 07:33:22,856 - INFO - logging in using static token
+2025-12-21 07:33:24,226 - INFO - Shard ID None has connected to Gateway (Session ID: 04169aa83907f6c4753ca5cc7046bcf2).
+2025-12-21 07:36:57,569 - INFO - logging in using static token
+2025-12-21 07:36:59,241 - INFO - Shard ID None has connected to Gateway (Session ID: ae9d1869a6d1c55de54ed8448fbbd440).
+2025-12-21 07:49:04,074 - INFO - logging in using static token
+2025-12-21 07:49:05,493 - INFO - Shard ID None has connected to Gateway (Session ID: 0fd3a42c3cc550adecc7b727bade3c54).
+2025-12-21 07:56:00,970 - INFO - logging in using static token
+2025-12-21 07:56:02,371 - INFO - Shard ID None has connected to Gateway (Session ID: 9d485673732e3805786c3228de5754e3).
+2025-12-21 07:58:35,576 - INFO - logging in using static token
+2025-12-21 07:58:38,146 - INFO - Shard ID None has connected to Gateway (Session ID: 4972e654237156251b8d10960648dde5).
+2025-12-21 08:04:48,950 - INFO - logging in using static token
+2025-12-21 08:04:51,033 - INFO - Shard ID None has connected to Gateway (Session ID: f70e52685edf7986ea525dfe0b367ec5).
+2025-12-21 08:10:29,984 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-21 08:16:25,298 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-21 08:17:05,134 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-21 08:20:06,661 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-21 08:23:35,859 - INFO - logging in using static token
+2025-12-21 08:23:37,376 - INFO - Shard ID None has connected to Gateway (Session ID: b5d918d1ebf333285213cf97aad3a91b).
+2025-12-21 08:35:19,741 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-21 08:39:25,625 - INFO - Shard ID None has successfully RESUMED session b5d918d1ebf333285213cf97aad3a91b.
+2025-12-21 09:41:09,133 - INFO - Shard ID None has successfully RESUMED session b5d918d1ebf333285213cf97aad3a91b.
+2025-12-21 10:09:03,755 - INFO - Shard ID None has successfully RESUMED session b5d918d1ebf333285213cf97aad3a91b.
+2025-12-21 10:58:46,156 - INFO - logging in using static token
+2025-12-21 10:59:51,561 - INFO - logging in using static token
+2025-12-21 10:59:53,690 - INFO - Shard ID None has connected to Gateway (Session ID: f7a654a1928348d10aaa1e721ef7e762).
+2025-12-21 11:02:02,677 - INFO - logging in using static token
+2025-12-21 11:02:05,520 - INFO - Shard ID None has connected to Gateway (Session ID: f46c6f5cbb817f686d0c9ccdd4cbe89c).
+2025-12-21 11:03:50,765 - INFO - logging in using static token
+2025-12-21 11:03:52,732 - INFO - Shard ID None has connected to Gateway (Session ID: 4cab93388e5a634e7d3aef311b066145).
+2025-12-21 11:19:58,755 - INFO - logging in using static token
+2025-12-21 11:20:00,087 - INFO - Shard ID None has connected to Gateway (Session ID: 92025f8e8faf74903f69d678e55528e3).
+2025-12-21 11:41:13,472 - INFO - logging in using static token
+2025-12-21 11:41:15,001 - INFO - Shard ID None has connected to Gateway (Session ID: 21c40955dea8b07d6c8e87c16562be2c).
+2025-12-21 11:55:26,570 - INFO - logging in using static token
+2025-12-21 11:55:27,956 - INFO - Shard ID None has connected to Gateway (Session ID: 97b6e8675fb6d383dcb55a9d8cbcf4bb).
+2025-12-21 12:00:32,466 - INFO - logging in using static token
+2025-12-21 12:00:35,585 - INFO - Shard ID None has connected to Gateway (Session ID: d7d4a7e751ae00c451f134e0a883fdd2).
+2025-12-21 12:15:02,566 - INFO - logging in using static token
+2025-12-21 12:15:03,911 - INFO - Shard ID None has connected to Gateway (Session ID: 01944339cd6a3301b496f1f21ddfa3f6).
+2025-12-21 12:27:39,056 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 471, in MessageEvaluate
+    await message.reply(view=view)
+  File "/home/container/.local/lib/python3.12/site-packages/discord/message.py", line 1879, in reply
+    return await self.channel.send(content, reference=self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/abc.py", line 1703, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 773, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In message_reference: Unknown message
+2025-12-21 12:36:50,579 - ERROR - Ignoring exception in view <BanRequestView timeout=None children=1> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='Validate' emoji=None row=None sku_id=None id=2>
+Traceback (most recent call last):
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 626, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "/home/container/src/Misc/sLilyComponentV2.py", line 642, in validate
+    success = await mLily.ban_interaction_user(interaction, self.user, self.reason, self.proofs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 636, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-12-21 13:11:17,790 - INFO - Shard ID None has successfully RESUMED session 01944339cd6a3301b496f1f21ddfa3f6.
+2025-12-21 14:00:31,543 - INFO - Shard ID None has successfully RESUMED session 01944339cd6a3301b496f1f21ddfa3f6.
+2025-12-21 14:13:38,647 - ERROR - Ignoring exception in view <BanRequestView timeout=None children=1> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='Validate' emoji=None row=None sku_id=None id=2>
+Traceback (most recent call last):
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 626, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "/home/container/src/Misc/sLilyComponentV2.py", line 642, in validate
+    success = await mLily.ban_interaction_user(interaction, self.user, self.reason, self.proofs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 636, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-12-21 14:25:27,376 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 406, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-21 14:26:54,757 - INFO - logging in using static token
+2025-12-21 14:26:56,418 - INFO - Shard ID None has connected to Gateway (Session ID: 4860370900c31c639f283e1373d351ed).
+2025-12-21 14:26:58,389 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 157, in MessageEvaluate
+    cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
+                    ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-12-21 14:49:38,094 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-21 18:36:45,015 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-21 20:21:39,814 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-21 20:29:42,552 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-21 21:22:40,365 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 406, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-21 23:51:03,698 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-21 23:55:30,828 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 00:50:13,327 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 02:49:08,371 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 03:25:07,052 - ERROR - Ignoring exception in modal <BaseModal timeout=None children=2>:
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/modal.py", line 216, in _scheduled_task
+    await self.on_submit(interaction)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 262, in on_submit
+    await TicketConstructor(values, self.moderator_roles, self.staff_manager_roles,interaction, self.field_details)
+  File "/home/container/src/LilyTicketTool/LilyTicketToolCore.py", line 511, in TicketConstructor
+    await private_channel.send(content=f"{user.mention} your ticket has been created.", embeds=embeds, view=view)
+  File "/home/container/.local/lib/python3.12/site-packages/discord/abc.py", line 1703, in send
+    data = await state.http.send_message(channel.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/http.py", line 767, in request
+    raise Forbidden(response, data)
+discord.errors.Forbidden: 403 Forbidden (error code: 50001): Missing Access
+2025-12-22 04:43:57,579 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 04:52:00,331 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-22 04:52:29,062 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-22 05:51:00,498 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 06:14:12,292 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-22 06:19:45,444 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-22 06:21:16,120 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-22 07:04:29,868 - ERROR - Ignoring exception in view <BanRequestView timeout=None children=1> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='Validate' emoji=None row=None sku_id=None id=2>
+Traceback (most recent call last):
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 626, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "/home/container/src/Misc/sLilyComponentV2.py", line 642, in validate
+    success = await mLily.ban_interaction_user(interaction, self.user, self.reason, self.proofs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 636, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-12-22 08:12:45,893 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-22 08:13:59,803 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-22 08:55:44,421 - ERROR - Ignoring exception in view <BanRequestView timeout=None children=1> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='Validate' emoji=None row=None sku_id=None id=2>
+Traceback (most recent call last):
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 626, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "/home/container/src/Misc/sLilyComponentV2.py", line 642, in validate
+    success = await mLily.ban_interaction_user(interaction, self.user, self.reason, self.proofs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 636, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-12-22 08:57:55,700 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 09:49:24,403 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 09:58:20,788 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-22 10:37:57,546 - ERROR - Ignoring exception in view <BanRequestView timeout=None children=1> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='Validate' emoji=None row=None sku_id=None id=None>
+Traceback (most recent call last):
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 626, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "/home/container/src/Misc/sLilyComponentV2.py", line 642, in validate
+    success = await mLily.ban_interaction_user(interaction, self.user, self.reason, self.proofs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 636, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-12-22 11:04:35,266 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 12:42:27,731 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-22 13:48:55,333 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 14:26:39,919 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-22 15:01:54,931 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-22 15:06:13,752 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value
+2025-12-22 15:33:15,364 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 15:44:27,303 - ERROR - Ignoring exception in view <BanRequestView timeout=None children=1> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='Validate' emoji=None row=None sku_id=None id=2>
+Traceback (most recent call last):
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 626, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/ui/view.py", line 555, in _scheduled_task
+    await item.callback(interaction)
+  File "/home/container/src/Misc/sLilyComponentV2.py", line 642, in validate
+    success = await mLily.ban_interaction_user(interaction, self.user, self.reason, self.proofs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/LilyModeration/sLilyModeration.py", line 636, in ban_interaction_user
+    await ctx.response.send_message(
+  File "/home/container/.local/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/.local/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2025-12-22 15:57:20,740 - INFO - Shard ID None has successfully RESUMED session 4860370900c31c639f283e1373d351ed.
+2025-12-22 16:11:32,657 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 317, in MessageEvaluate
+    value = data['Your_IndividualValues'][i]
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-12-22 16:45:23,057 - ERROR - Ignoring exception in on_message
+Traceback (most recent call last):
+  File "/home/container/.local/lib/python3.12/site-packages/discord/client.py", line 504, in _run_event
+    await coro(*args, **kwargs)
+  File "/home/container/src/sDiscordIntegration.py", line 202, in on_message
+    await LBFC.MessageEvaluate(bot, message)
+  File "/home/container/src/LilyBloxFruits/sLilyBloxFruitsCore.py", line 392, in MessageEvaluate
+    data = await StockValueJSON.j_LorW(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/container/src/Values/sStockValueJSON.py", line 162, in j_LorW
+    output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'output_dict' where it is not associated with a value

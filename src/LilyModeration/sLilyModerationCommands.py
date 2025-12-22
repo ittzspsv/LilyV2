@@ -6,6 +6,7 @@ import LilyLogging.sLilyLogging as LilyLogging
 import Config.sBotDetails as Config
 import LilyManagement.sLilyStaffManagement as LSM
 import LilyModeration.sLilyModeration as mLily
+import Misc.sLilyComponentV2 as CV2
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
 
 
@@ -48,11 +49,18 @@ class LilyModeration(commands.Cog):
             if not await mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
                 await mLily.ban_user(ctx, target_user, reason, proofs)
             else:
-                await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"You can ban in {await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
+                #fallback
+                ban_request_channel = ctx.guild.get_channel(1343648194223149108)
+                if not ban_request_channel:
+                    await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"You can ban in {await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
+                    return
+                view = CV2.BanRequestView(ctx.author, target_user, reason, proofs)
+                await ban_request_channel.send(embeds=view.embeds_to_send, view=view)
+                await ctx.send(embed=mLily.SimpleEmbed(f"Successfully sent action request to {ban_request_channel.mention}!"))
 
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}", 'cross'))
-
+            
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unban', description='unbans a particular user')
@@ -75,7 +83,7 @@ class LilyModeration(commands.Cog):
         except discord.NotFound:
             quarantine_role = discord.utils.get(ctx.guild.roles, name="Quarantine")
             if quarantine_role:
-                member_obj = ctx.guild.get_member(user_id)
+                member_obj = await ctx.guild.fetch_member(user_id)
                 if member_obj and quarantine_role in member_obj.roles:
                     try:
                         await member_obj.remove_roles(

@@ -89,7 +89,7 @@ async def LogModerationAction(ctx: commands.Context,moderator_id: int,target_use
     if not row or not row[0]:
         return
 
-    channel = ctx.bot.get_channel(row[0])
+    channel = ctx.guild.get_channel(row[0])
     if not channel:
         return
 

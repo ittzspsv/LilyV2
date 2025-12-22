@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import Config.sBotDetails as Config
 
 import LilyTicketTool.LilyTicketToolCore as LTTC
@@ -52,7 +52,7 @@ class MyBot(commands.Bot):
         for ext in extensions:
             if ext not in self.extensions:
                 await self.load_extension(ext)
-        #await self.tree.sync()
+        await self.tree.sync()
 
     async def BotInitialize(self):
         for guild in self.guilds:
@@ -160,7 +160,16 @@ class MyBot(commands.Bot):
         await self.ConnectDatabase()
         await self.BotInitialize()
         await LilyTTCore.InitializeView(self)
-        #await self.tree.sync()
+        await self.ModifyStatus()
+        await self.tree.sync()
+
+    @tasks.loop(minutes=60)
+    async def ModifyStatus(self):
+        member_count = 0
+        for guild in bot.guilds:
+            member_count += guild.member_count
+            activity = discord.Activity(type=discord.ActivityType.watching, name=f"{member_count:,} members!")
+        await bot.change_presence(activity=activity)
 
     async def on_guild_join(self, guild):
         asyncio.create_task(self.BotInitialize())
@@ -216,12 +225,6 @@ async def on_command_error(ctx, error):
     else:
         pass
 
-@bot.event
-async def on_presence_update(before, after):
-    try:
-        await LS.on_presence_update(before, after)
-    except:
-        pass
 
 load_dotenv("token.env")
 

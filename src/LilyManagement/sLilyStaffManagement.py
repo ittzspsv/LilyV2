@@ -137,7 +137,7 @@ async def GetRoles(role_names: tuple = ()):
 async def GetBanRoles():
     try:
         global sdb
-        cursor = await sdb.execute("SELECT role_id FROM roles WHERE ban_limit > 0")
+        cursor = await sdb.execute("SELECT role_id FROM roles WHERE ban_limit > -1")
         rows = await cursor.fetchall()
         return [row[0] for row in rows]
     except:
@@ -268,7 +268,7 @@ async def FetchStaffDetail(staff: discord.Member):
             description=f"{Configs.emoji['cross']} failed to fetch staff data. please check the database.",
         )
 
-async def FetchAllStaffs():
+async def FetchAllStaffs(ctx: commands.Context):
     try:
         count_query = """
         SELECT 
@@ -285,10 +285,10 @@ async def FetchAllStaffs():
         SELECT s.staff_id, r.role_name, r.role_priority
         FROM staffs s
         LEFT JOIN roles r ON s.role_id = r.role_id
-        WHERE s.retired = 0
+        WHERE s.retired = 0 AND s.guild_id = ?
         ORDER BY r.role_priority ASC
         """
-        async with sdb.execute(hierarchy_query) as cursor:
+        async with sdb.execute(hierarchy_query, (ctx.guild.id,)) as cursor:
             rows = await cursor.fetchall()
 
         if not rows:
@@ -361,7 +361,7 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
     staff_id = staff.id
     name = staff.display_name
 
-    cursor = await sdb.execute("SELECT retired FROM staffs WHERE staff_id = ?", (staff_id,))
+    cursor = await sdb.execute("SELECT retired FROM staffs WHERE staff_id = ? AND guild_id = ?", (staff_id,ctx.guild.id))
     row = await cursor.fetchone()
 
     db_roles_cursor = await sdb.execute("SELECT role_id FROM roles")
@@ -383,84 +383,89 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
         retired = row[0]
         if retired:
             await sdb.execute(
-                "UPDATE staffs SET retired = 0, role_id = ?, name = ? WHERE staff_id = ?",
-                (role_id, name, staff_id)
+                "UPDATE staffs SET retired = 0, role_id = ?, name = ? WHERE staff_id = ? AND guild_id = ?",
+                (role_id, name, staff_id, ctx.guild.id)
             )
             await ctx.send(embed=mLily.SimpleEmbed(f"Staff {staff.name} was retired and is now reactivated with updated role <@&{role_id}>"))
         else:
             await sdb.execute(
-                "UPDATE staffs SET role_id = ?, name = ? WHERE staff_id = ?",
-                (role_id, name, staff_id)
+                "UPDATE staffs SET role_id = ?, name = ? WHERE staff_id = ? AND guild_id = ?",
+                (role_id, name, staff_id, ctx.guild.id)
             )
             await ctx.send(embed=mLily.SimpleEmbed(f"Staff {staff.name}'s role has been updated to <@&{role_id}>"))
     else:
         await sdb.execute(
-            "INSERT INTO staffs (staff_id, name, role_id, on_loa, strikes_count, retired, Timezone, responsibility) VALUES (?, ?, ?, 0, 0, 0, 'Default', 'None')",
-            (staff_id, name, role_id)
+            "INSERT INTO staffs (staff_id, name, role_id, on_loa, strikes_count, retired, Timezone, responsibility, guild_id) VALUES (?, ?, ?, 0, 0, 0, 'Default', 'None', ?)",
+            (staff_id, name, role_id, ctx.guild.id)
         )
         await ctx.send(embed=mLily.SimpleEmbed(f"Staff {staff.name} has been added with role <@&{role_id}>"))
 
     await sdb.commit()
 
 async def RemoveStaff(ctx: commands.Context, staff_id: int):
-    cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ?", (staff_id,))
+    cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?", (staff_id,ctx.guild.id))
     exists = await cursor.fetchone()
 
     if exists:
-        await sdb.execute("UPDATE staffs SET retired = 1 WHERE staff_id = ?", (staff_id,))
+        await sdb.execute("UPDATE staffs SET retired = 1 WHERE staff_id = ? AND guild_id = ?", (staff_id,ctx.guild.id))
         await sdb.commit()
         await ctx.send(embed=mLily.SimpleEmbed(f"Staff <@{staff_id}> has been marked as retired."))
     else:
         await ctx.send(embed=mLily.SimpleEmbed(f"No staff found with ID `{staff_id}`.", 'cross'))
 
 async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role_id: int = None, joined_on: str = None, timezone: str = None, responsibility: str = None):
-    cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ?", (staff_id,))
-    row = await cursor.fetchone()
-    await cursor.close()
+    try:
+        cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?", (staff_id, ctx.guild.id))
+        row = await cursor.fetchone()
+        await cursor.close()
 
-    if not row:
-        await ctx.send(embed=mLily.SimpleEmbed(f"No staff found with ID {staff_id}.", 'cross'))
-        return
+        if not row:
+            await ctx.send(embed=mLily.SimpleEmbed(f"No staff found with ID {staff_id}.", 'cross'))
+            return
 
-    fields = {
-        "name": name,
-        "role_id": role_id,
-        "joined_on": joined_on,
-        "timezone": timezone,
-        "responsibility": responsibility
-    }
-    update_columns = {k: v for k, v in fields.items() if v is not None}
+        fields = {
+            "name": name,
+            "role_id": role_id,
+            "joined_on": joined_on,
+            "timezone": timezone,
+            "responsibility": responsibility
+        }
+        update_columns = {k: v for k, v in fields.items() if v is not None}
 
-    if not update_columns:
-        await ctx.send(embed=mLily.SimpleEmbed(f"No Fields Provided to update", 'cross'))
-        return
+        if not update_columns:
+            await ctx.send(embed=mLily.SimpleEmbed(f"No Fields Provided to update", 'cross'))
+            return
 
-    set_clause = ", ".join([f"{col} = ?" for col in update_columns.keys()])
-    values = list(update_columns.values())
-    values.append(staff_id)
+        set_clause = ", ".join([f"{col} = ?" for col in update_columns.keys()])
+        values = list(update_columns.values())
+        values.append(staff_id)
+        values.append(ctx.guild.id)
 
-    query = f"UPDATE staffs SET {set_clause} WHERE staff_id = ?"
-    await sdb.execute(query, values)
-    await sdb.commit()
+        query = f"UPDATE staffs SET {set_clause} WHERE staff_id = ? AND guild_id = ?"
+        await sdb.execute(query, values)
+        await sdb.commit()
 
-    await ctx.send(embed=mLily.SimpleEmbed(f"Staff ID {staff_id} updated successfully."))
+        await ctx.send(embed=mLily.SimpleEmbed(f"Staff ID {staff_id} updated successfully."))
+    except Exception as e:
+        await ctx.send(embed=mLily.SimpleEmbed(f"Error Updating Staff Details", 'cross'))
+        print(e)
 
 async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
     try:
-        cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ?", (staff_id,))
+        cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?", (staff_id,ctx.guild.id))
         exists = await cursor.fetchone()
 
         if not exists:
             return discord.Embed(title="Staff Member Not Found", colour=0xf50000)
 
         await sdb.execute(
-            "INSERT INTO strikes (issued_by_id, issued_to_id, reason, date) VALUES (?, ?, ?, ?)",
-            (ctx.author.id, staff_id, reason, datetime.today().strftime("%d/%m/%Y"))
+            "INSERT INTO strikes (issued_by_id, issued_to_id, reason, date, guild_id) VALUES (?, ?, ?, ?, ?)",
+            (ctx.author.id, staff_id, reason, datetime.today().strftime("%d/%m/%Y"), ctx.guild.id)
         )
 
         await sdb.execute(
-            "UPDATE staffs SET strikes_count = strikes_count + 1 WHERE staff_id = ?",
-            (staff_id,)
+            "UPDATE staffs SET strikes_count = strikes_count + 1 WHERE staff_id = ? AND guild_id = ?",
+            (staff_id,ctx.guild.id)
         )
 
         await sdb.commit()
@@ -474,8 +479,8 @@ async def RemoveStrikeStaff(ctx: commands.Context, strike_id: str):
         target_id = int(strike_id)
 
         cursor = await sdb.execute(
-            "SELECT issued_to_id FROM strikes WHERE strike_id = ?",
-            (target_id,)
+            "SELECT issued_to_id FROM strikes WHERE strike_id = ? AND guild_id = ?",
+            (target_id,ctx.guild.id)
         )
         row = await cursor.fetchone()
 
@@ -497,9 +502,9 @@ async def RemoveStrikeStaff(ctx: commands.Context, strike_id: str):
                 WHEN strikes_count > 0 THEN strikes_count - 1 
                 ELSE 0 
             END
-            WHERE staff_id = ?
+            WHERE staff_id = ? AND guild_id = ?
             """,
-            (staff_id,)
+            (staff_id, ctx.guild.id)
         )
 
         await sdb.commit()
@@ -509,11 +514,11 @@ async def RemoveStrikeStaff(ctx: commands.Context, strike_id: str):
     except Exception as e:
         return mLily.SimpleEmbed(f"Exception: {e}", 'cross')
 
-async def ListStrikes(staff: discord.Member):
+async def ListStrikes(ctx: commands.Context, staff: discord.Member):
     try:
         async with sdb.execute(
-            "SELECT strike_id, reason, date, issued_by_id FROM strikes WHERE issued_to_id = ?",
-            (str(staff.id),)
+            "SELECT strike_id, reason, date, issued_by_id FROM strikes WHERE issued_to_id = ? AND guild_id = ?",
+            (str(staff.id),ctx.guild.id)
         ) as cursor:
             rows = await cursor.fetchall()
 
@@ -563,7 +568,7 @@ async def ListStrikes(staff: discord.Member):
             colour=0xf50000
         )
 
-async def AssignLoa(staff_id: str, reason: str, days: int):
+async def AssignLoa(ctx: commands.Context, staff_id: str, reason: str, days: int):
     try:
         await sdb.execute(
             """
@@ -577,9 +582,9 @@ async def AssignLoa(staff_id: str, reason: str, days: int):
             """
             UPDATE staffs
             SET on_loa = 1
-            WHERE staff_id = ?
+            WHERE staff_id = ? AND guild_id = ?
             """,
-            (staff_id,)
+            (staff_id,ctx.guild.id)
         )
 
         await sdb.commit()
@@ -589,15 +594,15 @@ async def AssignLoa(staff_id: str, reason: str, days: int):
         print(f"Error assigning LOA: {e}")
         return False
 
-async def RemoveLoa(staff_id: str):
+async def RemoveLoa(ctx: commands.Context, staff_id: str):
     try:
         await sdb.execute(
             """
             UPDATE staffs
             SET on_loa = 0
-            WHERE staff_id = ?
+            WHERE staff_id = ? AND guild_id = ?
             """,
-            (staff_id,)
+            (staff_id,ctx.guild.id)
         )
 
         await sdb.commit()
@@ -615,9 +620,9 @@ async def RequestLoa(ctx: commands.Context):
         await ctx.send("Opening LOA request modal...")
         await ctx.send_modal(LOAModal())
 
-async def AddRole(ctx: commands.Context, role: discord.Role, priority: int):
+async def AddRole(ctx: commands.Context, role: discord.Role, priority: int, ban_limit: int):
     try:
-        await sdb.execute("INSERT INTO roles VALUES (?, ?, ?, ?)", (role.id, role.name, priority, 0))
+        await sdb.execute("INSERT INTO roles VALUES (?, ?, ?, ?)", (role.id, role.name, priority, ban_limit))
         await sdb.commit()
         await mLily.SimpleEmbed(f"Successfully Added {role.name} to the List")
     except Exception as e:

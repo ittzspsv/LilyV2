@@ -6,6 +6,7 @@ from discord.ui import View, Button, Modal, TextInput
 import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
 import Values.sStockValueJSON as StockValueJSON
 import LilyForge.LilyForgeCore as LFC
+import LilyModeration.sLilyModeration as mLily
 
 def format_currency(val):
     value = int(val)
@@ -521,11 +522,7 @@ class ForgeSuggestorView(discord.ui.LayoutView):
 
         container_items = [
             discord.ui.TextDisplay(content="# Craft Suggester\n- Suggests best Crafts Based on your Inventory"),
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(
-                    media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png"
-                )
-            ),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.TextDisplay(content="## Items that you can Craft"),
         ]
 
@@ -533,11 +530,22 @@ class ForgeSuggestorView(discord.ui.LayoutView):
             if not item['available']:
                 continue
 
+            cls_name = item["cls"]["name"]
+            chance = item["chance"]
+            avg = item["avgMultiplier"]
+
+            total_count = sum(i['count'] for i in item["composition"])
+            comp_str = ", ".join(
+                f"{i['count']}× {LFC.ore_by_id[i['id']]['name']} ({i['count']/total_count*100:.1f}%)"
+                for i in item["composition"]
+            )
+
             if item["category"] == "Armor":
-                cls_name = item["cls"]["name"]
-                chance = item["chance"]
-                avg = item["avgMultiplier"]
-                comp_str = ", ".join(f"{i['count']}× {LFC.ore_by_id[i['id']]['name']}" for i in item["composition"])
+                armor_class_dict = next(
+                    (ac for ac in LFC.armor_classes if ac['id'] == item['cls']['id']),
+                    None
+                )
+                armor_icon = armor_class_dict["icon"] if armor_class_dict else "https://cdn.discordapp.com/attachments/1438505067341680690/1438505246472142902/cross.png"
 
                 hp = LFC.get_health_range_for_armor_class(item["cls"]["id"])
                 vitality = LFC.compute_vitality_bonus_for_composition_array(item["composition"], "Armor")
@@ -550,42 +558,90 @@ class ForgeSuggestorView(discord.ui.LayoutView):
                     f'- Traits : **{vitality:.2f}**\n'
                     f'- Use : **{comp_str}**'
                 )
-                container_items.append(discord.ui.TextDisplay(content=armor_text))
 
-                container_items.append(
-                    discord.ui.MediaGallery(
-                        discord.MediaGalleryItem(
-                            media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png"
-                        )
-                    )
-                )
+                container_items.append(discord.ui.Section(
+                    discord.ui.TextDisplay(content=armor_text),
+                    accessory=discord.ui.Thumbnail(media=armor_icon)
+                ))
 
             elif item["category"] == "Weapon":
-                cls_name = item["cls"]["name"]
-                chance = item["chance"]
-                avg = item["avgMultiplier"]
-                comp_str = ", ".join(f"{i['count']}× {LFC.ore_by_id[i['id']]['name']}" for i in item["composition"])
+                weapon_class_dict = next(
+                    (wc for wc in LFC.weapon_classes if wc['id'] == item['cls']['id']),
+                    None
+                )
+                weapon_icon = weapon_class_dict["icon"] if weapon_class_dict else "https://cdn.discordapp.com/attachments/1438505067341680690/1438505246472142902/cross.png"
 
-                dmg_range = LFC.get_damage_range_for_class(item["cls"]["id"], avg)
-                dmg_min = dmg_range["min"] if dmg_range else 0
-                dmg_max = dmg_range["max"] if dmg_range else 0
+                dmg_range = LFC.get_damage_range_for_class(item["cls"]["id"], avg) or {"min": 0, "max": 0, "minDps": 0, "maxDps": 0}
 
                 weapon_text = (
                     f'### {cls_name} {chance:.1f}% @ {item["count"]} ores – ~{avg:.2f}x multiplier\n'
-                    f'- Estimated Damage: **{dmg_min:.1f} - {dmg_max:.1f}**\n'
-                    f'- Use : **{comp_str}**'
+                    f'- Use: {comp_str}\n'
+                    f'- Estimated damage: **{dmg_range["min"]:.2f} – {dmg_range["max"]:.2f}** DMG\n'
+                    f'- DPS: **{dmg_range["minDps"]:.2f} – {dmg_range["maxDps"]:.2f}**'
                 )
-                container_items.append(discord.ui.TextDisplay(content=weapon_text))
 
-                container_items.append(
-                    discord.ui.MediaGallery(
-                        discord.MediaGalleryItem(
-                            media="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png"
-                        )
-                    )
-                )
+                container_items.append(discord.ui.Section(
+                    discord.ui.TextDisplay(content=weapon_text),
+                    accessory=discord.ui.Thumbnail(media=weapon_icon)
+                ))
+
+            container_items.append(discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small))
 
         container1 = discord.ui.Container(*container_items, accent_colour=discord.Colour(0xFFFFFF))
-
         self.add_item(container1)
-    
+        
+        
+class BanRequestView(discord.ui.View):
+    def __init__(self, request_initializer: discord.Member,user: discord.Member,reason: str, proofs: list):
+        super().__init__(timeout=None)
+        self.user = user
+        self.request_initializer = request_initializer
+        self.reason = reason
+        self.proofs = proofs
+        self.embeds_to_send = []
+
+        self.main_embed = discord.Embed(
+            title=f"{Configs.emoji['ban_hammer']} Ban Request",
+            url="https://discohook.app#gallery-G2oFSRb8",
+            color=16777215,
+        )
+        self.main_embed.add_field(name="Action Requested by", value=f"{self.request_initializer.mention}", inline=False)
+        self.main_embed.add_field(name="User", value=f"<@{self.user.id}>", inline=False)
+        self.main_embed.add_field(name="Reason", value=self.reason, inline=False)
+
+        if self.proofs:
+            self.main_embed.add_field(name=f"{Configs.emoji['logs']} Proofs", value="", inline=False)
+
+            first_proof = self.proofs[0]
+            if isinstance(first_proof, discord.Attachment):
+                self.main_embed.set_image(url=first_proof.url)
+            else:
+                self.main_embed.set_image(url=str(first_proof))
+
+            self.embeds_to_send.append(self.main_embed)
+            
+            for proof in self.proofs[1:]:
+                proof_embed = discord.Embed(url="https://discohook.app#gallery-G2oFSRb8")
+                if isinstance(proof, discord.Attachment):
+                    proof_embed.set_image(url=proof.url)
+                else:
+                    proof_embed.set_image(url=str(proof))
+                self.embeds_to_send.append(proof_embed)
+
+        else:
+            self.main_embed.add_field(
+                name=f"{Configs.emoji['logs']} Proofs",
+                value="No Proofs Provided",
+                inline=False
+            )
+            self.embeds_to_send.append(self.main_embed)
+
+    @discord.ui.button(label="Validate", style=discord.ButtonStyle.secondary)
+    async def validate(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        success = await mLily.ban_interaction_user(interaction, self.user, self.reason, self.proofs)
+
+        if success:
+            for child in self.children:
+                child.disabled = True
+            await interaction.message.edit(view=self)
