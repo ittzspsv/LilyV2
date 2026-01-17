@@ -155,7 +155,6 @@ async def is_valid_trade_format(message):
     except:
         return False
 
-
 async def is_valid_emoji_trade_format(message: str):
     try:
         message = message.lower().strip()

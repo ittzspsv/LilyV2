@@ -23,7 +23,7 @@ if port == 0:
     weather_fetch_channel_id_pvb = 1431687357555277995
 
 else:
-    appeal_server_link = "https://discord.gg/CycZg9UmyT"
+    appeal_server_link = "https://discord.gg/StcA9GaEUU"
 
     role_creation_limit = 1
 
@@ -74,7 +74,8 @@ emoji = {
     'music_author' : '<:MusicAuthor:1443189678269268019>',
     'music_folder' : '<:MusicFolder:1443189682077962312>',
     'music_playlist' : '<:MusicPlaylist:1443189686712537098>',
-    'coin' : '<:coin:1444123040538693662>'
+    'coin' : '<:coin:1444123040538693662>',
+    'verified' : '<:verified:1460394848761675828>'
 }
 
 img = {

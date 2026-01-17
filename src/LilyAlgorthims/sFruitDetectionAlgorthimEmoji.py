@@ -47,14 +47,17 @@ async def extract_fruits_emoji(message):
 
             matched_fruit = None
             matched_length = 0
-            for window in range(max_words, 0, -1):
+
+            for window in range(1, max_words + 1):
                 if i + window > len(words):
-                    continue
+                    break
+
                 candidate = ' '.join(words[i:i + window])
                 matched = await TFA.MatchFruitSet(candidate.lower(), fruit_set, alias_map)
+
                 if matched:
                     matched_fruit = matched.title()
-                    matched_length = len(candidate.split())
+                    matched_length = window
                     break
 
             if matched_fruit:

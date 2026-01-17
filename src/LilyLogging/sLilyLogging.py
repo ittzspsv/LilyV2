@@ -128,12 +128,81 @@ async def LogModerationAction(ctx: commands.Context,moderator_id: int,target_use
         main_embed.add_field(name=f"{Configs.emoji['logs']} Proofs", value="No Proofs Provided", inline=False)
         embeds_to_send.append(main_embed)
 
-    await channel.send(embeds=embeds_to_send)
-            
-async def PostLog(ctx: commands.Context, embed: discord.Embed):
-    channel = ctx.bot.get_channel(1325204537434312856)
+    await channel.send(content=f'<@{target_user_id}>', embeds=embeds_to_send)
 
-    if channel is None:
-        channel = await ctx.bot.fetch_channel(1325204537434312856)
+async def LogValueAction(ctx: commands.Context,triggered: discord.Member,value_dict: dict):
+    try:
+        cursor = await VC.cdb.execute(
+            """
+            SELECT logs_channel 
+            FROM ConfigData 
+            WHERE guild_id = ? 
+              AND logs_channel IS NOT NULL
+            """,
+            (ctx.guild.id,)
+        )
+        row = await cursor.fetchone()
+        await cursor.close()
 
-    await channel.send(embed=embed)
+        if not row or not row[0]:
+            return
+
+        channel = ctx.guild.get_channel(row[0])
+        if not channel:
+            return
+
+        embed = discord.Embed(
+            title="Value Update Information",
+            description=f"Updated by {triggered.mention}",
+            colour=0xFFFFFF
+        )
+
+        for key, value in value_dict.items():
+            modified_name = key.replace("_", " ").title()
+
+            if isinstance(value, (list, dict)):
+                value = f"```\n{value}\n```"
+            elif value is None:
+                value = "N/A"
+            else:
+                value = str(value)
+
+            embed.add_field(
+                name=modified_name,
+                value=value,
+                inline=False
+            )
+
+        embed.set_footer(
+            text=f"User ID: {triggered.id}"
+        )
+
+        await channel.send(content="Value Update Information Logging", embed=embed)
+
+    except Exception as e:
+        print(f"[LogValueAction ERROR] {e}")
+
+async def PostLog(ctx: commands.Context, embed: discord.Embed, log_type:str="Default Log Type"):
+    try:
+        cursor = await VC.cdb.execute(
+            """
+            SELECT logs_channel 
+            FROM ConfigData 
+            WHERE guild_id = ? 
+              AND logs_channel IS NOT NULL
+            """,
+            (ctx.guild.id,)
+        )
+        row = await cursor.fetchone()
+        await cursor.close()
+
+        if not row or not row[0]:
+            return
+
+        channel = ctx.guild.get_channel(row[0])
+        if not channel:
+            return
+
+        await channel.send(content=log_type, embed=embed)
+    except Exception as e:
+        print(f"EXCEPTION [POST LOG ERROR] {e}")

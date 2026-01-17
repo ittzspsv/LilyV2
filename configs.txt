@@ -1,0 +1,89 @@
+Role hierarchy determines the **order of authority** within the server.
+Members can only manage users and roles that are **below their highest assigned role**.
+
+---
+
+## 📌 General Roles
+*Essential roles for access, identity, and basic interaction.*
+
+• <@&1345555162802159637>
+• <@&1345555258314588170>
+• <@&1345555125841694721>
+• <@&1347960168377221210>
+
+---
+
+## 📈 Level Roles
+- *Progress-based roles earned through activity, engagement, or milestones.*
+
+### Base Levels
+• <@&1324893774543061054>
+• <@&1423968579644297227>
+• <@&1324893524184793130>
+• <@&1324886713302253608>
+• <@&1324886614349971617>
+### Unlocks **Media** and **GIF** permissions
+- <@&1324886522473746432>
+-  <@&1324886276775739402>
+### Unlocked Extra Giveaway Entries
+- <@&1405647169175949515> (1X Extra entry)
+- <@&1405655652084224202> (2X Extra entry)
+
+## ✨ Special Roles
+*Limited, achievement-based, or recognition roles with unique value.*
+## Skill-Based
+## <@&1429167433838498024>
+- Obtained by showcasing verified art skills
+## <@&1448547673962446909>
+- Obtained by being a **honorable staff** member of BloxTrade
+- Role will be removed, if you are not honourable to the server anymore (certain circumstances.)
+## Community Recognition
+### <@&1423673209261396028> &  <@&1423243812255436871>
+- Granted for being close with server administration or being a highly active chatter (Can be removed due to inactivity)
+
+## Other Special Roles
+## <@&971944769548849163>
+- Media Perms
+- 12X Giveaway Entries
+- Special Booster Giveaways
+- Special Booster Trading channels <#1431396634948014253>
+## <@&1324581159530664047>
+- Unlocked if your Social Media has 10k+ **User Interactions** (Followers, Subscribers) (Depends on Social Media)
+## <@&1333444259033911306>
+- Recognized within the Roblox trading community.
+- This role is awarded to users who have accumulated 1,000+ verified vouches or proofs and are trusted in at least two established communities (preferably with 20,000+ members, Non Botted Schema).
+- To apply, please open a ticket and submit the required proof for review here <#1335061608107348020>
+## <@&1406394061027409920>
+- Being administrator above in past making valuable contribution to server.
+- Providing valuable suggestions which actually get implemented in server.
+- Contributing in server moderation with reporting 200+ scammers via tickets
+- Hosting giveaway with higher value/gamepasses.
+## <@&1430570784308461619>
+- Role given to trusted peoples (specifically selected) who can host giveaways to the server
+## <@&1454884764497608849>
+- Role given to the best performing staff of the week!
+
+## ⚒️ Staff Roles
+- **Roles responsible for moderation**
+
+<@&1431433056098713611>
+<@&1431449470620663869>
+<@&1431450009555042474>
+<@&1431450203994591234>
+<@&1448513968296431626>
+<@&1431451192160026786>
+
+## 🛡️ Management Roles
+- **Roles responsible for enforcement and server management.**
+<@&1431451555973959731>
+<@&1431980481532002334>
+
+
+## 👑 Higher Order Roles
+## <@&1431978067336892426>
+- Owner  / Developers of <@1240222509811499050>
+- Maintains the bot.
+## <@&1431698305783562240>
+- Non-Owner Holding Permissions to improve the server and support staff team and management team
+## <@&1431400219085639763>
+- Owners who hold the complete authority of the server

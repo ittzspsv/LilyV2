@@ -310,23 +310,29 @@ async def MessageEvaluate(bot, message):
                             their_fruit_details = ""
 
                             for i in range(len(your_fruits)):
-                                fruit_name = your_fruits[i].replace(" ", "")
+                                fruit_name = your_fruits[i].replace(" ", "").replace("-", "")
                                 fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
                                 beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+                                perm_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == "perm"), "🔒")
 
                                 value = data['Your_IndividualValues'][i]
                                 formatted_value = f"{value:,}"
-                                your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+                                if your_fruit_types[i].lower() == "permanent":
+                                    your_fruit_details += f"- {perm_emoji}{fruit_emoji} {beli_emoji} {formatted_value}\n"
+                                else:
+                                    your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
 
                             for i in range(len(their_fruits)):
-                                fruit_name = their_fruits[i].replace(" ", "")
+                                fruit_name = their_fruits[i].replace(" ", "").replace("-", "")
                                 fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
                                 beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
 
                                 value = data['Their_IndividualValues'][i]
                                 formatted_value = f"{value:,}"
-                                their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
-
+                                if their_fruits_types[i].lower() == "permanent":
+                                    their_fruit_details += f"- {perm_emoji}{fruit_emoji} {beli_emoji} {formatted_value}\n"
+                                else:
+                                    their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
                             embed = discord.Embed(title=data['TradeConclusion'],
                                 description=f"**{data['TradeDescription']}**",
                                 colour=data['ColorKey'])
@@ -440,9 +446,9 @@ async def MessageEvaluate(bot, message):
                             await status_msg.edit(content=None, embed=embed)
 
         elif await TFA.is_valid_trade_suggestor_format(message.content.lower()):
-            cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
-            crow = await cursor1.fetchall()
-            config_rows = (crow[0][0], crow[1][0])
+            cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage')")
+            crow = await cursor1.fetchone()
+            
             msg = re.sub(r"(for\b.*?\b)nlf\b", r"\1", message.content.lower())
             your_fruits1, your_fruit_types1, neglect_fruits, _ = await FDA.extract_trade_details(msg)
             ctx = await bot.get_context(message)
@@ -467,7 +473,7 @@ async def MessageEvaluate(bot, message):
                 return
             
             
-            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, neglect_fruits, config_rows[0])
+            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, neglect_fruits, int(crow[0]))
             await message.reply(view=view)
 
         elif await TFA.is_valid_trade_suggestor_format_emoji(message.content):

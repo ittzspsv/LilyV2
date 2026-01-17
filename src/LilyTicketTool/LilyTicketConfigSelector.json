@@ -53,7 +53,7 @@
             "LogChannel": 1449918663632355499
         },
         "TicketType" : ["Selector", "Report an Member : <:member:1438045591098753104>", "Claim Giveaway : <:gift:1438045585570791555>", "Server Issues : <:bot:1438504383397494896>"],
-        "Channel_To_Spawn" : 1450587693468614776,
+        "Channel_To_Spawn" : 1457780921817235631,
         "ModeratorRoles" : [1431433056098713611], 
         "StaffManagerRoles" : [1431980481532002334, 1431451555973959731, 1431978067336892426]
     },

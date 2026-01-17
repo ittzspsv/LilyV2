@@ -8,6 +8,7 @@ import re
 
 import Combo.LilyComboManager as LCM
 import Misc.sLilyComponentV2 as CV2
+import LilyLogging.sLilyLogging as LilyLogging
 
 import ui.sComboImageGenerator as CIG
 import Config.sValueConfig as VC
@@ -57,6 +58,7 @@ class LilyBloxFruits(commands.Cog):
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('ValueTeam', 'Developer')))
     @commands.hybrid_command(name='update_bf_value', description='updates an value of an item in blox fruits')
     async def UpdateValue(self, ctx: commands.Context,name: str,physical_value: str = None,permanent_value: str = None,physical_demand: str = None,permanent_demand: str = None,demand_type: str = None,permanent_demand_type: str = None,category: str = None,aliases: str = None,icon_url: str = None):
+        await ctx.defer()
         def parse_number(value):
             if value is None:
                 return None
@@ -101,6 +103,20 @@ class LilyBloxFruits(commands.Cog):
                 "icon_url": icon_url if icon_url is not None else current_values["icon_url"],
             }
 
+            updated_only = {
+                "physical_value": physical_value,
+                "permanent_value": permanent_value,
+                "physical_demand": physical_demand,
+                "permanent_demand": permanent_demand,
+                "demand_type": demand_type,
+                "permanent_demand_type": permanent_demand_type,
+                "category": category,
+                "aliases": aliases_json,
+                "icon_url": icon_url,
+            }
+
+            updated_only = {k: v for k, v in updated_only.items() if v is not None}
+
             set_clause = ", ".join([f"{col} = ?" for col in update_values])
             values = list(update_values.values())
             values.append(name)
@@ -108,6 +124,8 @@ class LilyBloxFruits(commands.Cog):
             query = f"UPDATE BF_ItemValues SET {set_clause} WHERE name = ?"
             await VC.vdb.execute(query, values)
             await VC.vdb.commit()
+
+            await LilyLogging.LogValueAction(ctx, ctx.author, updated_only)
 
             await ctx.send(f"Item {name} updated successfully.")
         except Exception as e:

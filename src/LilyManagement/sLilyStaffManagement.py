@@ -1,6 +1,7 @@
 import discord
 import aiosqlite
 import asyncio
+from ast import literal_eval
 import Config.sBotDetails as Configs
 import LilyModeration.sLilyModeration as mLily
 
@@ -142,6 +143,34 @@ async def GetBanRoles():
         return [row[0] for row in rows]
     except:
         return []
+
+async def GetAssignableRoles(roles):
+    global sdb
+
+    highest_allotment = None
+    highest_position = -1
+
+    for role in roles:
+        try:
+            cursor = await sdb.execute(
+                "SELECT manage_role_allowances FROM roles WHERE role_id = ?",
+                (role.id,)
+            )
+            row = await cursor.fetchone()
+            await cursor.close()
+
+            if row and row[0]:
+                role_allotment = literal_eval(row[0])
+                if role_allotment:
+                    if role.position > highest_position:
+                        highest_position = role.position
+                        highest_allotment = role_allotment
+
+        except Exception as e:
+            print(f"Exception [GetAssignableRoles] for role {role.id}:", e)
+            continue
+
+    return highest_allotment or {}
 
 async def run_query(ctx: commands.Context, query: str):
     try:

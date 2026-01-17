@@ -285,7 +285,7 @@ async def CreateLeaderBoardCard(rank_dict=[]):
                 row = (index - 1) // GRID_COLS
                 AVATAR_POS = (START_X + col * GAP_X, START_Y + row * GAP_Y)
 
-            if member:
+            if member and member.avatar:
                 avatar_asset = member.avatar.replace(format="png", size=256)
                 avatar_bytes = await avatar_asset.read()
                 avatar = Image.open(io.BytesIO(avatar_bytes)).convert("RGBA")

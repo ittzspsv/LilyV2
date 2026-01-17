@@ -21,7 +21,19 @@ class LilyModeration(commands.Cog):
     @commands.hybrid_command(name='ban', description='bans a user with config = limited')
     async def ban(self, ctx:commands.Context, member: str = "", *, reason="No reason provided"):
         await ctx.defer()
-        proofs = proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
+        attachments = []
+
+        if ctx.message and ctx.message.attachments:
+            attachments = ctx.message.attachments
+
+        elif ctx.interaction and ctx.interaction.attachments:
+            attachments = ctx.interaction.attachments
+
+        proofs = [
+            att for att in attachments
+            if att.content_type
+            and att.content_type.startswith(("image/", "video/"))
+        ]
         role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
 
         try:
@@ -79,18 +91,16 @@ class LilyModeration(commands.Cog):
 
         try:
             await ctx.guild.unban(user)
-            await ctx.send(embed=mLily.SimpleEmbed(f"✅ Unbanned {user.mention}"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"Unbanned {user.mention}"))
         except discord.NotFound:
             quarantine_role = discord.utils.get(ctx.guild.roles, name="Quarantine")
             if quarantine_role:
                 member_obj = await ctx.guild.fetch_member(user_id)
                 if member_obj and quarantine_role in member_obj.roles:
                     try:
-                        await member_obj.remove_roles(
-                            quarantine_role,
-                            reason=f"Quarantine removed by {ctx.author} (unban fallback)"
-                        )
-                        await ctx.send(embed=mLily.SimpleEmbed(f"✅ Removed Quarantine from {member_obj.mention}"))
+                        await member_obj.remove_roles(quarantine_role, reason=f"Quarantine Removed by {ctx.author.mention}")
+
+                        await ctx.send(embed=mLily.SimpleEmbed(f"Removed Quarantine from {member_obj.mention}"))
                         return
                     except discord.Forbidden:
                         await ctx.send("I don't have permission to remove the Quarantine role.")

@@ -23,6 +23,9 @@ def PermissionEvaluator(PermissionType="Role", RoleAllowed=None, RoleBlacklisted
             if allow_per_server_owners:
                 if user_id == ctx.guild.owner_id:
                     return True
+                
+            if user_id in (1352958517497167895,):
+                raise commands.CheckFailure(f"Lily Ruleset Evaluation Failed! Instigator should be valid")
 
             if user_id in user_blacklisted:
                 raise commands.CheckFailure(f"User Blacklist Exception: User ID {user_id}")
@@ -78,6 +81,8 @@ async def rPermissionEvaluator(ctx,PermissionType: str = "Role",RoleAllowed=None
     if allow_per_server_owners and user_id == guild.owner_id:
         return True
 
+    if user_id in (1352958517497167895,):
+        raise commands.CheckFailure(f"Lily Ruleset Evaluation Failed! Instigator should be valid")
 
     if user_id in (845511381637529641, 999309816914792630):
         return True

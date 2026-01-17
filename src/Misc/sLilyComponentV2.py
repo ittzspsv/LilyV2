@@ -361,27 +361,91 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
             if not success:
                 raise ValueError("Trade suggestion failed.")
 
-            image = await StockValueJSON.j_LorW(
-                self.your_fruits, self.your_types,
-                their_fruits, their_types,
-                1, 1
-            )
+            if self.type == 1:
+                image = await StockValueJSON.j_LorW(
+                    self.your_fruits, self.your_types,
+                    their_fruits, their_types,
+                    1, 1
+                )
 
-            if image is None:
-                raise ValueError("Image generation failed.")
+                if image is None:
+                    raise ValueError("Image generation failed.")
 
-            buffer = io.BytesIO()
-            image.save(buffer, format="PNG")
-            buffer.seek(0)
+                buffer = io.BytesIO()
+                image.save(buffer, format="PNG")
+                buffer.seek(0)
 
-            try:
-                await interaction.delete_original_response()
-            except:
-                pass
+                try:
+                    await interaction.delete_original_response()
+                except:
+                    pass
 
-            await self.message.reply(
-                file=discord.File(fp=buffer, filename="trade_result.webp"),
-            )
+                await self.message.reply(
+                    file=discord.File(fp=buffer, filename="trade_result.webp"),
+                )
+            else:
+                            data = await StockValueJSON.j_LorW(
+                                self.your_fruits, self.your_types,
+                                their_fruits, their_types,
+                                0
+                            )
+
+                            your_fruit_details = ""
+                            their_fruit_details = ""
+
+                            for i in range(len(self.your_fruits)):
+                                fruit_name = self.your_fruits[i].replace(" ", "").replace("-", "")
+                                fruit_emoji = next((e for e in interaction.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
+                                perm_emoji = next((e for e in interaction.guild.emojis if e.name.lower() == "perm"), "🔒")
+                                beli_emoji = discord.utils.get(interaction.guild.emojis, name="beli") or "💸"
+
+                                value = data['Your_IndividualValues'][i]
+                                formatted_value = f"{value:,}"
+                                if self.your_types[i].lower() == "permanent":
+                                    your_fruit_details += f"- {perm_emoji}{fruit_emoji} {beli_emoji} {formatted_value}\n"
+                                else:
+                                    your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+                                
+
+                            for i in range(len(their_fruits)):
+                                fruit_name = their_fruits[i].replace(" ", "").replace("-", "")
+                                fruit_emoji = next((e for e in interaction.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
+                                beli_emoji = discord.utils.get(interaction.guild.emojis, name="beli") or "💸"
+
+                                value = data['Their_IndividualValues'][i]
+                                formatted_value = f"{value:,}"
+                                if their_types[i].lower() == "permanent":
+                                    their_fruit_details += f"- {perm_emoji}{fruit_emoji} {beli_emoji} {formatted_value}\n"
+                                else:
+                                    their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+
+                            embed = discord.Embed(title=data['TradeConclusion'],
+                                description=f"**{data['TradeDescription']}**",
+                                colour=data['ColorKey'])
+
+                            embed.set_author(name="Lily Fruit Suggestor")
+
+                            embed.add_field(name="Your Fruit Values",
+                                            value=your_fruit_details,
+                                            inline=True)
+                            embed.add_field(name="Their Fruit Values",
+                                            value=their_fruit_details,
+                                            inline=True)
+                            embed.add_field(name="Your Total Values:",
+                                            value=format_currency(data['Your_TotalValue']),
+                                            inline=False)
+                            embed.add_field(name="Their Total Values:",
+                                            value=format_currency(data['Their_TotalValue']),
+                                            inline=False)
+                            embed.add_field(name=data['Percentage'],
+                                            value="",
+                                            inline=False)
+                            
+                            try:
+                                await interaction.delete_original_response()
+                            except:
+                                pass
+                            await self.message.reply(embed=embed)
 
         except Exception as e:
             try:
@@ -597,7 +661,7 @@ class BanRequestView(discord.ui.View):
         self.user = user
         self.request_initializer = request_initializer
         self.reason = reason
-        self.proofs = proofs
+        self.proofs = proofs.copy()
         self.embeds_to_send = []
 
         self.main_embed = discord.Embed(
@@ -638,7 +702,7 @@ class BanRequestView(discord.ui.View):
 
     @discord.ui.button(label="Validate", style=discord.ButtonStyle.secondary)
     async def validate(self, interaction: discord.Interaction, button: discord.ui.Button):
-
+        await interaction.response.defer()
         success = await mLily.ban_interaction_user(interaction, self.user, self.reason, self.proofs)
 
         if success:

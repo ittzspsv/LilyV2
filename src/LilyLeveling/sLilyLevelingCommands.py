@@ -1,16 +1,20 @@
-from discord.ext import commands
-import random
+from discord.ext import commands, tasks
+from enum import Enum
 import discord
+from datetime import timedelta
 import LilyLeveling.sLilyLevelingCore as LilyLevelCore
 import LilyManagement.sLilyStaffManagement as LSM
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
 import os
 import json
+import asyncio
+import Config.sValueConfig as VC
 
 
 class LilyLeveling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.message_reset_schedular.start()
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='level', description='Get Your Current leveling info')
@@ -58,15 +62,56 @@ class LilyLeveling(commands.Cog):
         except Exception as e:
             await ctx.send(f"Exception  {e}")
 
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
-    @commands.hybrid_command(name='leaderboard', description='Show Top 10 Leaderboard')
-    async def leaderboard(self, ctx: commands.Context):
-         await ctx.defer()
-         await LilyLevelCore.FetchLeaderBoard(ctx)
 
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
-    @commands.hybrid_command(name='daily', description='daily bonus coins')
-    async def daily(self, ctx: commands.Context):
-         await LilyLevelCore.daily(ctx)
+    class LeaderboardType(str, Enum):
+        Total = "Total"
+        Weekly = "Weekly"
+        Daily = "Daily"
+        Levels = "Levels"
+
+
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.guild)
+    @commands.hybrid_command(name='leaderboard', description='Show Top 10 Leaderboard')
+    async def leaderboard(self, ctx: commands.Context, type: LeaderboardType):
+         await ctx.defer()
+         await LilyLevelCore.FetchLeaderBoard(ctx, type.value)
+
+    async def daily_callback(self):
+        if LilyLevelCore.ldb is None:
+            return
+        await LilyLevelCore.ldb.execute("UPDATE message_counts SET daily = 0")
+
+    async def weekly_callback(self):
+        if LilyLevelCore.ldb is None:
+            return
+        await LilyLevelCore.ldb.execute("UPDATE message_counts SET weekly = 0")
+
+    @tasks.loop(minutes=5)
+    async def message_reset_schedular(self):
+        if LilyLevelCore.ldb is None:
+            return
+        now = LilyLevelCore.utcnow()
+        cursor = await LilyLevelCore.ldb.execute("SELECT next_day_update, next_week_update FROM updates")
+        row = await cursor.fetchone()
+        if not row:
+             return
+        
+        next_day, next_week = map(LilyLevelCore.parse, row)
+        if next_day and now >= next_day:
+            await self.daily_callback()
+            await LilyLevelCore.ldb.execute(
+                "UPDATE updates SET next_day_update = ?",
+                (LilyLevelCore.iso(now + timedelta(days=1)),)
+            )
+
+        if next_week and now >= next_week:
+            await self.weekly_callback()
+            await LilyLevelCore.ldb.execute(
+                "UPDATE updates SET next_week_update = ?",
+                (LilyLevelCore.iso(now + timedelta(days=7)),)
+            )
+
+        await LilyLevelCore.ldb.commit()
+         
 async def setup(bot):
     await bot.add_cog(LilyLeveling(bot))

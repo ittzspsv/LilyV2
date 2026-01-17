@@ -1,11 +1,119 @@
 [
     {
-        "channel_id": 1458532550803849216,
-        "message_id": 1458848702306451486,
+        "channel_id": 1457780921817235631,
+        "message_id": 1459218385098375382,
         "config": {
             "BasicConfigurations": {
-                "TicketPanelSpawnChannel": 1458532550803849216,
-                "TicketLoggingHandler": 1449918663632355499
+                "TicketPanelSpawnChannel": 1457780921817235631,
+                "TicketLoggingHandler": 1438525910750855300
+            },
+            "EmbedConfigs": {
+                "TicketPanelEmbed": {
+                    "embeds": [
+                        {
+                            "title": "<:ticket:1438584946997592114> BloxTrade Support Ticket",
+                            "color": 16777215,
+                            "description": "- If you are seeking out for any support from our side Please open  an ticket.",
+                            "footer": {
+                                "text": "Lily Ticketing"
+                            },
+                            "thumbnail": {
+                                "url": "https://media.discordapp.net/attachments/1438505067341680690/1438505245625024512/logs.png?ex=6921abe8&is=69205a68&hm=54821ef6720a0816a70e3d55232f67bde2da6e2dcc9c55a0468a1e2a330cc68b&=&format=webp&quality=lossless"
+                            },
+                            "fields": [
+                                {
+                                    "name": "<:member:1438045591098753104> Member Report",
+                                    "value": "- To Report any members"
+                                },
+                                {
+                                    "name": "<:gift:1438045585570791555> Claim Giveaway",
+                                    "value": "- If you won an giveaway and willing to claim it"
+                                },
+                                {
+                                    "name": "<:bot:1438504383397494896> Server-Issue Ticket",
+                                    "value": "- If you face any issues on our server"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "TicketChannelSpawnEmbed": {
+                    "embeds": [
+                        {
+                            "description": "Our Staff-Team will look into it as soon as possible.",
+                            "title": "<:arrow:1438045578721493062> Thanks for Creating the ticket!",
+                            "color": 16777215,
+                            "image": {
+                                "url": "https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=69172232&is=6915d0b2&hm=6fc4724fb6fb44c83c8fb82425f287c19c762d161ff882420f69abaaf725ad3a&"
+                            },
+                            "fields": [
+                                {
+                                    "name": "<:bookmark:1438048772939583571> General Informations",
+                                    "value": "- While waiting for staff to arrive, please provide all relevant information or proof you have.\n- Our staff usually responds within 30 minutes.\n- Clearly explain your issue so the staff can understand it better!"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "RoleInformation": {
+                "SupportStaffRole": [
+                    1431433056098713611
+                ]
+            },
+            "TicketType": [
+                "Selector",
+                "Report an Member : <:member:1438045591098753104>",
+                "Claim Giveaway : <:gift:1438045585570791555>",
+                "Server Issues : <:bot:1438504383397494896>",
+                "Host Giveaway : <:gift:1438045585570791555>"
+            ],
+            "Modal": [
+                {
+                    "fields": {
+                        "Discord ID | Username of that Member": 600,
+                        "Please explain what he did": 600
+                    },
+                    "channel_id": 1458145917420179652,
+                    "view_pannel_spawn_id": 1458151873138786486,
+                    "ticket_base_name": "member_report"
+                },
+                {
+                    "fields": {
+                        "Mention the giveaway": 200
+                    },
+                    "channel_id": 1458145917420179652,
+                    "view_pannel_spawn_id": 1458151930940489739,
+                    "ticket_base_name": "giveaway_claim"
+                },
+                {
+                    "fields": {
+                        "Mention the Server issue": 1000
+                    },
+                    "channel_id": 1458145917420179652,
+                    "view_pannel_spawn_id": 1458151983939584131,
+                    "ticket_base_name": "server_issue"
+                },
+                {
+                    "fields": {
+                        "Mention the item name": 500,
+                        "Any requirments?": 500
+                    },
+                    "channel_id": 1458145917420179652,
+                    "view_pannel_spawn_id": 1458151930940489739,
+                    "ticket_base_name": "giveaway_host"
+                }
+            ]
+        },
+        "guild_id": 1356198968962449478
+    },
+    {
+        "channel_id": 1457780921817235631,
+        "message_id": 1459212441765286118,
+        "config": {
+            "BasicConfigurations": {
+                "TicketPanelSpawnChannel": 1457780921817235631,
+                "TicketLoggingHandler": 1438525910750855300
             },
             "EmbedConfigs": {
                 "TicketPanelEmbed": {
@@ -88,8 +196,8 @@
                         "Discord ID | Username of that Member": 600,
                         "Please explain what he did": 600
                     },
-                    "channel_id": 1458531621014601738,
-                    "view_pannel_spawn_id": 1458526388947648613,
+                    "channel_id": 1458145917420179652,
+                    "view_pannel_spawn_id": 1458151873138786486,
                     "ticket_base_name": "member_report",
                     "file_upload": true
                 },
@@ -108,8 +216,7 @@
                     },
                     "channel_id": 1458531621014601738,
                     "view_pannel_spawn_id": 1458527279453044760,
-                    "ticket_base_name": "server_issue",
-                    "file_upload": false
+                    "ticket_base_name": "server_issue"
                 },
                 {
                     "fields": {
@@ -118,8 +225,7 @@
                     },
                     "channel_id": 1458531621014601738,
                     "view_pannel_spawn_id": 1458527872154210417,
-                    "ticket_base_name": "giveaway_host",
-                    "file_upload": false
+                    "ticket_base_name": "giveaway_host"
                 },
                 {
                     "fields": {
@@ -128,8 +234,7 @@
                     },
                     "channel_id": 1458531621014601738,
                     "view_pannel_spawn_id": 1458528231840944315,
-                    "ticket_base_name": "event_host",
-                    "file_upload": false
+                    "ticket_base_name": "event_host"
                 },
                 {
                     "fields": {
@@ -137,11 +242,10 @@
                     },
                     "channel_id": 1458531621014601738,
                     "view_pannel_spawn_id": 1458530538582184047,
-                    "ticket_base_name": "event_enquiry",
-                    "file_upload": false
+                    "ticket_base_name": "event_enquiry"
                 }
             ]
         },
-        "guild_id": 970643838047760384
+        "guild_id": 1356198968962449478
     }
 ]

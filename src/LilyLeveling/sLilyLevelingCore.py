@@ -7,7 +7,7 @@ import ui.sProfileCardGenerator as PCG
 import discord
 import Config.sBotDetails as BotConfig
 from discord.ext import commands
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import Misc.sLilyEmbed as LE
 
 ldb = None
@@ -58,6 +58,20 @@ def ShortNumber(val):
         return f"{value / 1_000:.1f}k"
     else:
         return str(value)
+
+
+UTC = timezone.utc
+
+def utcnow():
+    return datetime.now(UTC)
+
+def parse(ts: str | None):
+    if not ts:
+        return None
+    return datetime.fromisoformat(ts)
+
+def iso(dt: datetime):
+    return dt.astimezone(UTC).replace(microsecond=0).isoformat()
 
 async def LevelProcessor(message: discord.Message):
     if message.author.bot:
@@ -235,37 +249,63 @@ async def FetchProfileDetails(ctx: commands.Context, member: discord.Member = No
         )
         print(e)
 
-async def FetchLeaderBoard(ctx: commands.Context):
-    cursor = await ldb.execute(
-        "SELECT User_ID FROM levels WHERE Guild_ID = ? ORDER BY Current_Level DESC LIMIT 10",
-        (ctx.guild.id,)
-    )
-    rows = await cursor.fetchall()
+async def FetchLeaderBoard(ctx: commands.Context, type: str):
+    try:
+        val = type.lower()
 
-    if not rows:
-        await ctx.reply(
-            embed=mLily.SimpleEmbed(
-                'Error Fetching Leaderboard!',
-                'cross'
-            )
+        if val == 'levels':
+            cursor = await ldb.execute(
+            "SELECT user_id FROM levels WHERE guild_id = ? ORDER BY current_level DESC LIMIT 10",
+            (str(ctx.guild.id),)
         )
-        return
+        elif val == 'total':
+            cursor = await ldb.execute(
+            "SELECT User_ID FROM message_counts WHERE guild_id = ? ORDER BY total DESC LIMIT 10",
+            (str(ctx.guild.id),)
+        )
+        elif val == 'daily':
+            cursor = await ldb.execute(
+            "SELECT User_ID FROM message_counts WHERE guild_id = ? ORDER BY daily DESC LIMIT 10",
+            (str(ctx.guild.id),)
+        )
+        elif val == 'weekly':
+            cursor = await ldb.execute(
+            "SELECT User_ID FROM message_counts WHERE guild_id = ? ORDER BY weekly DESC LIMIT 10",
+            (str(ctx.guild.id),)
+        )
+        rows = await cursor.fetchall()
+        await cursor.close()
 
-    rank_list = []
-    for row in rows:
-        user_id = row[0]
-        user_member = ctx.guild.get_member(user_id)
-        if not user_member:
-            try:
-                user_member = await ctx.guild.fetch_member(user_id)
-            except discord.NotFound:
-                continue
-        name = re.sub(r'[^A-Za-z ]+', '', user_member.name)
-        rank_list.append({'name': user_member.name, 'member': user_member})
+        if not rows:
+            await ctx.reply(embed=mLily.SimpleEmbed('Error Fetching Leaderboard!', 'cross'))
+            return
 
-    final_buffer = await PCG.CreateLeaderBoardCard(rank_list)
-    file = discord.File(final_buffer, filename="profile_card.png")
-    await ctx.reply(file=file)
+        rank_list = []
+        for row in rows:
+            user_id = row[0]
+            user_member = ctx.guild.get_member(user_id)
+
+            if not user_member:
+                try:
+                    user_member = await ctx.guild.fetch_member(user_id)
+                    await asyncio.sleep(0.5)
+                except discord.NotFound:
+                    continue
+
+            name = getattr(user_member, "name", None) or str(user_id)
+            clean_name = re.sub(r'[^A-Za-z ]+', '', name)
+            rank_list.append({'name': clean_name, 'member': user_member})
+
+        if not rank_list:
+            await ctx.reply(embed=mLily.SimpleEmbed('No valid members found!', 'cross'))
+            return
+
+        final_buffer = await PCG.CreateLeaderBoardCard(rank_list)
+        file = discord.File(final_buffer, filename="profile_card.png")
+        await ctx.reply(file=file)
+
+    except Exception as e:
+        print(f"Exception [LEADERBOARD FETCH] {e}")
 
 async def _exp_background_worker():
     global exp_worker_running
@@ -273,10 +313,14 @@ async def _exp_background_worker():
 
     MAX_LEVEL = config.get("Max_Level", 1000)
     MAX_SQLITE_INT = 9223372036854775807
+    BASE_MAX_EXP = 100
+    EXP_INCREMENT = 50 
+    EXP_MULTIPLIER = 1.05
+    COINS_BASE = config.get("coins_minimum", 10)
 
     while not exp_queue.empty():
-        queue_msg, exp = await exp_queue.get()
-        updates = {(queue_msg.guild.id, queue_msg.author.id): exp}
+        queue_msg, exp_gain = await exp_queue.get()
+        updates = {(queue_msg.guild.id, queue_msg.author.id): exp_gain}
 
         await asyncio.sleep(0.05)
 
@@ -285,7 +329,7 @@ async def _exp_background_worker():
             key = (q_msg.guild.id, q_msg.author.id)
             updates[key] = updates.get(key, 0) + q_exp
 
-        for (guild_id, user_id), exp_gain in updates.items():
+        for (guild_id, user_id), exp_total in updates.items():
             cursor = await ldb.execute("""
                 SELECT Current_Level, Level_Exp, Max_Level_Exp, Coins
                 FROM levels
@@ -296,22 +340,24 @@ async def _exp_background_worker():
             if row:
                 level, exp_now, max_exp, coins = row
             else:
-                level, exp_now, max_exp, coins = 0, 0, 100, 1000
+                level, exp_now, max_exp, coins = 0, 0, BASE_MAX_EXP, 1000
                 await ldb.execute("""
                     INSERT INTO levels (Guild_ID, User_ID, Current_Level, Level_Exp, Max_Level_Exp, Coins)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """, (guild_id, user_id, level, exp_now, max_exp, coins))
 
-            exp_now += exp_gain
+            exp_now += exp_total + (0.1 * level)
 
             while exp_now >= max_exp and level < MAX_LEVEL:
                 exp_now -= max_exp
                 level += 1
-                max_exp = int(max_exp * config['Exp_Multiplier'])
+
+                max_exp = int(max_exp * EXP_MULTIPLIER + EXP_INCREMENT)
+
                 if max_exp > MAX_SQLITE_INT:
                     max_exp = MAX_SQLITE_INT
-                    break
-                coins += int(config['coins_minimum'] * (1 + (level * 0.1)))
+
+                coins += int(COINS_BASE * (1 + (level * 0.1)))
 
             if level >= MAX_LEVEL:
                 exp_now = min(exp_now, max_exp)
@@ -322,74 +368,10 @@ async def _exp_background_worker():
                 WHERE Guild_ID = ? AND User_ID = ?
             """, (level, exp_now, max_exp, coins, guild_id, user_id))
 
-            guild_config = config.get("Guilds", {}).get(str(guild_id))
-            if guild_config:
-                member = queue_msg.guild.get_member(user_id)
-                if member:
-                    for role_id, required_level in guild_config.items():
-                        if int(required_level) == level:
-                            role = queue_msg.guild.get_role(int(role_id))
-                            if role and role not in member.roles:
-                                try:
-                                    await member.add_roles(role, reason="Level-up reward")
-                                except Exception as e:
-                                    print("Role assign failed:", e)
-
         await ldb.commit()
 
     exp_worker_running = False
 
-async def daily(ctx: commands.Context):
-    try:
-        async with ldb.execute("SELECT daily_claim FROM profile WHERE user_id = ?", (ctx.author.id,)) as cursor:
-            row = await cursor.fetchone()
-            now = datetime.utcnow()
-
-            if row and row[0]:
-                last_claim_str = row[0]
-                last_claim = datetime.fromisoformat(last_claim_str)
-                delta = now - last_claim
-                if delta.total_seconds() < 86400:
-                    remaining = 86400 - delta.total_seconds()
-                    hours = int(remaining // 3600)
-                    minutes = int((remaining % 3600) // 60)
-                    embed = discord.Embed(
-                        color=16777215,
-                        description=f"You already claimed today! Try again in {hours}h {minutes}m.",
-                    )
-                    await ctx.send(embed=embed)
-                    return
-
-            async with ldb.execute("SELECT current_level, coins FROM levels WHERE user_id = ? AND guild_id = ?", 
-                                (ctx.author.id, str(ctx.guild.id))) as cursor:
-                level_row = await cursor.fetchone()
-
-            level = level_row[0] if level_row else 0
-            coins_current = level_row[1] if level_row else 0
-
-            coins_reward = int(config['coins_minimum'] * (1 + level * 0.1))
-
-            if level_row:
-                await ldb.execute("UPDATE levels SET coins = coins + ? WHERE user_id = ? AND guild_id = ?",
-                                (coins_reward, ctx.author.id, str(ctx.guild.id)))
-            else:
-                await ldb.execute("INSERT INTO levels (user_id, guild_id, coins) VALUES (?, ?, ?)",
-                                (ctx.author.id, str(ctx.guild.id), coins_reward))
-
-            if row:
-                await ldb.execute("UPDATE profile SET daily_claim = ? WHERE user_id = ?", (now.isoformat(), ctx.author.id))
-            else:
-                await ldb.execute("INSERT INTO profile (user_id, daily_claim) VALUES (?, ?)", (ctx.author.id, now.isoformat()))
-
-            await ldb.commit()
-            embed = discord.Embed(
-                color=16777215,
-                description=f"{BotConfig.emoji['coin']} Here is your daily **{coins_reward} coins** today!",
-            )
-            await ctx.send(embed=embed)
-    except Exception as e:
-        print(e)
-    
 async def _message_count_worker():
     global message_worker_running
     message_worker_running = True
@@ -401,53 +383,29 @@ async def _message_count_worker():
         key = (queue_msg.guild.id, queue_msg.author.id)
         updates[key] = max(updates.get(key, 0), timestamp)
 
-        while not message_count_queue.empty():
-            q_msg, q_ts = await message_count_queue.get()
+        while True:
+            try:
+                q_msg, q_ts = message_count_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
             key = (q_msg.guild.id, q_msg.author.id)
             updates[key] = max(updates.get(key, 0), q_ts)
 
         for (guild_id, user_id), ts in updates.items():
-            now = datetime.utcfromtimestamp(ts)
-            today_start = datetime(now.year, now.month, now.day)
-            week_start = today_start - timedelta(days=now.weekday())
-            now_ts = int(now.timestamp())
-
-            cursor = await ldb.execute("""
-                SELECT Total, Weekly, Daily, Last_Update
-                FROM message_counts
-                WHERE Guild_ID = ? AND User_ID = ?
-            """, (guild_id, user_id))
-            row = await cursor.fetchone()
-
-            if row:
-                total, weekly, daily, last_update = row
-                last_dt = datetime.utcfromtimestamp(last_update)
-
-                if last_dt.date() != now.date():
-                    daily = 0
-                if last_dt.isocalendar()[1] != now.isocalendar()[1]:
-                    weekly = 0
-
-                total += 1
-                weekly += 1
-                daily += 1
-
-                await ldb.execute("""
-                    UPDATE message_counts
-                    SET Total = ?, Weekly = ?, Daily = ?, Last_Update = ?
-                    WHERE Guild_ID = ? AND User_ID = ?
-                """, (total, weekly, daily, now_ts, guild_id, user_id))
-            else:
-                await ldb.execute("""
-                    INSERT INTO message_counts
-                        (Guild_ID, User_ID, Total, Weekly, Daily, Last_Update)
-                    VALUES (?, ?, 1, 1, 1, ?)
-                """, (guild_id, user_id, now_ts))
+            now_ts = int(ts)
+            await ldb.execute("""
+                INSERT INTO message_counts (Guild_ID, User_ID, Total, Last_Update, daily, weekly)
+                VALUES (?, ?, 1, ?, 1, 1)
+                ON CONFLICT(Guild_ID, User_ID) DO UPDATE SET
+                    Total = Total + 1,
+                    Last_Update = excluded.Last_Update,
+                    daily = daily + 1,
+                    weekly = weekly + 1
+            """, (guild_id, user_id, now_ts))
 
         await ldb.commit()
         updates.clear()
 
-        # Stop the worker if no more messages
         if message_count_queue.empty():
             message_worker_running = False
             break

@@ -2,6 +2,7 @@ import discord
 import json
 from pathlib import Path
 from discord.ext import commands
+from discord.utils import get
 import LilyLogging.sLilyLogging as LilyLogging
 from datetime import datetime, timedelta, timezone
 import Misc.sLilyEmbed as LilyEmbed
@@ -92,16 +93,16 @@ async def InitializeView(bot: commands.Bot):
             views = []
 
         for entry in views:
-            channel = bot.get_channel(entry["channel_id"])
+            channel = bot.get_channel(entry.get("channel_id"))
             if not channel:
                 continue
 
             try:
-                await channel.fetch_message(entry["message_id"])
+                await channel.fetch_message(entry.get("message_id"))
             except:
                 continue
 
-            config = entry["config"]
+            config = entry.get("config", {})
             if config.get("view_type") == "ButtonType":
                 view = ButtonType(
                     name=config['Configs']['TicketType'][1],
@@ -124,7 +125,8 @@ async def InitializeView(bot: commands.Bot):
 
             try:
                 bot.add_view(view)
-            except Exception:
+            except Exception as e:
+                print("Failed to add view:", e)
                 continue
 
     if TICKET_CHANNEL_LOG_PATH.exists():
@@ -136,24 +138,67 @@ async def InitializeView(bot: commands.Bot):
             channels = []
 
         for entry in channels:
-            channel = bot.get_channel(entry["channel_id"])
+            channel = bot.get_channel(entry.get("channel_id"))
             if not channel:
                 continue
 
-            config = entry["config"]
+            config = entry.get("config", {})
             moderator_roles = config.get("moderator_roles", [])
+            guild = bot.get_guild(config.get("guild"))
             staff_manager_roles = config.get("staff_manager_roles", [])
 
             class BasicTicketer(discord.ui.View):
-                def __init__(self):
+                def __init__(self, channel_ref: discord.TextChannel, guild,config, moderator_roles, staff_manager_roles, bot):
                     super().__init__(timeout=None)
+                    self.opened_user = config.get("opened_user", None)
+                    self.channel_ref = channel_ref
+                    self.claimer = None
+                    self.config = config
+                    self.guild = guild
 
-                @discord.ui.button(label="Claim", style=discord.ButtonStyle.secondary, custom_id="claim")
-                async def claim_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+                    self.moderator_roles = moderator_roles
+                    self.staff_manager_roles = staff_manager_roles
+                    self.bot = bot
+
+                    claim_btn = discord.ui.Button(
+                        label="Claim",
+                        style=discord.ButtonStyle.secondary,
+                        custom_id=f"ticket_claim:{self.channel_ref.id}"
+                    )
+                    claim_btn.callback = self.claim_button
+                    self.add_item(claim_btn)
+
+                    revoke_btn = discord.ui.Button(
+                        label="Revoke Claim",
+                        style=discord.ButtonStyle.danger,
+                        custom_id=f"ticket_revoke:{self.channel_ref.id}"
+                    )
+                    revoke_btn.callback = self.revoke_claim_button
+                    self.add_item(revoke_btn)
+
+                    close_btn = discord.ui.Button(
+                        label="Close",
+                        style=discord.ButtonStyle.danger,
+                        custom_id=f"ticket_close:{self.channel_ref.id}"
+                    )
+                    close_btn.callback = self.close_button
+                    self.add_item(close_btn)
+
+                async def get_channel(self):
+                    ch = self.bot.get_channel(self.channel_ref.id)
+                    if ch is None:
+                        raise RuntimeError("Ticket channel no longer exists")
+                    return ch
+
+                async def claim_button(self, interaction: discord.Interaction):
+                    try:
+                        channel = await self.get_channel()
+                    except RuntimeError:
+                        await interaction.response.send_message("Channel no longer exists.", ephemeral=True)
+                        return
+
                     user = interaction.user
-                    channel = interaction.channel
-
-                    if not any(role.id in moderator_roles for role in user.roles):
+                    if not any(role.id in self.moderator_roles for role in user.roles):
                         embed = mLily.SimpleEmbed("You are not allowed to claim the ticket", 'cross')
                         await interaction.response.send_message(embed=embed, ephemeral=True)
                         return
@@ -162,8 +207,9 @@ async def InitializeView(bot: commands.Bot):
                         view_channel=True,
                         send_messages=True
                     ))
+                    self.claimer = user
 
-                    if channel.id in claimed_tickets and claimed_tickets[channel.id]["task"]:
+                    if channel.id in claimed_tickets and claimed_tickets[channel.id].get("task"):
                         claimed_tickets[channel.id]["task"].cancel()
 
                     async def claim_timer():
@@ -173,8 +219,9 @@ async def InitializeView(bot: commands.Bot):
                                 last_msg = claimed_tickets.get(channel.id, {}).get("last_message", datetime.now(timezone.utc))
                                 if datetime.now(timezone.utc) - last_msg >= CLAIM_TIMEOUT:
                                     await channel.set_permissions(user, overwrite=None)
-                                    await channel.send(f"Claim by {user.mention} has been reset due to inactivity.")
+                                    await channel.send(embed=mLily.SimpleEmbed(f"Claim by {user.mention} has been reset due to inactivity."))
                                     claimed_tickets.pop(channel.id, None)
+                                    self.claimer = None
                                     break
                         except asyncio.CancelledError:
                             return
@@ -188,25 +235,95 @@ async def InitializeView(bot: commands.Bot):
                     embed = mLily.SimpleEmbed(f"{user.mention} has claimed this ticket!")
                     await interaction.response.send_message(embed=embed, ephemeral=False)
 
-                @discord.ui.button(label="Close", style=discord.ButtonStyle.danger, custom_id="close")
-                async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+                async def revoke_claim_button(self, interaction: discord.Interaction):
                     user = interaction.user
-                    if not any(role.id in moderator_roles for role in user.roles):
-                        embed = mLily.SimpleEmbed("You are not allowed to close the ticket", 'cross')
+                    guild = interaction.guild
+                    private_channel = interaction.channel
+
+                    if not any(role.id in self.staff_manager_roles for role in user.roles):
+                        embed = mLily.SimpleEmbed("You are not allowed to revoke claims.", 'cross')
                         await interaction.response.send_message(embed=embed, ephemeral=True)
                         return
+
+                    if private_channel.id not in claimed_tickets:
+                        embed = mLily.SimpleEmbed("No one has claimed this ticket yet.", 'cross')
+                        await interaction.response.send_message(embed=embed, ephemeral=True)
+                        return
+
+                    claimer_id = claimed_tickets[private_channel.id]["staff_id"]
+                    claimer = await guild.fetch_member(claimer_id)
+
+                    if claimer:
+                        await private_channel.set_permissions(claimer, overwrite=None)
+
+                    if claimed_tickets[private_channel.id].get("task"):
+                        claimed_tickets[private_channel.id]["task"].cancel()
+
+                    claimed_tickets.pop(private_channel.id, None)
+                    self.claimer = None
+                    embed = mLily.SimpleEmbed(f"The claim has been revoked by {user.mention}. This ticket is now unclaimed.")
+                    await private_channel.send(embed=embed)
+
+                    embed = mLily.SimpleEmbed("Claim successfully revoked.")
+                    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+                async def close_button(self, interaction: discord.Interaction):
+                    try:
+                        channel = await self.get_channel()
+                    except Exception as e:
+                        print(e)
+                        await interaction.response.send_message("Channel no longer exists.", ephemeral=True)
+                        return
+
+                    user = interaction.user
+                    is_claimer = self.claimer and user.id == self.claimer.id
+                    is_staff_manager = any(role.id in self.staff_manager_roles for role in user.roles)
+
+                    if not (is_claimer or is_staff_manager):
+                        embed = mLily.SimpleEmbed("You are not allowed to close this ticket", 'cross')
+                        await interaction.response.send_message(embed=embed, ephemeral=True)
+                        return
+
                     embed = mLily.SimpleEmbed(f"Ticket has been closed by {user.mention}")
-                    await interaction.response.send_message(embed=embed, ephemeral=False)
-                    if channel.id in claimed_tickets:
-                        task = claimed_tickets[channel.id].get("task")
-                        if task:
-                            task.cancel()
+                    await interaction.response.send_message(embed=embed, ephemeral=False)         
+
+                    if channel.id in claimed_tickets and claimed_tickets[channel.id].get("task"):
+                        claimed_tickets[channel.id]["task"].cancel()
                         claimed_tickets.pop(channel.id, None)
+
+                    cursor = await LilyLogging.mdb.execute(
+                        "SELECT user_name, message, timestamp FROM transcripts WHERE channel_id = ?",
+                        (interaction.channel.id,)
+                    )
+                    rows = await cursor.fetchall()
+
+                    log_message = "\n".join(
+                        f"Timestamp: {ts} | {name}: {msg}"
+                        for name, msg, ts in rows
+                    )
+                    opener_user = await guild.fetch_member(self.opened_user)
+                    await SendTicketLog(
+                        interaction.guild,
+                        self.config,
+                        opener=opener_user,
+                        claimer=self.claimer,
+                        closer=user,
+                        modal_data=self.config.get("values", {}),
+                        log_message=log_message
+                    )
+
+                    remove_ticket_channel(interaction.channel.id)
+                    await LilyLogging.mdb.execute("DELETE FROM transcripts WHERE channel_id = ?", (interaction.channel.id,))
+                    await LilyLogging.mdb.commit()
+
+
                     await channel.delete()
 
             try:
-                bot.add_view(BasicTicketer())
-            except Exception:
+                bot.add_view(BasicTicketer(channel, guild,config, moderator_roles, staff_manager_roles, bot))
+            except Exception as e:
+                print("Failed to add BasicTicketer view:", e)
                 continue
 
 class BaseModal(discord.ui.Modal):
@@ -267,6 +384,7 @@ async def SendTicketLog(guild: discord.Guild,config: dict,*,opener=None,claimer=
 
     log_channel = guild.get_channel(log_channel_id)
     if not log_channel:
+        print("No Log Channel")
         return
 
     embed = (
@@ -334,7 +452,7 @@ async def TicketConstructor(values: dict, moderator_roles: list, staff_manager_r
 
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(view_channel=False),
-        user: discord.PermissionOverwrite(view_channel=True, send_messages=True)
+        user: discord.PermissionOverwrite(view_channel=True, send_messages=True, attach_files=True,embed_links=True)
     }
 
     for role_id in moderator_roles:
@@ -347,14 +465,21 @@ async def TicketConstructor(values: dict, moderator_roles: list, staff_manager_r
             overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True)
 
     category = interaction.channel.category
-    channel_name = f"ticket-{user.name}".lower().replace(" ", "-")
-
-    private_channel = await guild.create_text_channel(
-        name=channel_name,
-        overwrites=overwrites,
-        category=category,
-        reason=f"Ticket created by {user.name}"
-    )
+    channel_name = f"ticket-{user.id}"
+    
+    flag = 0
+    channels = await guild.fetch_channels()
+    for channel in channels:
+        if channel.name.lower() == channel_name:
+            flag = 1
+            break
+    if flag == 0:
+        private_channel = await guild.create_text_channel(
+            name=channel_name,
+            overwrites=overwrites,
+            category=category,
+            reason=f"Ticket created by {user.name}"
+        )
 
     embed = discord.Embed(
         title=field_details['Title'],
@@ -369,141 +494,225 @@ async def TicketConstructor(values: dict, moderator_roles: list, staff_manager_r
     embeds.append(embed)
 
     log_data = {
+        "guild" : guild.id,
+        "opened_user" : interaction.user.id,
+        "staff_manager_roles": staff_manager_roles,
         "moderator_roles": moderator_roles,
-        "log_channel": field_details.get("LogChannel")
+        "log_channel": field_details.get("LogChannel"),
+        "values" : values
     }
 
     class BasicTicketer(discord.ui.View):
-        def __init__(self):
+        def __init__(self, channel: discord.TextChannel, field_values: dict, opened_user, field_details: dict):
             super().__init__(timeout=None)
+            self.channel_id = channel.id
+            self.channel = channel
             self.claimer = None
+            self.values = field_values
+            self.opened_user = opened_user
+            self.field_details = field_details
 
-        @discord.ui.button(label="Claim", style=discord.ButtonStyle.secondary, custom_id="claim")
-        async def claim_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+            claim_btn = discord.ui.Button(
+                label="Claim",
+                style=discord.ButtonStyle.secondary,
+                custom_id=f"ticket_claim:{self.channel_id}"
+            )
+            claim_btn.callback = self.claim_button
+            self.add_item(claim_btn)
+
+            revoke_btn = discord.ui.Button(
+                label="Revoke Claim",
+                style=discord.ButtonStyle.danger,
+                custom_id=f"ticket_revoke:{self.channel_id}"
+            )
+            revoke_btn.callback = self.revoke_claim_button
+            self.add_item(revoke_btn)
+
+            close_btn = discord.ui.Button(
+                label="Close",
+                style=discord.ButtonStyle.danger,
+                custom_id=f"ticket_close:{self.channel_id}"
+            )
+            close_btn.callback = self.close_button
+            self.add_item(close_btn)
+
+        async def _validate_channel(self, interaction: discord.Interaction) -> bool:
+            if interaction.channel.id != self.channel_id:
+                await interaction.response.send_message(
+                    "This button does not belong to this ticket.",
+                    ephemeral=True
+                )
+                return False
+            return True
+
+        async def claim_button(self, interaction: discord.Interaction):
+            if not await self._validate_channel(interaction):
+                return
+
             user = interaction.user
 
             if not any(role.id in moderator_roles for role in user.roles):
-                embed = mLily.SimpleEmbed("You are not allowed to claim the ticket", 'cross')
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(
+                    embed=mLily.SimpleEmbed("You are not allowed to claim the ticket", "cross"),
+                    ephemeral=True
+                )
                 return
 
-            if private_channel.id in claimed_tickets:
-                current = claimed_tickets[private_channel.id]
-                claimed_user_id = current["staff_id"]
-                if claimed_user_id != user.id:
-                    embed = mLily.SimpleEmbed(f"This ticket is already claimed by <@{claimed_user_id}>", 'cross')
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
+            if self.channel_id in claimed_tickets:
+                current = claimed_tickets[self.channel_id]
+                if current["staff_id"] != user.id:
+                    await interaction.response.send_message(
+                        embed=mLily.SimpleEmbed(
+                            f"This ticket is already claimed by <@{current['staff_id']}>",
+                            "cross"
+                        ),
+                        ephemeral=True
+                    )
                     return
 
-            await private_channel.set_permissions(user, send_messages=True, view_channel=True)
+            await self.channel.set_permissions(user, view_channel=True, send_messages=True)
             self.claimer = user
 
-            if private_channel.id in claimed_tickets and claimed_tickets[private_channel.id].get("task"):
-                claimed_tickets[private_channel.id]["task"].cancel()
+            if self.channel_id in claimed_tickets and claimed_tickets[self.channel_id].get("task"):
+                claimed_tickets[self.channel_id]["task"].cancel()
 
             async def claim_timer():
                 try:
                     while True:
                         await asyncio.sleep(CLAIM_TIMEOUT.total_seconds())
-                        last_msg = claimed_tickets.get(private_channel.id, {}).get("last_message", datetime.now(timezone.utc))
-                        if datetime.now(timezone.utc) - last_msg >= CLAIM_TIMEOUT:
-                            await private_channel.set_permissions(user, overwrite=None)
-                            await private_channel.send(f"Claim by {user.mention} has been reset due to inactivity.")
-                            claimed_tickets.pop(private_channel.id, None)
+                        last = claimed_tickets.get(self.channel_id, {}).get(
+                            "last_message", datetime.now(timezone.utc)
+                        )
+                        if datetime.now(timezone.utc) - last >= CLAIM_TIMEOUT:
+                            await self.channel.set_permissions(user, overwrite=None)
+                            await self.channel.send(
+                                embed=mLily.SimpleEmbed(
+                                    f"Claim by {user.mention} reset due to inactivity."
+                                )
+                            )
+                            claimed_tickets.pop(self.channel_id, None)
                             self.claimer = None
                             break
                 except asyncio.CancelledError:
-                    return
+                    pass
 
             task = asyncio.create_task(claim_timer())
-            claimed_tickets[private_channel.id] = {"staff_id": user.id, "last_message": datetime.now(timezone.utc), "task": task}
+            claimed_tickets[self.channel_id] = {
+                "staff_id": user.id,
+                "last_message": datetime.now(timezone.utc),
+                "task": task
+            }
 
-            embed = mLily.SimpleEmbed(f"{user.mention} has claimed this ticket!")
-            await interaction.response.send_message(embed=embed, ephemeral=False)
+            await interaction.response.send_message(
+                embed=mLily.SimpleEmbed(f"{user.mention} has claimed this ticket!")
+            )
 
-        @discord.ui.button(label="Revoke Claim", style=discord.ButtonStyle.danger, custom_id="revoke_claim")
-        async def revoke_claim_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        async def revoke_claim_button(self, interaction: discord.Interaction):
+            if not await self._validate_channel(interaction):
+                return
+
             user = interaction.user
 
             if not any(role.id in staff_manager_roles for role in user.roles):
-                embed = mLily.SimpleEmbed("You are not allowed to revoke claims.", 'cross')
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(
+                    embed=mLily.SimpleEmbed("You are not allowed to revoke claims.", "cross"),
+                    ephemeral=True
+                )
                 return
 
-            if private_channel.id not in claimed_tickets:
-                embed = mLily.SimpleEmbed("No one has claimed this ticket yet.", 'cross')
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+            if self.channel_id not in claimed_tickets:
+                await interaction.response.send_message(
+                    embed=mLily.SimpleEmbed("No one has claimed this ticket.", "cross"),
+                    ephemeral=True
+                )
                 return
 
-            claimer_id = claimed_tickets[private_channel.id]["staff_id"]
-            claimer = await guild.fetch_member(claimer_id)
+            claimer_id = claimed_tickets[self.channel_id]["staff_id"]
+            try:
+                claimer = await guild.fetch_member(claimer_id)
+            except discord.NotFound:
+                claimer = None
 
             if claimer:
-                await private_channel.set_permissions(claimer, overwrite=None)
+                await self.channel.set_permissions(claimer, overwrite=None)
 
-            if claimed_tickets[private_channel.id].get("task"):
-                claimed_tickets[private_channel.id]["task"].cancel()
-
-            claimed_tickets.pop(private_channel.id, None)
+            claimed_tickets[self.channel_id]["task"].cancel()
+            claimed_tickets.pop(self.channel_id, None)
             self.claimer = None
-            embed = mLily.SimpleEmbed(f"The claim has been revoked by {user.mention}. This ticket is now unclaimed.")
-            await private_channel.send(embed=embed)
 
-            embed = mLily.SimpleEmbed("Claim successfully revoked.")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await self.channel.send(
+                embed=mLily.SimpleEmbed(
+                    f"The claim has been revoked by {user.mention}."
+                )
+            )
+            await interaction.response.send_message(
+                embed=mLily.SimpleEmbed("Claim revoked."),
+                ephemeral=True
+            )
 
-        @discord.ui.button(label="Close", style=discord.ButtonStyle.danger, custom_id="close")
-        async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        async def close_button(self, interaction: discord.Interaction):
+            if not await self._validate_channel(interaction):
+                return
+
             user = interaction.user
-
             is_claimer = self.claimer and user.id == self.claimer.id
             is_staff_manager = any(role.id in staff_manager_roles for role in user.roles)
 
             if not (is_claimer or is_staff_manager):
-                embed = mLily.SimpleEmbed("You are not allowed to close this ticket", 'cross')
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(
+                    embed=mLily.SimpleEmbed("You are not allowed to close this ticket", "cross"),
+                    ephemeral=True
+                )
                 return
 
-            embed = mLily.SimpleEmbed(f"Ticket has been closed by {user.mention}")
-            await interaction.response.send_message(embed=embed, ephemeral=False)
+            await interaction.response.send_message(
+                embed=mLily.SimpleEmbed(f"Ticket closed by {user.mention}")
+            )
+
+            if self.channel_id in claimed_tickets:
+                claimed_tickets[self.channel_id]["task"].cancel()
+                claimed_tickets.pop(self.channel_id, None)
 
             cursor = await LilyLogging.mdb.execute(
-                "SELECT user_name, message, timestamp FROM transcripts WHERE channel_id = ?",
-                (interaction.channel.id,)
-            )
+                        "SELECT user_name, message, timestamp FROM transcripts WHERE channel_id = ?",
+                        (interaction.channel.id,)
+                    )
             rows = await cursor.fetchall()
 
             log_message = "\n".join(
-                f"Timestamp: {ts} | {name}: {msg}"
-                for name, msg, ts in rows
-            )
-
+                        f"Timestamp: {ts} | {name}: {msg}"
+                        for name, msg, ts in rows
+                    )
             await SendTicketLog(
-                guild,
-                log_data,
-                opener=opened_user,
-                claimer=self.claimer,
-                closer=user,
-                modal_data=values,
-                log_message=log_message
-            )
+                        interaction.guild,
+                        self.field_details,
+                        opener=self.opened_user,
+                        claimer=self.claimer,
+                        closer=user,
+                        modal_data=self.values,
+                        log_message=log_message
+                    )
 
-            remove_ticket_channel(interaction.channel.id)
-            await LilyLogging.mdb.execute("DELETE FROM transcripts WHERE channel_id = ?", (interaction.channel.id,))
+
+
+            remove_ticket_channel(self.channel_id)
+            await LilyLogging.mdb.execute(
+                "DELETE FROM transcripts WHERE channel_id = ?",
+                (self.channel_id,)
+            )
             await LilyLogging.mdb.commit()
 
-            if private_channel.id in claimed_tickets and claimed_tickets[private_channel.id].get("task"):
-                claimed_tickets[private_channel.id]["task"].cancel()
-                claimed_tickets.pop(private_channel.id, None)
+            await self.channel.delete()
 
-            await interaction.channel.delete()
+    if flag == 0:
+        view = BasicTicketer(private_channel, values, opened_user, field_details)
+        await private_channel.send(content=f"{user.mention} your ticket has been created.", embeds=embeds, view=view)
+        await interaction.followup.send(f"Your ticket has been created: {private_channel.mention}", ephemeral=True)
 
-    view = BasicTicketer()
-    await private_channel.send(content=f"{user.mention} your ticket has been created.", embeds=embeds, view=view)
-    await interaction.followup.send(f"Your ticket has been created: {private_channel.mention}", ephemeral=True)
-
-    save_ticket_channel(private_channel.id, log_data)
-    await SendTicketLog(guild, log_data, opener=user, modal_data=values)
+        save_ticket_channel(private_channel.id, log_data)
+        await SendTicketLog(guild, log_data, opener=user, modal_data=values)
+    else:
+        await interaction.followup.send(f"Pleaes close your previous ticket to open a new one!", ephemeral=True)
 
 class ButtonType(discord.ui.View):
     def __init__(self, name: str, type_: str, moderator_roles: list, staff_manager_roles: list, modal_details: dict, field_details: dict, *, timeout=None):

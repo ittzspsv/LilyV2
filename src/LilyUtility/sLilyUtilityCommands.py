@@ -71,16 +71,34 @@ class LilyUtility(commands.Cog):
     # MESSAGING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.hybrid_command(name='direct_message', description='direct messages using the bot')
-    async def dm(self, ctx, user: discord.User, message: str): 
+    async def dm(self, ctx: commands.Context, user: discord.User, message: str, type: int=0):
+        await ctx.defer()
         try:
-            embed = discord.Embed(title=f"Message from {ctx.author.name}",description=f"{message}",
-                        colour=0xf500b4)
-            await user.send(embed=embed)
-            await ctx.send("Sent Successfully")
+            if type == 0:
+                embed = discord.Embed(
+                    title=f"Message From {ctx.guild.name}",
+                    description=f"- {message}",
+                    colour=0xffffff
+                )
+
+                embed.set_author(
+                    name=ctx.author.name,
+                    icon_url=ctx.author.display_avatar.url
+                )
+
+                await user.send(embed=embed)
+                await ctx.send(embed=mLily.SimpleEmbed("Sent Successfully"))
+            else:
+                await user.send(content=message)
+                await LilyLogging.WriteLog(ctx, ctx.author.id, f"Sent Message to {user.id} DM : {message}")
+                await ctx.send(embed=mLily.SimpleEmbed("Sent Successfully"))
+
         except discord.Forbidden:
-            await ctx.send(f"Exception Type Forbidden {e}")
+            await ctx.send(embed=mLily.SimpleEmbed("I can't DM this user. They may have DMs disabled.", 'cross'))
+
         except Exception as e:
-            await ctx.send(f"Exception {e}")
+            print(f"Exception [USER DM] {e}")
+            await ctx.send(embed=mLily.SimpleEmbed("Failed to send Direct Message", 'cross'))
 
     # SLASH COMMAND SYNCING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
@@ -90,33 +108,29 @@ class LilyUtility(commands.Cog):
         synced = await self.tree.sync(guild=guild)
         await ctx.send(f"Synced {len(synced)} slash commands w.r.t the guild")
 
-
     # SERVER UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='list', description='lists the total number of users in the server')
     async def ServerList(self, ctx: commands.Context):
-        if not ctx.author.id in Config.ids + Config.owner_ids:
-            return
-        if not self.bot.guilds:
-            await ctx.send("No Servers Fetched")
-            return
+        try:
+            guilds = self.bot.guilds
+            chunk_size = 10
 
-        guilds = self.bot.guilds
-        chunk_size = 10
-
-        for i in range(0, len(guilds), chunk_size):
-            chunk = guilds[i:i+chunk_size]
-            description = ""
-            for guild in chunk:
-                description += f"**{guild.name}** — Owner: {guild.owner} (USER ID: {guild.owner.id})\n"
-            
-            embed = discord.Embed(
-                title=f"Server List (Page {i//chunk_size + 1}/{(len(guilds) + chunk_size - 1)//chunk_size})",
-                description=description,
-                color=discord.Color.blue()
-            )
-            await ctx.send(embed=embed)
-            asyncio.sleep(0.5)
+            for i in range(0, len(guilds), chunk_size):
+                chunk = guilds[i:i+chunk_size]
+                description = ""
+                for guild in chunk:
+                    description += f"**{guild.name} - {guild.member_count}**\n"
+                
+                embed = discord.Embed(
+                    title=f"Server List (Page {i//chunk_size + 1}/{(len(guilds) + chunk_size - 1)//chunk_size})",
+                    description=description,
+                    color=discord.Color.blue()
+                )
+                await ctx.send(embed=embed)
+                await asyncio.sleep(0.5)
+        except Exception as e:
+            print(f"Exception [SERVER LIST] {e}")
 
     #UID UTILITY
     @commands.hybrid_command(name='id', description='returns the id of a specific usertype')
@@ -351,6 +365,7 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             await ctx.send(f"Error: `{type(e).__name__}: {e}`")
 
+    '''
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='set_stock_type', description='stock type 0 = embed; 1 = image')
     async def set_stock_type(self, ctx:commands.Context, type:int):
@@ -448,11 +463,11 @@ class LilyUtility(commands.Cog):
 
                 await ValueConfig.cdb.commit()
                 await ctx.send(f"Webhook created: Weather will be sent in {channel_to_assign.name}")
-
+    '''
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='purge',description='Purges Message')
-    @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def purge(self, ctx, amount: int, member: discord.Member = None):
         if amount <= 0:
             await ctx.send("You must delete at least 1 message.")
@@ -560,7 +575,7 @@ class LilyUtility(commands.Cog):
     async def latency(self, ctx: commands.Context):
         await ctx.send(f'`{round(self.bot.latency * 1000, 2)}ms`')
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Manager')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Giveaway Manager', 'Administrator','Head Administrator')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='role',description='assign role or removes a specified role from the user')
     async def role(self, ctx: commands.Context, user: discord.Member, *, role_input: str):
@@ -581,8 +596,8 @@ class LilyUtility(commands.Cog):
             role = ctx.guild.get_role(int(role_input))
 
         if role is None:
-            role_name = role_input.replace('*', ' ')
-            role = discord.utils.get(ctx.guild.roles, name=role_name)
+            role_name = role_input.replace('*', ' ').lower()
+            role = discord.utils.find(lambda r: r.name.lower() == role_name, ctx.guild.roles)
 
         if role is None:
             return await ctx.send(f"Role `{role_input}` not found on this server.")
@@ -593,12 +608,38 @@ class LilyUtility(commands.Cog):
         if ctx.guild.me.top_role <= role:
             return await ctx.send("I cannot manage that role because it is above my top role.")
 
-        if role in user.roles:
-            await user.remove_roles(role, reason=f"Role removed by {ctx.author}")
-            return await ctx.send(f"Removed role **{role.name}** from **{user.name}**.")
+        role_allotment = await LSM.GetAssignableRoles(ctx.author.roles)
+        if role_allotment:
+            mode, role_ids = next(iter(role_allotment.items()))
+            if mode == 'all':
+                if role in user.roles:
+                    await user.remove_roles(role, reason=f"Role removed by {ctx.author}")
+                    return await ctx.send(f"Removed role **{role.name}** from **{user.name}**.")
+                else:
+                    await user.add_roles(role, reason=f"Role given by {ctx.author}")
+                    return await ctx.send(f"Added role **{role.name}** to **{user.name}**.")
+            elif mode == 'specified':
+                if role.id in role_ids:
+                    if role in user.roles:
+                        await user.remove_roles(role, reason=f"Role removed by {ctx.author}")
+                        return await ctx.send(f"Removed role **{role.name}** from **{user.name}**.")
+                    else:
+                        await user.add_roles(role, reason=f"Role given by {ctx.author}")
+                        return await ctx.send(f"Added role **{role.name}** to **{user.name}**.")
+                else:
+                    return await ctx.send(f"You are not allowed to assign this role.")
+            elif mode == 'except':
+                if role.id not in role_ids:
+                    if role in user.roles:
+                        await user.remove_roles(role, reason=f"Role removed by {ctx.author}")
+                        return await ctx.send(f"Removed role **{role.name}** from **{user.name}**.")
+                    else:
+                        await user.add_roles(role, reason=f"Role given by {ctx.author}")
+                        return await ctx.send(f"Added role **{role.name}** to **{user.name}**.")
+                else:
+                    return await ctx.send(f"You are not allowed to assign this role.")
         else:
-            await user.add_roles(role, reason=f"Role given by {ctx.author}")
-            return await ctx.send(f"Added role **{role.name}** to **{user.name}**.")
+            return await ctx.send(f"Column encountered a NULL parameter which is not expected")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Manager')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -644,6 +685,68 @@ class LilyUtility(commands.Cog):
             await ctx.send(content=member.mention, view=view,file=file)
         except Exception as e:
             print(e)
+
+    class Roles(str, Enum):
+        Giveaways = "Giveaways"
+        Events = "Events"
+        Null = "null"
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Giveaway Manager', 'Developer', 'Event Manager')))
+    @commands.hybrid_command(name='ping_role', description='Ping a predefined role')
+    @commands.cooldown(rate=1, per=600, type=commands.BucketType.user)
+    async def ping_role(self, ctx: commands.Context, role: Roles, channel: discord.TextChannel):
+        if ctx.interaction:
+            await ctx.defer(ephemeral=True)
+        else:
+            await ctx.defer()
+
+        if role == self.Roles.Giveaways:
+            role_obj = discord.utils.get(ctx.guild.roles, name="Giveaways")
+        elif role == self.Roles.Events:
+            role_obj = discord.utils.get(ctx.guild.roles, name="Events")
+        else:
+            role_obj = None
+
+        if role_obj is None:
+            if ctx.interaction:
+                await ctx.interaction.followup.send("Role not found.", ephemeral=True)
+            else:
+                await ctx.reply("Role not found.")
+            return
+
+        await channel.send(role_obj.mention)
+
+        if ctx.interaction:
+            await ctx.interaction.followup.send("Sent Successfully!", ephemeral=True)
+        else:
+            await ctx.reply("Sent Successfully!")
+        embed = discord.Embed(
+            title="ROLE PING ACTION",
+            description=f"{ctx.author.mention} pinged {role_obj.mention} in {channel.mention}",
+            colour=0xffffff
+        )
+
+        await LilyLogging.PostLog(ctx, embed, "Role Ping Action")
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
+    @commands.hybrid_command(name='set_role_icon', description='Sets a role icon')
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def role_icon(self, ctx: commands.Context, role: discord.Role, icon: discord.Attachment):
+        await ctx.defer()
+        if icon.content_type not in ("image/png", "image/jpeg"):
+            return await ctx.reply("Role icons must be a **PNG or JPG** image.",ephemeral=True)
+        try:
+            icon_bytes = await icon.read()
+
+            await role.edit(
+                display_icon=icon_bytes,
+                reason=f"Role icon updated by {ctx.author}"
+            )
+            await ctx.reply(
+                f"Successfully updated icon for **{role.name}**."
+            )
+        except Exception as e:
+            await ctx.reply("An Unknown Error Occured.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))
