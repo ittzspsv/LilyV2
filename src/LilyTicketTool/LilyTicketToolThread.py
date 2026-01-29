@@ -123,6 +123,7 @@ class TicketModal(discord.ui.Modal):
         values = {label: input.value for label, input in self.inputs.items()}
         channel_id = self.modal_data.get("channel_id")
         ticket_name_base = self.modal_data.get("ticket_base_name", "ticket")
+        ping_roles = self.modal_data.get("ping-roles", [])
         ticket_panel_spawn_id = self.modal_data.get("view_pannel_spawn_id", 0)
         logs_channel_id  = self.json_data["BasicConfigurations"]["TicketLoggingHandler"]
 
@@ -132,7 +133,8 @@ class TicketModal(discord.ui.Modal):
             "inputs": values,
             "ticket_name_base": ticket_name_base,
             "logs_channel_id" : logs_channel_id,
-            "proof_images" : self.images
+            "proof_images" : self.images,
+            "ping_roles" : ping_roles
         }
         thread_channel = await TicketThreadConstructor(
             interaction,
@@ -506,11 +508,14 @@ async def SendTicketPanel(interaction: discord.Interaction, submission_json, thr
             thread_channel_obj = await interaction.guild.fetch_channel(thread_channel)
         except discord.NotFound:
             return
+    roles = submission_json.get("ping_roles", [])
+    if roles:
+        mentions = " ".join(f"<@&{role_id}>" for role_id in roles)
 
     embed = await TicketEmbed(interaction.user, submission_json)
     view = TicketPanelView(thread_object, logs_channel)
     try:
-        message = await thread_channel_obj.send(embed=embed, view=view)
+        message = await thread_channel_obj.send(content=mentions, embed=embed, view=view)
         cursor = await LilyLogging.mdb.execute(
             """
             INSERT INTO ticket_access_panels (tickets_access_panel_id, access_panel_message_id)
@@ -553,10 +558,13 @@ async def TicketThreadConstructor(interaction: discord.Interaction, core_json, s
         thread_channel = await interaction.guild.fetch_channel(channel_id)
 
     proof_attachments = submission_json.get("proof_images")
+    proofs_flag = False
     if proof_attachments:
         proof_url = '\n'.join(proof_attachments)
+        proofs_flag = True
     else:
         proof_url = "No Proofs Attached!"
+        proofs_flag = False
 
     opener = interaction.user
 
@@ -590,10 +598,10 @@ async def TicketThreadConstructor(interaction: discord.Interaction, core_json, s
 
     
     await thread.send(embeds=embeds)
-    await thread.send(content=f"{proof_url}")
+    if proofs_flag:
+        await thread.send(content=f"{proof_url}")
 
     await SendTicketPanel(interaction, submission_json, thread, submission_json.get("logs_channel_id"))
-
     return thread
 
 async def TicketLogAction(interaction: discord.Interaction,thread: discord.Thread,opened_user_id: int,ticket_type: str,accessed_staff_ids: set, logs_channel: discord.TextChannel):
@@ -606,16 +614,6 @@ async def TicketLogAction(interaction: discord.Interaction,thread: discord.Threa
     embed.add_field(
         name="Ticket Thread ID",
         value=f"- ```{thread.id}```",
-        inline=False
-    )
-
-    if accessed_staff_ids:
-        accessed_str = "\n".join(f"> - <@{uid}>" for uid in accessed_staff_ids)
-    else:
-        accessed_str = "> - None"
-    embed.add_field(
-        name="Staff Accessed Ticket.",
-        value=accessed_str,
         inline=False
     )
 
@@ -643,16 +641,6 @@ async def cTicketLogAction(ctx: commands.Context,thread: discord.Thread,opened_u
     embed.add_field(
         name="Ticket Thread ID",
         value=f"- ```{thread.id}```",
-        inline=False
-    )
-
-    if accessed_staff_ids:
-        accessed_str = "\n".join(f"> - <@{uid}>" for uid in accessed_staff_ids)
-    else:
-        accessed_str = "> - None"
-    embed.add_field(
-        name="Staff Accessed Ticket.",
-        value=accessed_str,
         inline=False
     )
 
@@ -786,7 +774,7 @@ async def CloseTicketThread(ctx: commands.Context):
         except Exception as e:
             print(f"[TICKET CLOSE ERROR] {e}")
             await ctx.send(
-                await ctx.reply(embed=mLily.SimpleEmbed("Attempted to Close an invalid Instigator Thread", 'cross')),
+                embed=mLily.SimpleEmbed("Attempted to Close an invalid Instigator Thread", 'cross'),
                 ephemeral=True
             )
     else:

@@ -10,6 +10,7 @@ import Config.sValueConfig as VC
 import LilyManagement.sLilyStaffManagement as LSM
 import Misc.sLilyEmbed as LE
 import ui.sGreetingGenerator as GG
+import sLilyTags as LilyTags
 
 import discord
 from discord.ext import commands
@@ -747,6 +748,52 @@ class LilyUtility(commands.Cog):
             )
         except Exception as e:
             await ctx.reply("An Unknown Error Occured.", ephemeral=True)
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('StrictEnforcing')))
+    @commands.hybrid_command(name='edit_profile', description='Sets the profile of the bot per server')
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def edit_profile(self, ctx: commands.Context, bio: str, avatar: discord.Attachment, banner: discord.Attachment):
+        await ctx.defer()
+        try:
+            guild = ctx.guild
+            bot_member = guild.me
+            avatar_bytes = await avatar.read()
+            banner_bytes = await banner.read()
+            await bot_member.edit(avatar=avatar_bytes,banner=banner_bytes,bio=bio)
+
+            await ctx.send("Profile Edit Success, Will be updated within few mins.")
+        except Exception as e:
+            print(f"Exception [edit_profile] {e}")
+            await ctx.send("An Unknown error Occured")
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
+    @commands.hybrid_command(name='check_reaction', description='Checks if an user has reacted to an message')
+    async def check_reaction(self, ctx: commands.Context, member: discord.Member, message_id: int, emoji_str: str):
+        try:
+            message = await ctx.channel.fetch_message(message_id)
+        except discord.NotFound:
+            return await ctx.send("Message not found!")
+
+        reacted = False
+        for reaction in message.reactions:
+            if str(reaction.emoji) == emoji_str:
+                async for user in reaction.users():
+                    if user.id == member.id:
+                        reacted = True
+                        break
+                if reacted:
+                    break
+
+        if reacted:
+            await ctx.send(embed=mLily.SimpleEmbed(f"{member.mention} has reacted"))
+        else:
+            await ctx.send(embed=mLily.SimpleEmbed(f"{member.mention} has not reacted", 'cross'))
+
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
+    @commands.hybrid_command(name='tag', description='sticky messages statically typed inside the script')
+    async def tag(self, ctx: commands.Context, tag: str):
+        await ctx.send(content=LilyTags.tags.get(tag, "No Tags Found!"))
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

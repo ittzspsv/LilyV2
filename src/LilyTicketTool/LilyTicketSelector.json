@@ -199,7 +199,8 @@
                     "channel_id": 1458145917420179652,
                     "view_pannel_spawn_id": 1458151873138786486,
                     "ticket_base_name": "member_report",
-                    "file_upload": true
+                    "file_upload": true,
+                    "ping-roles" : []
                 },
                 {
                     "fields": {
@@ -208,7 +209,8 @@
                     "channel_id": 1458531621014601738,
                     "view_pannel_spawn_id": 1458526679730487520,
                     "ticket_base_name": "giveaway_claim",
-                    "file_upload": true
+                    "file_upload": true,
+                    "ping-roles" : []
                 },
                 {
                     "fields": {
@@ -216,7 +218,8 @@
                     },
                     "channel_id": 1458531621014601738,
                     "view_pannel_spawn_id": 1458527279453044760,
-                    "ticket_base_name": "server_issue"
+                    "ticket_base_name": "server_issue",
+                    "ping-roles" : []
                 },
                 {
                     "fields": {
@@ -225,7 +228,8 @@
                     },
                     "channel_id": 1458531621014601738,
                     "view_pannel_spawn_id": 1458527872154210417,
-                    "ticket_base_name": "giveaway_host"
+                    "ticket_base_name": "giveaway_host",
+                    "ping-roles" : []
                 },
                 {
                     "fields": {
@@ -234,7 +238,8 @@
                     },
                     "channel_id": 1458531621014601738,
                     "view_pannel_spawn_id": 1458528231840944315,
-                    "ticket_base_name": "event_host"
+                    "ticket_base_name": "event_host",
+                    "ping-roles" : []
                 },
                 {
                     "fields": {
@@ -242,7 +247,9 @@
                     },
                     "channel_id": 1458531621014601738,
                     "view_pannel_spawn_id": 1458530538582184047,
-                    "ticket_base_name": "event_enquiry"
+                    "ticket_base_name": "event_enquiry",
+                    "ping-roles" : []
+
                 }
             ]
         },

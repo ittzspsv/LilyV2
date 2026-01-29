@@ -164,144 +164,65 @@ async def LilyEventActionRoleDelete(role: discord.Role):
 
         queue.clear()
 
-async def LilySecurityEvaluate(bot, message: discord.Message):
+async def LilySecurityEvaluate(message: discord.Message):
     if message.author.bot:
         return
 
     if message.reference is not None:
         return
 
-    guild_id = message.guild.id
-    user_id = message.author.id
-    content = message.content
-    now = time.time()
-
-    user_pings = USER_MENTION_REGEX.findall(content)
-    here_ping = "@here" in content
-    everyone_ping = "@everyone" in content
-
-    total_user_pings = len(user_pings) + (1 if here_ping else 0) + (1 if everyone_ping else 0)
-
-    role_pings = ROLE_MENTION_REGEX.findall(content)
-    total_role_pings = len(role_pings)
-
-    if total_user_pings == 0 and total_role_pings == 0:
+    if not message.guild:
         return
 
-    if guild_id not in spam_ping:
-        spam_ping[guild_id] = {}
-    if user_id not in spam_ping[guild_id]:
-        spam_ping[guild_id][user_id] = {
-            "user": deque(),
-            "role": deque()
-        }
+    guild = message.guild
+    member: discord.Member = message.author
+    bot_member: discord.Member = guild.me
 
-    if total_user_pings > 0:
-        uq = spam_ping[guild_id][user_id]["user"]
+    if not message.mention_everyone:
+        return
 
-        for _ in range(total_user_pings):
-            uq.append(now)
+    if member.top_role >= bot_member.top_role:
+        return
 
-        while uq and now - uq[0] > security_info["ping_cd"]:
-            uq.popleft()
+    try:
+        await message.delete()
+    except discord.Forbidden:
+        return
 
-        if len(uq) > security_info["ping_limit"]:
-            
-            member = message.author
+    try:
+        await guild.ban(
+            member,
+            reason="Security violation: Unauthorized @everyone/@here mention",
+            delete_message_days=0
+        )
+    except discord.Forbidden:
+        return 
 
-            roles_to_remove = [r for r in member.roles if r != message.guild.default_role]
-            try:
-                await member.remove_roles(
-                    *roles_to_remove,
-                    reason="Lily Security: Excessive USER ping usage"
-                )
-            except Exception as e:
-                print("Role removal failed:", e)
+    log_channel = None
+    cursor = await VC.cdb.execute(
+        """
+        SELECT logs_channel
+        FROM ConfigData
+        WHERE guild_id = ? AND logs_channel IS NOT NULL
+        """,
+        (guild.id,)
+    )
+    row = await cursor.fetchone()
+    await cursor.close()
 
-            timeout_seconds = security_info.get("timeout_seconds", 3600)
-            try:
-                await member.timeout(
-                    discord.utils.utcnow() + timedelta(seconds=timeout_seconds),
-                    reason="Excessive user ping usage"
-                )
-            except Exception as e:
-                print("Timeout failed:", e)
+    if row:
+        log_channel = guild.get_channel(row[0])
 
-            uq.clear()
+    if log_channel:
+        embed = discord.Embed(
+            color=0xFFFFFF,
+            title=f"{Configs.emoji['arrow']} Security Act",
+            description=(
+                f"**Action:** Auto-ban\n"
+                f"**User:** {member.mention} (`{member.id}`)\n"
+                f"**Reason:** Unauthorized @everyone/@here mention"
+            ),
+        )
+        embed.set_footer(text=f"Lily Security • {guild.name}")
 
-
-            try:
-                cursor = await VC.cdb.execute(
-                    "SELECT logs_channel FROM ConfigData WHERE guild_id = ? AND logs_channel IS NOT NULL",
-                    (guild_id,)
-                )
-                row = await cursor.fetchone()
-                await cursor.close()
-
-                if row:
-                    log_channel = message.guild.get_channel(row[0])
-                    if log_channel:
-                        embed = discord.Embed(
-                            color=0xFFFFFF,
-                            title=f"{Configs.emoji['arrow']} Security Act",
-                            description=f"- {member.mention} exceeded **user ping limit**! Action Taken."
-                        )
-                        await log_channel.send(embed=embed)
-
-            except Exception as e:
-                print("Logging failed:", e)
-
-    if total_role_pings > 0:
-        rq = spam_ping[guild_id][user_id]["role"]
-
-        # Add pings
-        for _ in range(total_role_pings):
-            rq.append(now)
-
-        while rq and now - rq[0] > security_info["role_ping_cd"]:
-            rq.popleft()
-
-        if len(rq) > security_info["role_ping_limit"]:
-
-            member = message.author
-
-            roles_to_remove = [r for r in member.roles if r != message.guild.default_role]
-            try:
-                await member.remove_roles(
-                    *roles_to_remove,
-                    reason="Lily Security: Excessive ROLE ping usage"
-                )
-            except Exception as e:
-                print("Role removal failed:", e)
-
-            timeout_seconds = security_info.get("timeout_seconds", 3600)
-            try:
-                await member.timeout(
-                    discord.utils.utcnow() + timedelta(seconds=timeout_seconds),
-                    reason="Excessive role ping usage"
-                )
-            except Exception as e:
-                print("Timeout failed:", e)
-
-            rq.clear()
-
-            try:
-                cursor = await VC.cdb.execute(
-                    "SELECT logs_channel FROM ConfigData WHERE guild_id = ? AND logs_channel IS NOT NULL",
-                    (guild_id,)
-                )
-                row = await cursor.fetchone()
-                await cursor.close()
-
-                if row:
-                    log_channel = message.guild.get_channel(row[0])
-                    if log_channel:
-                        embed = discord.Embed(
-                            color=0xFFFFFF,
-                            title=f"{Configs.emoji['arrow']} Security Act",
-                            description=f"- {member.mention} exceeded **role ping limit**! Action Taken."
-                        )
-                        await log_channel.send(embed=embed)
-
-            except Exception as e:
-                print("Logging failed:", e)
+        await log_channel.send(embed=embed)

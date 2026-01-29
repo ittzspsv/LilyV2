@@ -53,6 +53,32 @@ def draw_gradient_text(
 
     image.paste(gradient, (int(x), int(y)), gradient)
 
+def format_currency(val):
+    value = int(val)
+    if value >= 1_000_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000_000:.1f}DX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000_000:.1f}NX"
+    elif value >= 1_000_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000_000:.1f}OX"
+    elif value >= 1_000_000_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000_000_000:.1f}SPX"
+    elif value >= 1_000_000_000_000_000_000_000: 
+        return f"{value / 1_000_000_000_000_000_000_000:.1f}SX"
+    elif value >= 1_000_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000_000:.1f}QI"
+    elif value >= 1_000_000_000_000_000:  
+        return f"{value / 1_000_000_000_000_000:.1f}QT"
+    elif value >= 1_000_000_000_000: 
+        return f"{value / 1_000_000_000_000:.1f}T"
+    elif value >= 1_000_000_000:  
+        return f"{value / 1_000_000_000:.1f}B"
+    elif value >= 1_000_000:  
+        return f"{value / 1_000_000:.1f}M"
+    elif value >= 1_000:  
+        return f"{value / 1_000:.1f}k"
+    else:
+        return str(int(value))
 
 async def GenerateWelcome(member: discord.Member):
     background_img = 'src/ui/Greetings/Welcome.png'
@@ -77,23 +103,50 @@ async def GenerateWelcome(member: discord.Member):
     draw = ImageDraw.Draw(base)
 
     username_text = re.sub(r'[^A-Za-z ]', '', member.name.replace('_', ' ').upper())
-    username_font_size = 52
-    MAX_USERNAME_WIDTH = 500
+    char_len = len(username_text)
+
+
+    BASE_USERNAME_POS = (395, 135)
+
+
+    if char_len <= 6:
+        username_font_size = 60
+        pos_offset = (10, 0)
+    elif char_len <= 10:
+        username_font_size = 46
+        pos_offset = (0, 0)
+    elif char_len <= 14:
+        username_font_size = 30
+        pos_offset = (-10, 2)
+    elif char_len <= 18:
+        username_font_size = 26
+        pos_offset = (-18, 4)
+    else:
+        username_font_size = 20
+        pos_offset = (-25, 6)
+
     username_font = ImageFont.truetype(TEXT_FONT_PATH, username_font_size)
+
+    MAX_USERNAME_WIDTH = 500
     while draw.textlength(username_text, font=username_font) > MAX_USERNAME_WIDTH and username_font_size > 10:
         username_font_size -= 1
         username_font = ImageFont.truetype(TEXT_FONT_PATH, username_font_size)
+
+
+    USERNAME_POS = (
+        BASE_USERNAME_POS[0] + pos_offset[0],
+        BASE_USERNAME_POS[1] + pos_offset[1]
+    )
 
     member_font = ImageFont.truetype(TEXT_FONT_PATH, 27)
 
     username_gradient = [(255, 80, 160), (140, 0, 255)]
     member_gradient = [(255, 80, 160), (140, 0, 255)]
 
-    USERNAME_POS = (395, 135)
     draw_gradient_text(base, USERNAME_POS, username_text, username_font, username_gradient, anchor="lt")
 
-    MEMBER_POS = (494, 222)
-    draw_gradient_text(base, MEMBER_POS, f"MEMBER #{member.guild.member_count}", member_font, member_gradient, anchor="lt")
+    MEMBER_POS = (475, 225)
+    draw_gradient_text(base, MEMBER_POS, f"MEMBER #{format_currency(member.guild.member_count)}", member_font, member_gradient, anchor="lt")
 
     final_buffer = io.BytesIO()
     base.save(final_buffer, format="PNG")

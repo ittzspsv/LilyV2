@@ -15,6 +15,7 @@ import os
 import LilySubstring.sLilySubstring as LS
 import logging
 import LilyLeveling.sLilyLevelingCommands as LLC
+import LilySecurity.sLilySecurity as LilySecurity
 #import LilyVouching.sLilyVouchCore as LVC
 import LilyUtility.sLilyGreetings as LG
 from meta_ai_api import MetaAI
@@ -62,7 +63,7 @@ class MyBot(commands.Bot):
                 await self.load_extension(ext)
         self.lily_session = aiohttp.ClientSession()
         self.ai = MetaAI()
-        await self.tree.sync()
+        #await self.tree.sync()
 
     async def BotInitialize(self):
         for guild in self.guilds:
@@ -173,7 +174,7 @@ class MyBot(commands.Bot):
         await LTTT.InitializeTicketView(self)
         #await LVC.Initialize()
         await self.ModifyStatus.start()
-        await self.tree.sync()
+        #await self.tree.sync()
 
     @tasks.loop(minutes=60)
     async def ModifyStatus(self):
@@ -218,7 +219,7 @@ class MyBot(commands.Bot):
         if message.author == self.user:
               return         
 
-        #await LSecurity.LilySecurityEvaluate(bot, message)
+        await LilySecurity.LilySecurityEvaluate(message)
 
         if message.channel.id in LilyLeveling.config['AllowedChannels']:
             await LilyLeveling.LevelProcessor(message)
@@ -228,7 +229,6 @@ class MyBot(commands.Bot):
 
         await LBFC.MessageEvaluate(bot, message)
         #await LTTC.TicketTranscript(bot, message)
-
 
         '''
         if (bot.user in message.mentions or (message.reference and isinstance(message.reference.resolved, discord.Message) and message.reference.resolved.author == bot.user)):
@@ -262,7 +262,6 @@ class MyBot(commands.Bot):
     async def on_guild_role_delete(self, role: discord.Role):
         pass
         #await LSecurity.LilyEventActionRoleDelete(role)
-    
 
 bot = MyBot()
 

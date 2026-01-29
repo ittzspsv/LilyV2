@@ -61,18 +61,19 @@ class LilyModeration(commands.Cog):
             if not await mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
                 await mLily.ban_user(ctx, target_user, reason, proofs)
             else:
-                #fallback
-                ban_request_channel = ctx.guild.get_channel(1343648194223149108)
-                if not ban_request_channel:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"You can ban in {await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
-                    return
-                view = CV2.BanRequestView(ctx.author, target_user, reason, proofs)
-                await ban_request_channel.send(embeds=view.embeds_to_send, view=view)
-                await ctx.send(embed=mLily.SimpleEmbed(f"Successfully sent action request to {ban_request_channel.mention}!"))
+                await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"{await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
+                return
 
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}", 'cross'))
-            
+
+
+    @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
+    @commands.hybrid_command(name='execute', description='execute an user with cutscene (WIP)')
+    async def execute(self, ctx: commands.Context, member: discord.Member):
+        await mLily.execute(ctx, member)
+
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unban', description='unbans a particular user')
