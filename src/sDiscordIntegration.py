@@ -202,7 +202,7 @@ class MyBot(commands.Bot):
             return
 
     async def ListenDirectMessage(self, message: discord.Message):
-        webhook_url = "https://discord.com/api/webhooks/1459260072377979052/TSmBoA7D5J_AfE2Ck520uGxgZNC-cWV3LNxKgP7vRnM05t0ZCm-4ZZs6DXwhiDtlzTtS"
+        webhook_url = "https://discord.com/api/webhooks/xxxxxxxxx"
         try:
             await self.lily_session.post(
                     webhook_url,
