@@ -53,7 +53,6 @@ class LilyManagement(commands.Cog):
             ctx, staff_id, name, role_id, joined_on, timezone, responsibility
         )
 
-
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)))
     @commands.hybrid_command(name='strikes', description='shows strikes for a concurrent staff')
     async def strikes(self, ctx: commands.Context, id: discord.Member):

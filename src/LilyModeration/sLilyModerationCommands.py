@@ -115,7 +115,7 @@ class LilyModeration(commands.Cog):
         except discord.HTTPException as e:
             await ctx.send(f"Exception Raised: {e}")
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)), allow_per_server_owners=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='mute', description='mutes a user with desired input')
     async def mute(self, ctx:commands.Context, member:discord.Member=None, duration:str="1",*, reason="No reason provided"):
