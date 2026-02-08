@@ -310,10 +310,10 @@ async def MessageEvaluate(bot, message):
                             their_fruit_details = ""
 
                             for i in range(len(your_fruits)):
-                                fruit_name = your_fruits[i].replace(" ", "").replace("-", "")
-                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
-                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
-                                perm_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == "perm"), "🔒")
+                                fruit_name = your_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                                fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
+                                beli_emoji = Config.emoji.get("beli", "💸")
+                                perm_emoji = Config.emoji.get("perm", "🔒")
 
                                 value = data['Your_IndividualValues'][i]
                                 formatted_value = f"{value:,}"
@@ -323,9 +323,10 @@ async def MessageEvaluate(bot, message):
                                     your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
 
                             for i in range(len(their_fruits)):
-                                fruit_name = their_fruits[i].replace(" ", "").replace("-", "")
-                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
-                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+                                fruit_name = their_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                                fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
+                                beli_emoji = Config.emoji.get("beli", "💸")
+                                perm_emoji = Config.emoji.get("perm", "🔒")
 
                                 value = data['Their_IndividualValues'][i]
                                 formatted_value = f"{value:,}"
@@ -405,18 +406,20 @@ async def MessageEvaluate(bot, message):
                             their_fruit_details = ""
 
                             for i in range(len(your_fruits)):
-                                fruit_name = your_fruits[i].replace(" ", "")
-                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
-                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+                                fruit_name = your_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                                fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
+                                beli_emoji = Config.emoji.get("beli", "💸")
+                                perm_emoji = Config.emoji.get("perm", "🔒")
 
                                 value = data['Your_IndividualValues'][i]
                                 formatted_value = f"{value:,}"
                                 your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
 
                             for i in range(len(their_fruits)):
-                                fruit_name = their_fruits[i].replace(" ", "")
-                                fruit_emoji = next((e for e in ctx.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
-                                beli_emoji = discord.utils.get(ctx.guild.emojis, name="beli") or "💸"
+                                fruit_name = their_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                                fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
+                                beli_emoji = Config.emoji.get("beli", "💸")
+                                perm_emoji = Config.emoji.get("perm", "🔒")
 
                                 value = data['Their_IndividualValues'][i]
                                 formatted_value = f"{value:,}"

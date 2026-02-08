@@ -2,6 +2,7 @@ import json
 import re
 import string
 import random
+import discord
 import Config.sValueConfig as VC
 
 from rapidfuzz.fuzz import ratio
@@ -289,3 +290,10 @@ async def DeleteComboByID(combo_id: int):
     await VC.combo_db.commit()
 
     return cursor.rowcount
+
+def ComboEmbedBuilder():
+    embed = discord.Embed(
+        color=16777215,
+        title="",
+        description=""
+    )

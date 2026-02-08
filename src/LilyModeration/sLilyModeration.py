@@ -141,6 +141,72 @@ async def remaining_ban_count(ctx: commands.Context, moderator_id: int, moderato
         print("Error calculating remaining ban count:", e)
         return 0
 
+async def remaining_Ban_time_text(ctx: commands.Context,moderator_id: int,moderator_role_ids: list[int]):
+    if not moderator_role_ids:
+        return None
+
+    now = datetime.now(pytz.utc)
+    past_24h = (now - timedelta(hours=24)).isoformat()
+
+    try:
+        placeholders = ",".join("?" * len(moderator_role_ids))
+        query = f"""
+            SELECT ban_limit
+            FROM roles
+            WHERE ban_limit > -1 AND role_id IN ({placeholders})
+        """
+        cursor = await LSM.sdb.execute(query, moderator_role_ids)
+        rows = await cursor.fetchall()
+
+        if not rows:
+            return None
+
+        max_limit = max(row[0] for row in rows)
+        if max_limit == 0:
+            return None
+
+        async with LilyLogging.mdb.execute("""
+            SELECT timestamp
+            FROM modlogs
+            WHERE guild_id = ?
+              AND moderator_id = ?
+              AND mod_type IN ('ban', 'quarantine')
+              AND timestamp >= ?
+            ORDER BY timestamp ASC
+        """, (ctx.guild.id, moderator_id, past_24h)) as cursor:
+            bans = await cursor.fetchall()
+
+        if not bans:
+            return None
+
+        cooldown_lines = []
+
+        for index, (ts,) in enumerate(bans, start=1):
+            ban_time = datetime.fromisoformat(ts)
+            cooldown_end = ban_time + timedelta(hours=24)
+
+            if cooldown_end > now:
+                remaining = cooldown_end - now
+                hours, remainder = divmod(int(remaining.total_seconds()), 3600)
+                minutes = remainder // 60
+
+                cooldown_lines.append(
+                    f"{index}. Recovery in **{hours}h {minutes}m**"
+                )
+
+        if not cooldown_lines:
+            return None
+
+        return (
+            "**Ban's Cooldown State.**\n"
+            + "\n".join(cooldown_lines)
+        )
+
+    except Exception as e:
+        print("Error calculating remaining ban time:", e)
+        return None
+
+
 async def ms(ctx: commands.Context, moderator_id: int, user: discord.User, slice_expr=None):
     try:
         async with LilyLogging.mdb.execute("""

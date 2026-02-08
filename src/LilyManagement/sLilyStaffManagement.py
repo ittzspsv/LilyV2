@@ -3,6 +3,7 @@ import aiosqlite
 import asyncio
 from ast import literal_eval
 import Config.sBotDetails as Configs
+from enum import Enum
 import LilyModeration.sLilyModeration as mLily
 
 try:
@@ -325,12 +326,12 @@ async def FetchAllStaffs(ctx: commands.Context):
 
 
         responsibility_query = """
-        SELECT s.staff_id, s.name, r.role_name
-        FROM staffs s
-        JOIN staff_roles sr ON sr.staff_id = s.staff_id
-        JOIN roles r ON r.role_id = sr.role_id
-        WHERE s.retired = 0 AND s.guild_id = ? AND r.role_type = 'Responsibility'
-        ORDER BY r.role_name ASC
+            SELECT s.staff_id, s.name, r.role_name
+            FROM staffs s
+            JOIN staff_roles sr ON sr.staff_id = s.staff_id
+            JOIN roles r ON r.role_id = sr.role_id
+            WHERE s.retired = 0 AND s.guild_id = ? AND r.role_type = 'Responsibility'
+            ORDER BY r.role_name ASC
         """
         cursor = await sdb.execute(responsibility_query, (guild_id,))
         resp_rows = await cursor.fetchall()
@@ -773,10 +774,86 @@ async def RequestLoa(ctx: commands.Context):
         await ctx.send("Opening LOA request modal...")
         await ctx.send_modal(LOAModal())
 
-async def AddRole(ctx: commands.Context, role: discord.Role, priority: int, ban_limit: int):
+class RoleType(str, Enum):
+        Staff = "Staff"
+        Responsibility = "Responsibility"
+
+async def AddRole(ctx: commands.Context, role: discord.Role, ban_limit: int, role_type: RoleType):
     try:
-        await sdb.execute("INSERT INTO roles (role_id, role_name, role_priority, ban_limit) VALUES (?, ?, ?, ?)", (role.id, role.name, priority, ban_limit))
+        cursor = await sdb.execute(
+            "SELECT role_id, role_priority FROM roles WHERE guild_id = ? ORDER BY role_priority ASC",
+            (ctx.guild.id,)
+        )
+        db_roles = await cursor.fetchall()
+
+        role_list = []
+        for db_role_id, db_priority in db_roles:
+            db_role = ctx.guild.get_role(db_role_id)
+            if db_role:
+                role_list.append((db_role_id, db_priority, db_role.position))
+
+        insert_index = 0
+        for i, (_, _, discord_pos) in enumerate(role_list):
+            if role.position > discord_pos:
+                break
+            insert_index += 1
+
+        for i in range(insert_index, len(role_list)):
+            db_role_id = role_list[i][0]
+            await sdb.execute(
+                "UPDATE roles SET role_priority = role_priority + 1 WHERE role_id = ?",
+                (db_role_id,)
+            )
+
+        await sdb.execute(
+            "INSERT INTO roles (role_id, role_name, role_priority, ban_limit, role_type, guild_id) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (role.id, role.name, insert_index, ban_limit, role_type.value, ctx.guild.id)
+        )
+
         await sdb.commit()
-        await ctx.send(mLily.SimpleEmbed(f"Successfully Added {role.name} to the List"))
+
+        await ctx.send(
+            embed=mLily.SimpleEmbed(f"Successfully Added {role.name} at priority {insert_index}")
+        )
     except Exception as e:
-        await ctx.send(mLily.SimpleEmbed(f"Error Adding {role.name} to the List"))
+        await ctx.send(
+            embed=mLily.SimpleEmbed(f"Error Adding {role.name}: {e}", 'cross')
+        )
+
+async def GetAllStaffRoles(ctx: commands.Context):
+    try:
+        cursor = await sdb.execute(
+            "SELECT role_id, role_name FROM roles WHERE guild_id = ? ORDER BY role_priority ASC",
+            (ctx.guild.id,)
+        )
+        rows = await cursor.fetchall()
+
+        if not rows:
+            await ctx.send(embed=mLily.SimpleEmbed("No staff roles found in this guild.", 'cross'))
+            return
+
+        role_names = []
+        role_mentions = []
+
+        for role_id, role_name in rows:
+            role = ctx.guild.get_role(role_id)
+            if role:
+                role_names.append(role.name)
+                role_mentions.append(role.mention)
+            else:
+                role_names.append(role_name)
+                role_mentions.append(f"<@&{role_id}>")
+
+        embed = discord.Embed(
+            title="Permission Assigned Roles",
+            colour=0xffffff
+        )
+        embed.add_field(name="Role Names", value="\n".join(role_names), inline=True)
+        embed.add_field(name="Role Reference", value="\n".join(role_mentions), inline=True)
+
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        print(f"Exception [GetAllStaffRoles] {e}")
+        await ctx.send(embed=mLily.SimpleEmbed(f"Error fetching staff roles", 'cross'))

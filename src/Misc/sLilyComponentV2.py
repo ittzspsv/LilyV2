@@ -35,154 +35,10 @@ def format_currency(val):
     else:
         return str(int(value))
 
-
-class GAGPetValueComponent(discord.ui.LayoutView):
-    def __init__(self, value, weight, age, name,link, mutations, pet_classifications):
-        super().__init__()
-        self.value = value
-        self.weight = weight
-        self.age = age
-        self.name = name
-        self.link = link
-        self.mutations = mutations
-        self.pet_classifications = pet_classifications
-
-        self.container1 = discord.ui.Container(
-                discord.ui.TextDisplay(content=f"## {self.name}"),
-                discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
-                discord.ui.MediaGallery(
-                    discord.MediaGalleryItem(
-                        media=self.link,
-                    ),
-                ),
-                discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
-                discord.ui.TextDisplay(content=f"### Basic Value Information\n- **Value : {self.value}**\n- **Weight : {self.weight}**\n- **Age : {self.age}**"),
-                discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
-                discord.ui.TextDisplay(content=f"### Additional Information\n- Mutations : {self.mutations}\n- Pet Classification : {self.pet_classifications}"),
-                accent_colour=discord.Colour(16711813)
-            )
-        
-        self.add_item(self.container1)
-
-class GAGFruitValueComponent(discord.ui.LayoutView):
-    def __init__(self, value, weight, variant, name,mutations,link):
-        super().__init__()
-        self.value = value
-        self.weight = weight
-        self.variant = variant
-        self.name = name
-        self.mutations = mutations
-        self.link = link
-
-        self.container1 = discord.ui.Container(
-            discord.ui.TextDisplay(content=f"## {name}"),
-            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(
-                    media=self.link
-                ),
-            ),
-            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
-            discord.ui.TextDisplay(content=f"- **Value : {self.value}**\n- **Weight : {self.weight}**\n- **Variant : {self.variant}**\n- **Mutations : {self.mutations}**"),
-            accent_colour=discord.Colour(16711813),
-        )
-
-        self.add_item(self.container1)
-
 class EmptyView(discord.ui.LayoutView):
     def __init__(self):
         self.text_display1 = discord.ui.TextDisplay(content="hi")
 
-class GAGStockComponent(discord.ui.LayoutView):
-    def __init__(self, stock_name,seed_stock, pings):
-        super().__init__()
-        self.stock_name = stock_name
-        self.seed_stock = seed_stock
-        self.pings = pings
-
-        sections = [
-            discord.ui.TextDisplay(content=f"## {stock_name}"),
-        ]
-
-        sections.append(
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(media="attachment://border.png")
-            )
-        )
-
-        for item in seed_stock:
-            sections.append(
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        content=(
-                            f"### {item['display_name']}\n"
-                            f"- Quantity : **x{item['quantity']}**\n"
-                            f"- Rarity : Common"
-                        )
-                    ),
-                    accessory=discord.ui.Thumbnail(media=item['icon']),
-                )
-            )
-
-        sections.append(
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(media="attachment://border.png")
-            )
-        )
-
-        if pings:
-            pings_text = "## PINGS\n" + ", ".join(pings)
-            sections.append(discord.ui.TextDisplay(content=pings_text))
-
-        container1 = discord.ui.Container(
-            *sections,
-            accent_colour=discord.Colour(8447),  # blue accent
-        )
-
-        self.add_item(container1)
-
-class PVBStockComponent(discord.ui.LayoutView):
-    def __init__(self, stock_name,seed_stock):
-        super().__init__()
-        self.stock_name = stock_name
-        self.seed_stock = seed_stock
-
-        sections = [
-            discord.ui.TextDisplay(content=f"## {stock_name}"),
-        ]
-
-        sections.append(
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(media="attachment://border.png")
-            )
-        )
-
-        for item in seed_stock:
-            sections.append(
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        content=(
-                            f"### {item['display_name']}\n"
-                            f"- Quantity : **x{item['quantity']}**\n"
-                            f"- Rarity : {item['rarity']}"
-                        )
-                    ),
-                    accessory=discord.ui.Thumbnail(media=item['icon']),
-                )
-            )
-
-        sections.append(
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(media="attachment://border.png")
-            )
-        )
-
-        container1 = discord.ui.Container(
-            *sections,
-            accent_colour=discord.Colour(8447),  # blue accent
-        )
-
-        self.add_item(container1)
 
 class BloxFruitStockComponent(discord.ui.LayoutView):
     def __init__(self, stock_type, container_items):
@@ -394,10 +250,11 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                             their_fruit_details = ""
 
                             for i in range(len(self.your_fruits)):
-                                fruit_name = self.your_fruits[i].replace(" ", "").replace("-", "")
-                                fruit_emoji = next((e for e in interaction.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
-                                perm_emoji = next((e for e in interaction.guild.emojis if e.name.lower() == "perm"), "🔒")
-                                beli_emoji = discord.utils.get(interaction.guild.emojis, name="beli") or "💸"
+
+                                fruit_name = self.your_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                                fruit_emoji = Configs.fruit_emojis.get(fruit_name, "🍎")
+                                beli_emoji = Configs.emoji.get("beli", "💸")
+                                perm_emoji = Configs.emoji.get("perm", "🔒")
 
                                 value = data['Your_IndividualValues'][i]
                                 formatted_value = f"{value:,}"
@@ -408,9 +265,10 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                                 
 
                             for i in range(len(their_fruits)):
-                                fruit_name = their_fruits[i].replace(" ", "").replace("-", "")
-                                fruit_emoji = next((e for e in interaction.guild.emojis if e.name.lower() == fruit_name.lower()), "🍎")
-                                beli_emoji = discord.utils.get(interaction.guild.emojis, name="beli") or "💸"
+                                fruit_name = their_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                                fruit_emoji = Configs.fruit_emojis.get(fruit_name, "🍎")
+                                beli_emoji = Configs.emoji.get("beli", "💸")
+                                perm_emoji = Configs.emoji.get("perm", "🔒")
 
                                 value = data['Their_IndividualValues'][i]
                                 formatted_value = f"{value:,}"
@@ -571,90 +429,7 @@ class MusicPlayerView(discord.ui.View):
         status = "enabled" if player.repeat else "disabled"
 
         await interaction.response.send_message(f"Repeat {status}", ephemeral=True)
-
-class ForgeSuggestorView(discord.ui.LayoutView):
-    def __init__(self, inv, item_type):
-        super().__init__()
-
-        self.suggestion_result_unfilter = LFC.suggest_best_crafts(inv)
-        self.item_type = item_type
-
-        self.suggestion_result = [
-            item for item in self.suggestion_result_unfilter
-            if item['available'] and item['category'] == self.item_type.value
-        ]
-
-        container_items = [
-            discord.ui.TextDisplay(content="# Craft Suggester\n- Suggests best Crafts Based on your Inventory"),
-            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
-            discord.ui.TextDisplay(content="## Items that you can Craft"),
-        ]
-
-        for item in self.suggestion_result:
-            if not item['available']:
-                continue
-
-            cls_name = item["cls"]["name"]
-            chance = item["chance"]
-            avg = item["avgMultiplier"]
-
-            total_count = sum(i['count'] for i in item["composition"])
-            comp_str = ", ".join(
-                f"{i['count']}× {LFC.ore_by_id[i['id']]['name']} ({i['count']/total_count*100:.1f}%)"
-                for i in item["composition"]
-            )
-
-            if item["category"] == "Armor":
-                armor_class_dict = next(
-                    (ac for ac in LFC.armor_classes if ac['id'] == item['cls']['id']),
-                    None
-                )
-                armor_icon = armor_class_dict["icon"] if armor_class_dict else "https://cdn.discordapp.com/attachments/1438505067341680690/1438505246472142902/cross.png"
-
-                hp = LFC.get_health_range_for_armor_class(item["cls"]["id"])
-                vitality = LFC.compute_vitality_bonus_for_composition_array(item["composition"], "Armor")
-                hp_min = hp["min"] + vitality
-                hp_max = hp["max"] + vitality
-
-                armor_text = (
-                    f'### {cls_name} {chance:.1f}% @ {item["count"]} ores – ~{avg:.2f}x multiplier\n'
-                    f'- Estimated Health (incl. Vitality) : **{hp_min}% - {hp_max}%**\n'
-                    f'- Traits : **{vitality:.2f}**\n'
-                    f'- Use : **{comp_str}**'
-                )
-
-                container_items.append(discord.ui.Section(
-                    discord.ui.TextDisplay(content=armor_text),
-                    accessory=discord.ui.Thumbnail(media=armor_icon)
-                ))
-
-            elif item["category"] == "Weapon":
-                weapon_class_dict = next(
-                    (wc for wc in LFC.weapon_classes if wc['id'] == item['cls']['id']),
-                    None
-                )
-                weapon_icon = weapon_class_dict["icon"] if weapon_class_dict else "https://cdn.discordapp.com/attachments/1438505067341680690/1438505246472142902/cross.png"
-
-                dmg_range = LFC.get_damage_range_for_class(item["cls"]["id"], avg) or {"min": 0, "max": 0, "minDps": 0, "maxDps": 0}
-
-                weapon_text = (
-                    f'### {cls_name} {chance:.1f}% @ {item["count"]} ores – ~{avg:.2f}x multiplier\n'
-                    f'- Use: {comp_str}\n'
-                    f'- Estimated damage: **{dmg_range["min"]:.2f} – {dmg_range["max"]:.2f}** DMG\n'
-                    f'- DPS: **{dmg_range["minDps"]:.2f} – {dmg_range["maxDps"]:.2f}**'
-                )
-
-                container_items.append(discord.ui.Section(
-                    discord.ui.TextDisplay(content=weapon_text),
-                    accessory=discord.ui.Thumbnail(media=weapon_icon)
-                ))
-
-            container_items.append(discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small))
-
-        container1 = discord.ui.Container(*container_items, accent_colour=discord.Colour(0xFFFFFF))
-        self.add_item(container1)
-        
-        
+           
 class BanRequestView(discord.ui.View):
     def __init__(self, request_initializer: discord.Member,user: discord.Member,reason: str, proofs: list):
         super().__init__(timeout=None)

@@ -179,7 +179,7 @@ class LilyModeration(commands.Cog):
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='modlogs', description='Checks logs for a particular user')
-    async def modlogs(self, ctx, mod_type: str = "all", slice_exp: str = None, member: discord.User = None, moderator: discord.User = None):
+    async def modlogs(self, ctx, member: discord.User = None, mod_type: str = "all", slice_exp: str = None, moderator: discord.User = None):
         await ctx.defer()
         slice_obj = None
         if slice_exp:
@@ -209,6 +209,30 @@ class LilyModeration(commands.Cog):
             await ctx.send(embeds=embed)
         except Exception as e:
             await ctx.send(embed=mLily.SimpleEmbed(f"No Mod Logs Returned", 'cross'))
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='fetch_ban_cd',description='Fetches all ban cooldowns less than or equal to 24 hours')
+    async def ban_cd(self, ctx: commands.Context, member: discord.Member | None = None):
+        target = member or ctx.author
+
+        target_role_ids = [role.id for role in target.roles]
+
+        cooldown_text = await mLily.remaining_Ban_time_text(
+            ctx,
+            moderator_id=target.id,
+            moderator_role_ids=target_role_ids
+        )
+
+        if not cooldown_text:
+            await ctx.reply(
+                f"**{target.display_name}** has no active ban cooldowns."
+            )
+            return
+
+        await ctx.reply(
+            f"**Ban Cooldowns for {target.display_name}:**\n{cooldown_text}"
+        )
 
 async def setup(bot):
     await bot.add_cog(LilyModeration(bot))
