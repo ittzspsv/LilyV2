@@ -2,17 +2,21 @@ import random
 import Config.sValueConfig as VC
 
 
+import LilyBloxFruits.sLilyBloxFruitsCache as BFC
 
-async def get_fruit_value(fruit_name, value_type="physical"):
-    cursor = await VC.vdb.execute(
-        f"SELECT {value_type}_value FROM BF_ItemValues WHERE LOWER(name) = ?",
-        (fruit_name.lower(),)
-    )
-    row = await cursor.fetchone()
-    await cursor.close()
-    return row[0] if row else 0
+from typing import List, Optional, Dict, Union, Tuple, Literal
 
-async def fetch_all_fruits():
+
+async def get_fruit_value(fruit_name: Optional[str], value_type: str = "physical") -> int:
+    if not fruit_name:
+        return 0
+    fruit = BFC.item_dict.get(fruit_name.title())
+    if not fruit:
+        return 0
+    return fruit.get(f"{value_type}_value") or 0
+
+async def fetch_all_fruits() -> List[Dict[str, Union[str, int]]]:
+    '''
     cursor = await VC.vdb.execute(
         "SELECT name, category, physical_value, permanent_value FROM BF_ItemValues"
     )
@@ -27,83 +31,83 @@ async def fetch_all_fruits():
             "permanent_value": row[3] or 0
         })
     return fruits
+    '''
 
-async def BuildFruitFilterationMap(user_fruits,suggest_permanent=False,suggest_gamepass=False,suggest_fruit_skins=False,neglect_fruits=[]):
+    return BFC.item_list_minimal
+
+async def BuildFruitFilterationMap(user_fruits, suggest_permanent: bool = False, suggest_gamepass: bool = False, suggest_fruit_skins: bool = False,neglect_fruits: Optional[List] = None) -> List:
+    if neglect_fruits is None:
+        neglect_fruits = []
+
     excluded = tuple(f.lower() for f in user_fruits) or ("",)
     neglected = tuple(f.lower() for f in neglect_fruits)
 
-    blocked_fruits = excluded + neglected
+    blocked_fruits = set(excluded + neglected)
 
-    category_map = {
-        'common': 1,
-        'uncommon': 2,
-        'rare': 3,
-        'legendary': 4,
-        'mythical': 5,
-        'gamepass': 6
-    }
+    user_categories = [
+        BFC.name_to_category[f]
+        for f in excluded
+        if f in BFC.name_to_category
+    ]
 
-    placeholders = ",".join("?" * len(excluded))
-    query = f"""
-        SELECT DISTINCT LOWER(category)
-        FROM BF_ItemValues
-        WHERE LOWER(name) IN ({placeholders})
-    """
+    rarity_levels = [
+        BFC.category_map[c]
+        for c in user_categories
+        if c in BFC.category_map
+    ]
 
-    cursor = await VC.vdb.execute(query, excluded)
-    user_categories = [row[0] for row in await cursor.fetchall()]
-    await cursor.close()
-
-    rarity_levels = [category_map[c] for c in user_categories if c in category_map]
     user_max_rarity = max(rarity_levels) if rarity_levels else 6
 
     if not suggest_permanent:
-        allowed_categories = [
-            cat for cat, lvl in category_map.items()
-            if lvl >= abs(user_max_rarity - 1)
-        ]
+        min_level = abs(user_max_rarity - 1)
+        allowed_categories = {
+            cat
+            for cat, lvl in BFC.category_map.items()
+            if lvl >= min_level
+        }
     else:
-        allowed_categories = list(category_map.keys())
+        allowed_categories = set(BFC.category_map.keys())
 
-    if not suggest_gamepass and "gamepass" in allowed_categories:
-        allowed_categories.remove("gamepass")
-
-    all_blocked = blocked_fruits
-    blocked_placeholders = ",".join("?" * len(all_blocked))
-    category_placeholders = ",".join("?" * len(allowed_categories))
-
-    base_query = f"""
-        SELECT name, category, physical_value, permanent_value
-        FROM BF_ItemValues
-        WHERE LOWER(name) NOT IN ({blocked_placeholders})
-          AND LOWER(category) IN ({category_placeholders})
-          AND LOWER(category) != 'limited'
-    """
-
-    if not suggest_fruit_skins:
-        base_query += " AND LOWER(category) != 'limited skin'"
-
-    params = list(all_blocked) + allowed_categories
-
-    cursor = await VC.vdb.execute(base_query, params)
-    rows = await cursor.fetchall()
-    await cursor.close()
+    if not suggest_gamepass:
+        allowed_categories.discard("gamepass")
 
     pool = []
-    for name, category, phys_val, perm_val in rows:
+
+    for item in BFC.item_list_minimal:
+
+        name_lower = item["name_lower"]
+        category = item["category"]
+
+        if name_lower in blocked_fruits:
+            continue
+
+        if category not in allowed_categories:
+            continue
+
+        if category == "limited":
+            continue
+
+        if not suggest_fruit_skins and category == "limited skin":
+            continue
+
+        name = item["name"]
+        phys_val = item["physical_value"]
+        perm_val = item["permanent_value"]
+
         if category in ("gamepass", "limited skin"):
             if (suggest_gamepass or suggest_fruit_skins) and phys_val > 0:
                 pool.append((name, "physical", phys_val, "gamepass"))
+
         else:
             if suggest_permanent and perm_val > 0:
                 pool.append((name, "permanent", perm_val, "fruit"))
+
             if phys_val > 0:
                 pool.append((name, "physical", phys_val, "fruit"))
 
     return pool
 
-
-def SuggestBuilder(pool, target_value, max_gamepass=2, overpay=False,storage_capacity=1, max_items=4):
+def SuggestBuilder(pool: Optional[List], target_value, max_gamepass=2, overpay=False,storage_capacity=1, max_items=4) -> Optional[List]:
     if not pool:
         return []
 
@@ -159,8 +163,10 @@ def SuggestBuilder(pool, target_value, max_gamepass=2, overpay=False,storage_cap
 
     return best_selection
 
-async def trade_suggestor(user_fruits, fruit_types, suggest_permanent=False, suggest_gamepass=False, suggest_fruit_skins=False, overpay=False, neglect_fruits=[], storage_capacity=1):
+async def trade_suggestor(user_fruits, fruit_types, suggest_permanent: bool = False, suggest_gamepass: bool = False, suggest_fruit_skins: bool = False, overpay: bool = False, neglect_fruits: List | None = None, storage_capacity=1) -> Union[Tuple[List, List, Literal[True]], Tuple[List, List, Literal[False]]]:
     total_value = 0
+    if neglect_fruits is None:
+        neglect_fruits = []
 
     for name, ftype in zip(user_fruits, fruit_types):
         total_value += await get_fruit_value(name, ftype.lower())

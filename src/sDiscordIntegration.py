@@ -7,18 +7,11 @@ import LilyModeration.sLilyModeration as mLily
 import LilyBloxFruits.sLilyBloxFruitsCore as LBFC
 import aiohttp
 import LilyLeveling.sLilyLevelingCore as LilyLeveling
-import LilyLogging.sLilyLogging as LilyLogging
 import Config.sValueConfig as ValueConfig
-import LilyTicketTool.LilyTicketToolCore as LilyTTCore
-import LilyManagement.sLilyStaffManagement as LSM
 import os
-import LilySubstring.sLilySubstring as LS
 import logging
-import LilyLeveling.sLilyLevelingCommands as LLC
 import LilySecurity.sLilySecurity as LilySecurity
-#import LilyVouching.sLilyVouchCore as LVC
 import LilyUtility.sLilyGreetings as LG
-from meta_ai_api import MetaAI
 import LilyTicketTool.LilyTicketToolThread as LTTT
 
 
@@ -52,7 +45,7 @@ class MyBot(commands.Bot):
             "LilyTicketTool.LilyTicketToolCommands",
             "LilyLeveling.sLilyLevelingCommands",
             # "LilyMiddleman.sLilyMiddlemanCommands"
-            #"LilyMusic.sLilyMusicCommands"
+            "LilyMusic.sLilyMusicCommands",
             "LilyForge.LilyForgeCommands",
             "LilyGTO.LilyGTOCommands",
             #"LilyVouching.LilyVouchingCommands"
@@ -61,120 +54,24 @@ class MyBot(commands.Bot):
         for ext in extensions:
             if ext not in self.extensions:
                 await self.load_extension(ext)
-        self.lily_session = aiohttp.ClientSession()
-        self.ai = MetaAI()
-        #await self.tree.sync()
+        await self.tree.sync()
 
     async def BotInitialize(self):
-        for guild in self.guilds:
-                await self.MemoryButtonSetup(guild)
         guild_ids = [(guild.id,) for guild in self.guilds]
         await ValueConfig.cdb.executemany(
             "INSERT OR IGNORE INTO ConfigData (guild_id) VALUES (?)",
             guild_ids
         )
         await ValueConfig.cdb.commit()
-
-    async def MemoryButtonSetup(self, Guild: discord.Guild):
-        try:
-            cursor = await ValueConfig.cdb.execute(
-                "SELECT MemoryButton FROM ConfigData WHERE guild_id = ?",
-                (Guild.id,)
-            )
-            row = await cursor.fetchone()
-        except Exception as e:
-            print(f"Database error during MemoryButtonSetup: {e}")
-            return
-
-        if not row or not row[0]:
-            return
-
-        try:
-            all_views = json.loads(row[0])
-        except json.JSONDecodeError:
-            await ValueConfig.cdb.execute(
-                """
-                INSERT INTO ConfigData (guild_id, MemoryButton)
-                VALUES (?, ?)
-                ON CONFLICT(guild_id) DO UPDATE SET MemoryButton = excluded.MemoryButton
-                """,
-                (Guild.id, "[]")
-            )
-            await ValueConfig.cdb.commit()
-            return
-
-        if not all_views:
-            return
-
-        valid_views = []
-        bot = self
-
-        for view_data in all_views:
-            channel_id = view_data.get("channel_id")
-            message_id = view_data.get("message_id")
-            buttons_data = view_data.get("buttons", [])
-
-            channel = bot.get_channel(channel_id)
-            if not channel:
-                continue
-
-            try:
-                message = await channel.fetch_message(message_id)
-            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                continue
-
-            view = discord.ui.View(timeout=None)
-
-            for btn_data in buttons_data:
-                button = discord.ui.Button(
-                    label=btn_data.get("label", "Unnamed"),
-                    style=discord.ButtonStyle(btn_data.get("style", discord.ButtonStyle.secondary)),
-                    custom_id=btn_data["custom_id"]
-                )
-
-                embed_dict = btn_data.get("embed")
-                if not embed_dict:
-                    continue
-
-                embed = discord.Embed.from_dict(embed_dict)
-
-                async def callback(interaction, embed=embed):
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-                button.callback = callback
-                view.add_item(button)
-
-            bot.add_view(view)
-            valid_views.append(view_data)
-
-        try:
-            await ValueConfig.cdb.execute(
-                """
-                INSERT INTO ConfigData (guild_id, MemoryButton)
-                VALUES (?, ?)
-                ON CONFLICT(guild_id) DO UPDATE SET MemoryButton = excluded.MemoryButton
-                """,
-                (Guild.id, json.dumps(valid_views, indent=4))
-            )
-            await ValueConfig.cdb.commit()
-        except Exception as e:
-            print(f"Failed to update valid views in DB: {e}")
-
     async def ConnectDatabase(self):
-        await LilyLogging.initialize()
-        await LilyLeveling.initialize()
-        await LSM.initialize()
         await ValueConfig.initialize()
 
     async def on_ready(self):
         print('Logged on as', self.user)   
         await self.ConnectDatabase()
         await self.BotInitialize()
-        await LilyTTCore.InitializeView(self)
-        await LTTT.InitializeTicketView(self)
         #await LVC.Initialize()
         await self.ModifyStatus.start()
-        #await self.tree.sync()
 
     @tasks.loop(minutes=60)
     async def ModifyStatus(self):
@@ -228,27 +125,6 @@ class MyBot(commands.Bot):
             await self.ListenDirectMessage(message)
 
         await LBFC.MessageEvaluate(bot, message)
-        #await LTTC.TicketTranscript(bot, message)
-
-        '''
-        if (bot.user in message.mentions or (message.reference and isinstance(message.reference.resolved, discord.Message) and message.reference.resolved.author == bot.user)):
-            async with message.channel.typing():
-                content = re.sub(
-                    rf"<@!?{bot.user.id}>",
-                    "",
-                    message.content
-                ).strip()
-
-                if not content:
-                    content = f"{message.author.name} pings you!"
-
-                response = await asyncio.to_thread(
-                    self.ai.prompt,
-                    f"[{message.author.name} Speaks with you] {content}"
-                )
-
-            await message.channel.send(response)'''
-
         await self.process_commands(message)
 
     async def on_member_join(self, member: discord.Member):

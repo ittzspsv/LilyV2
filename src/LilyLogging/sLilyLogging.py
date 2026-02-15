@@ -36,7 +36,14 @@ async def WriteLog(ctx: commands.Context, user_id: int, log_txt: str):
     await mdb.commit()
 
     cursor = await VC.cdb.execute(
-        "SELECT logs_channel FROM ConfigData WHERE guild_id = ? AND logs_channel IS NOT NULL",
+        """
+        SELECT cc.logs_channel
+        FROM ConfigData cd
+        JOIN ConfigChannels cc
+            ON cd.channel_config_id = cc.channel_config_id
+        WHERE cd.guild_id = ?
+        AND cc.logs_channel IS NOT NULL
+        """,
         (ctx.guild.id,)
     )
     row = await cursor.fetchone()
@@ -80,7 +87,14 @@ async def LogModerationAction(ctx: commands.Context,moderator_id: int,target_use
     await mdb.commit()
 
     cursor = await VC.cdb.execute(
-        "SELECT logs_channel FROM ConfigData WHERE guild_id = ? AND logs_channel IS NOT NULL",
+        """
+        SELECT cc.logs_channel
+        FROM ConfigData cd
+        JOIN ConfigChannels cc
+            ON cd.channel_config_id = cc.channel_config_id
+        WHERE cd.guild_id = ?
+        AND cc.logs_channel IS NOT NULL
+        """,
         (ctx.guild.id,)
     )
     row = await cursor.fetchone()
@@ -133,14 +147,16 @@ async def LogModerationAction(ctx: commands.Context,moderator_id: int,target_use
 async def LogValueAction(ctx: commands.Context,triggered: discord.Member,value_dict: dict):
     try:
         cursor = await VC.cdb.execute(
-            """
-            SELECT logs_channel 
-            FROM ConfigData 
-            WHERE guild_id = ? 
-              AND logs_channel IS NOT NULL
-            """,
-            (ctx.guild.id,)
-        )
+        """
+        SELECT cc.logs_channel
+        FROM ConfigData cd
+        JOIN ConfigChannels cc
+            ON cd.channel_config_id = cc.channel_config_id
+        WHERE cd.guild_id = ?
+        AND cc.logs_channel IS NOT NULL
+        """,
+        (ctx.guild.id,)
+    )
         row = await cursor.fetchone()
         await cursor.close()
 
@@ -186,10 +202,12 @@ async def PostLog(ctx: commands.Context, embed: discord.Embed, log_type:str="Def
     try:
         cursor = await VC.cdb.execute(
             """
-            SELECT logs_channel 
-            FROM ConfigData 
-            WHERE guild_id = ? 
-              AND logs_channel IS NOT NULL
+            SELECT cc.logs_channel
+            FROM ConfigData cd
+            JOIN ConfigChannels cc
+                ON cd.channel_config_id = cc.channel_config_id
+            WHERE cd.guild_id = ?
+            AND cc.logs_channel IS NOT NULL
             """,
             (ctx.guild.id,)
         )

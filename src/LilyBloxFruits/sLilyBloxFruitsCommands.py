@@ -13,6 +13,8 @@ import LilyLogging.sLilyLogging as LilyLogging
 import ui.sComboImageGenerator as CIG
 import Config.sValueConfig as VC
 import Misc.sFruitImageDownloader as FID
+from . import sLilyBloxFruitsCache as BFC
+
 
 import discord
 import ast
@@ -23,6 +25,10 @@ import json
 class LilyBloxFruits(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await BFC.initialize()
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='update_image_blox_fruits', description='updates an image of blox fruits')
@@ -124,13 +130,14 @@ class LilyBloxFruits(commands.Cog):
             query = f"UPDATE BF_ItemValues SET {set_clause} WHERE name = ?"
             await VC.vdb.execute(query, values)
             await VC.vdb.commit()
+            await BFC.initialize()
 
             await LilyLogging.LogValueAction(ctx, ctx.author, updated_only)
 
             await ctx.send(f"Item {name} updated successfully.")
         except Exception as e:
-            print(e)
-            await ctx.send(f"An error occurred: {e}")
+            print(f"Exception [UpdateValue] {e}")
+            await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred", 'cross'))
 
     @commands.hybrid_command(name='add_combo', description='Adds a combo to the database')
     async def add_combo(self, ctx: commands.Context, *, combo: str = None):

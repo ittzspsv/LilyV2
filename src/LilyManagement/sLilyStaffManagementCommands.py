@@ -12,6 +12,10 @@ class LilyManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await smLily.initialize()
+
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='staffdata', description='shows data for a particular staff')
     async def staffdata(self, ctx:commands.Context, id:str):
@@ -23,9 +27,9 @@ class LilyManagement(commands.Cog):
     @commands.hybrid_command(name='staffs', description='shows all staff registered name with the count')
     async def staffs(self, ctx:commands.Context):
         try:
-            await ctx.send(embeds=await smLily.FetchAllStaffs(ctx))
+            await smLily.FetchAllStaffs(ctx)
         except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"Exception {e}"))
+            await ctx.send(embed=mLily.SimpleEmbed(f"Exception [staffs] {e}"))
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Developer')), allow_per_server_owners=True)
     @commands.hybrid_command(name='staff_strike', description='strikes a staff with a specified reason')
@@ -102,6 +106,12 @@ class LilyManagement(commands.Cog):
     @commands.hybrid_command(name='get_all_staff_roles', description='Returns all staff roles')
     async def get_all_StaffRoles(self, ctx: commands.Context):
         await smLily.GetAllStaffRoles(ctx)
+
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Developer', 'Staff Manager')), allow_per_server_owners=True)
+    @commands.hybrid_command(name='remove_role', description='Removes a role from roles list')
+    async def remove_role(self, ctx: commands.Context, role: discord.Role):
+        await smLily.RemoveRole(ctx, role)
+
 
 async def setup(bot):
     await bot.add_cog(LilyManagement(bot))

@@ -1,6 +1,6 @@
 import unicodedata
 from rapidfuzz import fuzz
-import LilyAlgorthims.sTradeFormatAlgorthim as TFA
+import LilyBloxFruits.core.sTradeFormatAlgorthim as TFA
 import re
 
 HIGH_RISK_WORDS = {

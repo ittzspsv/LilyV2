@@ -5,6 +5,10 @@ from ast import literal_eval
 import Config.sBotDetails as Configs
 from enum import Enum
 import LilyModeration.sLilyModeration as mLily
+from collections import defaultdict
+from datetime import datetime, timezone
+
+from typing import Dict, Literal, List, Tuple
 
 try:
     import Misc.sLilyComponentV2 as CS2
@@ -17,101 +21,176 @@ import LilyRulesets.sLilyRulesets as LilyRuleset
 
 sdb = None
 
-class LOAModal(discord.ui.Modal):
-    def __init__(self):
-        super().__init__(title="Request LOA")
-        self.days = discord.ui.TextInput(
-            label="Number of days",
-            placeholder="Enter number of days",
-            required=True
-        )
-        self.reason = discord.ui.TextInput(
-            label="Reason",
-            style=discord.TextStyle.paragraph,
-            placeholder="Enter reason",
-            required=True
-        )
-        self.add_item(self.days)
-        self.add_item(self.reason)
+class StaffListView(discord.ui.LayoutView):
+    def __init__(self, interaction: discord.Interaction, role_data: dict, role_id: int, page: int = 0, per_page: int = 6):
+        super().__init__()
 
-    async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message("✅ Your LOA request has been submitted!", ephemeral=True)
+        self.owner_id = interaction.user.id
+        self.role_data = role_data
+        self.role_id = role_id
+        self.per_page = per_page
 
-        days = int(self.days.value)
-        reason = self.reason.value
-        staff = interaction.user
+        staffs_complete = role_data.get("staff", [])
+        self.total_staff = len(staffs_complete)
 
-        review_channel = interaction.client.get_channel(1421841285253431408)
-        if review_channel is None:
-            await staff.send("⚠️ Review channel not found. Contact a developer")
-            return
+        max_page = max((self.total_staff - 1) // per_page, 0)
+        self.page = max(0, min(page, max_page))
 
-        embed = discord.Embed(
-            title="📝 LOA Request",
-            description="A staff member has requested a Leave of Absence.",
-            color=discord.Color.blue()
-        )
-        embed.add_field(name="Staff", value=f"{staff.mention}", inline=True)
-        embed.add_field(name="Days", value=str(days), inline=True)
-        embed.add_field(name="Reason", value=reason, inline=False)
-        embed.set_thumbnail(url=staff.display_avatar.url if staff.display_avatar else "https://i.imgur.com/6VBx3io.png")
-        embed.set_footer(text="Use the buttons below to approve or reject this request.")
+        start = self.page * per_page
+        end = start + per_page
+        staffs = staffs_complete[start:end]
 
-        view = LOAReviewView(staff, reason, days)
-        await review_channel.send(embed=embed, view=view)
+        role = interaction.guild.get_role(role_id)
+        role_icon_url = role.icon.url if role and role.icon else interaction.client.user.avatar.url
 
-class LOAReviewView(discord.ui.View):
-    def __init__(self, staff, reason, days):
-        super().__init__(timeout=86400)
-        self.staff = staff
-        self.reason = reason
-        self.days = days
+        staff_sections = []
 
-    @discord.ui.button(label="Approve", style=discord.ButtonStyle.success)
-    async def approve(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            has_permission = await LilyRuleset.rPermissionEvaluator(
-                interaction,
-                PermissionType="role",
-                RoleAllowed=lambda: GetRoles(('Developer', 'Staff Manager'))
+        for i, staff in enumerate(staffs):
+            avatar = staff.get('avatar_profile') or interaction.client.user.avatar.url
+
+            staff_sections.append(
+                discord.ui.Section(
+                    discord.ui.TextDisplay(
+                        content=(
+                            f"### <@{staff.get('id','Unknown')}>\n"
+                            f"- Timezone : {staff.get('timezone','Default')}\n"
+                            f"- Joined : {staff.get('joined_on')}"
+                        )
+                    ),
+                    accessory=discord.ui.Thumbnail(media=avatar)
+                )
             )
-        except commands.CheckFailure as e:
-            await interaction.response.send_message(f"❌ {e}", ephemeral=True)
-            return
 
-        await AssignLoa(self.staff.id, self.reason, self.days)
-        embed = interaction.message.embeds[0]
-        embed.color = discord.Color.green()
-        await self.staff.send(
-            f"✅ Your LOA request for **{self.days} days** has been approved. Good luck!"
+            if i < len(staffs) - 1:
+                staff_sections.append(
+                    discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small)
+                )
+
+        role_section = discord.ui.Section(
+            discord.ui.TextDisplay(
+                content=f"## {role_data.get('role_name','Unknown')}\n"
+                        f"- Total Staff: `{self.total_staff}`\n"
+                        f"- Page: `{self.page+1}/{max_page+1}`"
+            ),
+            accessory=discord.ui.Thumbnail(media=role_icon_url)
         )
-        await interaction.response.edit_message(embed=embed, view=None)
 
-    @discord.ui.button(label="Reject", style=discord.ButtonStyle.danger)
-    async def reject(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            has_permission = await LilyRuleset.rPermissionEvaluator(
-                interaction,
-                PermissionType="role",
-                RoleAllowed=lambda: GetRoles(('Developer', 'Staff Manager', 'TestRole'))
+        container_items = [
+            role_section,
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
+            *staff_sections
+        ]
+
+        buttons = discord.ui.ActionRow()
+
+        if self.page > 0:
+            left = discord.ui.Button(style=discord.ButtonStyle.secondary, emoji="⏪")
+            left.callback = self.left_paginator_callback
+            buttons.add_item(left)
+
+        if end < self.total_staff:
+            right = discord.ui.Button(style=discord.ButtonStyle.secondary, emoji="⏩")
+            right.callback = self.right_paginator_callback
+            buttons.add_item(right)
+
+        if buttons.children:
+            container_items.append(buttons)
+
+        container_items.append(
+            discord.ui.MediaGallery(
+                discord.MediaGalleryItem(media=Configs.img['border'])
             )
-        except commands.CheckFailure as e:
+        )
+
+        self.container = discord.ui.Container(*container_items)
+        self.add_item(self.container)
+
+    async def interaction_check(self, interaction: discord.Interaction):
+        if interaction.user.id != self.owner_id:
             await interaction.response.send_message(
-                f"❌ {e}", ephemeral=True
+                "Only instigator has authority to access.",
+                ephemeral=True
             )
-            return
+            return False
+        return True
 
-        embed = interaction.message.embeds[0]
-        embed.color = discord.Color.red()
-
-        await self.staff.send(
-            f"❌ Your LOA request for **{self.days} days** has been rejected."
+    async def left_paginator_callback(self, interaction: discord.Interaction):
+        view = StaffListView(
+            interaction,
+            self.role_data,
+            self.role_id,
+            page=self.page - 1
         )
-        await interaction.response.edit_message(embed=embed, view=None)
+        await interaction.response.edit_message(view=view)
+
+    async def right_paginator_callback(self, interaction: discord.Interaction):
+        view = StaffListView(
+            interaction,
+            self.role_data,
+            self.role_id,
+            page=self.page + 1
+        )
+        await interaction.response.edit_message(view=view)
+
+class StaffsView(discord.ui.LayoutView):
+    def __init__(self, ctx: commands.Context, overall_details: Dict, role_users_map):
+        super().__init__(timeout=500)
+
+        self.message = None
+        self.role_users_map = role_users_map
+
+        role_select_options = [
+            discord.SelectOption(label=data["role_name"], value=str(role_id))
+            for role_id, data in role_users_map.items()
+            if role_id and data["role_name"]
+        ]
+
+        self.roles_selector = discord.ui.Select(
+            custom_id="roles_selector",
+            options=role_select_options
+        )
+        self.roles_selector.callback = self.role_selector_callback
+
+        self.container_1 = discord.ui.Container(
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    content=(
+                        "## Staff's Overview\n"
+                        "- Lily's Staff Management System.\n\n"
+                        f"### __Overall Details__\n"
+                        f"- **ON LOA** - `{overall_details.get('LOA')}`\n"
+                        f"- **Active Staffs** - `{overall_details.get('ActiveStaffs')}`\n"
+                        f"- **Total Staffs** - `{overall_details.get('TotalStaffs')}`"
+                    )
+                ),
+                accessory=discord.ui.Thumbnail(media=ctx.guild.icon.url)
+            ),
+            discord.ui.ActionRow(self.roles_selector),
+            discord.ui.MediaGallery(
+                discord.MediaGalleryItem(media=Configs.img['border'])
+            ),
+            accent_colour=discord.Colour(16777215),
+        )
+
+        self.add_item(self.container_1)
+
+    async def role_selector_callback(self, interaction: discord.Interaction):
+        selected_role_id = int(self.roles_selector.values[0])
+        role_data = self.role_users_map[selected_role_id]
+
+        view = StaffListView(interaction, role_data, selected_role_id)
+
+        await interaction.response.send_message(
+            view=view,
+            ephemeral=True
+        )
 
     async def on_timeout(self):
-        for item in self.children:
-            item.disabled = True
+        self.roles_selector.disabled = True
+        try:
+            await self.message.edit(view=self)
+        except discord.HTTPException:
+            pass
 
 async def initialize():
     global sdb
@@ -313,107 +392,70 @@ async def FetchAllStaffs(ctx: commands.Context):
         cursor = await sdb.execute(count_query, (guild_id,))
         total_staffs, loa_staffs, active_staffs = await cursor.fetchone()
 
-        staff_roles_query = """
-        SELECT s.staff_id, s.name, r.role_name, r.role_priority
-        FROM staffs s
-        JOIN staff_roles sr ON sr.staff_id = s.staff_id
-        JOIN roles r ON r.role_id = sr.role_id
-        WHERE s.retired = 0 AND s.guild_id = ? AND r.role_type = 'Staff'
-        ORDER BY r.role_priority ASC
-        """
-        cursor = await sdb.execute(staff_roles_query, (guild_id,))
-        staff_rows = await cursor.fetchall()
+        cursor = await sdb.execute(
+            """
+            SELECT 
+                r.role_id,
+                r.role_name,
+                s.staff_id,
+                s.name,
+                s.avatar_url,
+                s.joined_on,
+                s.Timezone
+            FROM roles r
+            LEFT JOIN staff_roles sr 
+                ON r.role_id = sr.role_id
+            LEFT JOIN staffs s 
+                ON sr.staff_id = s.staff_id
+                AND s.retired = 0
+            WHERE r.guild_id = ?
+            ORDER BY r.role_priority, s.name;
+            """
+        ,(guild_id,))
 
+        rows = await cursor.fetchall()
 
-        responsibility_query = """
-            SELECT s.staff_id, s.name, r.role_name
-            FROM staffs s
-            JOIN staff_roles sr ON sr.staff_id = s.staff_id
-            JOIN roles r ON r.role_id = sr.role_id
-            WHERE s.retired = 0 AND s.guild_id = ? AND r.role_type = 'Responsibility'
-            ORDER BY r.role_name ASC
-        """
-        cursor = await sdb.execute(responsibility_query, (guild_id,))
-        resp_rows = await cursor.fetchall()
+        overall_details = {"LOA" : loa_staffs, "ActiveStaffs" : active_staffs, "TotalStaffs" : total_staffs}
 
-        staff_roles = {}
-        for staff_id, name, role_name, role_priority in staff_rows:
-            mention = f"<@{staff_id}>"
-            if role_name not in staff_roles:
-                staff_roles[role_name] = {
-                    "priority": role_priority if role_priority is not None else 999,
-                    "mentions": []
-                }
-            staff_roles[role_name]["mentions"].append(mention)
+        time_now = datetime.now(timezone.utc)
+        role_user_map: dict[int, dict[str, str | list[dict[str, int | str | None]]]] = {}
+        for role_id, role_name, staff_id, name, avatar_url, joined_on, dtimezone in rows:
+        
+            try:
+                dt = datetime.strptime(joined_on, "%d/%m/%Y").replace(tzinfo=timezone.utc) \
+                    if joined_on else datetime.now(timezone.utc)
+            except ValueError:
+                dt = time_now
 
-        staff_embed = discord.Embed(
-            title=f"{Configs.emoji['arrow']} Staff Hierarchy",
-            colour=16777215
-        ).set_thumbnail(
-            url="https://media.discordapp.net/attachments/1366840025010012321/1438090416628043866/shield.png?format=webp&quality=lossless"
-        ).set_image(
-            url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png?format=webp&quality=lossless"
-        )
+            unix_timestamp = int(dt.timestamp())
 
-        sorted_staff_roles = sorted(staff_roles.items(), key=lambda x: x[1]["priority"])
-        for role_name, data in sorted_staff_roles:
-            mentions = data["mentions"]
-            count = len(mentions)
-            staff_embed.add_field(
-                name=f"__{role_name}__ ({count})",
-                value="- " + "\n- ".join(mentions),
-                inline=False
-            )
+            role = role_user_map.setdefault(role_id, {
+                "role_name": role_name,
+                "staff": []
+            })
 
-        responsibilities = {}
-        for staff_id, name, role_name in resp_rows:
-            mention = f"<@{staff_id}>"
-            if role_name not in responsibilities:
-                responsibilities[role_name] = []
-            responsibilities[role_name].append(mention)
+            if staff_id is not None:
+                role["staff"].append({
+                    "name": name,
+                    "id": staff_id,
+                    "avatar_profile": avatar_url,
+                    "joined_on" : f"<t:{unix_timestamp}:R>",
+                    "timezone" : dtimezone or "Default"
+                })
 
-        resp_embed = discord.Embed(
-            title=f"{Configs.emoji['arrow']} Responsibilities",
-            colour=16777215
-        ).set_thumbnail(
-            url="https://media.discordapp.net/attachments/1366840025010012321/1438064934574493768/logs.png?format=webp&quality=lossless"
-        ).set_image(
-            url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png?format=webp&quality=lossless"
-        )
-
-        for role_name, mentions in sorted(responsibilities.items()):
-            resp_embed.add_field(
-                name=f"__{role_name}__ ({len(mentions)})",
-                value="- " + "\n- ".join(mentions),
-                inline=False
-            )
-
-        overview_embed = discord.Embed(
-            title=f"{Configs.emoji['arrow']} Staff Overview",
-            colour=16777215
-        ).set_thumbnail(
-            url="https://media.discordapp.net/attachments/1366840025010012321/1438064934574493768/logs.png?format=webp&quality=lossless"
-        ).set_image(
-            url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png?format=webp&quality=lossless"
-        ).add_field(
-            name="On LOA", value=f"**{loa_staffs}**", inline=True
-        ).add_field(
-            name="Active Staffs", value=f"**{active_staffs}**", inline=True
-        ).add_field(
-            name="Total Staffs", value=f"**{total_staffs}**", inline=True
-        )
-
-        return [overview_embed, staff_embed, resp_embed]
+        view = StaffsView(ctx, overall_details, role_user_map)
+        view.message = await ctx.send(view=view)
 
     except Exception as e:
         print(f"Error fetching staff list: {e}")
-        return [
+        embeds = [
             discord.Embed(
                 title=f"{Configs.emoji['cross']} Error",
                 description="Failed to fetch staff data. Please check the database.",
                 colour=0xf50000
             )
         ]
+        await ctx.send(embeds=embeds)
 
 async def AddStaff(ctx: commands.Context, staff: discord.Member):
     staff_id = staff.id
@@ -452,24 +494,24 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
             if row[0] == 1:
                 await sdb.execute("""
                     UPDATE staffs
-                    SET retired = 0, name = ?
+                    SET retired = 0, name = ?, avatar_url = ?
                     WHERE staff_id = ? AND guild_id = ?
-                """, (name, staff_id, guild_id))
+                """, (name, staff.avatar.url, staff_id, guild_id))
             else:
                 await sdb.execute("""
                     UPDATE staffs
-                    SET name = ?
+                    SET name = ?, avatar_url = ?
                     WHERE staff_id = ? AND guild_id = ?
-                """, (name, staff_id, guild_id))
+                """, (name, staff.avatar.url, staff_id, guild_id))
         else:
             await sdb.execute("""
                 INSERT INTO staffs (
                     staff_id, name, guild_id,
                     on_loa, strikes_count, retired,
-                    Timezone, responsibility
+                    Timezone, responsibility, avatar_url
                 )
-                VALUES (?, ?, ?, 0, 0, 0, 'Default', 'None')
-            """, (staff_id, name, guild_id))
+                VALUES (?, ?, ?, 0, 0, 0, 'Default', 'None', ?)
+            """, (staff_id, name, guild_id, staff.avatar.url))
 
         if top_staff_role:
             await sdb.execute("""
@@ -766,14 +808,6 @@ async def RemoveLoa(ctx: commands.Context, staff_id: str):
         print(f"Error removing LOA: {e}")
         return False
 
-async def RequestLoa(ctx: commands.Context):
-    interaction = getattr(ctx, "interaction", None)
-    if interaction:
-        await interaction.response.send_modal(LOAModal())
-    else:
-        await ctx.send("Opening LOA request modal...")
-        await ctx.send_modal(LOAModal())
-
 class RoleType(str, Enum):
         Staff = "Staff"
         Responsibility = "Responsibility"
@@ -819,6 +853,55 @@ async def AddRole(ctx: commands.Context, role: discord.Role, ban_limit: int, rol
     except Exception as e:
         await ctx.send(
             embed=mLily.SimpleEmbed(f"Error Adding {role.name}: {e}", 'cross')
+        )
+
+async def RemoveRole(ctx: commands.Context, role: discord.Role):
+    try:
+        cursor = await sdb.execute(
+            "SELECT role_priority FROM roles WHERE role_id = ? AND guild_id = ?",
+            (role.id, ctx.guild.id)
+        )
+        result = await cursor.fetchone()
+
+        if not result:
+            await ctx.send(
+                embed=mLily.SimpleEmbed(f"{role.name} is not registered in the database.", 'cross')
+            )
+            return
+
+        removed_priority = result[0]
+
+        await sdb.execute(
+            "DELETE FROM staff_roles WHERE role_id = ?",
+            (role.id,)
+        )
+
+        await sdb.execute(
+            "DELETE FROM roles WHERE role_id = ?",
+            (role.id,)
+        )
+        await sdb.execute(
+            """
+            UPDATE roles
+            SET role_priority = role_priority - 1
+            WHERE guild_id = ?
+            AND role_priority > ?
+            """,
+            (ctx.guild.id, removed_priority)
+        )
+
+        await sdb.commit()
+
+        await ctx.send(
+            embed=mLily.SimpleEmbed(
+                f"Successfully removed {role.mention}"
+            )
+        )
+
+    except Exception as e:
+        print(f"Exception [RemoveRole] {e}")
+        await ctx.send(
+            embed=mLily.SimpleEmbed(f"Error removing {role.mention}", 'cross')
         )
 
 async def GetAllStaffRoles(ctx: commands.Context):

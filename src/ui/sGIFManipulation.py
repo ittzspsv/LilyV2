@@ -48,6 +48,6 @@ async def ExtractLastFrame(gif_path: str) -> tuple[io.BytesIO, float]:
     return buffer, total_duration_seconds
 
 if __name__ == "__main__":
-    input_gif = "Fatality 1.gif"  
-    output_gif = "compressed.gif"
-    #CompressGIF(input_gif, output_gif, scale=0.5, colors=128)
+    input_gif = "Animated.gif"  
+    output_gif = "Animated1.gif"
+    #CompressGIF(input_gif, output_gif, scale=0.7, colors=128)

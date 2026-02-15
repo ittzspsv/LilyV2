@@ -12,3 +12,4 @@ aiohttp
 aiofiles
 lavalink
 flashtext
+dotenv

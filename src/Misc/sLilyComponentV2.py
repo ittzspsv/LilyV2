@@ -3,8 +3,8 @@ import Config.sValueConfig as VC
 import Config.sBotDetails as Configs
 import io
 from discord.ui import View, Button, Modal, TextInput
-import LilyAlgorthims.sFruitSuggestorAlgorthim as FSA
-import Values.sStockValueJSON as StockValueJSON
+import LilyBloxFruits.core.sFruitSuggestorAlgorthim as FSA
+import LilyBloxFruits.sBloxFruitsCalculations as StockValueJSON
 import LilyForge.LilyForgeCore as LFC
 import LilyModeration.sLilyModeration as mLily
 
@@ -39,49 +39,6 @@ class EmptyView(discord.ui.LayoutView):
     def __init__(self):
         self.text_display1 = discord.ui.TextDisplay(content="hi")
 
-
-class BloxFruitStockComponent(discord.ui.LayoutView):
-    def __init__(self, stock_type, container_items):
-        super().__init__()
-        container1 = discord.ui.Container(*container_items, accent_colour=discord.Colour(8447))
-        self.add_item(container1)
-
-    @classmethod
-    async def create(cls, stock_data):
-        stock_type, data = stock_data
-        container_items = [discord.ui.TextDisplay(content=f"## {stock_type.upper()}")]
-
-        container_items.append(
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(media="attachment://border.png")
-            )
-        )
-
-        for item_name, price in data.items():
-            cursor = await VC.vdb.execute(
-                "SELECT category, icon_url FROM BF_ItemValues WHERE name = ?", (item_name,)
-            )
-            row = await cursor.fetchone()
-            if row:
-                rarity, image_url = row
-            else:
-                rarity, image_url = "Undefined", "https://static.wikia.nocookie.net/roblox-blox-piece/images/5/52/BloxFruitsHeader.png"
-
-            section = discord.ui.Section(
-                discord.ui.TextDisplay(
-                    content=f"### {item_name}\n- Price: **${price}**\n- Rarity: {rarity.title()}"
-                ),
-                accessory=discord.ui.Thumbnail(media=image_url)
-            )
-            container_items.append(section)
-
-        container_items.append(
-            discord.ui.MediaGallery(
-                discord.MediaGalleryItem(media="attachment://border.png")
-            )
-        )
-
-        return cls(stock_type, container_items)
 
 class TradeSuggestorComponent(discord.ui.LayoutView):
     def __init__(self, bot, your_fruits, your_types, message, neglect_fruits, type):

@@ -5,20 +5,21 @@ import random
 import discord
 import Config.sValueConfig as VC
 
+
 from rapidfuzz.fuzz import ratio
 from rapidfuzz import fuzz, process
 from difflib import SequenceMatcher
-
+from typing import Tuple, Dict, List, Literal, Optional
 
 
 ComboData = {}
 
 
-def ratio(a, b):
+def ratio(a, b) -> float:
     return SequenceMatcher(None, a, b).ratio() * 100
 
 
-async def ComboPatternParser(message: str, threshold=95):
+async def ComboPatternParser(message: str, threshold: int=95) -> Tuple[Dict, Tuple]:
     message = re.sub(f"[{re.escape(string.punctuation)}]", " ", message).lower()
     words = message.split()
 
@@ -137,7 +138,7 @@ async def ComboPatternParser(message: str, threshold=95):
 
     return parsed_build, tuple(combo_data)
 
-async def ValidComboDataType(data):
+async def ValidComboDataType(data: Tuple[Dict[str, str], Tuple[Tuple[str, List[str]], ...]]) -> bool:    
     if not isinstance(data, tuple) or len(data) != 2:
         return False
 
@@ -165,7 +166,7 @@ async def ValidComboDataType(data):
 
     return True
 
-def ComboScope(message: str, threshold=80):
+def ComboScope(message: str, threshold: int=80) -> Optional[Literal['Asking', 'Suggesting']]:
     BaseWords = ["combo", "combos"]
     RequestWords = ["want", "show", "give", "list", "suggest", "what", "best", "help", "please", "pls", "say"]
     SuggestionWords = ["suggest", "try", "recommend", "add", "share", "check", "here's", "heres", "my", "this", "got", "found", "made"]
@@ -191,7 +192,7 @@ def ComboScope(message: str, threshold=80):
     else:
         return None
 
-async def RegisterCombo(user_id: str = "", parsed_build: dict = None, combo_data: tuple = None):
+async def RegisterCombo(user_id: str = "", parsed_build: Optional[Dict[str, str]] = None, combo_data: Optional[Tuple[Dict[str, str], Tuple[Tuple[str, List[str]], ...]]] = None) -> Optional[int]:
     parsed_build = parsed_build or {}
 
     combo_data_str = str(combo_data) if combo_data else ""
@@ -218,7 +219,7 @@ async def RegisterCombo(user_id: str = "", parsed_build: dict = None, combo_data
         await VC.combo_db.commit()
         return cursor.lastrowid
 
-async def ComboLookup(message: str = ""):
+async def ComboLookup(message: str = "") -> Optional[Dict[str, str]]:
     parsed_build, _ = await ComboPatternParser(message)
 
     def normalize(s):
@@ -243,8 +244,8 @@ async def ComboLookup(message: str = ""):
         normalize("Gun"): "gun",
     }
 
-    where_clauses = []
-    values = []
+    where_clauses: List = []
+    values: List = []
 
     for norm_key, value in valid_parser_items.items():
         column = key_map[norm_key]
@@ -263,10 +264,12 @@ async def ComboLookup(message: str = ""):
 
     chosen_row = random.choice(rows)
 
-    columns = [col[0] for col in cursor.description]
-    return dict(zip(columns, chosen_row))
+    columns: List[str] = [col[0] for col in cursor.description]
+    result: Dict[str, str] = {k: str(v) if v is not None else "" for k, v in zip(columns, chosen_row)}
 
-async def ComboLookupByID(combo_id: int):
+    return result
+
+async def ComboLookupByID(combo_id: Optional[int]):
     if combo_id is None:
         return None
 
@@ -282,7 +285,7 @@ async def ComboLookupByID(combo_id: int):
     columns = [col[0] for col in cursor.description]
     return dict(zip(columns, row))
     
-async def DeleteComboByID(combo_id: int):
+async def DeleteComboByID(combo_id: int) -> Optional[int]:
     cursor = await VC.combo_db.execute(
         "DELETE FROM Combos WHERE combo_id = ?",
         (combo_id,)
@@ -290,10 +293,3 @@ async def DeleteComboByID(combo_id: int):
     await VC.combo_db.commit()
 
     return cursor.rowcount
-
-def ComboEmbedBuilder():
-    embed = discord.Embed(
-        color=16777215,
-        title="",
-        description=""
-    )

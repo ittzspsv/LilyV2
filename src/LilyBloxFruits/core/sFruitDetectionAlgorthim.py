@@ -1,11 +1,15 @@
 import re
 import word2number.w2n
-import LilyAlgorthims.sTradeFormatAlgorthim as TFA
+import LilyBloxFruits.core.sTradeFormatAlgorthim as TFA
 
-async def extract_trade_details(message):
+import LilyBloxFruits.sLilyBloxFruitsCache as BFC
+
+from typing import Optional, Tuple, List
+
+async def extract_trade_details(message: str) -> Optional[Tuple[List, List, List, List]]:
     fruit_names, alias_map = await TFA.get_all_fruit_names()
-    fruit_names_sorted = sorted([name.lower() for name in fruit_names], key=len, reverse=True)
-    fruit_set = set(fruit_names_sorted)
+    fruit_names_sorted = BFC.fruit_names_sorted
+    fruit_set = BFC.fruit_set
 
     message = message.lower()
     message = re.sub(r'[^\w\s]', ' ', message)

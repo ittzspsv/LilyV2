@@ -2,55 +2,18 @@ import json
 try:
     import Config.sValueConfig as VC
     import Config.sBotDetails as Config
-    from LilyAlgorthims.sTradeFormatAlgorthim import *
+    from LilyBloxFruits.core.sTradeFormatAlgorthim import *
     from ui.sWinOrLossImageGenerator import *
+
+    from . import sLilyBloxFruitsCache as FruitCache
 except:
     pass
 
 from PIL import Image
 
-value_data_path = "src/ValueData.json"
-
-fruit_dict = {}
-fruit_names = {}
-
-def UpdateFruitDict():
-    global fruit_dict
-    global fruit_names
-    try:
-        with open(value_data_path, "r", encoding="utf-8") as file:
-            value_data = json.load(file)  # Load JSON data
-
-        fruit_dict = {fruit["name"].lower(): fruit for fruit in value_data}
-        fruit_names = {fruit["name"].lower() for fruit in value_data}
-
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
-
-UpdateFruitDict()
-
-async def fetch_fruit_details(fruit_name):
-    cursor = await VC.vdb.execute(
-    "SELECT * FROM BF_ItemValues WHERE LOWER(name) = ?", 
-    (fruit_name.lower(),)
-)
-    data = await cursor.fetchone()
-    await cursor.close()
-
-    if data:
-        return {
-            "name": data[0],
-            "physical_value": data[1],
-            "permanent_value": data[2],
-            "physical_demand": data[3],
-            "permanent_demand": data[4],
-            "demand_type": data[5],
-            "permanent_demand_type": data[6],
-            "category" : data[7],
-            "icon_url" : data[9]
-        }
-    
-    return f"Fruit '{fruit_name}' not found in database."
+async def fetch_fruit_details(fruit_name: str):
+    data = FruitCache.item_dict.get(fruit_name.title(), {})
+    return data
 
 def calculate_win_loss(my_value, opponent_value, Type=0):
     try:
@@ -188,43 +151,6 @@ async def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_frui
             img = Image.open('src/ui/TooManyFruitRequests.png')
             img.resize((int(img.width * 0.7), int(img.height * 0.7)))
             return img
-
-def update_fruit_data_json_type(json_file_path, updated_fruits):
-    with open(json_file_path, "r", encoding="utf-8") as json_file:
-        fruit_data = json.load(json_file)
-
-    fruit_dict = {fruit["name"].lower(): fruit for fruit in fruit_data}
-
-    for new_fruit in updated_fruits:
-        fruit_name = new_fruit["name"].lower()
-        
-        if fruit_name in fruit_dict:
-            fruit_dict[fruit_name].update(new_fruit)
-        else:
-            print(f"Warning: {new_fruit['name']} not found in the JSON. Skipping update.")
-
-    updated_fruit_data = list(fruit_dict.values())
-
-    with open(json_file_path, "w", encoding="utf-8") as json_file:
-        json.dump(updated_fruit_data, json_file, indent=4, ensure_ascii=False)
-
-    UpdateFruitDict()
-    print("JSON successfully updated!")
-
-def update_fruit_data(name, physical_value, permanent_value, physical_demand, permanent_demand, demand_type, permanent_demand_type):
-    updated_fruits = [
-    {
-        "name": name,
-        "physical_value": physical_value,
-        "permanent_value": permanent_value,
-        "physical_demand": physical_demand,
-        "permanent_demand": permanent_demand,
-        "demand_type": demand_type,
-        "permanent_demand_type": permanent_demand_type
-    }
-]
-    
-    update_fruit_data_json_type(value_data_path, updated_fruits)
 
 
 '''

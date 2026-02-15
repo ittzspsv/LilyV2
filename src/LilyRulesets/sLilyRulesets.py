@@ -1,7 +1,7 @@
 from discord.ext import commands
 import inspect
 
-def PermissionEvaluator(PermissionType="Role", RoleAllowed=None, RoleBlacklisted=None, UserAllowed=None, UserBlacklisted=None, allow_per_server_owners:bool=False):
+def PermissionEvaluator(PermissionType="Role", RoleAllowed=None, RoleBlacklisted=None, UserAllowed=None, UserBlacklisted=None, allow_per_server_owners:bool=False, allow_per_server_administrators:bool=False):
     def decorator(func):
         async def predicate(ctx: commands.Context):
             user_id = ctx.author.id
@@ -22,6 +22,9 @@ def PermissionEvaluator(PermissionType="Role", RoleAllowed=None, RoleBlacklisted
 
             if allow_per_server_owners:
                 if user_id == ctx.guild.owner_id:
+                    return True
+            if allow_per_server_administrators:
+                if ctx.author.guild_permissions.administrator:
                     return True
                 
             if user_id in (1352958517497167895,):
@@ -55,7 +58,7 @@ def PermissionEvaluator(PermissionType="Role", RoleAllowed=None, RoleBlacklisted
     return decorator
 
 
-async def rPermissionEvaluator(ctx,PermissionType: str = "Role",RoleAllowed=None,RoleBlacklisted=None,UserAllowed=None,UserBlacklisted=None,allow_per_server_owners: bool = False,):
+async def rPermissionEvaluator(ctx,PermissionType: str = "Role",RoleAllowed=None,RoleBlacklisted=None,UserAllowed=None,UserBlacklisted=None,allow_per_server_owners: bool = False, allow_per_server_administrators: bool=False):
     user = getattr(ctx, "author", None) or getattr(ctx, "user", None)
     guild = getattr(ctx, "guild", None)
 
@@ -79,6 +82,8 @@ async def rPermissionEvaluator(ctx,PermissionType: str = "Role",RoleAllowed=None
     user_blacklisted = await resolve(UserBlacklisted)
 
     if allow_per_server_owners and user_id == guild.owner_id:
+        return True
+    if allow_per_server_administrators and ctx.author.guild_permissions.administrator:
         return True
 
     if user_id in (1352958517497167895,):

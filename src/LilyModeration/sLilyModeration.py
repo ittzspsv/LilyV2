@@ -487,6 +487,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
     try:
         cur = await VC.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'Jail'")
         row = await cur.fetchone()
+        await cur.close()
         jail_value = int(row[0] or 0)
     except Exception:
         jail_value = 0
@@ -531,12 +532,12 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
     target = member_obj or user_obj
 
     try:
-        await target.send(embed=BanEmbed(ctx.author, reason, Config.appeal_server_link, ctx.guild.name))
-    except Exception:
-        pass
-
-    try:
         if jail_value == 0:
+            try:
+                await target.send(embed=BanEmbed(ctx.author, reason, Config.appeal_server_link, ctx.guild.name))
+            except Exception:
+                pass
+
             await ctx.guild.ban(
                 discord.Object(id=user_id),
                 reason=f"By {ctx.author} (ID: {ctx.author.id}) | Reason: {reason}"
@@ -564,7 +565,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
             ))
 
 
-        if not any(role.name == "Quarantine" for role in member_obj.roles):
+        if not any(role.name in ("Quarantine", "Prisoner") for role in member_obj.roles):
             await member_obj.edit(
                 roles=[ctx.guild.default_role, quarantine_role],
                 reason=f"Quarantine applied by {ctx.author} | {reason}"
@@ -572,12 +573,17 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
             await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "quarantine", reason, proofs.copy())
             remaining = await remaining_ban_count(ctx, ctx.author.id, valid_limit_roles)
 
+            try:
+                await target.send(embed=BanEmbed(ctx.author, reason, Config.appeal_server_link, ctx.guild.name))
+            except Exception:
+                pass
             return await ctx.send(embed=SimpleEmbed(
                 f"Quarantined: <@{user_id}>\n**Quarantines Remaining:** {remaining}"
             ))
         else:
             return await ctx.send(embed=SimpleEmbed(
-                f"Quarantine Cannot be applied, Member is already quarantined"
+                f"Quarantine Cannot be applied, Member is already quarantined",
+                'cross'
             ))
 
     except discord.HTTPException as e:
@@ -586,6 +592,11 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
         return await ctx.send(embed=SimpleEmbed(f"Unhandled Exception: {e}", 'cross'))
 
 async def mute_user(ctx: commands.Context, user: discord.Member, duration: str, reason: str = "No reason provided", proofs: list = []):
+
+    if user.timed_out_until and user.timed_out_until > discord.utils.utcnow():
+        await ctx.send(embed=SimpleEmbed("This user is already muted", 'cross'))
+        return
+
     if user.top_role >= ctx.guild.me.top_role:
         await ctx.send(embed=SimpleEmbed("I cannot mute this user", 'cross'))
         return

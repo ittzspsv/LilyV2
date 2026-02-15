@@ -12,8 +12,14 @@ async def PostWelcomeGreeting(bot, member: discord.Member):
         view = CV2.GreetingComponent(member)
 
         cursor = await VC.cdb.execute(
-            "SELECT welcome_channel FROM ConfigData WHERE guild_id = ?", 
-            (member.guild.id,) 
+            """
+            SELECT cc.welcome_channel
+            FROM ConfigData cd
+            JOIN ConfigChannels cc
+                ON cd.channel_config_id = cc.channel_config_id
+            WHERE cd.guild_id = ?
+            """,
+            (member.guild.id,)
         )
         row = await cursor.fetchone()
 

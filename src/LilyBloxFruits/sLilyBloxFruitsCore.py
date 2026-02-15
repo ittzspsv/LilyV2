@@ -1,21 +1,22 @@
 import discord
 
 
-import LilyAlgorthims.sFruitDetectionAlgorthimEmoji as FDAE
-import LilyAlgorthims.sFruitDetectionAlgorthim as FDA
+import LilyBloxFruits.core.sFruitDetectionAlgorthimEmoji as FDAE
+import LilyBloxFruits.core.sFruitDetectionAlgorthim as FDA
 import LilyAlgorthims.sStockProcessorAlgorthim as SPA
 import Combo.LilyComboManager as LCM
 import ui.sStockGenerator as SG
 import Config.sBotDetails as Config
-import LilyAlgorthims.sTradeFormatAlgorthim as TFA
-import Values.sStockValueJSON as StockValueJSON
+import LilyBloxFruits.core.sTradeFormatAlgorthim as TFA
+from .import sBloxFruitsCalculations as StockValueJSON
 import Config.sValueConfig as LilyConfig
 from Misc.sFruitImageFetcher import *
 import Misc.sLilyComponentV2 as CV2
 import ui.sFruitValueGenerator as FVG
 import ui.sComboImageGenerator as CIG
+
+from . import sLilyBloxFruitsCache as BFC
 import ast
-import aiohttp
 
 import re
 import io
@@ -48,121 +49,25 @@ def format_currency(val):
     else:
         return str(int(value))
 
+async def MessageEvaluate(bot, message: discord.Message):
+        if not message.guild or message.author.bot:
+            return
 
-async def MessageEvaluate(bot, message):
-        if message.guild and message.guild.id == Config.stock_fetch_guild_id and message.channel.id == Config.stock_fetch_channel_id:
-            try:
-                cursor = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'StockImage'")
-                row = await cursor.fetchone()
-                use_image_mode = (row and int(row[0]) == 1)
-            except Exception as e:
-                print(f"DB error reading GlobalConfig: {e}")
-                use_image_mode = False
-
-            try:
-                source_channel = bot.get_channel(Config.stock_fetch_channel_id)
-                if source_channel is None:
-                    return
-
-                fetched_message = await source_channel.fetch_message(message.id)
-                if not fetched_message.embeds:
-                    return
-            except Exception as e:
-                print(f"Failed to fetch message: {e}")
-                return
-
-            embeded_string = ""
-            for embed in fetched_message.embeds:
-                title = embed.title or "-"
-                description = embed.description or "-"
-                embeded_string += f"Title: {title} Description: {description}"
-
-            Title, Fruit_Items = SPA.StockMessageProcessor(embeded_string)
-
-            async with LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'BF_Normal_GoodFruits'") as cursor:
-                row = await cursor.fetchone()
-                good_fruits = [fruit.strip() for fruit in row[0].split(",")] if row and row[0] else []
-
-            async with LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key = 'BF_Mirage_GoodFruits'") as cursor:
-                row = await cursor.fetchone()
-                m_good_fruits = [fruit.strip() for fruit in row[0].split(",")] if row and row[0] else []
-
-            CurrentGoodFruits = [
-                key for key in Fruit_Items.keys()
-                if ("normal" in Title.lower() and key in good_fruits)
-                or ("mirage" in Title.lower() and key in m_good_fruits)
-            ]
-
-            stock_image_bytes = None
-            if use_image_mode:
-                try:
-                    img = SG.StockImageGenerator(Fruit_Items, Title.lower())
-                    buffer = io.BytesIO()
-                    img.save(buffer, format="PNG")
-                    stock_image_bytes = buffer.getvalue()
-                except Exception as e:
-                    print(f"Error generating stock image: {e}")
-                    return
-            else:
-                try:
-                    stock_view = await CV2.BloxFruitStockComponent.create((Title, Fruit_Items))
-                except Exception as e:
-                    return
-
-            try:
+        if any(word in message.content.lower().split() for word in ("value",)):
+                cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
+                crow = await cursor1.fetchall()
+                config_rows = (crow[0][0], crow[1][0])
                 cursor = await LilyConfig.cdb.execute(
-                    "SELECT StockPingID, bf_stock_webhook, rowid FROM BF_StockHandler WHERE bf_stock_webhook IS NOT NULL"
+                    """
+                    SELECT cc.bf_fruit_values_channel_id
+                    FROM ConfigData cd
+                    JOIN ConfigChannels cc
+                        ON cd.channel_config_id = cc.channel_config_id
+                    WHERE cd.guild_id = ?
+                    """,
+                    (message.guild.id,)
                 )
-                rows = await cursor.fetchall()
-            except Exception as e:
-                print(f"DB error getting ConfigData: {e}")
-                return
 
-            if not rows:
-                return
-
-            async with aiohttp.ClientSession() as session:
-                for stock_ping, webhook_url, rowid in rows:
-                    try:
-                        webhook = discord.Webhook.from_url(webhook_url, session=session)
-
-                        if use_image_mode and stock_image_bytes:
-                            file = discord.File(io.BytesIO(stock_image_bytes), filename="stock_image.png")
-                            await webhook.send(file=file, wait=True)
-                        else:
-                            
-                            file = discord.File("src/ui/Border.png", filename="border.png")
-                            await webhook.send(file=file, view=stock_view, wait=True)
-
-                        if CurrentGoodFruits and stock_ping:
-                            await webhook.send(
-                                content=f"<@&{stock_ping}> {', '.join(CurrentGoodFruits)} is in {Title}. Make sure to buy them!",
-                                wait=True
-                            )
-
-                    except discord.NotFound:
-                        try:
-                            await LilyConfig.cdb.execute(
-                                "DELETE FROM BF_StockHandler WHERE rowid = ?", (rowid,)
-                            )
-                            await LilyConfig.cdb.commit()
-                        except Exception as db_err:
-                            print(f"Error deleting invalid webhook: {db_err}")
-
-                    except Exception as e:
-                        print(f"Webhook error: {e}")
-                        continue
-
-        if re.search(r"\b(fruit value of|value of|value)\b", message.content.lower()):
-            cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
-            crow = await cursor1.fetchall()
-            config_rows = (crow[0][0], crow[1][0])
-            try:
-                ctx = await bot.get_context(message)
-                cursor = await LilyConfig.cdb.execute(
-                    "SELECT bf_fruit_value_channel_id FROM ConfigData WHERE guild_id = ?", 
-                    (ctx.guild.id,)
-                )
                 row = await cursor.fetchone()
                 if not row or not row[0]:
                     return
@@ -170,7 +75,6 @@ async def MessageEvaluate(bot, message):
                 fChannel = bot.get_channel(int(row[0]))
                 if message.channel != fChannel:
                     return
-                status_msg = await message.reply("Thinking...")
                 match = re.search(r"\b(?:fruit value of|value of|value)\s+(.+)", message.content.lower())
                 if not match:
                     await message.delete()
@@ -179,11 +83,7 @@ async def MessageEvaluate(bot, message):
                 item_name = match.group(1).strip()
                 item_name = re.sub(r"^(perm|permanent)\s+", "", item_name).strip()
 
-                cursor = await LilyConfig.vdb.execute("SELECT name FROM BF_ItemValues")
-                rows = await cursor.fetchall()
-                fruit_names = [row[0].lower() for row in rows]
-                fruit_names = sorted(fruit_names, key=len, reverse=True)
-                fruit_set = set(fruit_names)
+                fruit_set = BFC.fruit_set
 
                 fruit_names, alias_map = await StockValueJSON.get_all_fruit_names()
                 item_name = await StockValueJSON.MatchFruitSet(item_name, fruit_set, alias_map)
@@ -205,6 +105,7 @@ async def MessageEvaluate(bot, message):
                 }
 
                 if int(config_rows[1]) == 1:
+                    status_msg = await message.reply("Thinking...")
                     img = await FVG.GenerateValueImage(overload_data)
                     buffer = io.BytesIO()
                     img.save(buffer, format="PNG", optimize=True)
@@ -216,7 +117,7 @@ async def MessageEvaluate(bot, message):
 
                 else:
                     embed = discord.Embed(title=item_name_capital,
-                      colour=0x1000f5)
+                      colour=0xffffff)
 
                     embed.set_author(name="Item Value Calculator")
 
@@ -252,14 +153,7 @@ async def MessageEvaluate(bot, message):
 
                     embed.set_footer(text="Powered By LilyValues")
 
-                    await status_msg.edit(content=None, embed=embed)
-
-            except Exception as e:
-                print(e)
-                try:
-                    await status_msg.delete()
-                except:
-                    pass
+                    await message.reply(content=None, embed=embed)
 
         elif await TFA.is_valid_trade_format(message.content.lower()):       
                     cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
@@ -271,17 +165,22 @@ async def MessageEvaluate(bot, message):
                     their_fruits_types=[]
                     your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDA.extract_trade_details(message.content)
 
-                    ctx = await bot.get_context(message)
-                    cursor = await LilyConfig.cdb.execute("SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
+                    cursor = await LilyConfig.cdb.execute(
+                        """
+                        SELECT cc.bf_win_loss_channel_id
+                        FROM ConfigData cd
+                        JOIN ConfigChannels cc
+                            ON cd.channel_config_id = cc.channel_config_id
+                        WHERE cd.guild_id = ?
+                        """,(message.guild.id,))                    
                     row = await cursor.fetchone()
                     if row and row[0]:
                         w_or_l_channel = bot.get_channel(row[0])
                     else:
                         return
                     if message.channel == w_or_l_channel:
-                        status_msg = await message.reply("Thinking...")
-
                         if int(config_rows[0]) == 1:
+                            status_msg = await message.reply("Thinking...")
                             image = await StockValueJSON.j_LorW(
                                 your_fruits, your_fruit_types,
                                 their_fruits, their_fruits_types,
@@ -355,7 +254,7 @@ async def MessageEvaluate(bot, message):
                             embed.add_field(name=data['Percentage'],
                                             value="",
                                             inline=False)
-                            await status_msg.edit(content=None, embed=embed)
+                            await message.reply(content=None, embed=embed)
 
         elif await TFA.is_valid_emoji_trade_format(message.content):
                     cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
@@ -367,18 +266,22 @@ async def MessageEvaluate(bot, message):
                     their_fruits_types=[]
                     your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDAE.extract_fruits_emoji(message.content)
 
-
-                    ctx = await bot.get_context(message)
-                    cursor = await LilyConfig.cdb.execute("SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,))
+                    cursor = await LilyConfig.cdb.execute(
+                        """
+                        SELECT cc.bf_win_loss_channel_id
+                        FROM ConfigData cd
+                        JOIN ConfigChannels cc
+                            ON cd.channel_config_id = cc.channel_config_id
+                        WHERE cd.guild_id = ?
+                        """,(message.guild.id,))                    
                     row = await cursor.fetchone()
                     if row and row[0]:
                         w_or_l_channel = bot.get_channel(row[0])
                     else:
                         return
                     if message.channel == w_or_l_channel:
-                        status_msg = await message.reply("Thinking...")
-
                         if int(config_rows[0]) == 1: 
+                            status_msg = await message.reply("Thinking...")
                             image = await StockValueJSON.j_LorW(
                                 your_fruits, your_fruit_types,
                                 their_fruits, their_fruits_types,
@@ -446,7 +349,7 @@ async def MessageEvaluate(bot, message):
                             embed.add_field(name=data['Percentage'],
                                             value="",
                                             inline=False)
-                            await status_msg.edit(content=None, embed=embed)
+                            await message.reply(content=None, embed=embed)
 
         elif await TFA.is_valid_trade_suggestor_format(message.content.lower()):
             cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage')")
@@ -454,13 +357,16 @@ async def MessageEvaluate(bot, message):
             
             msg = re.sub(r"(for\b.*?\b)nlf\b", r"\1", message.content.lower())
             your_fruits1, your_fruit_types1, neglect_fruits, _ = await FDA.extract_trade_details(msg)
-            ctx = await bot.get_context(message)
-            if not ctx.guild:
-                return
             
             cursor = await LilyConfig.cdb.execute(
-                "SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?",
-                (ctx.guild.id,)
+                """
+                SELECT cc.bf_win_loss_channel_id
+                FROM ConfigData cd
+                JOIN ConfigChannels cc
+                    ON cd.channel_config_id = cc.channel_config_id
+                WHERE cd.guild_id = ?
+                """,
+                (message.guild.id,)
             )
             row = await cursor.fetchone()
             
@@ -484,14 +390,16 @@ async def MessageEvaluate(bot, message):
             crow = await cursor1.fetchall()
             config_rows = (crow[0][0], crow[1][0])
             your_fruits1, your_fruit_types1, _, _ = await FDAE.extract_fruits_emoji(message.content)
-
-            ctx = await bot.get_context(message)
-            if not ctx.guild:
-                return
             
             cursor = await LilyConfig.cdb.execute(
-                "SELECT bf_win_loss_channel_id FROM ConfigData WHERE guild_id = ?",
-                (ctx.guild.id,)
+                """
+                SELECT cc.bf_win_loss_channel_id
+                FROM ConfigData cd
+                JOIN ConfigChannels cc
+                    ON cd.channel_config_id = cc.channel_config_id
+                WHERE cd.guild_id = ?
+                """,
+                (message.guild.id,)
             )
             row = await cursor.fetchone()
             
@@ -512,13 +420,8 @@ async def MessageEvaluate(bot, message):
 
         elif LCM.ComboScope(message.content.lower()) is not None:
             try:
-                ctx = await bot.get_context(message)
-            except Exception as e:
-                return
-
-            try:
                 cursor = await LilyConfig.cdb.execute(
-                    "SELECT bf_combo_channel_id FROM ConfigData WHERE guild_id = ?", (ctx.guild.id,)
+                    "SELECT bf_combo_channel_id FROM ConfigData WHERE guild_id = ?", (message.guild.id,)
                 )
                 row = await cursor.fetchone()
             except Exception as e:
@@ -634,7 +537,4 @@ async def MessageEvaluate(bot, message):
                         view = CV2.RatingComponent(message.author, combo['combo_id'])
                         await message.reply(file=imgfile, view=view)
                 except Exception as e:
-                    await message.reply(f"Exception: {e}")
-                        
-
-                    
+                    await message.reply(f"Exception: {e}")                    

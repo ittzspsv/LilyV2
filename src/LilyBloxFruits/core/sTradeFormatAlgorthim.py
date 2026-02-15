@@ -1,8 +1,11 @@
 import re
 from rapidfuzz import process, fuzz
 import Config.sValueConfig as VC
-import LilyAlgorthims.sFruitDetectionAlgorthim as FDA
-import LilyAlgorthims.sFruitDetectionAlgorthimEmoji as FDAE
+import LilyBloxFruits.core.sFruitDetectionAlgorthim as FDA
+import LilyBloxFruits.core.sFruitDetectionAlgorthimEmoji as FDAE
+
+#from .. import sBloxFruitsCache as BFC
+from LilyBloxFruits import sLilyBloxFruitsCache as BFC
 
 TradeInitializer = [
     "i got", "i gave", "i want to", "i wanna", "i want", 
@@ -13,21 +16,8 @@ OpponentTradeSplitter = ["his", "their", "her", "is it", "that"]
 
 
 async def get_all_fruit_names():
-    cursor = await VC.vdb.execute("SELECT name, aliases FROM BF_ItemValues")
-    rows = await cursor.fetchall()
-    await cursor.close()
+    return BFC.fruit_names, BFC.alias_map
 
-    fruit_names = set()
-    alias_map = {}
-
-    for name, aliases in rows:
-        if name:
-            fruit_names.add(name.lower())
-        if aliases:
-            for alias in aliases.split(","):
-                alias_map[alias.strip().lower()] = name.lower()
-
-    return fruit_names, alias_map
 
 def predict_trade_message(text, phrases, threshold=70):
     corrected_text = text

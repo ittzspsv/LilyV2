@@ -10,7 +10,6 @@ import Config.sValueConfig as VC
 import LilyManagement.sLilyStaffManagement as LSM
 import Misc.sLilyEmbed as LE
 import ui.sGreetingGenerator as GG
-import sLilyTags as LilyTags
 
 import discord
 from discord.ext import commands
@@ -53,21 +52,61 @@ class LilyUtility(commands.Cog):
         FruitValues = "FruitValues"
         Combo = "Combo"
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
-    @commands.hybrid_command(name="assign_channel", description="Assign Particular feature of the bot limited to the specific channel. Ex-Stock Update")
-    async def assign_channel(self, ctx, bot_feature: Channels, channel_to_assign: discord.TextChannel):
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(("Developer",)),allow_per_server_owners=True)
+    @commands.hybrid_command(name="assign_channel",description="Assign Particular feature of the bot limited to the specific channel.")
+    async def assign_channel(self,ctx,bot_feature: Channels,channel_to_assign: discord.TextChannel):
+        cursor = await ValueConfig.cdb.execute(
+            "SELECT channel_config_id FROM ConfigData WHERE guild_id = ?",
+            (ctx.guild.id,)
+        )
+        row = await cursor.fetchone()
+
+        if not row:
+            return await ctx.send("ConfigData row missing for this server.")
+
+        channel_config_id = row[0]
+
+        if channel_config_id is None:
+            cursor = await ValueConfig.cdb.execute(
+                "INSERT INTO ConfigChannels DEFAULT VALUES"
+            )
+            channel_config_id = cursor.lastrowid
+
+            await ValueConfig.cdb.execute(
+                """
+                UPDATE ConfigData
+                SET channel_config_id = ?
+                WHERE guild_id = ?
+                """,
+                (channel_config_id, ctx.guild.id)
+            )
+
         if bot_feature == self.Channels.WORL:
-            await ValueConfig.cdb.execute("UPDATE ConfigData SET bf_win_loss_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"Win or Loss is Caliberated in <#{channel_to_assign.id}>")
+            column = "bf_win_loss_channel_id"
+            msg = f"Win or Loss is calibrated in <#{channel_to_assign.id}>"
+
         elif bot_feature == self.Channels.FruitValues:
-            await ValueConfig.cdb.execute("UPDATE ConfigData SET bf_fruit_value_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"Fruit Values is Caliberated in <#{channel_to_assign.id}>")
+            column = "bf_fruit_values_channel_id"
+            msg = f"Fruit Values calibrated in <#{channel_to_assign.id}>"
+
         elif bot_feature == self.Channels.Combo:
-            await ValueConfig.cdb.execute("UPDATE ConfigData SET bf_combo_channel_id = ? WHERE guild_id = ?", (channel_to_assign.id, ctx.guild.id))
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"Combo Channel Set To <#{channel_to_assign.id}>")
+            column = "bf_combo_channel_id"
+            msg = f"Combo channel set to <#{channel_to_assign.id}>"
+
+        else:
+            return await ctx.send("Invalid feature.")
+
+        await ValueConfig.cdb.execute(
+            f"""
+            UPDATE ConfigChannels
+            SET {column} = ?
+            WHERE channel_config_id = ?
+            """,
+            (channel_to_assign.id, channel_config_id)
+        )
+
+        await ValueConfig.cdb.commit()
+        await ctx.send(msg)
 
     # MESSAGING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
@@ -141,330 +180,6 @@ class LilyUtility(commands.Cog):
         else:
             await ctx.send(user.id)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
-    @commands.hybrid_command(name='run_value_query', description='executes arbitary query for the database ValueData.')
-    async def run_value_query(self, ctx:commands.Context, *, query: str):
-            try:
-                cursor = await VC.vdb.execute(query)
-
-                try:
-                    rows = await cursor.fetchall()
-                    columns = [description[0] for description in cursor.description] if cursor.description else []
-                except Exception:
-                    rows = None
-                    columns = []
-
-                await VC.vdb.commit()
-
-                if rows:
-                    chunk_size = 5
-
-                    col_widths = []
-                    for i, col in enumerate(columns):
-                        max_len = max(len(str(row[i])) for row in rows) if rows else 0
-                        col_widths.append(max(len(col), max_len))
-
-                    header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
-                    separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
-
-                    for i in range(0, len(rows), chunk_size):
-                        chunk = rows[i:i+chunk_size]
-                        lines = []
-                        for row in chunk:
-                            line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
-                            lines.append(line)
-                        table = "\n".join([header, separator] + lines)
-                        await ctx.send(f"```\n{table}\n```")
-                        await asyncio.sleep(0.5)
-                else:
-                    await ctx.send("Execution Successful")
-
-            except Exception as e:
-                await ctx.send(f"Error: `{type(e).__name__}: {e}`")
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
-    @commands.hybrid_command(name='run_levels_query', description='executes arbitary query for the database Levels.')
-    async def run_levels_query(self, ctx: commands.Context, *, query: str):
-        try:
-            cursor = await LLC.ldb.execute(query)
-
-            try:
-                rows = await cursor.fetchall()
-                columns = [description[0] for description in cursor.description] if cursor.description else []
-            except Exception:
-                rows = None
-                columns = []
-
-            await LLC.ldb.commit()
-
-            if rows:
-                max_rows = 30
-                total_rows = len(rows)
-                rows = rows[:max_rows]
-
-                col_widths = []
-                for i, col in enumerate(columns):
-                    max_len = max(len(str(row[i])) for row in rows) if rows else 0
-                    col_widths.append(max(len(col), max_len))
-
-                header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
-                separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
-
-                lines = []
-                for row in rows:
-                    line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
-                    lines.append(line)
-
-                table = "\n".join([header, separator] + lines)
-
-                if total_rows > max_rows:
-                    table += f"\n... and {total_rows - max_rows} more rows not shown."
-
-                await ctx.send(f"```\n{table}\n```")
-
-            else:
-                await ctx.send("Execution Successful")
-
-        except Exception as e:
-            await ctx.send(f"Error: `{type(e).__name__}: {e}`")
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
-    @commands.hybrid_command(name='run_config_query', description='executes arbitary query for the database Config.')
-    async def run_config_query(self, ctx: commands.Context, *, query: str):
-        try:
-            cursor = await ValueConfig.cdb.execute(query)
-
-            try:
-                rows = await cursor.fetchall()
-                columns = [description[0] for description in cursor.description] if cursor.description else []
-            except Exception:
-                rows = None
-                columns = []
-
-            await ValueConfig.cdb.commit()
-
-            if rows:
-                max_rows = 30
-                total_rows = len(rows)
-                rows = rows[:max_rows]
-
-                col_widths = []
-                for i, col in enumerate(columns):
-                    max_len = max(len(str(row[i])) for row in rows) if rows else 0
-                    col_widths.append(max(len(col), max_len))
-
-                header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
-                separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
-
-                lines = []
-                for row in rows:
-                    line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
-                    lines.append(line)
-
-                table = "\n".join([header, separator] + lines)
-
-                if total_rows > max_rows:
-                    table += f"\n... and {total_rows - max_rows} more rows not shown."
-
-                await ctx.send(f"```\n{table}\n```")
-
-            else:
-                await ctx.send("Execution Successful")
-
-        except Exception as e:
-            await ctx.send(f"Error: `{type(e).__name__}: {e}`")
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
-    @commands.hybrid_command(name='run_botlogs_query', description='executes arbitary query for the database BotLogs.')
-    async def run_botlogs_query(self, ctx: commands.Context, *, query: str):
-        try:
-            cursor = await LilyLogging.bdb.execute(query)
-
-            try:
-                rows = await cursor.fetchall()
-                columns = [description[0] for description in cursor.description] if cursor.description else []
-            except Exception:
-                rows = None
-                columns = []
-
-            await LilyLogging.bdb.commit()
-
-            if rows:
-                max_rows = 30
-                total_rows = len(rows)
-                rows = rows[:max_rows]
-
-                col_widths = []
-                for i, col in enumerate(columns):
-                    max_len = max(len(str(row[i])) for row in rows) if rows else 0
-                    col_widths.append(max(len(col), max_len))
-
-                header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
-                separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
-
-                lines = []
-                for row in rows:
-                    line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
-                    lines.append(line)
-
-                table = "\n".join([header, separator] + lines)
-
-                if total_rows > max_rows:
-                    table += f"\n... and {total_rows - max_rows} more rows not shown."
-
-                await ctx.send(f"```\n{table}\n```")
-
-            else:
-                await ctx.send("Execution Successful")
-
-        except Exception as e:
-            await ctx.send(f"Error: `{type(e).__name__}: {e}`")
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
-    @commands.hybrid_command(name='run_modlogs_query', description='executes arbitary query for the database Modlogs.')
-    async def run_modlogs_query(self, ctx: commands.Context, *, query: str):
-        try:
-            cursor = await LilyLogging.mdb.execute(query)
-
-            try:
-                rows = await cursor.fetchall()
-                columns = [description[0] for description in cursor.description] if cursor.description else []
-            except Exception:
-                rows = None
-                columns = []
-
-            await LilyLogging.mdb.commit()
-
-            if rows:
-                max_rows = 30
-                total_rows = len(rows)
-                rows = rows[:max_rows]
-
-                col_widths = []
-                for i, col in enumerate(columns):
-                    max_len = max(len(str(row[i])) for row in rows) if rows else 0
-                    col_widths.append(max(len(col), max_len))
-
-                header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
-                separator = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
-
-                lines = []
-                for row in rows:
-                    line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(columns)))
-                    lines.append(line)
-
-                table = "\n".join([header, separator] + lines)
-
-                if total_rows > max_rows:
-                    table += f"\n... and {total_rows - max_rows} more rows not shown."
-
-                await ctx.send(f"```\n{table}\n```")
-
-            else:
-                await ctx.send("Execution Successful")
-
-        except Exception as e:
-            await ctx.send(f"Error: `{type(e).__name__}: {e}`")
-
-    '''
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
-    @commands.hybrid_command(name='set_stock_type', description='stock type 0 = embed; 1 = image')
-    async def set_stock_type(self, ctx:commands.Context, type:int):
-        await ValueConfig.cdb.execute("UPDATE GlobalConfigs SET value = ? WHERE key = ?", (type, "StockImage"))
-        await ValueConfig.cdb.commit()
-        addltext = "Image" if type == 1 else "Embed"
-        await ctx.send(f"Stock Type set to {addltext}")
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
-    @commands.hybrid_command(name='add_bloxfruits_stock_webhook',description='Adds or updates Blox Fruits stock webhook for a guild')
-    @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
-    async def add_bloxfruits_stock_webhook(self, ctx: commands.Context, channel_to_assign:discord.TextChannel):
-            await ctx.send(f"Processing........")
-            try:
-                webhook = await channel_to_assign.create_webhook(
-                    name=f"{Config.bot_name} Stock Updates"
-                )
-
-                cursor = await ValueConfig.cdb.execute(
-                    "SELECT guild_id FROM BF_StockHandler WHERE guild_id = ?",
-                    (ctx.guild.id,)
-                )
-                row = await cursor.fetchone()
-
-                if row:
-                    await ValueConfig.cdb.execute(
-                        "UPDATE BF_StockHandler SET bf_stock_webhook = ? WHERE guild_id = ?",
-                        (webhook.url, ctx.guild.id)
-                    )
-                else: 
-                    await ValueConfig.cdb.execute(
-                        "INSERT INTO BF_StockHandler (guild_id, bf_stock_webhook) VALUES (?, ?)",
-                        (ctx.guild.id, webhook.url)
-                    )
-
-                await ValueConfig.cdb.commit()
-                await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
-            except Exception as e:
-                await ctx.send(f"Exception : {e}")
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
-    @commands.hybrid_command(name='add_pvz_stock_webhook',description='Adds or updates PVZ stock webhook for a guild')
-    @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
-    async def add_pvb_stock_webhook(self,ctx: commands.Context,channel_to_assign:discord.TextChannel, mythical_ping: discord.Role,godly_ping: discord.Role,secret_ping: discord.Role):
-            await ctx.send(f"Processing........")
-            webhook = await channel_to_assign.create_webhook(
-                name=f"{Config.bot_name} Stock Updates"
-            )
-
-            cursor = await ValueConfig.cdb.execute(
-                "SELECT guild_id FROM PVB_StockHandler WHERE guild_id = ?",
-                (ctx.guild.id,)
-            )
-            row = await cursor.fetchone()
-
-            if row:
-                await ValueConfig.cdb.execute(
-                    "UPDATE PVB_StockHandler SET pvb_stock_webhook = ? WHERE guild_id = ?",
-                    (webhook.url, ctx.guild.id)
-                )
-            else:
-                await ValueConfig.cdb.execute(
-                    "INSERT INTO PVB_StockHandler (guild_id, pvb_stock_webhook) VALUES (?, ?)",
-                    (ctx.guild.id, webhook.url)
-                )
-
-            await ValueConfig.cdb.commit()
-            await ctx.send(f"Webhook created: Stock will be sent in {channel_to_assign.name}")
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)), allow_per_server_owners=True)
-    @commands.hybrid_command(name='add_pvz_weather_webhook',description='Adds or updates PVZ weather webhook for a guild')
-    @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
-    async def add_pvb_weather_webhook(self,ctx: commands.Context,channel_to_assign: discord.TextChannel,weather_ping: discord.Role):
-                await ctx.send(f"Processing........")
-                webhook = await channel_to_assign.create_webhook(
-                    name=f"{Config.bot_name} Weather Updates"
-                )
-
-                cursor = await ValueConfig.cdb.execute(
-                    "SELECT guild_id FROM PVB_WeatherHandler WHERE guild_id = ?",
-                    (ctx.guild.id,)
-                )
-                row = await cursor.fetchone()
-
-                if row:
-                    await ValueConfig.cdb.execute(
-                        "UPDATE PVB_WeatherHandler SET pvb_weather_webhook = ? WHERE guild_id = ?",
-                        (webhook.url, ctx.guild.id)
-                    )
-                else:
-                    await ValueConfig.cdb.execute(
-                        "INSERT INTO PVB_WeatherHandler (guild_id, pvb_weather_webhook) VALUES (?, ?)",
-                        (ctx.guild.id, webhook.url)
-                    )
-
-                await ValueConfig.cdb.commit()
-                await ctx.send(f"Webhook created: Weather will be sent in {channel_to_assign.name}")
-    '''
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='purge',description='Purges Message')
@@ -788,12 +503,6 @@ class LilyUtility(commands.Cog):
             await ctx.send(embed=mLily.SimpleEmbed(f"{member.mention} has reacted"))
         else:
             await ctx.send(embed=mLily.SimpleEmbed(f"{member.mention} has not reacted", 'cross'))
-
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
-    @commands.hybrid_command(name='tag', description='sticky messages statically typed inside the script')
-    async def tag(self, ctx: commands.Context, tag: str):
-        await ctx.send(content=LilyTags.tags.get(tag, "No Tags Found!"))
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

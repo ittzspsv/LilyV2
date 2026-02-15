@@ -9,6 +9,11 @@ class LilyTicketTool(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await LTTT.InitializeTicketView(self)
+
+
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='spawn_ticket', description='spawn in ticket processor')
     async def spawnticket(self, ctx):
@@ -22,6 +27,8 @@ class LilyTicketTool(commands.Cog):
                     json_data = json.loads(content.decode('utf-8'))
                     await LTTT.SpawnTicket(ctx, json_data)
                     return
+            
+
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.hybrid_command(name='close', description='close a ticket thread')
     async def CloseTicket(self, ctx: commands.Context):

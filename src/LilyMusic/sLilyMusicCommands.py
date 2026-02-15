@@ -8,7 +8,8 @@ CODE REMODIFIED BY SHREE
 
 """
 This example cog demonstrates basic usage of Lavalink.py, using the DefaultPlayer.
-As this example primarily showcases usage in conjunction with discord.py, you will need to make
+As this example primarilHost : lavalinkv4.serenetia.com
+y showcases usage in conjunction with discord.py, you will need to make
 modifications as necessary for use with another Discord library.
 
 Usage of this cog requires Python 3.6 or higher due to the use of f-strings.
@@ -29,7 +30,9 @@ from lavalink.server import LoadType
 import Config.sBotDetails as Configs
 
 url_rx = re.compile(r'https?://(?:www\.)?.+')
-
+Host = "lavalinkv4.serenetia.com"
+Port = 80
+passwd = "https://dsc.gg/ajidevserver"
 class LavalinkVoiceClient(discord.VoiceProtocol):
     """
     This is the preferred way to handle external voice sending
@@ -49,8 +52,8 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
             # We store it in `self.client` so that it may persist across cog reloads,
             # however this is not mandatory.
             self.client.lavalink = lavalink.Client(client.user.id)
-            self.client.lavalink.add_node(host='217.154.161.167', port=9885, password='Lily',
-                                          region='ro', name='default-node')
+            self.client.lavalink.add_node(host=Host, port=Port, password=passwd,
+                                          region='ro', name='default-node') #Source from https://lavalink.darrennathanael.com/SSL/Lavalink-SSL/
 
         # Create a shortcut to the Lavalink client here.
         self.lavalink = self.client.lavalink
@@ -132,8 +135,8 @@ class Music(commands.Cog):
 
         if not hasattr(bot, 'lavalink'):
             bot.lavalink = lavalink.Client(bot.user.id)
-            bot.lavalink.add_node(host='217.154.161.167', port=9885, password='Lily',
-                                  region='ro', name='default-node')
+            bot.lavalink.add_node(host=Host, port=Port, password=passwd,
+                                  region='ro', name='default-node') # From https://lavalink.darrennathanael.com/SSL/Lavalink-SSL/
 
         self.lavalink: lavalink.Client = bot.lavalink
         self.lavalink.add_event_hooks(self)
@@ -225,7 +228,7 @@ class Music(commands.Cog):
             embed = discord.Embed(
                 color=16777215,
             )
-            embed.set_thumbnail(url="https://media.discordapp.net/attachments/1438505067341680690/1442953875127537714/Hearing_Music.jpeg?ex=69274f04&is=6925fd84&hm=a3c58e5ab97e33e05ee66888553e8ea14810e18db0e66d64d2010505f7bc5f7b&=&format=webp&width=845&height=845")
+            embed.set_thumbnail(url="https://media.discordapp.net/attachments/1438505067341680690/1472318035707564084/LilyListeningToMusic.png?ex=69922286&is=6990d106&hm=902b94e7718caed30aaed5bf64513c98c6586920063c5f88d8e137ec899a220a&=&format=webp&quality=lossless&width=700&height=700")
             embed.set_footer(
                 text="Lily Music",
             )
@@ -254,6 +257,9 @@ class Music(commands.Cog):
     @commands.hybrid_command(name='play', description='plays an music')
     @commands.check(create_player)
     async def play(self, ctx, *, query: str):
+
+        await ctx.defer()
+
         """ Searches and plays a song from a given query. """
         # Get the player for this guild from cache.
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)

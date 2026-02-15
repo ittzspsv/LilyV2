@@ -1,13 +1,16 @@
 import re
-import LilyAlgorthims.sTradeFormatAlgorthim as TFA
+import LilyBloxFruits.core.sTradeFormatAlgorthim as TFA
 
+import LilyBloxFruits.sLilyBloxFruitsCache as BFC
 
-async def extract_fruits_emoji(message):
+from typing import Optional, Tuple, List
+
+async def extract_fruits_emoji(message: str) -> Optional[Tuple[List, List, List, List]]:
     message = message.strip()
 
     fruit_names, alias_map = await TFA.get_all_fruit_names()
-    fruit_names_sorted = sorted([name.lower() for name in fruit_names], key=len, reverse=True)
-    fruit_set = set(fruit_names_sorted)
+    fruit_names_sorted = BFC.fruit_names_sorted
+    fruit_set = BFC.fruit_set
 
     trade_separators = ["pointtrade", "point_trade", "trade_pointer"]
     perm_keywords = ["perm", "permanent"]

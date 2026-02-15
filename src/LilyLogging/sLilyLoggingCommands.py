@@ -1,5 +1,6 @@
 import discord
 
+import LilyLogging.sLilyLogging as fLilyLogging
 from discord.ext import commands
 import LilyManagement.sLilyStaffManagement as LSM
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
@@ -10,6 +11,11 @@ import Config.sBotDetails as Config
 class LilyLogging(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await fLilyLogging.initialize()
+
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)

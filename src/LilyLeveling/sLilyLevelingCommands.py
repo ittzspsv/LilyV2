@@ -16,6 +16,11 @@ class LilyLeveling(commands.Cog):
         self.bot = bot
         self.message_reset_schedular.start()
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await LilyLevelCore.initialize()
+
+
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='level', description='Get Your Current leveling info')
     async def level(self, ctx: commands.Context, member:discord.Member=None):

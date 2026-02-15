@@ -229,16 +229,21 @@ async def FetchProfileDetails(ctx: commands.Context, member: discord.Member = No
         row1 = await cursor1.fetchone()
         coins = row1[0] if row1 else 0
 
-        final_buffer = await PCG.CreateProfileCard(
-            member,
-            str(daily),
-            str(weekly),
-            str(total),
-            ShortNumber(int(coins))
-        )
+        mode: int = 1 # To DO : Move this to a database.
+        if mode == 1:
+            final_buffer = await PCG.CreateProfileCard(
+                member,
+                str(daily),
+                str(weekly),
+                str(total),
+                ShortNumber(int(coins))
+            )
 
-        file = discord.File(final_buffer, filename="profile_card.png")
-        await ctx.reply(file=file)
+            file = discord.File(final_buffer, filename="profile_card.png")
+            await ctx.reply(file=file)
+        # Lightweight embed pass
+        else:
+            pass
 
     except Exception as e:
         await ctx.reply(
