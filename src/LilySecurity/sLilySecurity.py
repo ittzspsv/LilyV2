@@ -4,7 +4,10 @@ import Config.sBotDetails as Configs
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 import time
+from typing import Dict, Deque, DefaultDict
 import re
+
+from LilyUtility.sLilyUtility import utcnow
 
 security_info = {
     'channel_deletion_limit' : 3,
@@ -17,12 +20,17 @@ security_info = {
     "role_ping_cd" : 8
 }
 
+ping_limit = 3
+time_window = 10 * 60
+
 
 guild_channel_deletions = defaultdict(lambda: defaultdict(lambda: deque()))
 guild_role_deletions = defaultdict(lambda: defaultdict(lambda: deque()))
-spam_ping = defaultdict(lambda: defaultdict(lambda: deque()))
-USER_MENTION_REGEX = re.compile(r"<@!?(\d+)>")
-ROLE_MENTION_REGEX = re.compile(r"<@&(\d+)>")
+
+
+role_mention_regex = re.compile(r"<@&(\d+)>")
+role_ping_tracker: DefaultDict[int, DefaultDict[int, Deque[float]]] = defaultdict(lambda: defaultdict(deque))
+role_ping_strikes: DefaultDict[int, DefaultDict[int, int]] = defaultdict(lambda: defaultdict(int))
 
 async def LilySecurityJoinWindow(bot, member: discord.Member):
     if member.bot:
@@ -164,16 +172,7 @@ async def LilyEventActionRoleDelete(role: discord.Role):
 
         queue.clear()
 
-async def LilySecurityEvaluate(message: discord.Message):
-    if message.author.bot:
-        return
-
-    if message.reference is not None:
-        return
-
-    if not message.guild:
-        return
-
+async def elevated_ping_evaluation(message: discord.Message):
     guild = message.guild
     member: discord.Member = message.author
     bot_member: discord.Member = guild.me
@@ -201,9 +200,12 @@ async def LilySecurityEvaluate(message: discord.Message):
     log_channel = None
     cursor = await VC.cdb.execute(
         """
-        SELECT logs_channel
-        FROM ConfigData
-        WHERE guild_id = ? AND logs_channel IS NOT NULL
+            SELECT cc.logs_channel
+            FROM ConfigData cd
+            JOIN ConfigChannels cc
+                ON cd.channel_config_id = cc.channel_config_id
+            WHERE cd.guild_id = ?
+            AND cc.logs_channel IS NOT NULL
         """,
         (guild.id,)
     )
@@ -212,6 +214,11 @@ async def LilySecurityEvaluate(message: discord.Message):
 
     if row:
         log_channel = guild.get_channel(row[0])
+        if not log_channel:
+            try:
+                log_channel = await guild.fetch_channel(row[0])
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                return
 
     if log_channel:
         embed = discord.Embed(
@@ -226,3 +233,125 @@ async def LilySecurityEvaluate(message: discord.Message):
         embed.set_footer(text=f"Lily Security • {guild.name}")
 
         await log_channel.send(embed=embed)
+
+async def role_ping_rate_limiter(message: discord.Message):
+    if not message.guild or not isinstance(message.author, discord.Member):
+        return
+
+    guild = message.guild
+    member = message.author
+    bot_member = guild.me
+
+    if member.id == guild.owner_id or member.top_role.position >= bot_member.top_role.position:
+        return
+
+    if not role_mention_regex.search(message.content):
+        return
+
+    now = utcnow().timestamp()
+    dq = role_ping_tracker[guild.id][member.id]
+
+    while dq and now - dq[0] > time_window:
+        dq.popleft()
+
+    dq.append(now)
+    print(len(dq))
+
+    if len(dq) <= ping_limit:
+        return
+
+    role_ping_strikes[guild.id][member.id] += 1
+    strikes = role_ping_strikes[guild.id][member.id]
+
+    
+
+    if strikes == 1:
+        remaining = time_window
+        if dq:
+            remaining = max(0, time_window - (now - dq[0]))
+
+        minutes = int(remaining) // 60
+        seconds = int(remaining) % 60
+        cooldown_text = f"{minutes}m {seconds}s" if minutes else f"{seconds}s"
+
+        try:
+            await member.send(
+                "Hello! You reached your **Role Mention Limit**.\n"
+                f"Limit: {ping_limit} per 10 minutes.\n"
+                f"Cooldown resets in: {cooldown_text}\n"
+                "Pinging again may result in role removal. 😊"
+            )
+        except discord.Forbidden:
+            pass
+        return
+
+
+    if strikes >= 2:
+        roles_to_remove = [
+            role for role in member.roles
+            if role != guild.default_role and role < bot_member.top_role
+        ]
+
+        if roles_to_remove:
+            try:
+                await member.remove_roles(
+                    *roles_to_remove,
+                    reason="Excessive Role Pings"
+                )
+
+                dq.clear()
+            except (discord.Forbidden, discord.HTTPException):
+                return
+
+        role_ping_strikes[guild.id].pop(member.id, None)
+
+        cursor = await VC.cdb.execute(
+            """
+            SELECT cc.logs_channel
+            FROM ConfigData cd
+            JOIN ConfigChannels cc
+                ON cd.channel_config_id = cc.channel_config_id
+            WHERE cd.guild_id = ?
+            AND cc.logs_channel IS NOT NULL
+            """,
+            (guild.id,)
+        )
+        row = await cursor.fetchone()
+        await cursor.close()
+
+        if not row:
+            return
+
+        log_channel = guild.get_channel(row[0])
+        if not log_channel:
+            try:
+                log_channel = await guild.fetch_channel(row[0])
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                return
+
+        embed = discord.Embed(
+            title="Security Act",
+            description=(
+                f"**Action:** Auto-Role-Strip\n"
+                f"**User:** {member.mention} (`{member.id}`)\n"
+                "**Reason:** Reached Role Rate Limits."
+            ),
+            color=0xFFFFFF
+        )
+        embed.set_footer(text=f"Lily Security • {guild.name}")
+
+        await log_channel.send(embed=embed)
+    
+async def LilySecurityEvaluate(message: discord.Message):
+    if message.author.bot:
+        return
+
+    if message.reference is not None:
+        return
+
+    if not message.guild:
+        return
+    
+    # Prevents @everyone/@here ping.
+    await elevated_ping_evaluation(message)
+    await role_ping_rate_limiter(message)

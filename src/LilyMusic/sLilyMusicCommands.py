@@ -17,6 +17,8 @@ Compatibility with Python 3.5 should be possible if f-strings are removed.
 """
 import re
 import LilyModeration.sLilyModeration as mLily
+
+from Misc.sLilyEmbed import simple_embed
 import Misc.sLilyComponentV2 as CV2
 
 import discord
@@ -283,7 +285,7 @@ class Music(commands.Cog):
         #   EMPTY    - no results for the query (result.tracks will be empty)
         #   ERROR    - the track encountered an exception during loading
         if results.load_type == LoadType.EMPTY:
-            await ctx.send(embed=mLily.SimpleEmbed("I couldn`t find any tracks for that query.", 'cross'))
+            await ctx.send(embed=simple_embed("I couldn`t find any tracks for that query.", 'cross'))
         elif results.load_type == LoadType.PLAYLIST:
             tracks = results.tracks
 
@@ -368,7 +370,7 @@ class Music(commands.Cog):
         await player.stop()
         # Disconnect from the voice channel.
         await ctx.voice_client.disconnect(force=True)
-        await ctx.send(embed=mLily.SimpleEmbed('Disconnected Successfully'))
+        await ctx.send(embed=simple_embed('Disconnected Successfully'))
 
 async def setup(bot):
     await bot.add_cog(Music(bot))

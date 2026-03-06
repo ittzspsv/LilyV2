@@ -5,7 +5,13 @@ import discord
 import Config.sValueConfig as VC
 import Config.sBotDetails as Configs
 import aiosqlite
+
+from typing import Sequence, Optional, Union
+
 import pytz
+
+import LilyUtility.sLilyUtility as LilyUtility
+from LilyLogging.components.sLilyLoggingComponents import write_log_embed, moderation_embed
 
 mdb = None
 
@@ -35,48 +41,16 @@ async def WriteLog(ctx: commands.Context, user_id: int, log_txt: str):
     """, (ctx.guild.id, user_id, timestamp, log_txt))
     await mdb.commit()
 
-    cursor = await VC.cdb.execute(
-        """
-        SELECT cc.logs_channel
-        FROM ConfigData cd
-        JOIN ConfigChannels cc
-            ON cd.channel_config_id = cc.channel_config_id
-        WHERE cd.guild_id = ?
-        AND cc.logs_channel IS NOT NULL
-        """,
-        (ctx.guild.id,)
-    )
-    row = await cursor.fetchone()
-    await cursor.close()
+    logs_channel: int = VC.guild_configs.get(ctx.guild.id).get("channels").get("logs_channel", 0)
 
-    if not row or not row[0]:
-        return
-
-    channel = ctx.bot.get_channel(row[0])
+    channel = ctx.bot.get_channel(logs_channel)
     if not channel:
         return
 
-    embed = (
-        discord.Embed(
-            color=16777215,
-            title=f"{Configs.emoji['ticket']} Logging Information",
-        )
-        .set_footer(text=timestamp)
-        .add_field(
-            name=f"{Configs.emoji['member']} User",
-            value=f"<@{user_id}>",
-            inline=True,
-        )
-        .add_field(
-            name=f"{Configs.emoji['pencil']} Reason",
-            value=log_txt,
-            inline=False,
-        )
-    )
-
+    embed = write_log_embed(timestamp, user_id, log_txt)
     await channel.send(embed=embed)
 
-async def LogModerationAction(ctx: commands.Context,moderator_id: int,target_user_id: int,mod_type: str,reason: str = "No reason provided",proofs=[]):
+async def LogModerationAction(ctx: commands.Context,moderator_id: int,target_user_id: int,mod_type: str,reason: str = "No reason provided", proofs: Optional[Sequence[Union[discord.Attachment, str]]] = None) -> None:
     global mdb
     timestamp = datetime.now(pytz.utc).isoformat()
 
@@ -86,84 +60,20 @@ async def LogModerationAction(ctx: commands.Context,moderator_id: int,target_use
     """, (ctx.guild.id, moderator_id, target_user_id, mod_type.lower(), reason, timestamp))
     await mdb.commit()
 
-    cursor = await VC.cdb.execute(
-        """
-        SELECT cc.logs_channel
-        FROM ConfigData cd
-        JOIN ConfigChannels cc
-            ON cd.channel_config_id = cc.channel_config_id
-        WHERE cd.guild_id = ?
-        AND cc.logs_channel IS NOT NULL
-        """,
-        (ctx.guild.id,)
-    )
-    row = await cursor.fetchone()
-    await cursor.close()
+    logs_channel: int = VC.guild_configs.get(ctx.guild.id).get("channels").get("logs_channel", 0)
 
-    if not row or not row[0]:
-        return
-
-    channel = ctx.guild.get_channel(row[0])
+    channel = ctx.bot.get_channel(logs_channel)
     if not channel:
         return
 
-    main_embed = discord.Embed(
-        color=16777215,
-        url="https://discohook.app#gallery-G2oFSRb8",
-        title=f"{Configs.emoji['ticket']} Logging Information",
-        timestamp=datetime.utcnow()
-    )
-    main_embed.add_field(name=f"{Configs.emoji['bookmark']} Case Type", value=mod_type.title(), inline=True)
-    main_embed.add_field(name=f"{Configs.emoji['member']} User", value=f"<@{target_user_id}>", inline=True)
-    main_embed.add_field(name=f"{Configs.emoji['shield']} Moderator", value=f"<@{moderator_id}>", inline=True)
-    main_embed.add_field(name=f"{Configs.emoji['pencil']} Reason", value=reason, inline=False)
-
-    embeds_to_send = []
-
-    if proofs:
-        main_embed.add_field(name=f"{Configs.emoji['logs']} Proofs", value="", inline=False)
-
-        first_proof = proofs[0]
-        if isinstance(first_proof, discord.Attachment):
-            main_embed.set_image(url=first_proof.url)
-        elif isinstance(first_proof, str):
-            main_embed.set_image(url=first_proof)
-
-        embeds_to_send.append(main_embed)
-
-        for proof in proofs[1:]:
-            proof_embed = discord.Embed(url="https://discohook.app#gallery-G2oFSRb8")
-            if isinstance(proof, discord.Attachment):
-                proof_embed.set_image(url=proof.url)
-            elif isinstance(proof, str):
-                proof_embed.set_image(url=proof)
-            embeds_to_send.append(proof_embed)
-    else:
-        main_embed.add_field(name=f"{Configs.emoji['logs']} Proofs", value="No Proofs Provided", inline=False)
-        embeds_to_send.append(main_embed)
-
+    embeds_to_send = moderation_embed(moderator_id, target_user_id, mod_type, reason, proofs, Configs.emoji, LilyUtility.utcnow())
     await channel.send(content=f'<@{target_user_id}>', embeds=embeds_to_send)
 
 async def LogValueAction(ctx: commands.Context,triggered: discord.Member,value_dict: dict):
     try:
-        cursor = await VC.cdb.execute(
-        """
-        SELECT cc.logs_channel
-        FROM ConfigData cd
-        JOIN ConfigChannels cc
-            ON cd.channel_config_id = cc.channel_config_id
-        WHERE cd.guild_id = ?
-        AND cc.logs_channel IS NOT NULL
-        """,
-        (ctx.guild.id,)
-    )
-        row = await cursor.fetchone()
-        await cursor.close()
+        logs_channel: int = VC.guild_configs.get(ctx.guild.id).get("channels").get("logs_channel", 0)
 
-        if not row or not row[0]:
-            return
-
-        channel = ctx.guild.get_channel(row[0])
+        channel = ctx.bot.get_channel(logs_channel)
         if not channel:
             return
 
@@ -200,24 +110,13 @@ async def LogValueAction(ctx: commands.Context,triggered: discord.Member,value_d
 
 async def PostLog(ctx: commands.Context, embed: discord.Embed, log_type:str="Default Log Type"):
     try:
-        cursor = await VC.cdb.execute(
-            """
-            SELECT cc.logs_channel
-            FROM ConfigData cd
-            JOIN ConfigChannels cc
-                ON cd.channel_config_id = cc.channel_config_id
-            WHERE cd.guild_id = ?
-            AND cc.logs_channel IS NOT NULL
-            """,
-            (ctx.guild.id,)
-        )
-        row = await cursor.fetchone()
-        await cursor.close()
+        logs_channel: int = VC.guild_configs.get(ctx.guild.id).get("channels").get("logs_channel", 0)
 
-        if not row or not row[0]:
+        channel = ctx.bot.get_channel(logs_channel)
+        if not channel:
             return
 
-        channel = ctx.guild.get_channel(row[0])
+        channel = ctx.guild.get_channel(channel)
         if not channel:
             return
 

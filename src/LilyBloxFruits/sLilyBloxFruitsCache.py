@@ -25,6 +25,8 @@ category_map = {
         'gamepass': 6
     }
 name_to_category = {}
+moderation_channels_lookup: Dict[int, List[int]] = {} # dict = {guild_id, [channel_ids]}
+moderation_tracker: Dict[int, str] = {}
 
 async def initialize():
     global item_dict, fruit_names, alias_map

@@ -190,3 +190,13 @@ def ParseTicketEmbed(message: discord.Message):
             break
 
     return ticket_opener_id, reason, scammer_match
+
+def simple_embed(message: str, s_emoji: str='checked', expression: str = None) -> discord.Embed:
+    embed =  discord.Embed(
+        color=16777215,
+        description=f"{Configs.emoji[s_emoji.lower()]} **{message}**",
+    )
+
+    if expression:
+        embed.set_thumbnail(Configs.expression.get(expression) or 'neutral')
+    return embed

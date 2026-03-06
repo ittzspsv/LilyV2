@@ -1,7 +1,5 @@
 from LilyRulesets.sLilyRulesets import PermissionEvaluator, rPermissionEvaluator
 import LilyLogging.sLilyLogging as LilyLogging
-import LilyLeveling.sLilyLevelingCore as LLC
-import LilyModeration.sLilyModeration as mLily
 import re
 
 import Misc.sLilyComponentV2 as CV2
@@ -11,11 +9,16 @@ import LilyManagement.sLilyStaffManagement as LSM
 import Misc.sLilyEmbed as LE
 import ui.sGreetingGenerator as GG
 
+import LilyUtility.sLilyUtility as LilyUtil
+import LilyBloxFruits.sLilyBloxFruitsCache as BFC
+
 import discord
 from discord.ext import commands
 
 import Config.sBotDetails as Config
 from enum import Enum
+
+from Misc.sLilyEmbed import simple_embed
 
 import asyncio
 
@@ -106,6 +109,7 @@ class LilyUtility(commands.Cog):
         )
 
         await ValueConfig.cdb.commit()
+        await ValueConfig.initialize_cache()
         await ctx.send(msg)
 
     # MESSAGING UTILITY
@@ -127,18 +131,18 @@ class LilyUtility(commands.Cog):
                 )
 
                 await user.send(embed=embed)
-                await ctx.send(embed=mLily.SimpleEmbed("Sent Successfully"))
+                await ctx.send(embed=simple_embed("Sent Successfully"))
             else:
                 await user.send(content=message)
                 await LilyLogging.WriteLog(ctx, ctx.author.id, f"Sent Message to {user.id} DM : {message}")
-                await ctx.send(embed=mLily.SimpleEmbed("Sent Successfully"))
+                await ctx.send(embed=simple_embed("Sent Successfully"))
 
         except discord.Forbidden:
-            await ctx.send(embed=mLily.SimpleEmbed("I can't DM this user. They may have DMs disabled.", 'cross'))
+            await ctx.send(embed=simple_embed("I can't DM this user. They may have DMs disabled.", 'cross'))
 
         except Exception as e:
             print(f"Exception [USER DM] {e}")
-            await ctx.send(embed=mLily.SimpleEmbed("Failed to send Direct Message", 'cross'))
+            await ctx.send(embed=simple_embed("Failed to send Direct Message", 'cross'))
 
     # SLASH COMMAND SYNCING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
@@ -177,6 +181,7 @@ class LilyUtility(commands.Cog):
     async def id(self, ctx:commands.Context, user:discord.Member=None):
         if user== None:
             await ctx.send(ctx.author.id)
+
         else:
             await ctx.send(user.id)
 
@@ -200,98 +205,13 @@ class LilyUtility(commands.Cog):
         except discord.HTTPException as e:
             await ctx.send(f"Exception: {e}")
 
-    '''
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='reaction_roles',description='Adds or updates reaction roles.  Follows role hierrachy of user who is triggering this')
-    async def reactionroles(self, ctx: commands.Context, roles: str, title: str,channel_to_send: discord.TextChannel):
-        try:
-            role_map = json.loads(roles)
-        except Exception:
-            await ctx.reply("Invalid JSON format. Use `{ \"Button Name\": RoleID }`")
-            return
-
-        view = discord.ui.View(timeout=None)
-
-        for button_label, role_id in role_map.items():
-            role = ctx.guild.get_role(int(role_id))
-            if not role:
-                await ctx.send(f"Role ID {role_id} not found.")
-                continue
-
-            if role >= ctx.author.top_role and ctx.author != ctx.guild.owner:
-                await ctx.send(f"You cannot assign {role.name} because it is higher or equal to your top role.")
-                continue
-
-            if role >= ctx.guild.me.top_role:
-                await ctx.send(f"I can't manage the role {role.name} because it's higher than my top role.")
-                continue
-
-            view.add_item(RoleButton(label=button_label, role_id=role.id))
-
-        if len(view.children) == 0:
-            await ctx.reply("No valid roles to add buttons for. Command cancelled.")
-            return
-
-        embed = discord.Embed(
-            title=title,
-            description="Click the buttons below to toggle your roles!",
-            color=discord.Color.blurple()
-        )
-
-        sent_message = await channel_to_send.send(embed=embed, view=view)
-        await ctx.reply(f"Reaction role message sent in {channel_to_send.mention}!")
-    '''
-
-    '''
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='telecast_message',description='Sends Message to All webhooks linked')
-    async def telecast(self, ctx: commands.Context, msg_config: str):
-        try:
-            data = json.loads(msg_config)
-
-            content, embed = LE.ParseAdvancedEmbed(data)
-            cursor = await VC.cdb.execute(
-                "SELECT pvb_stock_webhook FROM PVB_StockHandler WHERE guild_id != ?", (ctx.guild.id,)
-            )
-            row_1 = await cursor.fetchall()
-
-            cursor = await VC.cdb.execute(
-                "SELECT bf_stock_webhook FROM BF_StockHandler WHERE guild_id != ?", (ctx.guild.id,)
-            )
-            row_2 = await cursor.fetchall()
-
-            row_merged = row_1 + row_2
-            if not row_merged:
-                await ctx.send("No webhooks found to telecast the message.")
-                return
-
-            sent_count = 0
-            async with aiohttp.ClientSession() as session:
-                for webhook_row in row_merged:
-                    webhook_url = webhook_row[0]
-                    if not webhook_url:
-                        continue
-                    try:
-                        webhook = discord.Webhook.from_url(webhook_url, session=session)
-                        await webhook.send(content=content, embeds=embed)
-                        sent_count += 1
-                    except Exception as wh_err:
-                        print(f"Failed to send to webhook {webhook_url}: {wh_err}")
-
-            await ctx.send(f"Telecast completed. Message sent to {sent_count} webhooks.")
-
-        except Exception as e:
-            await ctx.send(f"An error occurred while telecasting: {e}")
-    '''
             
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='latency',description='sends the latency of the bot')
     async def latency(self, ctx: commands.Context):
         await ctx.send(f'`{round(self.bot.latency * 1000, 2)}ms`')
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Giveaway Manager', 'Administrator','Head Administrator')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Giveaway Administrator', 'Administrator','Head Administrator')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='role',description='assign role or removes a specified role from the user')
     async def role(self, ctx: commands.Context, user: discord.Member, *, role_input: str):
@@ -372,7 +292,7 @@ class LilyUtility(commands.Cog):
         )
         await VC.cdb.commit()
         
-        await ctx.send(embed=mLily.SimpleEmbed("Successfully Assigned Log Channel!"))
+        await ctx.send(embed=simple_embed("Successfully Assigned Log Channel!"))
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Manager')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -389,7 +309,7 @@ class LilyUtility(commands.Cog):
         )
         await VC.cdb.commit()
         
-        await ctx.send(embed=mLily.SimpleEmbed("Successfully Assigned Welcome Channel!"))
+        await ctx.send(embed=simple_embed("Successfully Assigned Welcome Channel!"))
 
     @commands.hybrid_command(name='welcome_demo', description='Welcome Demo')
     async def welcome_demo(self, ctx: commands.Context, member: discord.Member):
@@ -500,9 +420,10 @@ class LilyUtility(commands.Cog):
                     break
 
         if reacted:
-            await ctx.send(embed=mLily.SimpleEmbed(f"{member.mention} has reacted"))
+            await ctx.send(embed=simple_embed(f"{member.mention} has reacted"))
         else:
-            await ctx.send(embed=mLily.SimpleEmbed(f"{member.mention} has not reacted", 'cross'))
+            await ctx.send(embed=simple_embed(f"{member.mention} has not reacted", 'cross'))
+
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

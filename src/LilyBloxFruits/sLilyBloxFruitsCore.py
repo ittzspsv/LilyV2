@@ -4,16 +4,17 @@ import discord
 import LilyBloxFruits.core.sFruitDetectionAlgorthimEmoji as FDAE
 import LilyBloxFruits.core.sFruitDetectionAlgorthim as FDA
 import LilyAlgorthims.sStockProcessorAlgorthim as SPA
-import Combo.LilyComboManager as LCM
+import LilyBloxFruits.modules.combo.LilyComboManager as LCM
 import ui.sStockGenerator as SG
 import Config.sBotDetails as Config
 import LilyBloxFruits.core.sTradeFormatAlgorthim as TFA
-from .import sBloxFruitsCalculations as StockValueJSON
+from .core import sBloxFruitsCalculations as StockValueJSON
 import Config.sValueConfig as LilyConfig
 from Misc.sFruitImageFetcher import *
-import Misc.sLilyComponentV2 as CV2
 import ui.sFruitValueGenerator as FVG
 import ui.sComboImageGenerator as CIG
+
+import LilyBloxFruits.components.sBloxFruitsComponent as Components
 
 from . import sLilyBloxFruitsCache as BFC
 import ast
@@ -54,30 +55,11 @@ async def MessageEvaluate(bot, message: discord.Message):
             return
 
         if any(word in message.content.lower().split() for word in ("value",)):
-                cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
-                crow = await cursor1.fetchall()
-                config_rows = (crow[0][0], crow[1][0])
-                cursor = await LilyConfig.cdb.execute(
-                    """
-                    SELECT cc.bf_fruit_values_channel_id
-                    FROM ConfigData cd
-                    JOIN ConfigChannels cc
-                        ON cd.channel_config_id = cc.channel_config_id
-                    WHERE cd.guild_id = ?
-                    """,
-                    (message.guild.id,)
-                )
-
-                row = await cursor.fetchone()
-                if not row or not row[0]:
-                    return
-
-                fChannel = bot.get_channel(int(row[0]))
-                if message.channel != fChannel:
+                img_mode: int = 0
+                if not message.channel.id == LilyConfig.guild_configs.get(message.guild.id).get("channels").get("bf_fruit_values_channel_id", 0):
                     return
                 match = re.search(r"\b(?:fruit value of|value of|value)\s+(.+)", message.content.lower())
                 if not match:
-                    await message.delete()
                     return
 
                 item_name = match.group(1).strip()
@@ -95,16 +77,20 @@ async def MessageEvaluate(bot, message: discord.Message):
                     return
 
                 overload_data = {
-                    "fruit_name": item_name_capital,
-                    "physical_value": jsonfruitdata['physical_value'],
-                    "permanent_value": jsonfruitdata['permanent_value'],
-                    "value": jsonfruitdata['physical_value'],
-                    "demand": jsonfruitdata['physical_demand'],
-                    "demand_type": jsonfruitdata['demand_type'],
-                    "icon_url" : jsonfruitdata['icon_url']
+                    "fruit_name": item_name_capital or "Unknown",
+                    "physical_value": jsonfruitdata.get("physical_value") or "0",
+                    "permanent_value": jsonfruitdata.get("permanent_value") or "0",
+                    "value": jsonfruitdata.get("physical_value") or "0",
+                    "demand": jsonfruitdata.get("physical_demand") or "0",
+                    "demand_type": jsonfruitdata.get("demand_type") or "..",
+                    "icon_url": (
+                        jsonfruitdata.get("icon_url")
+                        or getattr(message.author.display_avatar, "url", None)
+                    ),
                 }
 
-                if int(config_rows[1]) == 1:
+
+                if img_mode == 1:
                     status_msg = await message.reply("Thinking...")
                     img = await FVG.GenerateValueImage(overload_data)
                     buffer = io.BytesIO()
@@ -121,316 +107,230 @@ async def MessageEvaluate(bot, message: discord.Message):
 
                     embed.set_author(name="Item Value Calculator")
 
-                    if jsonfruitdata['physical_value']:
+                    if jsonfruitdata.get('physical_value'):
                         embed.add_field(
                             name="Physical Value",
                             value=format_currency(jsonfruitdata['physical_value']),
                             inline=False
                         )
 
-                    if jsonfruitdata['permanent_value']:
+                    if jsonfruitdata.get('permanent_value'):
                         embed.add_field(
                             name="Permanent Value",
                             value=format_currency(jsonfruitdata['permanent_value']),
                             inline=False
                         )
 
-                    if jsonfruitdata['physical_demand']:
+                    if jsonfruitdata.get('physical_demand'):
                         embed.add_field(
                             name="Demand",
                             value=jsonfruitdata['physical_demand'],
                             inline=False
                         )
 
-                    if jsonfruitdata['demand_type']:
+                    if jsonfruitdata.get('demand_type'):
                         embed.add_field(
                             name="Demand Type",
                             value=jsonfruitdata['demand_type'],
                             inline=False
                         )
 
-                    embed.set_thumbnail(url=jsonfruitdata['icon_url'])
+                    if jsonfruitdata.get("icon_url"):
+                        embed.set_thumbnail(url=jsonfruitdata['icon_url'])
 
                     embed.set_footer(text="Powered By LilyValues")
 
                     await message.reply(content=None, embed=embed)
 
-        elif await TFA.is_valid_trade_format(message.content.lower()):       
-                    cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
-                    crow = await cursor1.fetchall()
-                    config_rows = (crow[0][0], crow[1][0])         
-                    your_fruits = []
-                    your_fruit_types=[]
-                    their_fruits = []
-                    their_fruits_types=[]
-                    your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDA.extract_trade_details(message.content)
+        elif await TFA.is_valid_trade_format(message.content.lower()):
+            if not message.channel.id == LilyConfig.guild_configs.get(message.guild.id).get("channels").get("bf_win_loss_channel_id", 0):
+                return
 
-                    cursor = await LilyConfig.cdb.execute(
-                        """
-                        SELECT cc.bf_win_loss_channel_id
-                        FROM ConfigData cd
-                        JOIN ConfigChannels cc
-                            ON cd.channel_config_id = cc.channel_config_id
-                        WHERE cd.guild_id = ?
-                        """,(message.guild.id,))                    
-                    row = await cursor.fetchone()
-                    if row and row[0]:
-                        w_or_l_channel = bot.get_channel(row[0])
+            img_mode: int = 0     
+            your_fruits = []
+            your_fruit_types=[]
+            their_fruits = []
+            their_fruits_types=[]
+            your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDA.extract_trade_details(message.content)
+
+            if img_mode == 1:
+                status_msg = await message.reply("Thinking...")
+                image = await StockValueJSON.j_LorW(
+                    your_fruits, your_fruit_types,
+                    their_fruits, their_fruits_types,
+                    1
+                )
+
+                if image is None:
+                    await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
+                    return
+
+                buffer = io.BytesIO()
+                image.save(buffer, format="PNG", optimize=True)
+                buffer.seek(0)
+
+                file = discord.File(fp=buffer, filename="trade_result.png")
+                await status_msg.edit(content=None, attachments=[file])
+
+            else:
+                data = await StockValueJSON.j_LorW(
+                    your_fruits, your_fruit_types,
+                    their_fruits, their_fruits_types,
+                    0
+                )
+
+                your_fruit_details = ""
+                their_fruit_details = ""
+
+                for i in range(len(your_fruits)):
+                    fruit_name = your_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                    fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
+                    beli_emoji = Config.emoji.get("beli", "💸")
+                    perm_emoji = Config.emoji.get("perm", "🔒")
+
+                    value = data['Your_IndividualValues'][i]
+                    formatted_value = f"{value:,}"
+                    if your_fruit_types[i].lower() == "permanent":
+                        your_fruit_details += f"- {perm_emoji}{fruit_emoji} {beli_emoji} {formatted_value}\n"
                     else:
-                        return
-                    if message.channel == w_or_l_channel:
-                        if int(config_rows[0]) == 1:
-                            status_msg = await message.reply("Thinking...")
-                            image = await StockValueJSON.j_LorW(
-                                your_fruits, your_fruit_types,
-                                their_fruits, their_fruits_types,
-                                1
-                            )
+                        your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
 
-                            if image is None:
-                                await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
-                                return
+                for i in range(len(their_fruits)):
+                    fruit_name = their_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                    fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
+                    beli_emoji = Config.emoji.get("beli", "💸")
+                    perm_emoji = Config.emoji.get("perm", "🔒")
 
-                            buffer = io.BytesIO()
-                            image.save(buffer, format="PNG", optimize=True)
-                            buffer.seek(0)
+                    value = data['Their_IndividualValues'][i]
+                    formatted_value = f"{value:,}"
+                    if their_fruits_types[i].lower() == "permanent":
+                        their_fruit_details += f"- {perm_emoji}{fruit_emoji} {beli_emoji} {formatted_value}\n"
+                    else:
+                        their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+                embed = discord.Embed(description=f"## {data['TradeConclusion']}",
+                    colour=16777215)
 
-                            file = discord.File(fp=buffer, filename="trade_result.png")
-                            await status_msg.edit(content=None, attachments=[file])
-
-                        else:
-                            data = await StockValueJSON.j_LorW(
-                                your_fruits, your_fruit_types,
-                                their_fruits, their_fruits_types,
-                                0
-                            )
-
-                            your_fruit_details = ""
-                            their_fruit_details = ""
-
-                            for i in range(len(your_fruits)):
-                                fruit_name = your_fruits[i].replace(" ", "_").replace("-", "_").lower()
-                                fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
-                                beli_emoji = Config.emoji.get("beli", "💸")
-                                perm_emoji = Config.emoji.get("perm", "🔒")
-
-                                value = data['Your_IndividualValues'][i]
-                                formatted_value = f"{value:,}"
-                                if your_fruit_types[i].lower() == "permanent":
-                                    your_fruit_details += f"- {perm_emoji}{fruit_emoji} {beli_emoji} {formatted_value}\n"
-                                else:
-                                    your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
-
-                            for i in range(len(their_fruits)):
-                                fruit_name = their_fruits[i].replace(" ", "_").replace("-", "_").lower()
-                                fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
-                                beli_emoji = Config.emoji.get("beli", "💸")
-                                perm_emoji = Config.emoji.get("perm", "🔒")
-
-                                value = data['Their_IndividualValues'][i]
-                                formatted_value = f"{value:,}"
-                                if their_fruits_types[i].lower() == "permanent":
-                                    their_fruit_details += f"- {perm_emoji}{fruit_emoji} {beli_emoji} {formatted_value}\n"
-                                else:
-                                    their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
-                            embed = discord.Embed(title=data['TradeConclusion'],
-                                description=f"**{data['TradeDescription']}**",
-                                colour=data['ColorKey'])
-
-                            embed.set_author(name="Lily W OR L Calculator")
-
-                            embed.add_field(name="Your Fruit Values",
-                                            value=your_fruit_details,
-                                            inline=True)
-                            embed.add_field(name="Their Fruit Values",
-                                            value=their_fruit_details,
-                                            inline=True)
-                            embed.add_field(name="Your Total Values:",
-                                            value=format_currency(data['Your_TotalValue']),
-                                            inline=False)
-                            embed.add_field(name="Their Total Values:",
-                                            value=format_currency(data['Their_TotalValue']),
-                                            inline=False)
-                            embed.add_field(name=data['Percentage'],
-                                            value="",
-                                            inline=False)
-                            await message.reply(content=None, embed=embed)
+                embed.add_field(name="Your Fruit Values",
+                                value=your_fruit_details,
+                                inline=True)
+                embed.add_field(name="Their Fruit Values",
+                                value=their_fruit_details,
+                                inline=True)
+                embed.add_field(name="Your Total Values:",
+                                value=format_currency(data['Your_TotalValue']),
+                                inline=False)
+                embed.add_field(name="Their Total Values:",
+                                value=format_currency(data['Their_TotalValue']),
+                                inline=False)
+                embed.add_field(name=data['Percentage'],
+                                value="",
+                                inline=False)
+                embed.set_image(url=Config.img.get("border"))
+                await message.reply(content=None, embed=embed)
 
         elif await TFA.is_valid_emoji_trade_format(message.content):
-                    cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
-                    crow = await cursor1.fetchall()
-                    config_rows = (crow[0][0], crow[1][0])
-                    your_fruits = []
-                    your_fruit_types=[]
-                    their_fruits = []
-                    their_fruits_types=[]
-                    your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDAE.extract_fruits_emoji(message.content)
+            if not message.channel.id == LilyConfig.guild_configs.get(message.guild.id).get("channels").get("bf_win_loss_channel_id", 0):
+                return
+            img_mode: int = 0
+            your_fruits = []
+            your_fruit_types=[]
+            their_fruits = []
+            their_fruits_types=[]
+            your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDAE.extract_fruits_emoji(message.content)
 
-                    cursor = await LilyConfig.cdb.execute(
-                        """
-                        SELECT cc.bf_win_loss_channel_id
-                        FROM ConfigData cd
-                        JOIN ConfigChannels cc
-                            ON cd.channel_config_id = cc.channel_config_id
-                        WHERE cd.guild_id = ?
-                        """,(message.guild.id,))                    
-                    row = await cursor.fetchone()
-                    if row and row[0]:
-                        w_or_l_channel = bot.get_channel(row[0])
-                    else:
-                        return
-                    if message.channel == w_or_l_channel:
-                        if int(config_rows[0]) == 1: 
-                            status_msg = await message.reply("Thinking...")
-                            image = await StockValueJSON.j_LorW(
-                                your_fruits, your_fruit_types,
-                                their_fruits, their_fruits_types,
-                                1
-                            )
+            if img_mode == 1: 
+                status_msg = await message.reply("Thinking...")
+                image = await StockValueJSON.j_LorW(
+                    your_fruits, your_fruit_types,
+                    their_fruits, their_fruits_types,
+                    1
+                )
 
-                            if image is None:
-                                await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
-                                return
+                if image is None:
+                    await status_msg.edit(content="AttributeError: 'NoneType' object has no attribute 'save'")
+                    return
 
-                            buffer = io.BytesIO()
-                            image.save(buffer, format="PNG", optimize=True)
-                            buffer.seek(0)
+                buffer = io.BytesIO()
+                image.save(buffer, format="PNG", optimize=True)
+                buffer.seek(0)
 
-                            file = discord.File(fp=buffer, filename="trade_result.png")
-                            await status_msg.edit(content=None, attachments=[file])
-                        else:
-                            data = await StockValueJSON.j_LorW(
-                                your_fruits, your_fruit_types,
-                                their_fruits, their_fruits_types,
-                                0
-                            )
+                file = discord.File(fp=buffer, filename="trade_result.png")
+                await status_msg.edit(content=None, attachments=[file])
+            else:
+                data = await StockValueJSON.j_LorW(
+                    your_fruits, your_fruit_types,
+                    their_fruits, their_fruits_types,
+                    0
+                )
 
-                            your_fruit_details = ""
-                            their_fruit_details = ""
+                your_fruit_details = ""
+                their_fruit_details = ""
 
-                            for i in range(len(your_fruits)):
-                                fruit_name = your_fruits[i].replace(" ", "_").replace("-", "_").lower()
-                                fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
-                                beli_emoji = Config.emoji.get("beli", "💸")
-                                perm_emoji = Config.emoji.get("perm", "🔒")
+                for i in range(len(your_fruits)):
+                    fruit_name = your_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                    fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
+                    beli_emoji = Config.emoji.get("beli", "💸")
+                    perm_emoji = Config.emoji.get("perm", "🔒")
 
-                                value = data['Your_IndividualValues'][i]
-                                formatted_value = f"{value:,}"
-                                your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+                    value = data['Your_IndividualValues'][i]
+                    formatted_value = f"{value:,}"
+                    your_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
 
-                            for i in range(len(their_fruits)):
-                                fruit_name = their_fruits[i].replace(" ", "_").replace("-", "_").lower()
-                                fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
-                                beli_emoji = Config.emoji.get("beli", "💸")
-                                perm_emoji = Config.emoji.get("perm", "🔒")
+                for i in range(len(their_fruits)):
+                    fruit_name = their_fruits[i].replace(" ", "_").replace("-", "_").lower()
+                    fruit_emoji = Config.fruit_emojis.get(fruit_name, "🍎")
+                    beli_emoji = Config.emoji.get("beli", "💸")
+                    perm_emoji = Config.emoji.get("perm", "🔒")
 
-                                value = data['Their_IndividualValues'][i]
-                                formatted_value = f"{value:,}"
-                                their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
+                    value = data['Their_IndividualValues'][i]
+                    formatted_value = f"{value:,}"
+                    their_fruit_details += f"- {fruit_emoji} {beli_emoji} {formatted_value}\n"
 
-                            embed = discord.Embed(title=data['TradeConclusion'],
-                                description=f"**{data['TradeDescription']}**",
-                                colour=data['ColorKey'])
+                embed = discord.Embed(description=f"## {data['TradeConclusion']}", colour=16777215)
 
-                            embed.set_author(name="Lily W OR L Calculator")
+                embed.add_field(name="Your Fruit Values",
+                                value=your_fruit_details,
+                                inline=True)
+                embed.add_field(name="Their Fruit Values",
+                                value=their_fruit_details,
+                                inline=True)
+                embed.add_field(name="Your Total Values:",
+                                value=format_currency(data['Your_TotalValue']),
+                                inline=False)
+                embed.add_field(name="Their Total Values:",
+                                value=format_currency(data['Their_TotalValue']),
+                                inline=False)
+                embed.add_field(name=data['Percentage'],
+                                value="",
+                                inline=False)
+                embed.set_image(url=Config.img.get("border"))
 
-                            embed.add_field(name="Your Fruit Values",
-                                            value=your_fruit_details,
-                                            inline=True)
-                            embed.add_field(name="Their Fruit Values",
-                                            value=their_fruit_details,
-                                            inline=True)
-                            embed.add_field(name="Your Total Values:",
-                                            value=format_currency(data['Your_TotalValue']),
-                                            inline=False)
-                            embed.add_field(name="Their Total Values:",
-                                            value=format_currency(data['Their_TotalValue']),
-                                            inline=False)
-                            embed.add_field(name=data['Percentage'],
-                                            value="",
-                                            inline=False)
-                            await message.reply(content=None, embed=embed)
+                await message.reply(content=None, embed=embed)
 
         elif await TFA.is_valid_trade_suggestor_format(message.content.lower()):
-            cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage')")
-            crow = await cursor1.fetchone()
+            if not message.channel.id == LilyConfig.guild_configs.get(message.guild.id).get("channels").get("bf_win_loss_channel_id", 0):
+                return
+            img_mode: int = 0
             
             msg = re.sub(r"(for\b.*?\b)nlf\b", r"\1", message.content.lower())
             your_fruits1, your_fruit_types1, neglect_fruits, _ = await FDA.extract_trade_details(msg)
             
-            cursor = await LilyConfig.cdb.execute(
-                """
-                SELECT cc.bf_win_loss_channel_id
-                FROM ConfigData cd
-                JOIN ConfigChannels cc
-                    ON cd.channel_config_id = cc.channel_config_id
-                WHERE cd.guild_id = ?
-                """,
-                (message.guild.id,)
-            )
-            row = await cursor.fetchone()
-            
-            if not row or not row[0]:
-                return
-            
-            _w_or_l_channel = bot.get_channel(row[0])
-            if not _w_or_l_channel:
-                return
-            
-            
-            if message.channel != _w_or_l_channel:
-                return
-            
-            
-            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, neglect_fruits, int(crow[0]))
+            view = Components.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, neglect_fruits, img_mode)
             await message.reply(view=view)
 
         elif await TFA.is_valid_trade_suggestor_format_emoji(message.content):
-            cursor1 = await LilyConfig.cdb.execute("SELECT value FROM GlobalConfigs WHERE key IN ('WORLImage', 'FruitValuesImage')")
-            crow = await cursor1.fetchall()
-            config_rows = (crow[0][0], crow[1][0])
+            if not message.channel.id == LilyConfig.guild_configs.get(message.guild.id).get("channels").get("bf_win_loss_channel_id", 0):
+                return
+            
+            img_mode: int = 0
             your_fruits1, your_fruit_types1, _, _ = await FDAE.extract_fruits_emoji(message.content)
+        
             
-            cursor = await LilyConfig.cdb.execute(
-                """
-                SELECT cc.bf_win_loss_channel_id
-                FROM ConfigData cd
-                JOIN ConfigChannels cc
-                    ON cd.channel_config_id = cc.channel_config_id
-                WHERE cd.guild_id = ?
-                """,
-                (message.guild.id,)
-            )
-            row = await cursor.fetchone()
-            
-            if not row or not row[0]:
-                return
-            
-            _w_or_l_channel = bot.get_channel(row[0])
-            if not _w_or_l_channel:
-                return
-            
-            
-            if message.channel != _w_or_l_channel:
-                return
-            
-            
-            view = CV2.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, config_rows[0])
+            view = Components.TradeSuggestorComponent(bot, your_fruits1, your_fruit_types1, message, img_mode)
             await message.reply(view=view)
 
         elif LCM.ComboScope(message.content.lower()) is not None:
-            try:
-                cursor = await LilyConfig.cdb.execute(
-                    "SELECT bf_combo_channel_id FROM ConfigData WHERE guild_id = ?", (message.guild.id,)
-                )
-                row = await cursor.fetchone()
-            except Exception as e:
-                return
-
-            if not row:
-                return
-
-            if message.channel.id != row[0]:
+            if not message.channel.id == LilyConfig.guild_configs.get(message.guild.id).get("channels").get("bf_combo_channel_id", 0):
                 return
 
             try:
@@ -534,7 +434,7 @@ async def MessageEvaluate(bot, message: discord.Message):
                         img_byte_arr.seek(0)
 
                         imgfile = discord.File(img_byte_arr, filename="image.png")
-                        view = CV2.RatingComponent(message.author, combo['combo_id'])
+                        view = Components.RatingComponent(message.author, combo['combo_id'])
                         await message.reply(file=imgfile, view=view)
                 except Exception as e:
-                    await message.reply(f"Exception: {e}")                    
+                    await message.reply(f"Exception: {e}")    

@@ -172,4 +172,9 @@ fruit_emojis = {
     "2x_mastery": "<:2x_mastery:1467157330129981683>",
     "diamond": "<:diamond:1467157336219979787>",
     "falcon": "<:falcon:1467157342306045953>",
+    "fiend_yeti" : "<:fiend_yeti:1472639151252701336>"
+}
+
+expression = {
+    
 }

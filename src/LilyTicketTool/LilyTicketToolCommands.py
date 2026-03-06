@@ -11,7 +11,8 @@ class LilyTicketTool(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await LTTT.InitializeTicketView(self)
+        await LTTT.InitializeTicketView(self.bot)
+        print("[Ticket Tool Cog] Initialized")
 
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
@@ -25,7 +26,7 @@ class LilyTicketTool(commands.Cog):
             if attachment.filename.endswith('.json'):
                     content = await attachment.read()
                     json_data = json.loads(content.decode('utf-8'))
-                    await LTTT.SpawnTicket(ctx, json_data)
+                    await LTTT.spawn_ticket(ctx, json_data)
                     return
             
 

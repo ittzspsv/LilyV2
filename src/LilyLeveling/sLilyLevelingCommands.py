@@ -2,7 +2,7 @@ from discord.ext import commands, tasks
 from enum import Enum
 import discord
 from datetime import timedelta
-import LilyLeveling.sLilyLevelingCore as LilyLevelCore
+import LilyLeveling.core.sLilyLevelingCore as LilyLevelCore
 import LilyManagement.sLilyStaffManagement as LSM
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
 import os
@@ -19,19 +19,24 @@ class LilyLeveling(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         await LilyLevelCore.initialize()
+    
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.channel.id in LilyLevelCore.config['AllowedChannels']:
+            await LilyLevelCore.level_processor(message)
 
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='level', description='Get Your Current leveling info')
     async def level(self, ctx: commands.Context, member:discord.Member=None):
             await ctx.defer()
-            await LilyLevelCore.FetchLevelDetails(ctx, member)
+            await LilyLevelCore.fetch_level_details(ctx, member)
     
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='profile', description='Get Your Profile Information')
     async def profile(self, ctx: commands.Context, member:discord.Member=None):
             await ctx.defer()
-            await LilyLevelCore.FetchProfileDetails(ctx, member)
+            await LilyLevelCore.fetch_profile_details(ctx, member)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -79,7 +84,7 @@ class LilyLeveling(commands.Cog):
     @commands.hybrid_command(name='leaderboard', description='Show Top 10 Leaderboard')
     async def leaderboard(self, ctx: commands.Context, type: LeaderboardType):
          await ctx.defer()
-         await LilyLevelCore.FetchLeaderBoard(ctx, type.value)
+         await LilyLevelCore.fetch_leaderboard(ctx, type.value)
 
     async def daily_callback(self):
         if LilyLevelCore.ldb is None:

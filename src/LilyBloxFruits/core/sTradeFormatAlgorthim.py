@@ -98,7 +98,7 @@ async def MatchFruitSet(fruit: str, fruit_names: set, alias_map: dict, threshold
     return None
 
 
-async def is_valid_trade_format(message):
+async def is_valid_trade_format(message) -> bool:
     try:
         message = message.lower().strip()
         message = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", message).strip()
@@ -145,7 +145,7 @@ async def is_valid_trade_format(message):
     except:
         return False
 
-async def is_valid_emoji_trade_format(message: str):
+async def is_valid_emoji_trade_format(message: str) -> bool:
     try:
         message = message.lower().strip()
         message = re.sub(r"\b(w|l)\s*or\s*(w|l)\??", "", message).strip()
@@ -185,7 +185,7 @@ async def is_valid_emoji_trade_format(message: str):
     except:
         return False
 
-async def is_valid_trade_suggestor_format(message: str):
+async def is_valid_trade_suggestor_format(message: str) -> bool:
     try:
         msg = message.lower().strip()
         trimmed = re.sub(r"(for\b.*?\bnlf\b).*", r"\1", msg)
@@ -200,7 +200,7 @@ async def is_valid_trade_suggestor_format(message: str):
     except:
         return False
 
-async def is_valid_trade_suggestor_format_emoji(message: str):
+async def is_valid_trade_suggestor_format_emoji(message: str) -> bool:
     try:
         your_fruits, _, their_fruits, _ = await FDAE.extract_fruits_emoji(message)
         

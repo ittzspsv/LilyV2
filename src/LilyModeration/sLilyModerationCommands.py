@@ -6,6 +6,7 @@ import LilyLogging.sLilyLogging as LilyLogging
 import Config.sBotDetails as Config
 import LilyManagement.sLilyStaffManagement as LSM
 import LilyModeration.sLilyModeration as mLily
+from Misc.sLilyEmbed import simple_embed
 import Misc.sLilyComponentV2 as CV2
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
 
@@ -45,27 +46,27 @@ class LilyModeration(commands.Cog):
                     user_id = int(member)
                     target_user = await ctx.bot.fetch_user(user_id)
                 except ValueError as v:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Value Error {v}", 'cross'))
+                    await ctx.send(embed=simple_embed(f"Value Error {v}", 'cross'))
                     return
                 except discord.NotFound:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"User ID {member} not found. Please check the ID.", 'cross'))
+                    await ctx.send(embed=simple_embed(f"User ID {member} not found. Please check the ID.", 'cross'))
                     return
                 except discord.HTTPException as e:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user data: {e}", 'cross'))
+                    await ctx.send(embed=simple_embed(f"Failed to fetch user data: {e}", 'cross'))
                     return
 
             if not target_user:
-                await ctx.send(embed=mLily.SimpleEmbed("No Valid Users to Ban", 'cross'))
+                await ctx.send(embed=simple_embed("No Valid Users to Ban", 'cross'))
                 return
 
             if not await mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
                 await mLily.ban_user(ctx, target_user, reason, proofs)
             else:
-                await ctx.send(embed=mLily.SimpleEmbed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"{await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
+                await ctx.send(embed=simple_embed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"{await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
                 return
 
         except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"An error occurred: {e}", 'cross'))
+            await ctx.send(embed=simple_embed(f"An error occurred: {e}", 'cross'))
 
 
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
@@ -84,7 +85,7 @@ class LilyModeration(commands.Cog):
         try:
             user = await self.bot.fetch_user(user_id)
         except discord.NotFound:
-            await ctx.send(embed=mLily.SimpleEmbed("User not found."))
+            await ctx.send(embed=simple_embed("User not found."))
             return
         except discord.HTTPException as e:
             await ctx.send(f"Exception Raised: {e}")
@@ -92,7 +93,7 @@ class LilyModeration(commands.Cog):
 
         try:
             await ctx.guild.unban(user)
-            await ctx.send(embed=mLily.SimpleEmbed(f"Unbanned {user.mention}"))
+            await ctx.send(embed=simple_embed(f"Unbanned {user.mention}"))
         except discord.NotFound:
             quarantine_role = discord.utils.get(ctx.guild.roles, name="Quarantine")
             if quarantine_role:
@@ -101,7 +102,7 @@ class LilyModeration(commands.Cog):
                     try:
                         await member_obj.remove_roles(quarantine_role, reason=f"Quarantine Removed by {ctx.author.mention}")
 
-                        await ctx.send(embed=mLily.SimpleEmbed(f"Removed Quarantine from {member_obj.mention}"))
+                        await ctx.send(embed=simple_embed(f"Removed Quarantine from {member_obj.mention}"))
                         return
                     except discord.Forbidden:
                         await ctx.send("I don't have permission to remove the Quarantine role.")
@@ -109,7 +110,7 @@ class LilyModeration(commands.Cog):
                     except discord.HTTPException as e:
                         await ctx.send(f"Failed to remove Quarantine role: {e}")
                         return
-            await ctx.send(embed=mLily.SimpleEmbed("This user is not banned and not quarantined!"))
+            await ctx.send(embed=simple_embed("This user is not banned and not quarantined!"))
         except discord.Forbidden:
             await ctx.send("I don't have permission to unban this user.")
         except discord.HTTPException as e:
@@ -147,10 +148,10 @@ class LilyModeration(commands.Cog):
             try:
                 start, stop = (int(x) if x else 0 for x in slice_exp.split(":"))
             except ValueError:
-                await ctx.send(embed=mLily.SimpleEmbed("Slicing Error. Make sure your slicing is in the format 'start:stop'"))
+                await ctx.send(embed=simple_embed("Slicing Error. Make sure your slicing is in the format 'start:stop'"))
                 return
             except Exception as e:
-                await ctx.send(embed=mLily.SimpleEmbed(f"Error while parsing slice: {e}"))
+                await ctx.send(embed=simple_embed(f"Error while parsing slice: {e}"))
                 return
 
             if not member:
@@ -158,23 +159,23 @@ class LilyModeration(commands.Cog):
                     user = await self.bot.fetch_user(ctx.author.id)
                     embed = await mLily.ms(ctx,ctx.author.id, user, slice_expr=slice(start, stop))
                 except Exception as e:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch user or display logs: {e}"))
+                    await ctx.send(embed=simple_embed(f"Failed to fetch user or display logs: {e}"))
                     return
             else:
                 try:
                     user = await self.bot.fetch_user(member.id)
                     embed = await mLily.ms(ctx, member.id, user, slice_expr=slice(start, stop))
                 except ValueError:
-                    await ctx.send(embed=mLily.SimpleEmbed("Member ID must be a integer"))
+                    await ctx.send(embed=simple_embed("Member ID must be a integer"))
                     return
                 except Exception as e:
-                    await ctx.send(embed=mLily.SimpleEmbed(f"Failed to fetch member ban logs csv: {e}"))
+                    await ctx.send(embed=simple_embed(f"Failed to fetch member ban logs csv: {e}"))
                     return
 
             await ctx.send(embeds=embed)
 
         except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"No Modlogs Available", 'cross'))
+            await ctx.send(embed=simple_embed(f"No Modlogs Available", 'cross'))
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -187,14 +188,14 @@ class LilyModeration(commands.Cog):
                 start, stop = (int(x) if x else None for x in slice_exp.split(":"))
                 slice_obj = slice(start, stop)
             except Exception:
-                await ctx.send(embed=mLily.SimpleEmbed("Slicing Error. Format must be 'start:stop'"))
+                await ctx.send(embed=simple_embed("Slicing Error. Format must be 'start:stop'"))
                 return
 
         target_id = member.id if member else ctx.author.id
         try:
             user = await self.bot.fetch_user(target_id)
         except Exception:
-            await ctx.send(embed=mLily.SimpleEmbed(f"No Mod Logs Returned", 'cross'))
+            await ctx.send(embed=simple_embed(f"No Mod Logs Returned", 'cross'))
             return
 
         try:
@@ -208,7 +209,7 @@ class LilyModeration(commands.Cog):
             )
             await ctx.send(embeds=embed)
         except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"No Mod Logs Returned", 'cross'))
+            await ctx.send(embed=simple_embed(f"No Mod Logs Returned", 'cross'))
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

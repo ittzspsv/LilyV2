@@ -6,6 +6,8 @@ import Config.sBotDetails as Config
 import discord
 from discord.ext import commands
 
+from Misc.sLilyEmbed import simple_embed
+
 
 
 class LilyManagement(commands.Cog):
@@ -29,7 +31,7 @@ class LilyManagement(commands.Cog):
         try:
             await smLily.FetchAllStaffs(ctx)
         except Exception as e:
-            await ctx.send(embed=mLily.SimpleEmbed(f"Exception [staffs] {e}"))
+            await ctx.send(embed=simple_embed(f"Exception [staffs] {e}"))
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Developer')), allow_per_server_owners=True)
     @commands.hybrid_command(name='staff_strike', description='strikes a staff with a specified reason')
@@ -77,6 +79,12 @@ class LilyManagement(commands.Cog):
             await smLily.AddStaff(ctx, staff)
         except Exception as e:
             await ctx.send(f"Exception {e}")
+
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Developer', 'Staff Manager')))
+    @commands.hybrid_command(name='update_all_staffs', description='updates all staff details')
+    async def update_all_staffs(self, ctx: commands.Context):
+        await smLily.update_all_staffs(ctx)
+
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Developer', 'Staff Manager')), allow_per_server_owners=True)
     @commands.hybrid_command(name='remove_staff', description='Removes a member from staff_data')

@@ -1,13 +1,17 @@
-{
+[
+    {
+        "channel_id": 1458532550803849216,
+        "message_id": 1458848702306451486,
+        "config": {
             "BasicConfigurations": {
-                "TicketPanelSpawnChannel": 1454288744155840624,
-                "TicketLoggingHandler": 1455540913618157639
+                "TicketPanelSpawnChannel": 1458532550803849216,
+                "TicketLoggingHandler": 1449918663632355499
             },
             "EmbedConfigs": {
                 "TicketPanelEmbed": {
                     "embeds": [
                         {
-                            "title": "<:ticket:1438584946997592114> Zenith Support Ticket",
+                            "title": "<:ticket:1438584946997592114> BloxTrade Support Ticket",
                             "color": 16777215,
                             "description": "- If you are seeking out for any support from our side Please open  an ticket.",
                             "footer": {
@@ -66,7 +70,7 @@
             },
             "RoleInformation": {
                 "SupportStaffRole": [
-                    1455537782368899249
+                    1431433056098713611
                 ]
             },
             "TicketType": [
@@ -84,63 +88,78 @@
                         "Discord ID | Username of that Member": 600,
                         "Please explain what he did": 600
                     },
-                    "channel_id": 1467124240384921691,
-                    "view_pannel_spawn_id": 1467125201404956703,
+                    "channel_id": 1458531621014601738,
+                    "view_pannel_spawn_id": 1458526388947648613,
                     "ticket_base_name": "member_report",
                     "file_upload": true,
-                    "ping-roles" : [1455537782368899249]
+                    "ping-roles": [
+                        1462459395421114654
+                    ]
                 },
                 {
                     "fields": {
                         "Mention the giveaway": 200
                     },
-                    "channel_id": 1467124240384921691,
-                    "view_pannel_spawn_id": 1467125036090523728,
+                    "channel_id": 1458531621014601738,
+                    "view_pannel_spawn_id": 1477031659709665471,
                     "ticket_base_name": "giveaway_claim",
                     "file_upload": true,
-                    "ping-roles" : [1467127261835558984]
+                    "ping-roles": [
+                        1430570784308461619
+                    ]
                 },
                 {
                     "fields": {
                         "Mention the Server issue": 1000
                     },
-                    "channel_id": 1467124240384921691,
-                    "view_pannel_spawn_id": 1467124866606956657,
+                    "channel_id": 1458531621014601738,
+                    "view_pannel_spawn_id": 1458527279453044760,
                     "ticket_base_name": "server_issue",
                     "file_upload": false,
-                    "ping-roles" : [1455537782368899249]
+                    "ping-roles": [
+                        1462459395421114654
+                    ]
                 },
                 {
                     "fields": {
                         "Mention the item name": 500,
                         "Any requirments?": 500
                     },
-                    "channel_id": 1467124240384921691,
-                    "view_pannel_spawn_id": 1467125098736521479,
+                    "channel_id": 1458531621014601738,
+                    "view_pannel_spawn_id": 1477031490951971030,
                     "ticket_base_name": "giveaway_host",
                     "file_upload": false,
-                    "ping-roles" : [1467127261835558984]
+                    "ping-roles": [
+                        1430570784308461619
+                    ]
                 },
                 {
                     "fields": {
                         "Mention the event": 500,
                         "Describe the event": 1000
                     },
-                    "channel_id": 1467124240384921691,
-                    "view_pannel_spawn_id": 1467124967182307349,
+                    "channel_id": 1458531621014601738,
+                    "view_pannel_spawn_id": 1458528231840944315,
                     "ticket_base_name": "event_host",
                     "file_upload": false,
-                    "ping-roles" : [1467127299764785183]
+                    "ping-roles": [
+                        1456264139210227905
+                    ]
                 },
                 {
                     "fields": {
                         "Please explain your statement": 1000
                     },
-                    "channel_id": 1467124240384921691,
-                    "view_pannel_spawn_id": 1467124774173151455,
+                    "channel_id": 1458531621014601738,
+                    "view_pannel_spawn_id": 1458530538582184047,
                     "ticket_base_name": "event_enquiry",
                     "file_upload": false,
-                    "ping-roles" : [1467127299764785183]
+                    "ping-roles": [
+                        1456264139210227905
+                    ]
                 }
             ]
-}
+        },
+        "guild_id": 970643838047760384
+    }
+]

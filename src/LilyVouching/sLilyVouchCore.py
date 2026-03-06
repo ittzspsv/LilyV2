@@ -3,6 +3,8 @@ import aiosqlite
 import Config.sBotDetails as Configs
 import LilyModeration.sLilyModeration as mLily
 
+from Misc.sLilyEmbed import simple_embed
+
 from datetime import datetime
 
 from discord.ext import commands
@@ -19,7 +21,7 @@ async def ValidateVouch(interaction: discord.Interaction,vouch_by: discord.Membe
         await vodb.commit()
 
         await interaction.followup.send(
-            embed=mLily.SimpleEmbed(
+            embed=simple_embed(
                 f"Successfully vouched {vouch_to.mention}"
             ),ephemeral=True
         )
@@ -28,7 +30,7 @@ async def ValidateVouch(interaction: discord.Interaction,vouch_by: discord.Membe
         await vodb.rollback()
         print(f"Exception [VALIDATE VOUCH] {e}")
 
-        await interaction.followup.send(embed=mLily.SimpleEmbed("Failed to vouch member.","cross"),ephemeral=True)
+        await interaction.followup.send(embed=simple_embed("Failed to vouch member.","cross"),ephemeral=True)
 
 class ProofsModal(discord.ui.Modal):
     def __init__(self, vouch_by: discord.Member, vouch_to: discord.Member, desc: str="None"):
@@ -61,7 +63,7 @@ async def Initialize():
 
 async def AddVouch(ctx: commands.Context, vouch_by: discord.Member, vouch_to: discord.Member, desc: str="None"):
     if not ctx.interaction:
-        await ctx.send(embed=mLily.SimpleEmbed(f"Please use this command as slash command", 'cross'))
+        await ctx.send(embed=simple_embed(f"Please use this command as slash command", 'cross'))
     else:
         try:
             await ctx.interaction.response.send_modal(ProofsModal(vouch_by, vouch_to, desc))
@@ -73,28 +75,28 @@ async def RemoveVouch(ctx: commands.Context, vouch_id: int):
     try:
         await vodb.execute("DELETE FROM vouch WHERE id = ?", (vouch_id,))
         await vodb.commit()
-        await ctx.send(embed=mLily.SimpleEmbed(f"Successfully Removed"))
+        await ctx.send(embed=simple_embed(f"Successfully Removed"))
     except Exception as e:
         print(f"Exception [REMOVE VOUCH] {e}")
-        await ctx.send(embed=mLily.SimpleEmbed(f"Failed to Delete Vouch", 'cross'))
+        await ctx.send(embed=simple_embed(f"Failed to Delete Vouch", 'cross'))
 
 async def AssignTrustedServiceProvider(ctx: commands.Context, member: discord.Member):
     try:
         await vodb.execute("UPDATE service_provider SET trusted = 1 WHERE provider_id = ?", (member.id,))
         await vodb.commit()
-        await ctx.send(embed=mLily.SimpleEmbed(f"Successfully Made the Service provider {member.mention} Trusted"))
+        await ctx.send(embed=simple_embed(f"Successfully Made the Service provider {member.mention} Trusted"))
     except Exception as e:
         print(f"Exception [AssignTrustedServiceProvider] {e}")
-        await ctx.send(embed=mLily.SimpleEmbed(f"Command Failure", 'cross'))
+        await ctx.send(embed=simple_embed(f"Command Failure", 'cross'))
 
 async def RemoveTrustedServiceProvider(ctx: commands.Context, member: discord.Member):
     try:
         await vodb.execute("UPDATE service_provider SET trusted = 0 WHERE provider_id = ?", (member.id,))
         await vodb.commit()
-        await ctx.send(embed=mLily.SimpleEmbed(f"Removed the trusted key from the service provider {member.mention}"))
+        await ctx.send(embed=simple_embed(f"Removed the trusted key from the service provider {member.mention}"))
     except Exception as e:
         print(f"Exception [RemoveTrustedServiceProvider] {e}")
-        await ctx.send(embed=mLily.SimpleEmbed(f"Command Failure", 'cross'))
+        await ctx.send(embed=simple_embed(f"Command Failure", 'cross'))
 
 async def ShowVouches(ctx: commands.Context, member: discord.Member):
     try:
@@ -115,7 +117,7 @@ async def ShowVouches(ctx: commands.Context, member: discord.Member):
 
         if not row:
             await ctx.send(
-                embed=mLily.SimpleEmbed(
+                embed=simple_embed(
                     f"{member.mention} is not registered as a service provider.",
                     "cross"
                 )
@@ -222,5 +224,5 @@ async def ShowVouches(ctx: commands.Context, member: discord.Member):
     except Exception as e:
         print(f"Exception [ShowVouches] {e}")
         await ctx.send(
-            embed=mLily.SimpleEmbed("Command Failure", "cross")
+            embed=simple_embed("Command Failure", "cross")
         )
