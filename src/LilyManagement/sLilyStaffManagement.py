@@ -1,68 +1,61 @@
 import discord
-import aiosqlite
-import asyncio
 from ast import literal_eval
 import Config.sBotDetails as Configs
-from enum import Enum
+import LilyManagement.types.sLilyStaffManagementTypes as types
+import re
 
+import Config.sBotDetails as Configs
+
+import asyncio
+
+from typing import Optional
 from Misc.sLilyEmbed import simple_embed
-from collections import defaultdict
-from datetime import datetime, timezone
 
-from typing import Dict, Literal, List, Tuple
-from LilyManagement.components.sLilyStaffManagementComponents import StaffListView, StaffsView
 
-import Misc.sLilyComponentV2 as CS2
+from LilyManagement.db.sLilyStaffDatabaseAccess import fetch_staff_detail, fetch_all_staffs, add_staff, remove_staff, edit_staff, strike_staff, remove_strike, fetch_staff_strikes, add_loa, remove_loa, update_staff
+import LilyManagement.db.sLilyStaffDatabaseAccess as LSDA
 
-from datetime import datetime
+from LilyManagement.components.sLilyStaffManagementComponents import StaffsView, StaffRoleView
+
 from discord.ext import commands
 
-import LilyUtility.sLilyUtility as LilyUtility
 
-sdb = None
-
-
-async def initialize():
-    global sdb
-    sdb = await aiosqlite.connect("storage/management/staff_management.db")
-
-    #DDL SCHEMA INITIALIZATION
-    await sdb.execute("CREATE TABLE IF NOT EXISTS roles (role_id INTEGER PRIMARY KEY ,role_name TEXT NOT NULL UNIQUE,role_priority INTEGER NOT NULL, ban_limit INTEGER)")
-    await sdb.commit()
+async def initialize_cache():
+    pass
 
 async def GetRoles(role_names: tuple = ()):
     try:
-        global sdb
         if not role_names:
             return []
 
         placeholders = ",".join("?" for _ in role_names)
         query = f"SELECT role_id FROM roles WHERE role_name IN ({placeholders})"
         
-        cursor = await sdb.execute(query, role_names)
+        cursor = await LSDA.sdb.execute(query, role_names)
         rows = await cursor.fetchall()
+
         return [row[0] for row in rows]
-    except:
+    except Exception as e:
+        print(f"Exception [GetRoles] {e}")
         return []
 
 async def GetBanRoles():
     try:
-        global sdb
-        cursor = await sdb.execute("SELECT role_id FROM roles WHERE ban_limit > 0")
+        cursor = await LSDA.sdb.execute("SELECT role_id FROM roles WHERE ban_limit > 0")
         rows = await cursor.fetchall()
+
         return [row[0] for row in rows]
-    except:
+    except Exception as e:
+        print(f"Exception [GetRoles] {e}")
         return []
 
 async def GetAssignableRoles(roles):
-    global sdb
-
     highest_allotment = None
     highest_position = -1
 
     for role in roles:
         try:
-            cursor = await sdb.execute(
+            cursor = await LSDA.sdb.execute(
                 "SELECT manage_role_allowances FROM roles WHERE role_id = ?",
                 (role.id,)
             )
@@ -84,33 +77,14 @@ async def GetAssignableRoles(roles):
 
 async def FetchStaffDetail(staff: discord.Member):
     try:
-        query = """
-        SELECT s.name, r.role_name, s.on_loa, s.strikes_count, s.joined_on, s.timezone, s.responsibility, s.retired
-        FROM staffs s
-        LEFT JOIN roles r ON s.role_id = r.role_id
-        WHERE s.staff_id = ?
-        """
-        cursor = await sdb.execute(query, (staff.id,))
-        row = await cursor.fetchone()
-
-        if not row:
+        data_dict = await fetch_staff_detail(staff.id)
+        if not data_dict:
             raise ValueError("Staff data not found in database.")
 
-        name, role_name, is_loa, strikes_count, joined_on_str, timezone, responsibility, retired = row
-
-        joined_on = datetime.strptime(joined_on_str, "%d/%m/%Y")
-        current_date = datetime.today()
-
-        years = current_date.year - joined_on.year
-        months = current_date.month - joined_on.month
-        days = current_date.day - joined_on.day
-
-        if days < 0:
-            months -= 1
-            days += 30
-        if months < 0:
-            years -= 1
-            months += 12
+        name, role_name, is_loa, strikes_count, joined_on_str, timezone, responsibility, retired = (
+            data_dict.get("name"), data_dict.get("role_name"), data_dict.get("is_loa"), data_dict.get("strikes_count"), 
+            data_dict.get("joined_on"), data_dict.get("timezone"), data_dict.get("responsibility"), data_dict.get("retired")
+        )
 
         if is_loa == 1:
             status_display = f"{Configs.emoji['dnd']} On Leave"
@@ -130,10 +104,10 @@ async def FetchStaffDetail(staff: discord.Member):
         embed.add_field(
             name="__Basic Information__",
             value=(
-                f"{Configs.emoji['shield']} **Role:** {role_name or 'N/A'}\n"
+                f"{Configs.emoji['shield']} **Role:** {','.join(role_name) or 'N/A'}\n"
                 f"{Configs.emoji['bookmark']} **Responsibilities:** {responsibility or 'N/A'}\n"
                 f"{Configs.emoji['clock']} **Timezone:** {timezone or 'N/A'}\n"
-                f"{Configs.emoji['calender']} **Join Date:** {joined_on.strftime('%d/%m/%Y') or '0/0/0000'}"
+                f"{Configs.emoji['calender']} **Join Date:** <t:{joined_on_str}:D>"
             ),
             inline=False,
         )
@@ -142,7 +116,7 @@ async def FetchStaffDetail(staff: discord.Member):
             name="__Experience Information__",
             value=(
                 f"{Configs.emoji['clock']} **Evaluated Experience:** "
-                f"**{years} years {months} months {days} days**"
+                f"<t:{joined_on_str}:R>"
             ),
             inline=False,
         )
@@ -170,108 +144,139 @@ async def FetchStaffDetail(staff: discord.Member):
 
 async def FetchAllStaffs(ctx: commands.Context):
     try:
-        guild_id = ctx.guild.id
+        data = await fetch_all_staffs(ctx.guild.id)
 
-        count_query = """
-        SELECT 
-            COUNT(*) AS total_staffs,
-            SUM(CASE WHEN s.on_loa = 1 THEN 1 ELSE 0 END) AS loa_staffs,
-            SUM(CASE WHEN s.on_loa = 0 THEN 1 ELSE 0 END) AS active_staffs
-        FROM staffs s
-        WHERE s.retired = 0 AND s.guild_id = ?
-        """
-        cursor = await sdb.execute(count_query, (guild_id,))
-        total_staffs, loa_staffs, active_staffs = await cursor.fetchone()
-
-        cursor = await sdb.execute(
-            """
-            SELECT 
-                r.role_id,
-                r.role_name,
-                s.staff_id,
-                s.name,
-                s.avatar_url,
-                s.joined_on,
-                s.Timezone
-            FROM roles r
-            LEFT JOIN staff_roles sr 
-                ON r.role_id = sr.role_id
-            LEFT JOIN staffs s 
-                ON sr.staff_id = s.staff_id
-                AND s.retired = 0
-            WHERE r.guild_id = ?
-            ORDER BY r.role_priority, s.name;
-            """
-        ,(guild_id,))
-
-        rows = await cursor.fetchall()
-
-        overall_details = {"LOA" : loa_staffs, "ActiveStaffs" : active_staffs, "TotalStaffs" : total_staffs}
-
-        time_now = datetime.now(timezone.utc)
-        role_user_map: dict[int, dict[str, str | list[dict[str, int | str | None]]]] = {}
-        for role_id, role_name, staff_id, name, avatar_url, joined_on, dtimezone in rows:
-        
-            try:
-                dt = datetime.strptime(joined_on, "%d/%m/%Y").replace(tzinfo=timezone.utc) \
-                    if joined_on else datetime.now(timezone.utc)
-            except ValueError:
-                dt = time_now
-
-            unix_timestamp = int(dt.timestamp())
-
-            role = role_user_map.setdefault(role_id, {
-                "role_name": role_name,
-                "staff": []
-            })
-
-            if staff_id is not None:
-                role["staff"].append({
-                    "name": name,
-                    "id": staff_id,
-                    "avatar_profile": avatar_url,
-                    "joined_on" : f"<t:{unix_timestamp}:R>",
-                    "timezone" : dtimezone or "Default"
-                })
+        overall_details = data["overall"]
+        role_user_map = data["roles"]
 
         view = StaffsView(ctx, overall_details, role_user_map)
-        view.message = await ctx.send(view=view)
+        view.message = await ctx.reply(view=view)
 
     except Exception as e:
         print(f"Error fetching staff list: {e}")
-        embeds = [
-            discord.Embed(
-                title=f"{Configs.emoji['cross']} Error",
-                description="Failed to fetch staff data. Please check the database.",
-                colour=0xf50000
-            )
-        ]
-        await ctx.send(embeds=embeds)
 
-async def AddStaff(ctx: commands.Context, staff: discord.Member):
-    staff_id = staff.id
-    name = staff.display_name
+        embed = discord.Embed(
+            title=f"{Configs.emoji['cross']} Error",
+            description="Failed to fetch staff data. Please check the database.",
+            colour=0xf50000
+        )
+
+        await ctx.reply(embed=embed)
+
+async def update_all_staffs(ctx: commands.Context):
     guild_id = ctx.guild.id
 
-    async with sdb.execute("BEGIN IMMEDIATE"):
-        cursor = await sdb.execute("""
-            SELECT retired
-            FROM staffs
-            WHERE staff_id = ? AND guild_id = ?
-        """, (staff_id, guild_id))
-        row = await cursor.fetchone()
+    cursor = await LSDA.sdb.execute(
+        "SELECT staff_id FROM staffs WHERE retired = 0 AND on_loa = 0 AND guild_id = ?",
+        (guild_id,)
+    )
+    rows = await cursor.fetchall()
+    staff_ids = [row[0] for row in rows]
 
-        cursor = await sdb.execute("""
+    cursor = await LSDA.sdb.execute("""
+        SELECT role_id, role_type
+        FROM roles
+        WHERE guild_id = ?
+    """, (guild_id,))
+    db_roles = await cursor.fetchall()
+
+    staff_role_ids = {r[0] for r in db_roles if r[1] == "Staff"}
+    responsibility_role_ids = {r[0] for r in db_roles if r[1] == "Responsibility"}
+
+    for staff_id in staff_ids:
+
+        staff_member = ctx.guild.get_member(staff_id)
+
+        if not staff_member:
+            try:
+                staff_member = await ctx.guild.fetch_member(staff_id)
+            except discord.NotFound:
+                continue
+
+        try:
+
+            top_staff_role = None
+
+            for role in reversed(staff_member.roles):
+                if role.id in staff_role_ids:
+                    top_staff_role = role
+                    break
+
+            discord_responsibilities = {
+                role.id for role in staff_member.roles
+                if role.id in responsibility_role_ids
+            }
+
+            await LSDA.sdb.execute(
+                "DELETE FROM staff_roles WHERE staff_id = ?",
+                (staff_id,)
+            )
+
+            if top_staff_role is None and not discord_responsibilities:
+                await LSDA.sdb.execute("""
+                    UPDATE staffs
+                    SET retired = 1
+                    WHERE staff_id = ? AND guild_id = ?
+                """, (staff_id, guild_id))
+
+                continue
+
+            await LSDA.sdb.execute("""
+                UPDATE staffs
+                SET retired = 0, avatar_url = ?
+                WHERE staff_id = ? AND guild_id = ?
+            """, (staff_member.display_avatar.url, staff_id, guild_id))
+
+            await LSDA.sdb.execute("""
+                INSERT INTO staff_roles (staff_id, role_id)
+                VALUES (?, ?)
+            """, (staff_id, top_staff_role.id))
+
+            if discord_responsibilities:
+                await LSDA.sdb.executemany("""
+                    INSERT INTO staff_roles (staff_id, role_id)
+                    VALUES (?, ?)
+                """, [(staff_id, rid) for rid in discord_responsibilities])
+
+            print(f"[Update_All_Staffs] Updated {staff_member.name}")
+
+        except Exception as e:
+            print(f"Exception [Update_All_Staffs] {e}")
+            continue
+
+        await asyncio.sleep(1)
+
+    await LSDA.sdb.commit()
+    await ctx.reply(embed=simple_embed(f"Updated Every staff roles on the Database!"))
+
+'''
+async def update_staff(ctx: commands.Context, staff: discord.Member):
+    guild_id = ctx.guild.id
+    staff_id = staff.id
+
+    try:
+        cursor = await LSDA.sdb.execute(
+            "SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id)
+        )
+        exists = await cursor.fetchone()
+
+        if not exists:
+            return
+
+        cursor = await LSDA.sdb.execute("""
             SELECT role_id, role_type
             FROM roles
-        """)
+            WHERE guild_id = ?
+        """, (guild_id,))
         db_roles = await cursor.fetchall()
 
         staff_role_ids = {r[0] for r in db_roles if r[1] == "Staff"}
         responsibility_role_ids = {r[0] for r in db_roles if r[1] == "Responsibility"}
 
+
         top_staff_role = None
-        for role in sorted(staff.roles, key=lambda r: r.position, reverse=True):
+        for role in reversed(staff.roles):
             if role.id in staff_role_ids:
                 top_staff_role = role
                 break
@@ -281,583 +286,415 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
             if role.id in responsibility_role_ids
         }
 
-        if row:
-            if row[0] == 1:
-                await sdb.execute("""
-                    UPDATE staffs
-                    SET retired = 0, name = ?, avatar_url = ?
-                    WHERE staff_id = ? AND guild_id = ?
-                """, (name, staff.avatar.url, staff_id, guild_id))
-            else:
-                await sdb.execute("""
-                    UPDATE staffs
-                    SET name = ?, avatar_url = ?
-                    WHERE staff_id = ? AND guild_id = ?
-                """, (name, staff.avatar.url, staff_id, guild_id))
-        else:
-            await sdb.execute("""
-                INSERT INTO staffs (
-                    staff_id, name, guild_id,
-                    on_loa, strikes_count, retired,
-                    Timezone, responsibility, avatar_url
-                )
-                VALUES (?, ?, ?, 0, 0, 0, 'Default', 'None', ?)
-            """, (staff_id, name, guild_id, staff.avatar.url))
 
-        if top_staff_role:
-            await sdb.execute("""
-                DELETE FROM staff_roles
-                WHERE staff_id = ?
-                  AND role_id IN (
-                    SELECT role_id FROM roles WHERE role_type = 'Staff'
-                  )
-            """, (staff_id,))
-
-            await sdb.execute("""
-                INSERT INTO staff_roles (staff_id, role_id)
-                VALUES (?, ?)
-            """, (staff_id, top_staff_role.id))
-
-        cursor = await sdb.execute("""
-            SELECT sr.role_id
-            FROM staff_roles sr
-            JOIN roles r ON r.role_id = sr.role_id
-            WHERE sr.staff_id = ? AND r.role_type = 'Responsibility'
-        """, (staff_id,))
-        db_responsibilities = {r[0] for r in await cursor.fetchall()}
-
-        to_add = discord_responsibilities - db_responsibilities
-        to_remove = db_responsibilities - discord_responsibilities
-
-        if to_remove:
-            await sdb.executemany("""
-                DELETE FROM staff_roles
-                WHERE staff_id = ? AND role_id = ?
-            """, [(staff_id, rid) for rid in to_remove])
-
-        if to_add:
-            await sdb.executemany("""
-                INSERT INTO staff_roles (staff_id, role_id)
-                VALUES (?, ?)
-            """, [(staff_id, rid) for rid in to_add])
-
-    await sdb.commit()
-
-    if top_staff_role:
-        embed_text = f"Staff synced successfully with <@&{top_staff_role.id}> | responsible for {len(discord_responsibilities)} actions"
-        await ctx.send(embed=simple_embed(embed_text))
-    elif discord_responsibilities:
-        embed_text = f"User has no staff role but is responsible for {len(discord_responsibilities)} actions"
-        await ctx.send(embed=simple_embed(embed_text))
-    else:
-        embed_text = "User has no staff role or responsibilities"
-        await ctx.send(embed=simple_embed(embed_text, 'cross'))
-
-async def update_all_staffs(ctx: commands.Context):
-    await ctx.defer()
-    guild = ctx.guild
-    guild_id = guild.id
-
-    cursor = await sdb.execute("""
-        SELECT staff_id
-        FROM staffs
-        WHERE guild_id = ? AND retired != 1
-    """, (guild_id,))
-    staff_rows = await cursor.fetchall()
-
-    cursor = await sdb.execute("""
-        SELECT role_id, role_type, role_priority
-        FROM roles
-        WHERE guild_id = ?
-    """, (guild_id,))
-    db_roles = await cursor.fetchall()
-
-    staff_role_priority = {
-        r[0]: r[2] for r in db_roles if r[1] == "Staff"
-    }
-    responsibility_role_ids = {
-        r[0] for r in db_roles if r[1] == "Responsibility"
-    }
-
-    updated_count = 0
-    retired_count = 0
-
-    for (staff_id,) in staff_rows:
-        try:
-            member = await LilyUtility.get_safe_member(bot=None, guild=guild, id=staff_id)
-            print(f"Appeared at {staff_id}")
-            if not member:
-                try:
-                    member = await guild.fetch_member(staff_id)
-                except Exception as e:
-                    await sdb.execute("""
-                        UPDATE staffs
-                        SET retired = 1
-                        WHERE staff_id = ? AND guild_id = ?
-                    """, (staff_id, guild_id))
-
-                    await sdb.execute("""
-                        DELETE FROM staff_roles
-                        WHERE staff_id = ?
-                    """, (staff_id,))
-
-                    retired_count += 1
-                    continue
-
-            top_staff_role = None
-            highest_priority = -1
-
-            for role in member.roles:
-                if role.id in staff_role_priority:
-                    priority = staff_role_priority[role.id]
-                    if priority > highest_priority:
-                        highest_priority = priority
-                        top_staff_role = role
-
-            discord_responsibilities = {
-                role.id for role in member.roles
-                if role.id in responsibility_role_ids
-            }
-
-            if not top_staff_role and not discord_responsibilities:
-                await sdb.execute("""
-                    UPDATE staffs
-                    SET retired = 1
-                    WHERE staff_id = ? AND guild_id = ?
-                """, (staff_id, guild_id))
-
-                await sdb.execute("""
-                    DELETE FROM staff_roles
-                    WHERE staff_id = ?
-                """, (staff_id,))
-
-                retired_count += 1
-                continue
-
-            await sdb.execute("""
-                UPDATE staffs
-                SET retired = 0,
-                    name = ?,
-                    avatar_url = ?
-                WHERE staff_id = ? AND guild_id = ?
-            """, (
-                member.display_name,
-                member.avatar.url if member.avatar else None,
-                staff_id,
-                guild_id
-            ))
-
-
-            if top_staff_role:
-                await sdb.execute("""
-                    DELETE FROM staff_roles
-                    WHERE staff_id = ?
-                    AND role_id IN (
-                        SELECT role_id FROM roles
-                        WHERE role_type = 'Staff' AND guild_id = ?
-                    )
-                """, (staff_id, guild_id))
-
-                await sdb.execute("""
-                    INSERT INTO staff_roles (staff_id, role_id)
-                    VALUES (?, ?)
-                """, (staff_id, top_staff_role.id))
-
-
-            cursor = await sdb.execute("""
-                SELECT sr.role_id
-                FROM staff_roles sr
-                JOIN roles r ON r.role_id = sr.role_id
-                WHERE sr.staff_id = ?
-                AND r.role_type = 'Responsibility'
-                AND r.guild_id = ?
-            """, (staff_id, guild_id))
-            db_responsibilities = {r[0] for r in await cursor.fetchall()}
-
-            to_add = discord_responsibilities - db_responsibilities
-            to_remove = db_responsibilities - discord_responsibilities
-
-            if to_remove:
-                await sdb.executemany("""
-                    DELETE FROM staff_roles
-                    WHERE staff_id = ? AND role_id = ?
-                """, [(staff_id, rid) for rid in to_remove])
-
-            if to_add:
-                await sdb.executemany("""
-                    INSERT INTO staff_roles (staff_id, role_id)
-                    VALUES (?, ?)
-                """, [(staff_id, rid) for rid in to_add])
-
-            updated_count += 1
-
-            await asyncio.sleep(2)
-
-        except Exception as e:
-            print(f"Exception [update_all_staffs] {e}")
-            continue
-    await sdb.commit()
-
-    await ctx.send(
-        embed=simple_embed(
-            f"Staff sync complete.\n"
-            f"Updated: {updated_count}\n"
-            f"Retired: {retired_count}"
+        await LSDA.sdb.execute(
+            "DELETE FROM staff_roles WHERE staff_id = ?",
+            (staff_id,)
         )
-    )
 
-async def RemoveStaff(ctx: commands.Context, staff_id: int):
-    guild_id = ctx.guild.id
-
-    try:
-        async with sdb.execute("BEGIN IMMEDIATE"):
-            cursor = await sdb.execute("""
-                SELECT retired
-                FROM staffs
-                WHERE staff_id = ? AND guild_id = ?
-            """, (staff_id, guild_id))
-            row = await cursor.fetchone()
-
-            if not row:
-                raise LookupError("Staff not found")
-
-            await sdb.execute("""
+        if not top_staff_role:
+            await LSDA.sdb.execute("""
                 UPDATE staffs
                 SET retired = 1
                 WHERE staff_id = ? AND guild_id = ?
             """, (staff_id, guild_id))
 
-            await sdb.execute("""
-                DELETE FROM staff_roles
-                WHERE staff_id = ?
-            """, (staff_id,))
-
-        await sdb.commit()
-
-        await ctx.send(
-            embed=simple_embed(
-                f"Staff <@{staff_id}> has been marked as **Retired**"
-            )
-        )
-
-    except LookupError:
-        await ctx.send(
-            embed=simple_embed(
-                f"No staff found with ID `{staff_id}`.",
-                'cross'
-            )
-        )
-
-    except Exception as e:
-        print(f"Exception [RemoveStaff] {e}")
-        await sdb.rollback()
-        raise
-
-async def EditStaff(ctx: commands.Context, staff_id: int, name: str = None, role_id: int = None, joined_on: str = None, timezone: str = None, responsibility: str = None):
-    try:
-        cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?", (staff_id, ctx.guild.id))
-        row = await cursor.fetchone()
-        await cursor.close()
-
-        if not row:
-            await ctx.send(embed=simple_embed(f"No staff found with ID {staff_id}.", 'cross'))
+            await LSDA.sdb.commit()
             return
 
-        fields = {
-            "name": name,
-            "role_id": role_id,
-            "joined_on": joined_on,
-            "timezone": timezone,
-            "responsibility": responsibility
-        }
-        update_columns = {k: v for k, v in fields.items() if v is not None}
-
-        if not update_columns:
-            await ctx.send(embed=simple_embed(f"No Fields Provided to update", 'cross'))
-            return
-
-        set_clause = ", ".join([f"{col} = ?" for col in update_columns.keys()])
-        values = list(update_columns.values())
-        values.append(staff_id)
-        values.append(ctx.guild.id)
-
-        query = f"UPDATE staffs SET {set_clause} WHERE staff_id = ? AND guild_id = ?"
-        await sdb.execute(query, values)
-        await sdb.commit()
-
-        await ctx.send(embed=simple_embed(f"Staff ID {staff_id} updated successfully."))
-    except Exception as e:
-        await ctx.send(embed=simple_embed(f"Error Updating Staff Details", 'cross'))
-        print(e)
-
-async def StrikeStaff(ctx: commands.Context, staff_id: str, reason: str):
-    try:
-        cursor = await sdb.execute("SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?", (staff_id,ctx.guild.id))
-        exists = await cursor.fetchone()
-
-        if not exists:
-            return discord.Embed(title="Staff Member Not Found", colour=0xf50000)
-
-        await sdb.execute(
-            "INSERT INTO strikes (issued_by_id, issued_to_id, reason, date, guild_id) VALUES (?, ?, ?, ?, ?)",
-            (ctx.author.id, staff_id, reason, datetime.today().strftime("%d/%m/%Y"), ctx.guild.id)
-        )
-
-        await sdb.execute(
-            "UPDATE staffs SET strikes_count = strikes_count + 1 WHERE staff_id = ? AND guild_id = ?",
-            (staff_id,ctx.guild.id)
-        )
-
-        await sdb.commit()
-        return simple_embed(f'**Successfully Striked Staff <@{staff_id}>**')
-
-    except Exception as e:
-        return simple_embed(f'Exception : {e}', 'cross')
-
-async def RemoveStrikeStaff(ctx: commands.Context, strike_id: str):
-    try:
-        target_id = int(strike_id)
-
-        cursor = await sdb.execute(
-            "SELECT issued_to_id FROM strikes WHERE strike_id = ? AND guild_id = ?",
-            (target_id,ctx.guild.id)
-        )
-        row = await cursor.fetchone()
-
-        if not row:
-            return discord.Embed(
-                title="Strike Not Found",
-                description=f"No strike with ID `{target_id}` found.",
-                colour=0xf50000
-            )
-
-        staff_id = row[0]
-
-        await sdb.execute("DELETE FROM strikes WHERE strike_id = ?", (target_id,))
-
-        await sdb.execute(
-            """
+        await LSDA.sdb.execute("""
             UPDATE staffs
-            SET strikes_count = CASE 
-                WHEN strikes_count > 0 THEN strikes_count - 1 
-                ELSE 0 
-            END
+            SET retired = 0
             WHERE staff_id = ? AND guild_id = ?
-            """,
-            (staff_id, ctx.guild.id)
-        )
+        """, (staff_id, guild_id))
 
-        await sdb.commit()
+        await LSDA.sdb.execute("""
+            INSERT INTO staff_roles (staff_id, role_id)
+            VALUES (?, ?)
+        """, (staff_id, top_staff_role.id))
 
-        return simple_embed(f"Strike `{target_id}` removed from <@{staff_id}>")
+        if discord_responsibilities:
+            await LSDA.sdb.executemany("""
+                INSERT INTO staff_roles (staff_id, role_id)
+                VALUES (?, ?)
+            """, [(staff_id, rid) for rid in discord_responsibilities])
+
+        await LSDA.sdb.commit()
+        await ctx.reply(embed=simple_embed(f"Updated {staff.mention} role on the Database!"))
 
     except Exception as e:
-        return simple_embed(f"Exception: {e}", 'cross')
+        print(f"Exception [Update_Staff] {e}")
+''' 
+async def AddStaff(ctx: commands.Context, staff: discord.Member):
+    payload = {
+        "staff_id": staff.id,
+        "guild_id": ctx.guild.id,
+        "name": staff.display_name,
+        "avatar_url": staff.avatar.url if staff.avatar else None
+    }
+
+    response = await add_staff(payload)
+
+    if not response.get("success"):
+        await ctx.reply(embed=simple_embed(response.get("message"), "cross"))
+        return
+
+    roles_to_add = set(response.get("roles_to_add", ()))
+
+    add_roles = {
+        ctx.guild.get_role(role_id)
+        for role_id in roles_to_add
+    }
+    add_roles = {r for r in add_roles if r}
+
+    if add_roles:
+        await staff.add_roles(*add_roles, reason=f"Staff added by {ctx.author.id}")
+
+    await ctx.reply(embed=simple_embed(response.get("message")))
+
+async def AddStaffBadge(ctx: commands.Context, staffs: str):
+    mention_ids = re.findall(r"<@!?(\d+)>", staffs)
+    raw_ids = re.findall(r"(?:^|\s)(\d{6,})(?:\s|$)", staffs)
+    ids = list({int(i) for i in mention_ids + raw_ids})
+
+    for staff_id in ids:
+        staff = ctx.guild.get_member(staff_id)
+        if staff is None:
+            try:
+                staff = await ctx.guild.fetch_member(staff_id)
+            except:
+                continue
+
+        payload = {
+            "staff_id": staff_id,
+            "guild_id": ctx.guild.id,
+            "name": staff.display_name,
+            "avatar_url": staff.avatar.url if staff.avatar else None
+        }
+
+        response = await add_staff(payload)
+
+        if not response.get("success"):
+            continue
+
+        roles_to_add = set(response.get("roles_to_add", ()))
+
+        add_roles = {
+            ctx.guild.get_role(role_id)
+            for role_id in roles_to_add
+        }
+        add_roles = {r for r in add_roles if r}
+
+        if add_roles:
+            try:
+                await staff.add_roles(*add_roles, reason=f"Staff added by {ctx.author.id}")
+            except:
+                continue
+        
+        await asyncio.sleep(1.5)
+
+    await ctx.reply(embed=simple_embed("Batch of staffs has been added successfully!"))
+
+async def RemoveStaff(ctx: commands.Context,staff: discord.Member | int,reason: str):
+    if isinstance(staff, int):
+        staff_id = staff
+        member = None
+    else:
+        staff_id = staff.id
+        member = staff
+
+    payload = {
+        "staff_id": staff_id,
+        "guild_id": ctx.guild.id
+    }
+
+    response = await remove_staff(payload)
+
+    if not response.get("success"):
+        await ctx.reply(embed=simple_embed(response.get("message"), "cross"))
+        return
+
+    roles_to_remove = set(response.get("roles_to_remove", ()))
+    channel_id = response.get("staff_updates_channel")
+
+    if member is None:
+        try:
+            member = await ctx.guild.fetch_member(staff_id)
+        except Exception:
+            member = None
+
+    staff_updates_channel = ctx.guild.get_channel(channel_id)
+    if staff_updates_channel is None and channel_id:
+        try:
+            staff_updates_channel = await ctx.guild.fetch_channel(channel_id)
+        except Exception:
+            staff_updates_channel = None
+
+    if member:
+        remove_roles = {
+            ctx.guild.get_role(role_id)
+            for role_id in roles_to_remove
+        }
+        remove_roles = {r for r in remove_roles if r}
+
+        if remove_roles:
+            await member.remove_roles(
+                *remove_roles,
+                reason=f"Staff removed by {ctx.author.id} | {reason}"
+            )
+
+    if staff_updates_channel:
+        embed = discord.Embed(
+            color=16777215,
+            title="Staff Update Information",
+            description=f"### <@{staff_id}> has been removed from the team",
+        )
+        if staff:
+            embed.set_thumbnail(url=staff.display_avatar.url)
+        embed.set_image(url=Configs.img['border'])
+        embed.add_field(
+            name="Handled by",
+            value=f"{ctx.author.mention}",
+            inline=False,
+        )
+        embed.add_field(
+            name="Reason",
+            value=f"- {reason}",
+            inline=False,
+        )
+        await staff_updates_channel.send(
+            embed=embed
+        )
+    await ctx.reply(embed=simple_embed(response.get("message")))
+
+async def EditStaff(ctx: commands.Context,staff_id: int,name: str = None,role_id: Optional[int] = None,joined_on: Optional[str] = None,timezone: Optional[str] = None, responsibility: Optional[str] = None):
+    payload = {
+        "staff_id": staff_id,
+        "guild_id": ctx.guild.id,
+        "name": name,
+        "role_id": role_id,
+        "joined_on": joined_on,
+        "timezone": timezone,
+        "responsibility": responsibility
+    }
+
+    result = await edit_staff(payload)
+
+    if result.get("success"):
+        await ctx.reply(
+            embed=simple_embed(
+                result["message"]
+            )
+        )
+    else:
+        await ctx.reply(
+            embed=simple_embed(
+                result["message"],'cross'
+            )
+        )
+
+async def StrikeStaff(ctx: commands.Context, staff: discord.Member, reason: str):
+    payload = {
+        "staff_id": staff.id,
+        "guild_id": ctx.guild.id,
+        "issued_by": ctx.author.id,
+        "reason": reason
+    }
+
+    response = await strike_staff(payload)
+
+    if not response.get("success"):
+        await ctx.reply(embed=simple_embed(response.get("message"), "cross"))
+        return
+
+    message = response.get("message")
+    issued_by = response.get("issued_by")
+    strike_reason = response.get("reason")
+
+
+    channel_id = response.get("staff_updates_channel")
+    staff_updates_channel = ctx.guild.get_channel(channel_id)
+
+    if staff_updates_channel is None and channel_id:
+        try:
+            staff_updates_channel = await ctx.guild.fetch_channel(channel_id)
+        except Exception:
+            staff_updates_channel = None
+
+    embed = discord.Embed(
+        color=discord.Color.white(),
+        title="Strike Information",
+        description=f"### {staff.mention} has been Striked!"
+    )
+    embed.set_thumbnail(url=staff.display_avatar.url)
+    embed.set_image(url=Configs.img['border'])
+
+
+    embed.add_field(
+        name="Striked By",
+        value=f"<@{issued_by}>",
+        inline=False,
+    )
+
+    embed.add_field(
+        name="Reason",
+        value=f"- {strike_reason}",
+        inline=False,
+    )
+
+    await ctx.reply(embed=simple_embed(message))
+
+    if staff_updates_channel:
+        await staff_updates_channel.send(
+            content=staff.mention,
+            embed=embed
+        )
+
+async def RemoveStrikeStaff(ctx: commands.Context, strike_id: int):
+
+    payload = {
+        "strike_id": strike_id,
+        "guild_id": ctx.guild.id
+    }
+
+    result = await remove_strike(payload)
+
+    status = result.get("success")
+    message = result.get("message")
+
+    if status:
+        await ctx.reply(embed=simple_embed(message))
+    else:
+        await ctx.reply(embed=simple_embed(message, "cross"))
 
 async def ListStrikes(ctx: commands.Context, staff: discord.Member):
-    try:
-        async with sdb.execute(
-            "SELECT strike_id, reason, date, issued_by_id FROM strikes WHERE issued_to_id = ? AND guild_id = ?",
-            (str(staff.id),ctx.guild.id)
-        ) as cursor:
-            rows = await cursor.fetchall()
+    payload = {
+        "staff_id": staff.id,
+        "guild_id": ctx.guild.id
+    }
 
-        if not rows:
-            embed = (
-                discord.Embed(
-                    color=0xf50000,
-                    title=f"{Configs.emoji['cross']} No Strikes Found",
-                    description=f"No strikes found for {staff.mention}.",
-                )
-                .set_thumbnail(url=staff.display_avatar.url or Configs.img['member'])
-                .set_footer(text="Immutable Records • Managed by Lily System")
-            )
-            return embed
+    result = await fetch_staff_strikes(payload)
 
-
+    if not result["success"] and not result["data"]:
         embed = (
             discord.Embed(
-                color=0xFFFFFF,
-                title=f"{Configs.emoji['arrow']} {staff.display_name}'s Strike Information",
-                description=f"{Configs.emoji['bookmark']} Listing all strikes issued to {staff.mention}",
+                color=0xf50000,
+                title=f"{Configs.emoji['cross']} No Strikes Found",
+                description=f"No strikes found for {staff.mention}.",
             )
-            .set_thumbnail(url=staff.display_avatar.url)
-            .set_image(
-                url=Configs.img['border']
-            )
+            .set_thumbnail(url=staff.display_avatar.url or Configs.img['member'])
+            .set_footer(text="Immutable Records • Managed by Lily System")
         )
 
-        for strike_id, reason, date, manager in rows:
-            embed.add_field(
-                name=f"{Configs.emoji['pencil']} __Strike ID: {strike_id}__",
-                value=(
-                    f"> {Configs.emoji['bookmark']} **Reason** : {reason}\n"
-                    f"> {Configs.emoji['shield']} **Manager** : <@{manager}>\n"
-                    f"> {Configs.emoji['calender']} **Date** : {date}"
-                ),
-                inline=False,
-            )
+        await ctx.reply(embed=embed)
+        return
 
-        embed.set_footer(text="Immutable Records • Can only be removed by higher staff")
-        return embed
+    embed = (
+        discord.Embed(
+            color=0xFFFFFF,
+            title=f"{Configs.emoji['arrow']} {staff.display_name}'s Strike Information",
+            description=f"{Configs.emoji['bookmark']} Listing all strikes issued to {staff.mention}",
+        )
+        .set_thumbnail(url=staff.display_avatar.url)
+        .set_image(url=Configs.img['border'])
+    )
 
-    except Exception as e:
-        return discord.Embed(
-            title=f"{Configs.emoji['cross']} Exception Occurred",
-            description=f"```{e}```",
-            colour=0xf50000
+    for strike in result["data"]:
+        embed.add_field(
+            name=f"{Configs.emoji['pencil']} __Strike ID: {strike['strike_id']}__",
+            value=(
+                f"> {Configs.emoji['bookmark']} **Reason** : {strike['reason']}\n"
+                f"> {Configs.emoji['shield']} **Manager** : <@{strike['manager']}>\n"
+                f"> {Configs.emoji['calender']} **Date** : {strike['date']}"
+            ),
+            inline=False
         )
 
-async def AssignLoa(ctx: commands.Context, staff_id: str, reason: str, days: int):
-    try:
-        await sdb.execute(
-            """
-            INSERT INTO leaves (staff_id, reason, days)
-            VALUES (?, ?, ?)
-            """,
-            (staff_id, reason, days)
-        )
+    embed.set_footer(text="Immutable Records • Can only be removed by higher staff")
 
-        await sdb.execute(
-            """
-            UPDATE staffs
-            SET on_loa = 1
-            WHERE staff_id = ? AND guild_id = ?
-            """,
-            (staff_id,ctx.guild.id)
-        )
+    await ctx.reply(embed=embed)
 
-        await sdb.commit()
-        return True
+async def AddLOA(ctx: commands.Context, staff: discord.Member, reason: str):
+    response = await add_loa({
+        "staff_id": staff.id,
+        "reason": reason,
+        "loa_issued_by": ctx.author.id,
+        "guild_id": ctx.guild.id
+    })
 
-    except Exception as e:
-        print(f"Error assigning LOA: {e}")
-        return False
+    if not response.get("success"):
+        await ctx.reply(embed=simple_embed(response.get("message")))
+        return
 
-async def RemoveLoa(ctx: commands.Context, staff_id: str):
-    try:
-        await sdb.execute(
-            """
-            UPDATE staffs
-            SET on_loa = 0
-            WHERE staff_id = ? AND guild_id = ?
-            """,
-            (staff_id,ctx.guild.id)
-        )
+    roles_to_remove = set(response.get("roles_to_remove", ()))
+    roles_to_add = set(response.get("roles_to_add", ()))
 
-        await sdb.commit()
-        return True
+    current_roles = set(staff.roles)
 
-    except Exception as e:
-        print(f"Error removing LOA: {e}")
-        return False
+    remove_roles = {
+        ctx.guild.get_role(rid)
+        for rid in roles_to_remove
+    }
+    remove_roles = {r for r in remove_roles if r}
 
-class RoleType(str, Enum):
-        Staff = "Staff"
-        Responsibility = "Responsibility"
+    add_roles = {
+        ctx.guild.get_role(rid)
+        for rid in roles_to_add
+    }
+    add_roles = {r for r in add_roles if r}
 
-async def AddRole(ctx: commands.Context, role: discord.Role, ban_limit: int, role_type: RoleType):
-    try:
-        cursor = await sdb.execute(
-            "SELECT role_id, role_priority FROM roles WHERE guild_id = ? ORDER BY role_priority ASC",
-            (ctx.guild.id,)
-        )
-        db_roles = await cursor.fetchall()
+    new_roles = (current_roles - remove_roles) | add_roles
 
-        role_list = []
-        for db_role_id, db_priority in db_roles:
-            db_role = ctx.guild.get_role(db_role_id)
-            if db_role:
-                role_list.append((db_role_id, db_priority, db_role.position))
+    await staff.edit(
+        roles=list(new_roles),
+        reason="LOA assigned"
+    )
 
-        insert_index = 0
-        for i, (_, _, discord_pos) in enumerate(role_list):
-            if role.position > discord_pos:
-                break
-            insert_index += 1
+    await ctx.reply(embed=simple_embed(response.get("message")))
 
-        for i in range(insert_index, len(role_list)):
-            db_role_id = role_list[i][0]
-            await sdb.execute(
-                "UPDATE roles SET role_priority = role_priority + 1 WHERE role_id = ?",
-                (db_role_id,)
-            )
+async def RemoveLOA(ctx: commands.Context, staff: discord.Member):
+    response = await remove_loa({"staff_id": staff.id, "guild_id" : ctx.guild.id})
 
-        await sdb.execute(
-            "INSERT INTO roles (role_id, role_name, role_priority, ban_limit, role_type, guild_id) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (role.id, role.name, insert_index, ban_limit, role_type.value, ctx.guild.id)
-        )
+    if not response.get("success"):
+        await ctx.reply(embed=simple_embed(response.get("message")))
+        return
 
-        await sdb.commit()
+    roles_to_remove = set(response.get("roles_to_remove", ()))
+    roles_to_add = set(response.get("roles_to_add", ()))
 
-        await ctx.send(
-            embed=simple_embed(f"Successfully Added {role.name} at priority {insert_index}")
-        )
-    except Exception as e:
-        await ctx.send(
-            embed=simple_embed(f"Error Adding {role.name}: {e}", 'cross')
-        )
+    current_roles = set(staff.roles)
 
-async def RemoveRole(ctx: commands.Context, role: discord.Role):
-    try:
-        cursor = await sdb.execute(
-            "SELECT role_priority FROM roles WHERE role_id = ? AND guild_id = ?",
-            (role.id, ctx.guild.id)
-        )
-        result = await cursor.fetchone()
+    remove_roles = {
+        ctx.guild.get_role(rid)
+        for rid in roles_to_remove
+    }
+    remove_roles = {r for r in remove_roles if r}
 
-        if not result:
-            await ctx.send(
-                embed=simple_embed(f"{role.name} is not registered in the database.", 'cross')
-            )
-            return
+    add_roles = {
+        ctx.guild.get_role(rid)
+        for rid in roles_to_add
+    }
+    add_roles = {r for r in add_roles if r}
 
-        removed_priority = result[0]
+    new_roles = (current_roles - remove_roles) | add_roles
 
-        await sdb.execute(
-            "DELETE FROM staff_roles WHERE role_id = ?",
-            (role.id,)
-        )
+    await staff.edit(
+        roles=list(new_roles),
+        reason="LOA removed"
+    )
 
-        await sdb.execute(
-            "DELETE FROM roles WHERE role_id = ?",
-            (role.id,)
-        )
-        await sdb.execute(
-            """
-            UPDATE roles
-            SET role_priority = role_priority - 1
-            WHERE guild_id = ?
-            AND role_priority > ?
-            """,
-            (ctx.guild.id, removed_priority)
-        )
-
-        await sdb.commit()
-
-        await ctx.send(
-            embed=simple_embed(
-                f"Successfully removed {role.mention}"
-            )
-        )
-
-    except Exception as e:
-        print(f"Exception [RemoveRole] {e}")
-        await ctx.send(
-            embed=simple_embed(f"Error removing {role.mention}", 'cross')
-        )
-
+    await ctx.reply(embed=simple_embed(response.get("message")))
+    
 async def GetAllStaffRoles(ctx: commands.Context):
     try:
-        cursor = await sdb.execute(
+        cursor = await LSDA.sdb.execute(
             "SELECT role_id, role_name FROM roles WHERE guild_id = ? ORDER BY role_priority ASC",
             (ctx.guild.id,)
         )
         rows = await cursor.fetchall()
 
         if not rows:
-            await ctx.send(embed=simple_embed("No staff roles found in this guild.", 'cross'))
+            await ctx.reply(embed=simple_embed("No staff roles found in this guild.", 'cross'))
             return
 
         role_names = []
@@ -879,8 +716,209 @@ async def GetAllStaffRoles(ctx: commands.Context):
         embed.add_field(name="Role Names", value="\n".join(role_names), inline=True)
         embed.add_field(name="Role Reference", value="\n".join(role_mentions), inline=True)
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     except Exception as e:
         print(f"Exception [GetAllStaffRoles] {e}")
-        await ctx.send(embed=simple_embed(f"Error fetching staff roles", 'cross'))
+        await ctx.reply(embed=simple_embed(f"Error fetching staff roles", 'cross'))
+
+async def UpdateStaff(ctx: commands.Context,staff: discord.Member,reason: str,update_type: str):
+    if ctx.author.id == staff.id:
+        await ctx.reply(embed=simple_embed("You cannot Update yourself", 'cross'))
+        return
+
+    payload: dict = {
+        "guild_id": ctx.guild.id,
+        "staff_id": staff.id,
+        "update_type": update_type,
+        "reason": reason,
+        "updated_by": ctx.author.id
+    }
+
+    result = await update_staff(payload)
+
+    if not result.get("success"):
+        await ctx.send(embed=simple_embed(result.get("message"), 'cross'))
+        return
+    
+    channel_id = result.get("staff_updates_channel")
+    staff_updates_channel = ctx.guild.get_channel(channel_id)
+
+    if staff_updates_channel is None and channel_id:
+        try:
+            staff_updates_channel = await ctx.guild.fetch_channel(channel_id)
+        except Exception:
+            staff_updates_channel = None
+
+    old_role_id = result.get("old_role_id")
+    new_role_id = result.get("new_role_id")
+
+    old_role = ctx.guild.get_role(old_role_id)
+    new_role = ctx.guild.get_role(new_role_id)
+
+    try:
+        current_roles = set(staff.roles)
+
+        if old_role:
+            current_roles.discard(old_role)
+
+        if new_role:
+            current_roles.add(new_role)
+
+        await staff.edit(
+            roles=list(current_roles),
+            reason=f'Staff {update_type.title()} | {reason}'
+        )
+
+    except Exception as e:
+        await ctx.send(
+            embed=simple_embed(
+                f"Database updated, but Discord role update failed: {e}",
+                'cross'
+            )
+        )
+        return
+
+    act = "promoted" if update_type == "promotion" else "demoted"
+
+    embed = discord.Embed(
+        color=16777215,
+        title=f"{update_type.title()} Information",
+        description=f"### {staff.mention} has been {act.title()}!\n### <@&{old_role_id}> -> <@&{new_role_id}>"
+    )
+    embed.set_thumbnail(url=staff.display_avatar.url)
+    embed.set_image(url=Configs.img['border'])
+
+
+    embed.add_field(
+        name=f"{act.title()} By",
+        value=f"{ctx.author.mention}",
+        inline=False,
+    )
+
+    embed.add_field(
+        name="Reason",
+        value=f"- {reason}",
+        inline=False,
+    )
+
+    if staff_updates_channel:
+        await staff_updates_channel.send(
+            content=f'{staff.mention}',
+            embed=embed
+        ) 
+
+    await ctx.send(
+        embed=simple_embed(f"{staff.mention} has been {act}.")
+    )
+
+async def UpdateStaffBatch(ctx: commands.Context, content: str, update_type: str):
+    mention_ids = re.findall(r"<@!?(\d+)>", content)
+    raw_ids = re.findall(r"(?:^|\s)(\d{6,})(?:\s|$)", content)
+
+    ids = list({int(i) for i in mention_ids + raw_ids})
+    reason = re.sub(r"<@!?(\d+)>|\b\d{6,}\b", "", content).strip()
+
+    if not ids:
+        return await ctx.send(embed=simple_embed("No valid staff IDs found.", 'cross'))
+
+    descriptions = []
+    staff_updates_channel = None
+
+    for staff_id in ids:
+        if ctx.author.id == staff_id:
+            continue
+
+        payload = {
+            "guild_id": ctx.guild.id,
+            "staff_id": staff_id,
+            "update_type": update_type,
+            "reason": reason,
+            "updated_by": ctx.author.id
+        }
+
+        result = await update_staff(payload)
+
+        if not result.get("success"):
+            await ctx.send(embed=simple_embed(result.get("message"), 'cross'))
+            continue
+
+        staff = ctx.guild.get_member(staff_id)
+
+        if staff is None:
+            try:
+                staff = await ctx.guild.fetch_member(staff_id)
+            except Exception:
+                continue
+
+        if not staff_updates_channel:
+            channel_id = result.get("staff_updates_channel")
+            staff_updates_channel = ctx.guild.get_channel(channel_id)
+
+            if staff_updates_channel is None and channel_id:
+                try:
+                    staff_updates_channel = await ctx.guild.fetch_channel(channel_id)
+                except Exception:
+                    staff_updates_channel = None
+
+        old_role = ctx.guild.get_role(result.get("old_role_id"))
+        new_role = ctx.guild.get_role(result.get("new_role_id"))
+
+        try:
+            current_roles = set(staff.roles)
+
+            if old_role:
+                current_roles.discard(old_role)
+
+            if new_role:
+                current_roles.add(new_role)
+
+            await staff.edit(
+                roles=list(current_roles),
+                reason=f'Staff {update_type.title()} | {reason}'
+            )
+
+            descriptions.append(
+                f"### {staff.mention}: <@&{result.get('old_role_id')}> → <@&{result.get('new_role_id')}>"
+            )
+
+            await asyncio.sleep(2)
+
+        except Exception as e:
+            await ctx.send(
+                embed=simple_embed(
+                    f"Database updated, but Discord role update failed: {e}",
+                    'cross'
+                )
+            )
+            continue
+
+    act = "promoted" if update_type == "promotion" else "demoted"
+
+    embed = discord.Embed(
+        color=16777215,
+        title=f"{update_type.title()} Information",
+        description="\n".join(descriptions) if descriptions else "No updates processed."
+    )
+
+    embed.set_image(url=Configs.img['border'])
+
+    embed.add_field(
+        name=f"{act.title()} By",
+        value=ctx.author.mention,
+        inline=False,
+    )
+
+    embed.add_field(
+        name="Reason",
+        value=f"- {reason}",
+        inline=False,
+    )
+
+    if staff_updates_channel:
+        await staff_updates_channel.send(content=" ".join(f"<@{i}>" for i in ids), embed=embed)
+
+    await ctx.send(
+        embed=simple_embed(f"Batch of staffs has been {act}.")
+    )
+

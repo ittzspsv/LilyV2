@@ -5,7 +5,7 @@ import pytz
 import re
 import asyncio
 import ui.sGIFManipulation as GIFM
-import LilyManagement.sLilyStaffManagement as LSM
+#import LilyManagement.sLilyStaffManagement as LSM
 
 import Config.sBotDetails as Config
 import LilyLogging.sLilyLogging as LilyLogging
@@ -16,9 +16,12 @@ from discord.utils import utcnow
 import os
 import random
 
+from LilyModeration.db.sLilyModerationDatabaseAccess import fetch_mod_logs, fetch_mod_stats
+import LilyManagement.db.sLilyStaffDatabaseAccess as LSDA
+
 
 from Misc.sLilyEmbed import simple_embed
-from LilyModeration.components.sLilyModerationComponents import ban_embed, mute_embed, warn_embed
+from LilyModeration.components.sLilyModerationComponents import ban_embed, mute_embed, warn_embed, ModerationInsights
 from LilyModeration.utils.LilyModerationUtilities import mute_parser
 
 
@@ -32,7 +35,7 @@ async def exceeded_ban_limit(ctx: commands.Context, moderator_id: int, moderator
         FROM roles
         WHERE ban_limit > -1 AND role_id IN ({placeholders})
     """
-    cursor = await LSM.sdb.execute(query, [str(rid) for rid in moderator_role_ids])
+    cursor = await LSDA.sdb.execute(query, [str(rid) for rid in moderator_role_ids])
     rows = await cursor.fetchall()
 
     if not rows:
@@ -72,7 +75,7 @@ async def remaining_Ban_time(ctx: commands.Context, moderator_id: int, moderator
             FROM roles
             WHERE ban_limit > -1 AND role_id IN ({placeholders})
         """
-        cursor = await LSM.sdb.execute(query, moderator_role_ids)
+        cursor = await LSDA.sdb.execute(query, moderator_role_ids)
         rows = await cursor.fetchall()
 
         if not rows:
@@ -124,7 +127,7 @@ async def remaining_ban_count(ctx: commands.Context, moderator_id: int, moderato
             FROM roles
             WHERE role_id IN ({placeholders}) AND ban_limit > 0
         """
-        cursor = await LSM.sdb.execute(query, moderator_role_ids)
+        cursor = await LSDA.sdb.execute(query, moderator_role_ids)
         rows = await cursor.fetchall()
         max_limit = max(row[0] for row in rows) if rows else 0
 
@@ -160,7 +163,7 @@ async def remaining_Ban_time_text(ctx: commands.Context,moderator_id: int,modera
             FROM roles
             WHERE ban_limit > -1 AND role_id IN ({placeholders})
         """
-        cursor = await LSM.sdb.execute(query, moderator_role_ids)
+        cursor = await LSDA.sdb.execute(query, moderator_role_ids)
         rows = await cursor.fetchall()
 
         if not rows:
@@ -211,227 +214,162 @@ async def remaining_Ban_time_text(ctx: commands.Context,moderator_id: int,modera
         print("Error calculating remaining ban time:", e)
         return None
 
-async def ms(ctx: commands.Context, moderator_id: int, user: discord.User, slice_expr=None):
-    try:
-        async with LilyLogging.mdb.execute("""
-            SELECT target_user_id, mod_type, reason, timestamp
-            FROM modlogs
-            WHERE guild_id = ? AND moderator_id = ?
-            ORDER BY timestamp DESC
-        """, (ctx.guild.id, moderator_id)) as cursor:
-            rows = await cursor.fetchall()
+async def ms(ctx: commands.Context, moderator: discord.Member, page_start: int=0, page_end: int=5):
+    payload = {
+        "guild_id" : ctx.guild.id,
+        "moderator_id" : moderator.id,
+        "page_start" : page_start,
+        "page_end" : page_end
+    }
 
-        if not rows:
-            return simple_embed("No Logs Found For the given user ID")
+    result = await fetch_mod_stats(payload)
 
-        all_logs = [
-            {
-                "target_user_id": row[0],
-                "mod_type": row[1].lower(),
-                "reason": row[2],
-                "timestamp": datetime.fromisoformat(row[3])
-            }
-            for row in rows
-        ]
+    if not result["success"]:
+        return simple_embed("No Logs Found For the given moderator ID")
 
-        now = datetime.now(timezone.utc)
-        period_7d = now - timedelta(days=7)
-        period_30d = now - timedelta(days=30)
+    logs = result["logs"]
+    stats = result["stats"]
+    total_logs = result["total_logs"]
+    now = result["now"]
+    average_active_moderation_timestamp_range = result["average_active_moderation_timestamp_range"]
 
-        stats = defaultdict(lambda: {"7d": 0, "30d": 0, "total": 0})
-        for log in all_logs:
-            action = log["mod_type"]
-            ts = log["timestamp"]
+    embed1 = discord.Embed(
+            title=f"{Config.emoji['arrow']} {moderator.display_name}'s Moderation Stats",
+            description=f"### Average Active Moderation Time\n- <t:{average_active_moderation_timestamp_range[0]}:T> - <t:{average_active_moderation_timestamp_range[1]}:T>",
+            colour=16777215
+        )
+    embed1.set_thumbnail(url=moderator.avatar.url if moderator.avatar else Config.img['member'])
+    embed1.set_image(url=Config.img['border'])
+    embed1.add_field(name=f"{Config.emoji['logs']} Total Logs", value=str(total_logs), inline=True)
+    embed1.add_field(name=f"{Config.emoji['shield']} Moderator ID", value=str(moderator.id), inline=True)
+    embed1.add_field(name=f"{Config.emoji['calender']} Date", value=now.strftime("%Y-%m-%d"), inline=True)
 
-            stats[action]["total"] += 1
-            if ts >= period_7d:
-                stats[action]["7d"] += 1
-            if ts >= period_30d:
-                stats[action]["30d"] += 1
+    embed2 = discord.Embed(
+            title=f"{Config.emoji['arrow']} Moderation Statistics Overview",
+            description=f"### Total Logs Evaluation\n-  **Mutes**: `{stats['mute']['total']}` | **Bans** : `{stats['ban']['total']}` | **Quarantines** : `{stats['quarantine']['total']}` | **Warns** : `{stats['warn']['total']}`",
+            colour=16777215
+        )
+    embed2.set_image(url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png")
 
-        total_logs = len(all_logs)
-        shown_logs = all_logs[slice_expr] if slice_expr else all_logs
+    actions = ["mute", "warn", "ban", "quarantine"]
 
-        embed1 = (
-            discord.Embed(
-                title=f"{Config.emoji['arrow']} {user.display_name}'s Moderation Stats",
-                colour=16777215,
-            )
-            .set_thumbnail(url=user.avatar.url if user.avatar else Config.img['member'])
-            .set_image(url=Config.img['border'])
-            .add_field(name=f"{Config.emoji['logs']} Total Logs", value=str(total_logs), inline=True)
-            .add_field(name=f"{Config.emoji['shield']} Moderator ID", value=str(moderator_id), inline=True)
-            .add_field(name=f"{Config.emoji['calender']} Date", value=now.strftime("%Y-%m-%d"), inline=True)
+    for action in actions:
+        embed2.add_field(
+            name=f"{action.title()} (Today)",
+            value=str(stats[action]["today"]),
+            inline=True
+        )
+        embed2.add_field(
+            name=f"{action.title()} (last 7 days)",
+            value=str(stats[action]["7d"]),
+            inline=True
+        )
+        embed2.add_field(
+            name=f"{action.title()} (last 30 days)",
+            value=str(stats[action]["30d"]),
+            inline=True
         )
 
-        embed2 = (
-            discord.Embed(title=f"{Config.emoji['arrow']} Moderation Statistics Overview", colour=16777215)
-            .set_thumbnail(url="https://media.discordapp.net/attachments/1366840025010012321/1438061680541306880/staff.png")
-            .set_image(url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png")
-            .add_field(
-                name=f"{Config.emoji['mute']} Mutes",
-                value=f"7d: `{stats['mute']['7d']}`\n30d: `{stats['mute']['30d']}`\nTotal: `{stats['mute']['total']}`",
-                inline=True
-            )
-            .add_field(
-                name=f"{Config.emoji['warn']} Warns",
-                value=f"7d: `{stats['warn']['7d']}`\n30d: `{stats['warn']['30d']}`\nTotal: `{stats['warn']['total']}`",
-                inline=True
-            )
-            .add_field(
-                name=f"{Config.emoji['ban_hammer']} Bans",
-                value=f"7d: `{stats['ban']['7d']}`\n30d: `{stats['ban']['30d']}`\nTotal: `{stats['ban']['total']}`",
-                inline=True
-            )
-            .add_field(
-                name=f"{Config.emoji['ban_hammer']} Quarantines",
-                value=f"7d: `{stats['quarantine']['7d']}`\n30d: `{stats['quarantine']['30d']}`\nTotal: `{stats['quarantine']['total']}`",
-                inline=True
-            ))
-        
+    logs_text = ""
 
-        logs_text = ""
-        for index, log in enumerate(shown_logs, start=1):
-            ts_unix = int(log["timestamp"].timestamp())
-            logs_text += (
-                f"📌 **Log #{index} - {log['mod_type'].title()}**\n"
-                f"> {Config.emoji['member']} User: <@{log['target_user_id']}>\n"
-                f"> {Config.emoji['bookmark']} Reason: {log['reason']}\n"
-                f"> {Config.emoji['clock']} Time: <t:{ts_unix}:R>\n\n"
-            )
+    for index, log in enumerate(logs, start=page_start + 1):
 
-        if logs_text:
-            embed_logs = discord.Embed(
-                title=f"{Config.emoji['arrow']} Moderator Action Logs",
-                description=logs_text or "No logs to display.",
-                colour=16777215
-            ).set_image(url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png")
+        ts_unix = int(log["timestamp"].timestamp())
 
-            return [embed1, embed2, embed_logs]
-        else:
-            return [embed1, embed2]
+        logs_text += (
+            f"📌 **Log #{index} - {log['mod_type'].title()}**\n"
+            f"> {Config.emoji['member']} User: <@{log['target_user_id']}>\n"
+            f"> {Config.emoji['bookmark']} Reason: {log['reason']}\n"
+            f"> {Config.emoji['clock']} Time: <t:{ts_unix}:R>\n\n"
+        )
 
-    except Exception as e:
-        print("Error in display_logs:", e)
-        return simple_embed("Something went wrong while retrieving logs.")
+    if logs_text:
+        embed_logs = discord.Embed(
+            title=f"{Config.emoji['arrow']} Moderator Action Logs",
+            description=logs_text,
+            colour=16777215
+        ).set_image(url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png")
+
+        return [embed1, embed2, embed_logs]
+
+    return [embed1, embed2]
     
-async def mod_logs(ctx: commands.Context, target_user_id: int, user: discord.User, moderator: discord.User = None, mod_type: str = 'all', slice_expr=None):
-    try:
-        DEFAULT_FETCH_LIMIT = 5
+async def mod_logs(ctx: commands.Context, target_user_id: int, user: discord.User, moderator: discord.User = None, mod_type: str = "all", page_start: int=0, page_end: int = 5):
+    payload = {
+        "guild_id" : ctx.guild.id,
+        "target_user_id" : target_user_id,
+        "moderator_id" : moderator.id if moderator else None,
+        "mod_type" : mod_type,
+        "page_start" : page_start,
+        "page_end" : page_end
+    }
+    result = await fetch_mod_logs(payload)
 
-        count_query = "SELECT COUNT(*) FROM modlogs WHERE guild_id = ? AND target_user_id = ?"
-        count_params = [ctx.guild.id, target_user_id]
-        if moderator:
-            count_query += " AND moderator_id = ?"
-            count_params.append(moderator.id)
-        if mod_type.lower() != "all":
-            count_query += " AND lower(mod_type) = ?"
-            count_params.append(mod_type.lower())
+    if not result["success"]:
+        return simple_embed("No Logs Found For the given filters")
 
-        async with LilyLogging.mdb.execute(count_query, tuple(count_params)) as cursor:
-            total_count_row = await cursor.fetchone()
-        total_count = total_count_row[0] if total_count_row else 0
+    total_count = result["total_logs"]
+    mod_type_counts = result["counts"]
+    display_logs = result["logs"]
 
-        if total_count == 0:
-            return simple_embed("No Logs Found For the given filters")
+    now = datetime.now(timezone.utc)
 
+    embed_summary = (
+        discord.Embed(
+            color=16777215,
+            title=f"{Config.emoji['arrow']} {user.display_name}'s Moderation Logs",
+        )
+        .set_thumbnail(url=user.avatar.url if user.avatar else Config.img['member'])
+        .set_image(url=Config.img['border'])
+        .add_field(name="Total Logs", value=str(total_count), inline=True)
+        .add_field(name="Date", value=now.strftime("%Y-%m-%d"), inline=True)
+    )
 
-        type_query = "SELECT lower(mod_type), COUNT(*) FROM modlogs WHERE guild_id = ? AND target_user_id = ?"
-        type_params = [ctx.guild.id, target_user_id]
-        if moderator:
-            type_query += " AND moderator_id = ?"
-            type_params.append(moderator.id)
-        type_query += " GROUP BY lower(mod_type)"
+    summary_text = "\n".join(
+        f"- {action.title()}s: `{count}`" for action, count in mod_type_counts.items()
+    )
 
-        async with LilyLogging.mdb.execute(type_query, tuple(type_params)) as cursor:
-            rows = await cursor.fetchall()
-        mod_type_counts = {row[0]: row[1] for row in rows}
+    embed_summary.add_field(
+        name="Logs Summary",
+        value=summary_text or "No actions recorded",
+        inline=False
+    )
 
+    embed_logs = (
+        discord.Embed(
+            color=16777215,
+            title=f"{Config.emoji['arrow']} Log's Overview",
+        )
+        .set_thumbnail(url=Config.img['logs'])
+        .set_image(url=Config.img['border'])
+    )
 
-        select_query = "SELECT mod_type, reason, timestamp, moderator_id FROM modlogs WHERE guild_id = ? AND target_user_id = ?"
-        select_params = [ctx.guild.id, target_user_id]
-        if moderator:
-            select_query += " AND moderator_id = ?"
-            select_params.append(moderator.id)
-        if mod_type.lower() != "all":
-            select_query += " AND lower(mod_type) = ?"
-            select_params.append(mod_type.lower())
-        select_query += " ORDER BY timestamp DESC"
+    for index, log in enumerate(display_logs, start=page_start + 1):
 
-        start = 0
-        limit = DEFAULT_FETCH_LIMIT
-        if slice_expr:
-            start = slice_expr.start or 0
-            if slice_expr.stop is not None:
-                limit = slice_expr.stop - start
-        select_query += " LIMIT ? OFFSET ?"
-        select_params.extend([limit, start])
+        try:
+            dt = datetime.fromisoformat(log["timestamp"])
+        except ValueError:
+            dt = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
 
-        async with LilyLogging.mdb.execute(select_query, tuple(select_params)) as cursor:
-            rows = await cursor.fetchall()
+        ts_unix = int(dt.timestamp())
+        reason_text = log["reason"] or "No reason provided"
 
-        display_logs = [
-            {
-                "moderator_id": row[3],
-                "mod_type": row[0].lower(),
-                "reason": row[1],
-                "timestamp": row[2],
-            }
-            for row in rows
-        ]
-
-        now = datetime.now(timezone.utc)
-
-
-        embed_summary = (
-            discord.Embed(
-                color=16777215,
-                title=f"{Config.emoji['arrow']} {user.display_name}'s Moderation Logs",
-            )
-            .set_thumbnail(url=user.avatar.url if user.avatar else Config.img['member'])
-            .set_image(url=Config.img['border'])
-            .add_field(name="Total Logs", value=str(total_count), inline=True)
-            .add_field(name="Date", value=now.strftime("%Y-%m-%d"), inline=True)
+        embed_logs.add_field(
+            name=f"📌 Log #{index} • {log['mod_type'].title()}",
+            value=(
+                f"> {Config.emoji['shield']} Moderator : <@{log['moderator_id']}>\n"
+                f"> {Config.emoji['pencil']} Reason : **{reason_text}**\n"
+                f"> {Config.emoji['clock']} Time : <t:{ts_unix}:R>"
+            ),
+            inline=False
         )
 
-        summary_text = "\n".join(
-            f"- {action.title()}s: `{count}`" for action, count in mod_type_counts.items()
-        )
-        embed_summary.add_field(name="Logs Summary", value=summary_text or "No actions recorded", inline=False)
-
-
-        embed_logs = (
-            discord.Embed(
-                color=16777215,
-                title=f"{Config.emoji['arrow']} Log's Overview",
-            )
-            .set_thumbnail(url=Config.img['logs'])
-            .set_image(url=Config.img['border'])
-        )
-
-        for index, log in enumerate(display_logs, start=1):
-            try:
-                dt = datetime.fromisoformat(log["timestamp"])
-            except ValueError:
-                dt = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
-            ts_unix = int(dt.timestamp())
-
-            reason_text = log["reason"] if log["reason"] else "No reason provided"
-            embed_logs.add_field(
-                name=f"📌 Log #{index} • {log['mod_type'].title()}",
-                value=(
-                    f"> {Config.emoji['shield']} Moderator : <@{log['moderator_id']}>\n"
-                    f"> {Config.emoji['pencil']} Reason : **{reason_text}**\n"
-                    f"> {Config.emoji['clock']} Time : <t:{ts_unix}:R>"
-                ),
-                inline=False,
-            )
-
-        return [embed_summary, embed_logs]
-
-    except Exception as e:
-        print("Error in mod_logs:", e)
-        return simple_embed(f"Exception {e}", 'cross')
+    return [embed_summary, embed_logs]
+    
+async def moderation_insights(ctx: commands.Context):
+    view = ModerationInsights(ctx.me)
+    view.message = await ctx.reply(view=view)
+    
 
 async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = []):
     try:
@@ -445,7 +383,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
     role_ids = [str(r.id) for r in ctx.author.roles]
     if role_ids:
         placeholders = ",".join("?" * len(role_ids))
-        cursor = await LSM.sdb.execute(
+        cursor = await LSDA.sdb.execute(
             f"SELECT role_id FROM roles WHERE ban_limit > -1 AND role_id IN ({placeholders})",
             role_ids
         )
@@ -454,7 +392,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
         valid_limit_roles = []
 
     if not valid_limit_roles:
-        return await ctx.send(embed=simple_embed("You don't have permission to perform a ban.", 'cross'))
+        return await ctx.reply(embed=simple_embed("You don't have permission to perform a ban.", 'cross'))
 
     try:
         user_id = user_input.id
@@ -462,7 +400,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
         try:
             user_id = int(user_input)
         except ValueError:
-            return await ctx.send(embed=simple_embed("Invalid user id", 'cross'))
+            return await ctx.reply(embed=simple_embed("Invalid user id", 'cross'))
 
     member_obj = user_input if isinstance(user_input, discord.Member) else None
     user_obj = user_input if isinstance(user_input, discord.User) else None
@@ -473,11 +411,11 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
             member_obj.top_role >= ctx.author.top_role or
             member_obj.id in {ctx.guild.owner_id, ctx.bot.user.id, ctx.author.id}
         ):
-            return await ctx.send(embed=simple_embed("Cannot moderate this user.", 'cross'))
+            return await ctx.reply(embed=simple_embed("Cannot moderate this user.", 'cross'))
 
 
     if await exceeded_ban_limit(ctx, ctx.author.id, valid_limit_roles):
-        return await ctx.send(embed=simple_embed("You have exceeded your daily ban limit.", 'cross'))
+        return await ctx.reply(embed=simple_embed("You have exceeded your daily ban limit.", 'cross'))
 
     target = member_obj or user_obj
 
@@ -495,12 +433,12 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
             await LilyLogging.LogModerationAction(ctx, ctx.author.id, user_id, "ban", reason, proofs.copy())
             remaining = await remaining_ban_count(ctx, ctx.author.id, valid_limit_roles)
 
-            return await ctx.send(embed=simple_embed(
+            return await ctx.reply(embed=simple_embed(
                 f"Banned: <@{user_id}>\n**Bans Remaining:** {remaining}"
             ))
 
         if not member_obj:
-            return await ctx.send(embed=simple_embed(
+            return await ctx.reply(embed=simple_embed(
                 "Cannot quarantine; user is no longer in the guild.", 'cross'
             ))
 
@@ -510,7 +448,7 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
         )
 
         if not quarantine_role or quarantine_role >= ctx.guild.me.top_role:
-            return await ctx.send(embed=simple_embed(
+            return await ctx.reply(embed=simple_embed(
                 "Quarantine role issue: not found or too high.", 'cross'
             ))
 
@@ -527,36 +465,36 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
                 await target.send(embed=ban_embed(ctx.author, reason, Config.appeal_server_link, ctx.guild.name))
             except Exception:
                 pass
-            return await ctx.send(embed=simple_embed(
+            return await ctx.reply(embed=simple_embed(
                 f"Quarantined: <@{user_id}>\n**Quarantines Remaining:** {remaining}"
             ))
         else:
-            return await ctx.send(embed=simple_embed(
+            return await ctx.reply(embed=simple_embed(
                 f"Quarantine Cannot be applied, Member is already quarantined",
                 'cross'
             ))
 
     except discord.HTTPException as e:
-        return await ctx.send(embed=simple_embed(f"Failed to perform moderation action: {e}", 'cross'))
+        return await ctx.reply(embed=simple_embed(f"Failed to perform moderation action: {e}", 'cross'))
     except Exception as e:
-        return await ctx.send(embed=simple_embed(f"Unhandled Exception: {e}", 'cross'))
+        return await ctx.reply(embed=simple_embed(f"Unhandled Exception: {e}", 'cross'))
 
 async def mute_user(ctx: commands.Context, user: discord.Member, duration: str, reason: str = "No reason provided", proofs: list = []):
 
     if user.timed_out_until and user.timed_out_until > discord.utils.utcnow():
-        await ctx.send(embed=simple_embed("This user is already muted", 'cross'))
+        await ctx.reply(embed=simple_embed("This user is already muted", 'cross'))
         return
 
     if user.top_role >= ctx.guild.me.top_role:
-        await ctx.send(embed=simple_embed("I cannot mute this user", 'cross'))
+        await ctx.reply(embed=simple_embed("I cannot mute this user", 'cross'))
         return
 
     if user.top_role >= ctx.author.top_role:
-        await ctx.send(embed=simple_embed("I cannot mute a user with a role equal to or higher than yours.", 'cross'))
+        await ctx.reply(embed=simple_embed("I cannot mute a user with a role equal to or higher than yours.", 'cross'))
         return
 
     if user.id in {ctx.guild.owner_id, ctx.bot.user.id, ctx.author.id}:
-        await ctx.send(embed=simple_embed("Exception!. Stupid action detected errno 77777", 'cross'))
+        await ctx.reply(embed=simple_embed("Exception!. Stupid action detected errno 77777", 'cross'))
         return
 
     try:
@@ -571,34 +509,34 @@ async def mute_user(ctx: commands.Context, user: discord.Member, duration: str, 
 
         await user.edit(timed_out_until=until, reason=reason)
 
-        await ctx.send(embed=simple_embed(
+        await ctx.reply(embed=simple_embed(
             f"Muted: <@{user.id}>"
         ))
 
         await LilyLogging.LogModerationAction(ctx, ctx.author.id, user.id, "mute", reason, proofs)
 
     except ValueError as ve:
-        await ctx.send(embed=simple_embed(str(ve)))
+        await ctx.reply(embed=simple_embed(str(ve)))
     except discord.HTTPException as e:
         print(f"[MuteUser] {e}")
-        await ctx.send(embed=simple_embed(f"Failed to mute the user", 'cross'))
+        await ctx.reply(embed=simple_embed(f"Failed to mute the user", 'cross'))
     except Exception as e:
         print(f"[MuteUser] {e}")
-        await ctx.send(embed=simple_embed(f"Failed to mute the user", 'cross'))
+        await ctx.reply(embed=simple_embed(f"Failed to mute the user", 'cross'))
 
 async def unmute(ctx: commands.Context, user: discord.Member):
     if not user.timed_out_until or user.timed_out_until <= discord.utils.utcnow():
-        await ctx.send(embed=simple_embed("That user is not muted currently", 'cross'))
+        await ctx.reply(embed=simple_embed("That user is not muted currently", 'cross'))
         return
 
     try:
         await user.edit(timed_out_until=None, reason=f"Manual unmute by moderator {ctx.author.mention}")
-        await ctx.send(embed=simple_embed(f"Unmuted: <@{user.id}>"))
+        await ctx.reply(embed=simple_embed(f"Unmuted: <@{user.id}>"))
 
     except discord.HTTPException as e:
-        await ctx.send(embed=simple_embed(f"Failed to unmute user. {e}", 'cross'))
+        await ctx.reply(embed=simple_embed(f"Failed to unmute user. {e}", 'cross'))
     except Exception as e:
-        await ctx.send(embed=simple_embed(f"Exception: {e}", 'cross'))
+        await ctx.reply(embed=simple_embed(f"Exception: {e}", 'cross'))
 
 async def warn(ctx: commands.Context, member: discord.Member, reason: str, proofs=[]):
     await LilyLogging.LogModerationAction(ctx, ctx.author.id, member.id, "warn", reason, proofs)
@@ -609,7 +547,7 @@ async def warn(ctx: commands.Context, member: discord.Member, reason: str, proof
     except Exception as e:
         print(e)
 
-    await ctx.send(embed=simple_embed(f"{member.mention} has been warned"))
+    await ctx.reply(embed=simple_embed(f"{member.mention} has been warned"))
 
 async def execute(ctx: commands.Context, member: discord.Member):
     await ctx.defer()

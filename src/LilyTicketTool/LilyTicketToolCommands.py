@@ -8,6 +8,7 @@ from LilyRulesets.sLilyRulesets import PermissionEvaluator
 class LilyTicketTool(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        LTTT.LTTC.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):

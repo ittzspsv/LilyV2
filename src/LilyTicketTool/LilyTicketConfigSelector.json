@@ -1,11 +1,7 @@
-[
-    {
-        "channel_id": 1458532550803849216,
-        "message_id": 1458848702306451486,
-        "config": {
+{
             "BasicConfigurations": {
-                "TicketPanelSpawnChannel": 1458532550803849216,
-                "TicketLoggingHandler": 1449918663632355499
+                "TicketPanelSpawnChannel": 1485281228985733210,
+                "TicketLoggingHandler": 1485280984759800069
             },
             "EmbedConfigs": {
                 "TicketPanelEmbed": {
@@ -88,8 +84,7 @@
                         "Discord ID | Username of that Member": 600,
                         "Please explain what he did": 600
                     },
-                    "channel_id": 1458531621014601738,
-                    "view_pannel_spawn_id": 1458526388947648613,
+                    "channel_id": 1485280973066342610,
                     "ticket_base_name": "member_report",
                     "file_upload": true,
                     "ping-roles": [
@@ -100,8 +95,7 @@
                     "fields": {
                         "Mention the giveaway": 200
                     },
-                    "channel_id": 1458531621014601738,
-                    "view_pannel_spawn_id": 1477031659709665471,
+                    "channel_id": 1485280973066342610,
                     "ticket_base_name": "giveaway_claim",
                     "file_upload": true,
                     "ping-roles": [
@@ -112,8 +106,7 @@
                     "fields": {
                         "Mention the Server issue": 1000
                     },
-                    "channel_id": 1458531621014601738,
-                    "view_pannel_spawn_id": 1458527279453044760,
+                    "channel_id": 1485280973066342610,
                     "ticket_base_name": "server_issue",
                     "file_upload": false,
                     "ping-roles": [
@@ -125,8 +118,7 @@
                         "Mention the item name": 500,
                         "Any requirments?": 500
                     },
-                    "channel_id": 1458531621014601738,
-                    "view_pannel_spawn_id": 1477031490951971030,
+                    "channel_id": 1485280973066342610,
                     "ticket_base_name": "giveaway_host",
                     "file_upload": false,
                     "ping-roles": [
@@ -138,8 +130,7 @@
                         "Mention the event": 500,
                         "Describe the event": 1000
                     },
-                    "channel_id": 1458531621014601738,
-                    "view_pannel_spawn_id": 1458528231840944315,
+                    "channel_id": 1485280973066342610,
                     "ticket_base_name": "event_host",
                     "file_upload": false,
                     "ping-roles": [
@@ -150,8 +141,7 @@
                     "fields": {
                         "Please explain your statement": 1000
                     },
-                    "channel_id": 1458531621014601738,
-                    "view_pannel_spawn_id": 1458530538582184047,
+                    "channel_id": 1485280973066342610,
                     "ticket_base_name": "event_enquiry",
                     "file_upload": false,
                     "ping-roles": [
@@ -159,7 +149,4 @@
                     ]
                 }
             ]
-        },
-        "guild_id": 970643838047760384
-    }
-]
+}

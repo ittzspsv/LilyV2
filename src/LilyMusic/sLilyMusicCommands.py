@@ -32,9 +32,9 @@ from lavalink.server import LoadType
 import Config.sBotDetails as Configs
 
 url_rx = re.compile(r'https?://(?:www\.)?.+')
-Host = "lavalinkv4.serenetia.com"
-Port = 80
-passwd = "https://dsc.gg/ajidevserver"
+Host = "lavalink.jirayu.net"
+Port = 13592
+passwd = "youshallnotpass"
 class LavalinkVoiceClient(discord.VoiceProtocol):
     """
     This is the preferred way to handle external voice sending

@@ -23,9 +23,9 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         self.message = message
         self.type = type
 
-        self.permanent_emoji = discord.utils.get(bot.emojis, name="perm") or "✅"
-        self.gamepass_emoji = discord.utils.get(bot.emojis, name="gamepass") or "🎟️"
-        self.default_emoji = discord.utils.get(bot.emojis, name="default") or "🍉"
+        self.permanent_emoji = discord.utils.get(self.bot.emojis, name="perm") or "✅"
+        self.gamepass_emoji = discord.utils.get(self.bot.emojis, name="gamepass") or "🎟️"
+        self.default_emoji = discord.utils.get(self.bot.emojis, name="default") or "🍉"
         self.overpay_emoji = "🔥"
         self.fair_emoji = "🤝"
 

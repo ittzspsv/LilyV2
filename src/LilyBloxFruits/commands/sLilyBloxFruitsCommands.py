@@ -35,7 +35,7 @@ class LilyBloxFruits(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        await LBFC.MessageEvaluate(self, message)
+        await LBFC.MessageEvaluate(self.bot, message)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
     @commands.hybrid_command(name='update_image_blox_fruits', description='updates an image of blox fruits')

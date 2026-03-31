@@ -5,6 +5,8 @@ from datetime import timedelta
 import LilyLeveling.core.sLilyLevelingCore as LilyLevelCore
 import LilyManagement.sLilyStaffManagement as LSM
 from LilyRulesets.sLilyRulesets import PermissionEvaluator
+from LilyUtility.sLilyUtility import utcnow
+import LilyUtility.sLilyUtility as LilyUtility
 import os
 import json
 import asyncio
@@ -100,25 +102,25 @@ class LilyLeveling(commands.Cog):
     async def message_reset_schedular(self):
         if LilyLevelCore.ldb is None:
             return
-        now = LilyLevelCore.utcnow()
+        now = utcnow()
         cursor = await LilyLevelCore.ldb.execute("SELECT next_day_update, next_week_update FROM updates")
         row = await cursor.fetchone()
         if not row:
              return
         
-        next_day, next_week = map(LilyLevelCore.parse, row)
+        next_day, next_week = map(LilyUtility.parse_date, row)
         if next_day and now >= next_day:
             await self.daily_callback()
             await LilyLevelCore.ldb.execute(
                 "UPDATE updates SET next_day_update = ?",
-                (LilyLevelCore.iso(now + timedelta(days=1)),)
+                (LilyUtility.iso(now + timedelta(days=1)),)
             )
 
         if next_week and now >= next_week:
             await self.weekly_callback()
             await LilyLevelCore.ldb.execute(
                 "UPDATE updates SET next_week_update = ?",
-                (LilyLevelCore.iso(now + timedelta(days=7)),)
+                (LilyUtility.iso(now + timedelta(days=7)),)
             )
 
         await LilyLevelCore.ldb.commit()

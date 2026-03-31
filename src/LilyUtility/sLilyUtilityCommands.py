@@ -1,21 +1,24 @@
 from LilyRulesets.sLilyRulesets import PermissionEvaluator, rPermissionEvaluator
 import LilyLogging.sLilyLogging as LilyLogging
 import re
+import json
 
 import Misc.sLilyComponentV2 as CV2
 import Config.sValueConfig as ValueConfig
 import Config.sValueConfig as VC
 import LilyManagement.sLilyStaffManagement as LSM
-import Misc.sLilyEmbed as LE
+from Misc.sLilyEmbed import simple_embed
 import ui.sGreetingGenerator as GG
 
-import LilyUtility.sLilyUtility as LilyUtil
+from Misc.sLIlyGlobalComponents import CommandInfo as CI
+from LilyUtility.sLilyUtilityComponents import ProfileInformationComponent
 import LilyBloxFruits.sLilyBloxFruitsCache as BFC
 
 import discord
 from discord.ext import commands
 
 import Config.sBotDetails as Config
+from ast import literal_eval
 from enum import Enum
 
 from Misc.sLilyEmbed import simple_embed
@@ -23,37 +26,52 @@ from Misc.sLilyEmbed import simple_embed
 import asyncio
 
 
-
-class RoleButton(discord.ui.Button):
-    def __init__(self, label: str, role_id: int):
-        super().__init__(label=label, style=discord.ButtonStyle.primary)
-        self.role_id = role_id
-
-    async def callback(self, interaction: discord.Interaction):
-        role = interaction.guild.get_role(self.role_id)
-        member = interaction.user
-
-        if not role:
-            await interaction.response.send_message("❌ Role not found!", ephemeral=True)
-            return
-
-        if role in member.roles:
-            await member.remove_roles(role)
-            await interaction.response.send_message(f"🧹 Removed **{role.name}** role!", ephemeral=True)
-        else:
-            await member.add_roles(role)
-            await interaction.response.send_message(f"✅ Added **{role.name}** role!", ephemeral=True)
-
-
 class LilyUtility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+        self.afk_cache: dict = {"automod_rule_id": None, "currently_afk": []}
     # CHANNEL UTILITY
 
     class Channels(str, Enum):
         WORL = "WORL"
         FruitValues = "FruitValues"
         Combo = "Combo"
+
+    def initialize_cache(self):
+        with open("storage/configs/AutomodConfig.json", "r") as file:
+            self.afk_cache = json.load(file)
+    
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+
+        if message.author.id in self.afk_cache.get("currently_afk", []):
+            self.afk_cache["currently_afk"].remove(message.author.id)
+
+            automod_rule_id = self.afk_cache.get("automod_rule_id")
+            mention_keyword = f"<@{message.author.id}>"
+
+            if automod_rule_id:
+                try:
+                    lily_automod = await message.guild.fetch_automod_rule(automod_rule_id)
+                    automod_keywords = lily_automod.trigger.keyword_filter
+                    if mention_keyword in automod_keywords:
+                        updated_keywords = [kw for kw in automod_keywords if kw != mention_keyword]
+                        new_trigger = discord.AutoModTrigger(keyword_filter=updated_keywords)
+                        await lily_automod.edit(trigger=new_trigger)
+                except discord.NotFound:
+                    pass
+
+            with open("storage/configs/AutomodConfig.json", "w") as file:
+                json.dump(self.afk_cache, file, indent=4)
+
+            await message.channel.reply(embed=simple_embed(f"{message.author.mention} is no longer AFK. Welcome back!"))
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.initialize_cache()
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(("Developer",)),allow_per_server_owners=True)
     @commands.hybrid_command(name="assign_channel",description="Assign Particular feature of the bot limited to the specific channel.")
@@ -114,8 +132,11 @@ class LilyUtility(commands.Cog):
 
     # MESSAGING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
-    @commands.hybrid_command(name='direct_message', description='direct messages using the bot')
+    @commands.hybrid_command(name='direct_message', description='Direct Messages to an user using the bot')
     async def dm(self, ctx: commands.Context, user: discord.User, message: str, type: int=0):
+        if user is None:
+            await ctx.reply(view=CI(ctx, "Direct User", ["/direct_message user: message: type: ", f"/direct_message user: {ctx.me.mention} message: Hello! type: 1"]))
+            return
         await ctx.defer()
         try:
             if type == 0:
@@ -179,19 +200,47 @@ class LilyUtility(commands.Cog):
     #UID UTILITY
     @commands.hybrid_command(name='id', description='returns the id of a specific usertype')
     async def id(self, ctx:commands.Context, user:discord.Member=None):
+        '''
+        if(isinstance(ctx.channel, discord.Threads)):
+            cursor = await LilyLogging.mdb.execute("SELECT ticket_values FROM tickets WHERE ticket_id = ?", (ctx.channel.id,))
+            row = await cursor.fetchone()
+
+            if row:
+                pass
+            else:
+                if user== None:
+                    await ctx.send(ctx.author.id)
+                else:
+                    await ctx.send(user.id)
+        else:'''
         if user== None:
             await ctx.send(ctx.author.id)
-
         else:
             await ctx.send(user.id)
 
+    @commands.hybrid_command(name='info', description='returns the information of the user globally')
+    async def info(self, ctx: commands.Context, user: str = None):
+        if user is None:
+            target = ctx.author
+        else:
+            try:
+                target = await commands.UserConverter().convert(ctx, user)
+            except commands.BadArgument:
+                await ctx.reply(embed=simple_embed("User not found", 'cross'))
+                return
+
+        user = await self.bot.fetch_user(target.id)
+
+        view = ProfileInformationComponent(user)
+        await ctx.reply(view=view)
+        
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)), allow_per_server_owners=True)
-    @commands.hybrid_command(name='purge',description='Purges Message')
+    @commands.hybrid_command(name='purge',description='Purge Message with specified amount')
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
-    async def purge(self, ctx, amount: int, member: discord.Member = None):
+    async def purge(self, ctx, amount: int=0, member: discord.Member = None):
         if amount <= 0:
-            await ctx.send("You must delete at least 1 message.")
+            await ctx.reply(view=CI(ctx, "Purge", ["purge n", "purge 30"]))
             return
 
         def check(msg):
@@ -199,22 +248,25 @@ class LilyUtility(commands.Cog):
 
         try:
             deleted = await ctx.channel.purge(limit=amount, check=check, bulk=True)
-            await ctx.send(f"✅ Deleted {len(deleted)} message(s).", delete_after=5)
+            await ctx.send(embed=simple_embed(f"Deleted {len(deleted)} message(s)."), delete_after=5)
         except discord.Forbidden:
-            await ctx.send("I do not have permission to delete messages.")
+            await ctx.send(embed=simple_embed("I do not have permission to delete messages.", 'cross'))
         except discord.HTTPException as e:
-            await ctx.send(f"Exception: {e}")
+            await ctx.send(embed=simple_embed("An Unknown error occured", 'cross'))
 
-            
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='latency',description='sends the latency of the bot')
     async def latency(self, ctx: commands.Context):
         await ctx.send(f'`{round(self.bot.latency * 1000, 2)}ms`')
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Giveaway Administrator', 'Administrator','Head Administrator')))
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager', 'Giveaway Administrator', 'Administrator','Head Administrator', 'Giveaway Host', 'Event Administrator')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='role',description='assign role or removes a specified role from the user')
-    async def role(self, ctx: commands.Context, user: discord.Member, *, role_input: str):
+    @commands.hybrid_command(name='role',description='Assigns/Removes a specified role from the user (not case-sensitive)')
+    async def role(self, ctx: commands.Context, user: discord.Member=None, *, role_input: str=None):
+        if user is None and role_input is None:
+            await ctx.reply(view=CI(ctx, "Role", ["role user role", f"role {ctx.me.mention} Moderator", f"role {ctx.me.mention} 1324893524184793130"]))
+            return
+
         if (
             ctx.author != ctx.guild.owner 
             and ctx.author != user
@@ -322,53 +374,12 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             print(e)
 
-    class Roles(str, Enum):
-        Giveaways = "Giveaways"
-        Events = "Events"
-        Null = "null"
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Giveaway Manager', 'Developer', 'Event Manager')))
-    @commands.hybrid_command(name='ping_role', description='Ping a predefined role')
-    @commands.cooldown(rate=1, per=600, type=commands.BucketType.user)
-    async def ping_role(self, ctx: commands.Context, role: Roles, channel: discord.TextChannel):
-        if ctx.interaction:
-            await ctx.defer(ephemeral=True)
-        else:
-            await ctx.defer()
-
-        if role == self.Roles.Giveaways:
-            role_obj = discord.utils.get(ctx.guild.roles, name="Giveaways")
-        elif role == self.Roles.Events:
-            role_obj = discord.utils.get(ctx.guild.roles, name="Events")
-        else:
-            role_obj = None
-
-        if role_obj is None:
-            if ctx.interaction:
-                await ctx.interaction.followup.send("Role not found.", ephemeral=True)
-            else:
-                await ctx.reply("Role not found.")
-            return
-
-        await channel.send(role_obj.mention)
-
-        if ctx.interaction:
-            await ctx.interaction.followup.send("Sent Successfully!", ephemeral=True)
-        else:
-            await ctx.reply("Sent Successfully!")
-        embed = discord.Embed(
-            title="ROLE PING ACTION",
-            description=f"{ctx.author.mention} pinged {role_obj.mention} in {channel.mention}",
-            colour=0xffffff
-        )
-
-        await LilyLogging.PostLog(ctx, embed, "Role Ping Action")
-
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer', 'Staff Manager')))
-    @commands.hybrid_command(name='set_role_icon', description='Sets a role icon')
+    @commands.hybrid_command(name='set_role_icon', description='Sets a role icon for a specific role')
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def role_icon(self, ctx: commands.Context, role: discord.Role, icon: discord.Attachment):
+    async def role_icon(self, ctx: commands.Context, role: discord.Role=None, icon: discord.Attachment=None):        
         await ctx.defer()
+
         if icon.content_type not in ("image/png", "image/jpeg"):
             return await ctx.reply("Role icons must be a **PNG or JPG** image.",ephemeral=True)
         try:
@@ -403,7 +414,10 @@ class LilyUtility(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff')))
     @commands.hybrid_command(name='check_reaction', description='Checks if an user has reacted to an message')
-    async def check_reaction(self, ctx: commands.Context, member: discord.Member, message_id: int, emoji_str: str):
+    async def check_reaction(self, ctx: commands.Context, member: discord.Member=None, message_id: int=None, emoji_str: str=None):
+        if member is None or message_id is None or emoji_str is None:
+            await ctx.reply(view=CI(ctx, "Check Reaction", ["check_reaction user message_id emoji", f"check_reaction {ctx.me.mention} 1488478394361446470 😊"]))
+            return
         try:
             message = await ctx.channel.fetch_message(message_id)
         except discord.NotFound:
@@ -423,7 +437,49 @@ class LilyUtility(commands.Cog):
             await ctx.send(embed=simple_embed(f"{member.mention} has reacted"))
         else:
             await ctx.send(embed=simple_embed(f"{member.mention} has not reacted", 'cross'))
+        
+    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
+    @commands.hybrid_command(name="afk", description="Puts the user to afk mode")
+    async def afk(self, ctx: commands.Context, * ,message: str="AFK"):
+        await ctx.defer()
 
+        if ctx.author.id in self.afk_cache.get("currently_afk"):
+            await ctx.reply(embed=simple_embed("You are already in afk", 'cross'))
+            return 
 
+        mention_keyword: str = f"<@{ctx.author.id}>"
+        automod_rule_id = self.afk_cache.get("automod_rule_id")
+
+        if automod_rule_id:
+            try:
+                lily_automod = await ctx.guild.fetch_automod_rule(automod_rule_id)
+                automod_keywords = lily_automod.trigger.keyword_filter
+                if mention_keyword not in automod_keywords:
+                    updated_keywords = automod_keywords + [mention_keyword]
+                    new_trigger = discord.AutoModTrigger(keyword_filter=updated_keywords)
+                    await lily_automod.edit(trigger=new_trigger)
+            except discord.NotFound:
+                automod_rule_id = None
+
+        if not automod_rule_id:
+            lily_automod = await ctx.guild.create_automod_rule(
+                name="LilyAutomod",
+                event_type=discord.AutoModRuleEventType.message_send,
+                trigger=discord.AutoModTrigger(keyword_filter=[mention_keyword]),
+                enabled=True,
+                actions=[discord.AutoModRuleAction(custom_message="Shh… this user is away for a bit. Let's not disturb them!")]
+            )
+            automod_rule_id = lily_automod.id
+
+        self.afk_cache["automod_rule_id"] = automod_rule_id
+        if ctx.author.id not in self.afk_cache["currently_afk"]:
+            self.afk_cache["currently_afk"].append(ctx.author.id)
+
+        with open("storage/configs/AutomodConfig.json", "w") as file:
+            json.dump(self.afk_cache, file, indent=4)
+
+        await ctx.reply(embed=simple_embed(f"{ctx.author.mention} is now AFK : {message}"))
+        
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

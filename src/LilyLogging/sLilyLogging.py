@@ -66,7 +66,7 @@ async def LogModerationAction(ctx: commands.Context,moderator_id: int,target_use
     if not channel:
         return
 
-    embeds_to_send = moderation_embed(moderator_id, target_user_id, mod_type, reason, proofs, Configs.emoji, LilyUtility.utcnow())
+    embeds_to_send = moderation_embed(moderator_id, target_user_id, mod_type, reason, proofs, LilyUtility.utcnow())
     await channel.send(content=f'<@{target_user_id}>', embeds=embeds_to_send)
 
 async def LogValueAction(ctx: commands.Context,triggered: discord.Member,value_dict: dict):

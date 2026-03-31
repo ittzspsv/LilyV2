@@ -176,5 +176,25 @@ fruit_emojis = {
 }
 
 expression = {
-    
+    "neutral" : "",
+    "focused" : "",
+    "explaining" : "",
+    "pouting" : "",
+    "blushing" : "",
+    "concerned" : "",
+    "hand_to_chest_neutral" : "",
+    "curious" : "",
+    "shyness" : "",
+    "adjusting_hair" : "",
+    "yawning" : "",
+    "deep_thought" : "",
+    "puffing_cheeks" : "",
+    "confused" : "",
+    "hoodie_on" : "",
+    "rubbing_eyes" : "",
+    "sleeping"  : "",
+    "pensive" : "",
+    "aha" : "",
+    "stop" : "",
+    "disappointed" : ""
 }

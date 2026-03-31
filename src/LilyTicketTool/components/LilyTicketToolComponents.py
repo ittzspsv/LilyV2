@@ -6,60 +6,32 @@ from Misc.sLilyEmbed import simple_embed
 from typing import Dict, Optional, List
 
 import Misc.sLilyEmbed as LilyEmbed
+import LilyUtility.sLilyUtility as LilyUtility
 
+bot = None
 
-
-async def SendTicketPanel(interaction: discord.Interaction, submission_json, thread_object, logs_channel):
-    thread_channel = submission_json.get("ticket_panel_thread_id", 0)
-
-    thread_channel_obj = interaction.guild.get_channel(thread_channel)
-    if not thread_channel_obj:
-        try:
-            thread_channel_obj = await interaction.guild.fetch_channel(thread_channel)
-        except discord.NotFound:
-            return
-    roles = submission_json.get("ping_roles", [])
-    if roles:
-        mentions = " ".join(f"<@&{role_id}>" for role_id in roles)
-
-    embed = TicketEmbed(interaction.user, submission_json)
-    view = TicketPanelView(thread_object, logs_channel)
-    try:
-        message = await thread_channel_obj.send(content=mentions, embed=embed, view=view)
-        cursor = await LilyLogging.mdb.execute(
-            """
-            INSERT INTO ticket_access_panels (tickets_access_panel_id, access_panel_message_id)
-            VALUES (?, ?)
-            """,
-            (thread_channel, message.id)
+class ReportComponent(discord.ui.LayoutView):
+    def __init__(self, reported_member: discord.Member, field_values: Dict, mentions):
+        super().__init__()
+        self.last_key, self.last_value = next(reversed(field_values.items()))
+        self.container = discord.ui.Container(
+            discord.ui.TextDisplay(content="## Member Report"),
+            discord.ui.TextDisplay(content="## Reported Member Detail"),
+            discord.ui.Section(
+                discord.ui.TextDisplay(content=f"**Name** \n- ```{reported_member.name}```\n**Dev ID**\n- ```{reported_member.id}```"),
+                discord.ui.TextDisplay(content=f"Created On : <t:{int(reported_member.created_at.timestamp())}:F>\nJoined On : <t:{int(reported_member.joined_at.timestamp())}:F>"),
+                accessory=discord.ui.Thumbnail(
+                    media=reported_member.display_avatar.url,
+                ),
+            ),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
+            discord.ui.TextDisplay(content=f"### {self.last_key}\n- ```{self.last_value}```"),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
+            discord.ui.TextDisplay(content=mentions),
+            accent_colour=discord.Colour(16777215),
         )
-        await LilyLogging.mdb.commit()
 
-        panel_access_id = cursor.lastrowid
-
-    except Exception as e:
-        print(f"Exception [SendTicketPanel - panel insert] {e}")
-        return
-    try:
-        await LilyLogging.mdb.execute(
-            """
-            INSERT INTO tickets (ticket_id, opened_user_id, tickets_access_panel_id, ticket_values, ticket_type, guild_id, log_channel_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                thread_object.id,
-                interaction.user.id,
-                panel_access_id,
-                str(submission_json.get("inputs")),
-                submission_json.get("ticket_name_base", "default"),
-                interaction.guild.id,
-                logs_channel
-            )
-        )
-        await LilyLogging.mdb.commit()
-
-    except Exception as e:
-        print(f"Exception [SendTicketPanel - ticket insert] {e}")
+        self.add_item(self.container)
 
 class TicketModal(discord.ui.Modal):
     def __init__(self, title: str, modal_data: dict, json_data):
@@ -107,11 +79,11 @@ class TicketModal(discord.ui.Modal):
 
             self.add_item(self.images)
 
-    async def ticket_thread_constructor(interaction: discord.Interaction, core_json, submission_json):
-        channel_id = int(submission_json.get("channel_id"))
+    async def ticket_thread_constructor(self, interaction: discord.Interaction, core_json, submission_json):
+        channel_id: int = int(submission_json.get("channel_id"))
         thread_channel: discord.TextChannel = interaction.guild.get_channel(channel_id)
         if not thread_channel:
-            thread_channel = await interaction.guild.fetch_channel(channel_id)
+            thread_channel: discord.TextChannel = await interaction.guild.fetch_channel(channel_id)
 
         proof_attachments = submission_json.get("proof_images")
         proofs_flag = False
@@ -122,11 +94,12 @@ class TicketModal(discord.ui.Modal):
             proof_url = "No Proofs Attached!"
             proofs_flag = False
 
-        opener = interaction.user
+        roles = submission_json.get("ping_roles", [])
+        if roles:
+            mentions = " ".join(f"<@&{role_id}>" for role_id in roles)
 
-        support_staff_ids = core_json["RoleInformation"]["SupportStaffRole"]
-        if isinstance(support_staff_ids, int):
-            support_staff_ids = [support_staff_ids]
+        opener = interaction.user
+        logging_channel_id = core_json.get("BasicConfigurations").get("TicketLoggingHandler")
 
         ticket_name_base = submission_json.get("ticket_name_base")
         thread = await thread_channel.create_thread(
@@ -139,11 +112,11 @@ class TicketModal(discord.ui.Modal):
         thread.jump_url
 
         await thread.add_user(opener)
-
-        content, embeds = LilyEmbed.ParseAdvancedEmbed(core_json['EmbedConfigs']['TicketChannelSpawnEmbed'])
         field_details = submission_json.get("inputs", {})
+        content, embeds = LilyEmbed.ParseAdvancedEmbed(core_json['EmbedConfigs']['TicketChannelSpawnEmbed'])
+        
         embed = discord.Embed(
-            title=ticket_name_base.replace("_", " "),
+            title=ticket_name_base.replace("_", " ").title(),
             description="\n".join(f"**{k}**: ```{v}```" for k, v in field_details.items()),
             color=16777215
         )
@@ -151,13 +124,18 @@ class TicketModal(discord.ui.Modal):
         embed.set_thumbnail(url = Configs.img['logs'])
 
         embeds.append(embed)
-
         
-        await thread.send(embeds=embeds)
+        await LilyLogging.mdb.execute(
+            '''INSERT INTO tickets (ticket_id, opened_user_id, ticket_values, ticket_type, guild_id, log_channel_id)
+            VALUES (?, ?, ?, ?, ?, ?)'''
+        ,(thread.id, opener.id, str(field_details), ticket_name_base, interaction.guild.id, logging_channel_id))
+
+        await LilyLogging.mdb.commit()
+        await thread.send(content=mentions, embeds=embeds)
         if proofs_flag:
             await thread.send(content=f"{proof_url}")
+        
 
-        await SendTicketPanel(interaction, submission_json, thread, submission_json.get("logs_channel_id"))
         return thread
 
     async def on_submit(self, interaction: discord.Interaction):
@@ -195,12 +173,10 @@ class TicketModal(discord.ui.Modal):
         channel_id = self.modal_data.get("channel_id")
         ticket_name_base = self.modal_data.get("ticket_base_name", "ticket")
         ping_roles = self.modal_data.get("ping-roles", [])
-        ticket_panel_spawn_id = self.modal_data.get("view_pannel_spawn_id", 0)
         logs_channel_id  = self.json_data["BasicConfigurations"]["TicketLoggingHandler"]
 
         submission = {
             "channel_id": channel_id,
-            "ticket_panel_thread_id" : ticket_panel_spawn_id,
             "inputs": values,
             "ticket_name_base": ticket_name_base,
             "logs_channel_id" : logs_channel_id,
@@ -286,174 +262,6 @@ async def TicketLogAction(interaction: discord.Interaction,thread: discord.Threa
         await logs_channel.send(content=f'<@{opened_user_id}>', embed=embed)
     except Exception as e:
         print(f"Exception [TicketLogAction] {e}")
-
-class TicketPanelView(discord.ui.View):
-    def __init__(self, thread_object: discord.Thread, logs_channel_id):
-        super().__init__(timeout=None)
-        self.thread = thread_object
-        self.thread_id = thread_object.id
-        self.logs_channel_id = logs_channel_id
-
-        view_btn = discord.ui.Button(
-            label="View Ticket",
-            style=discord.ButtonStyle.primary,
-            custom_id=f"ticket_view:{self.thread_id}"
-        )
-        view_btn.callback = self.view_ticket
-        self.add_item(view_btn)
-
-        close_btn = discord.ui.Button(
-            label="Close Ticket",
-            style=discord.ButtonStyle.danger,
-            custom_id=f"ticket_close:{self.thread_id}"
-        )
-        close_btn.callback = self.close_ticket
-        self.add_item(close_btn)
-
-    async def view_ticket(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-
-        try:
-            await self.thread.add_user(interaction.user)
-            await LilyLogging.mdb.execute(
-                """
-                INSERT OR IGNORE INTO ticket_handlers (accessed_staff, ticket_id)
-                VALUES (?, ?)
-                """,
-                (interaction.user.id, self.thread.id)
-            )
-            await LilyLogging.mdb.commit()
-
-            await interaction.followup.send(
-                embed=simple_embed(
-                    f"Successfully added. Please visit {self.thread.mention}"
-                ),
-                ephemeral=True
-            )
-
-        except Exception as e:
-            print(f"[TICKET VIEW ERROR] {e}")
-            await interaction.followup.send(
-                embed=simple_embed("An unknown error occurred.", "cross"),
-                ephemeral=True
-            )
-
-    async def close_ticket(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-
-        try:
-            cursor = await LilyLogging.mdb.execute(
-                """
-                SELECT
-                    t.opened_user_id,
-                    t.ticket_type,
-                    tae.tickets_access_panel_id,
-                    tae.access_panel_message_id,    
-                    th.accessed_staff
-                FROM tickets AS t
-                LEFT JOIN ticket_access_panels AS tae
-                    ON tae.access_id = t.tickets_access_panel_id
-                LEFT JOIN ticket_handlers AS th
-                    ON th.ticket_id = t.ticket_id
-                WHERE t.ticket_id = ?;
-                """,
-                (self.thread.id,)
-            )
-
-            rows = await cursor.fetchall()
-            if not rows:
-                raise RuntimeError("Ticket data not found")
-
-            opened_user_id = rows[0][0]
-            ticket_type = rows[0][1]            
-            panel_channel_id = rows[0][2]
-            panel_message_id = rows[0][3]
-
-            accessed_staff_ids = {row[4] for row in rows if row[4] is not None}
-
-            opener = interaction.guild.get_member(opened_user_id)
-            if not opener:
-                try:
-                    opener = await interaction.guild.fetch_member(opened_user_id)
-                except:
-                    opener = None
-            if opener:
-                await self.thread.remove_user(opener)
-
-            accessed_staff_ids.discard(opened_user_id)
-            accessed_staff_ids.discard(interaction.user.id)
-            for staff_id in accessed_staff_ids:
-                member = interaction.guild.get_member(staff_id)
-                if not member:
-                    try:
-                        member = await interaction.guild.fetch_member(staff_id)
-                    except:
-                        continue
-                try:
-                   await self.thread.remove_user(member) 
-                except:
-                    continue
-
-            await self.thread.remove_user(interaction.user)
-
-            await interaction.followup.send(
-                embed=simple_embed("Ticket closed successfully."),
-                ephemeral=True
-            )
-
-            if panel_channel_id and panel_message_id:
-                channel = interaction.guild.get_channel(panel_channel_id)
-                if not channel:
-                    try:
-                        channel = await interaction.guild.fetch_channel(panel_channel_id)
-                    except discord.NotFound:
-                        channel = None
-
-                if channel:
-                    try:
-                        msg = await channel.fetch_message(panel_message_id)
-                        await msg.delete()
-                    except (discord.NotFound, discord.Forbidden):
-                        pass
-
-            await self.thread.edit(archived=True, locked=True)
-            logs_channel = interaction.guild.get_channel(self.logs_channel_id)
-            if not logs_channel:
-                logs_channel = await interaction.guild.fetch_channel(self.logs_channel_id)
-            await TicketLogAction(
-                interaction=interaction,
-                thread=self.thread,
-                opened_user_id=opened_user_id,
-                ticket_type=ticket_type,
-                accessed_staff_ids=accessed_staff_ids,
-                logs_channel=logs_channel
-            )
-
-            await self.cleanup_ticket_data(panel_message_id)
-
-        except Exception as e:
-            print(f"[TICKET CLOSE ERROR] {e}")
-            await interaction.followup.send(
-                embed=simple_embed("An unknown error occurred.", "cross"),
-                ephemeral=True
-            )
-
-    async def cleanup_ticket_data(self, message_id):
-        ticket_id = self.thread.id
-        await LilyLogging.mdb.execute(
-            "DELETE FROM ticket_handlers WHERE ticket_id = ?",
-            (ticket_id,)
-        )
-        await LilyLogging.mdb.execute(
-            "DELETE FROM tickets WHERE ticket_id = ?",
-            (ticket_id,)
-        )
-
-        await LilyLogging.mdb.execute(
-            "DELETE FROM ticket_access_panels WHERE access_panel_message_id = ?",
-            (message_id,) 
-        )
-        await LilyLogging.mdb.commit()
 
 def TicketEmbed(ticket_opener: discord.Member, submission_data) -> discord.Embed:
     ticket_name = submission_data.get("ticket_name_base", "General Ticket").replace("_", " ").title()

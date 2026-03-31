@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-import LilyLogging.sLilyLogging as LilyLogging
+from Misc.sLIlyGlobalComponents import CommandInfo
 
 import Config.sBotDetails as Config
 import LilyManagement.sLilyStaffManagement as LSM
@@ -20,7 +20,12 @@ class LilyModeration(commands.Cog):
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ban', description='bans a user with config = limited')
-    async def ban(self, ctx:commands.Context, member: str = "", *, reason="No reason provided"):
+    async def ban(self, ctx:commands.Context, member: str = None, *, reason="No reason provided"):
+        if member is None:
+            await ctx.reply(view=CommandInfo(ctx, "Ban", ["ban user reason", f"ban {ctx.me.mention} Toxicity!"]))
+            return
+
+
         await ctx.defer()
         attachments = []
 
@@ -46,54 +51,60 @@ class LilyModeration(commands.Cog):
                     user_id = int(member)
                     target_user = await ctx.bot.fetch_user(user_id)
                 except ValueError as v:
-                    await ctx.send(embed=simple_embed(f"Value Error {v}", 'cross'))
+                    await ctx.reply(embed=simple_embed(f"Value Error {v}", 'cross'))
                     return
                 except discord.NotFound:
-                    await ctx.send(embed=simple_embed(f"User ID {member} not found. Please check the ID.", 'cross'))
+                    await ctx.reply(embed=simple_embed(f"User ID {member} not found. Please check the ID.", 'cross'))
                     return
                 except discord.HTTPException as e:
-                    await ctx.send(embed=simple_embed(f"Failed to fetch user data: {e}", 'cross'))
+                    await ctx.reply(embed=simple_embed(f"Failed to fetch user data: {e}", 'cross'))
                     return
 
             if not target_user:
-                await ctx.send(embed=simple_embed("No Valid Users to Ban", 'cross'))
+                await ctx.reply(embed=simple_embed("No Valid Users to Ban", 'cross'))
                 return
 
             if not await mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
                 await mLily.ban_user(ctx, target_user, reason, proofs)
             else:
-                await ctx.send(embed=simple_embed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"{await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
+                await ctx.reply(embed=simple_embed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"{await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
                 return
 
         except Exception as e:
-            await ctx.send(embed=simple_embed(f"An error occurred: {e}", 'cross'))
+            await ctx.reply(embed=simple_embed(f"An error occurred: {e}", 'cross'))
 
 
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
-    @commands.hybrid_command(name='execute', description='execute an user with cutscene (WIP)')
+    @commands.hybrid_command(name='execute', description='Execute an user with cutscene (WIP)')
     async def execute(self, ctx: commands.Context, member: discord.Member):
+        if not member:
+            await ctx.reply(view=CommandInfo(ctx, "Execute", ["execute user", f"execute {ctx.me.mention}"]))
+            return
         await mLily.execute(ctx, member)
 
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='unban', description='unbans a particular user')
-    async def unban(self, ctx, user_id: str):
+    @commands.hybrid_command(name='unban', description='Unban a Particular User')
+    async def unban(self, ctx, user_id: str=None):
         await ctx.defer()
+        if user_id is None:
+            await ctx.reply(view=CommandInfo(ctx, "Unban", ["unban user", f"unban {ctx.me.mention} Appealed"]))
+            return
         user_id = int(user_id.replace("<@", "").replace(Config.bot_command_prefix, "").replace(">", ""))
         
         try:
             user = await self.bot.fetch_user(user_id)
         except discord.NotFound:
-            await ctx.send(embed=simple_embed("User not found."))
+            await ctx.reply(embed=simple_embed("User not found."))
             return
         except discord.HTTPException as e:
-            await ctx.send(f"Exception Raised: {e}")
+            await ctx.reply(f"Exception Raised: {e}")
             return
 
         try:
             await ctx.guild.unban(user)
-            await ctx.send(embed=simple_embed(f"Unbanned {user.mention}"))
+            await ctx.reply(embed=simple_embed(f"Unbanned {user.mention}"))
         except discord.NotFound:
             quarantine_role = discord.utils.get(ctx.guild.roles, name="Quarantine")
             if quarantine_role:
@@ -102,33 +113,40 @@ class LilyModeration(commands.Cog):
                     try:
                         await member_obj.remove_roles(quarantine_role, reason=f"Quarantine Removed by {ctx.author.mention}")
 
-                        await ctx.send(embed=simple_embed(f"Removed Quarantine from {member_obj.mention}"))
+                        await ctx.reply(embed=simple_embed(f"Removed Quarantine from {member_obj.mention}"))
                         return
                     except discord.Forbidden:
-                        await ctx.send("I don't have permission to remove the Quarantine role.")
+                        await ctx.reply("I don't have permission to remove the Quarantine role.")
                         return
                     except discord.HTTPException as e:
-                        await ctx.send(f"Failed to remove Quarantine role: {e}")
+                        await ctx.reply(f"Failed to remove Quarantine role: {e}")
                         return
-            await ctx.send(embed=simple_embed("This user is not banned and not quarantined!"))
+            await ctx.reply(embed=simple_embed("This user is not banned and not quarantined!"))
         except discord.Forbidden:
-            await ctx.send("I don't have permission to unban this user.")
+            await ctx.reply("I don't have permission to unban this user.")
         except discord.HTTPException as e:
-            await ctx.send(f"Exception Raised: {e}")
+            await ctx.reply(f"Exception Raised: {e}")
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)), allow_per_server_owners=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='mute', description='mutes a user with desired input')
+    @commands.hybrid_command(name='mute', description='Mute a user with desired input')
     async def mute(self, ctx:commands.Context, member:discord.Member=None, duration:str="1",*, reason="No reason provided"):
         await ctx.defer()
+
+        if member is None:
+            await ctx.reply(view=CommandInfo(ctx, "Mute", ["mute user time reason", f"mute {ctx.me.mention} 3d Not Obeying Rules", f"mute {ctx.me.mention} 22hr Toxicity!"]))
+            return
         proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
         await mLily.mute_user(ctx, member, duration, reason, proofs)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='warn', description='warns a user')
+    @commands.hybrid_command(name='warn', description='Warn a user with a specific reason')
     async def warn(self, ctx:commands.Context, member:discord.Member=None,*, reason="No reason provided"):
         await ctx.defer()
+        if member is None:
+            await ctx.reply(view=CommandInfo(ctx, "Warn", ["warn user reason", f"warn {ctx.me.mention} Not Obeying Rules!"]))
+            return
         proofs = proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
         await mLily.warn(ctx, member, reason, proofs)
 
@@ -136,66 +154,40 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unmute', description='unmutes a user with desired input')
     async def unmute(self, ctx:commands.Context, member:discord.Member=None):
+        if member is None:
+            await ctx.reply(view=CommandInfo(ctx, "Unmute", ["unmute user reason", f"warn {ctx.me.mention} Appealed"]))
+            return
         await ctx.defer()
         await mLily.unmute(ctx, member)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ms', description='checks logs for a particular moderator')
-    async def ms(self, ctx, member: discord.Member=None, slice_exp: str = '0:0'):
+    async def ms(self, ctx, member: discord.Member=None, page_start: int=0, page_end: int=0):
         await ctx.defer()
+        user: discord.Member = None
         try:
-            try:
-                start, stop = (int(x) if x else 0 for x in slice_exp.split(":"))
-            except ValueError:
-                await ctx.send(embed=simple_embed("Slicing Error. Make sure your slicing is in the format 'start:stop'"))
-                return
-            except Exception as e:
-                await ctx.send(embed=simple_embed(f"Error while parsing slice: {e}"))
-                return
-
             if not member:
-                try:
-                    user = await self.bot.fetch_user(ctx.author.id)
-                    embed = await mLily.ms(ctx,ctx.author.id, user, slice_expr=slice(start, stop))
-                except Exception as e:
-                    await ctx.send(embed=simple_embed(f"Failed to fetch user or display logs: {e}"))
-                    return
+                user = ctx.author
             else:
-                try:
-                    user = await self.bot.fetch_user(member.id)
-                    embed = await mLily.ms(ctx, member.id, user, slice_expr=slice(start, stop))
-                except ValueError:
-                    await ctx.send(embed=simple_embed("Member ID must be a integer"))
-                    return
-                except Exception as e:
-                    await ctx.send(embed=simple_embed(f"Failed to fetch member ban logs csv: {e}"))
-                    return
-
-            await ctx.send(embeds=embed)
+                user = member
+            embed = await mLily.ms(ctx=ctx, moderator=user, page_start=page_start, page_end=page_end)
+            await ctx.reply(embeds=embed)
 
         except Exception as e:
-            await ctx.send(embed=simple_embed(f"No Modlogs Available", 'cross'))
+            print(f"Exception [ms] {e}")
+            await ctx.reply(embed=simple_embed(f"No Modlogs Available", 'cross'))
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='modlogs', description='Checks logs for a particular user')
-    async def modlogs(self, ctx, member: discord.User = None, mod_type: str = "all", slice_exp: str = None, moderator: discord.User = None):
+    async def modlogs(self, ctx, member: discord.User = None, mod_type: str = "all", page_start: int=0, page_end: int=5, moderator: discord.User = None):
         await ctx.defer()
-        slice_obj = None
-        if slice_exp:
-            try:
-                start, stop = (int(x) if x else None for x in slice_exp.split(":"))
-                slice_obj = slice(start, stop)
-            except Exception:
-                await ctx.send(embed=simple_embed("Slicing Error. Format must be 'start:stop'"))
-                return
-
         target_id = member.id if member else ctx.author.id
         try:
             user = await self.bot.fetch_user(target_id)
         except Exception:
-            await ctx.send(embed=simple_embed(f"No Mod Logs Returned", 'cross'))
+            await ctx.reply(embed=simple_embed(f"No Mod Logs Returned", 'cross'))
             return
 
         try:
@@ -205,11 +197,19 @@ class LilyModeration(commands.Cog):
                 user=user,
                 moderator=moderator,
                 mod_type=mod_type,
-                slice_expr=slice_obj
+                page_start=page_start,
+                page_end=page_end
             )
-            await ctx.send(embeds=embed)
+            await ctx.reply(embeds=embed)
         except Exception as e:
-            await ctx.send(embed=simple_embed(f"No Mod Logs Returned", 'cross'))
+            print(f"Exception [ModLogs] : {e}")
+            await ctx.reply(embed=simple_embed(f"No Mod Logs Returned", 'cross'))
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='mod_insights', description='Get an detailed insights about moderation on this server')
+    async def moderation_insights(self, ctx: commands.Context):
+        await mLily.moderation_insights(ctx)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

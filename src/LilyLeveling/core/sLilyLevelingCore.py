@@ -301,13 +301,13 @@ async def fetch_profile_details(ctx: commands.Context, member: discord.Member = 
             await ctx.reply(embed=embed)
 
     except Exception as e:
+        print(e)
         await ctx.reply(
             embed=simple_embed(
                 'Cannot Fetch your Profile, Please Chat Atleast Once!',
                 'cross'
             )
         )
-        print(e)
 
 async def fetch_leaderboard(ctx: commands.Context, type: str) -> None:
     try:
