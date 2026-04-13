@@ -1,11 +1,15 @@
 [
     {
-        "channel_id": 1458532550803849216,
-        "message_id": 1458848702306451486,
+        "channel_id": 1489573908813189223,
+        "message_id": 1489576410216665218,
         "config": {
             "BasicConfigurations": {
-                "TicketPanelSpawnChannel": 1458532550803849216,
-                "TicketLoggingHandler": 1449918663632355499
+                "TicketPanelSpawnChannel": 1489573908813189223,
+                "TicketLoggingHandler": 1489574651347603486,
+                "TicketType": "channel",
+                "higher_staffs_role_id": [
+                    1489370361945395210
+                ]
             },
             "EmbedConfigs": {
                 "TicketPanelEmbed": {
@@ -28,26 +32,6 @@
                                 {
                                     "name": "<:gift:1438045585570791555> Claim Giveaway",
                                     "value": "- If you won an giveaway and willing to claim it"
-                                },
-                                {
-                                    "name": "<:bot:1438504383397494896> Server-Issue Ticket",
-                                    "value": "- If you face any issues on our server"
-                                },
-                                {
-                                    "name": "<:bot:1438504383397494896> Giveaway Host Ticket",
-                                    "value": "- If you wish to host a giveaway for our server"
-                                },
-                                {
-                                    "name": "<:bot:1438504383397494896> Event Host Ticket",
-                                    "value": "- If you wish to conduct an event for our server"
-                                },
-                                {
-                                    "name": "<:bot:1438504383397494896> Event Enquiry Ticket",
-                                    "value": "- If you wish to Enquire about an particular event"
-                                },
-                                {
-                                    "name": "<:shield:1443348011227811870> Staff Report Ticket",
-                                    "value": "- If you wish to report our staff member for their actions"
                                 }
                             ]
                         }
@@ -80,13 +64,7 @@
             "TicketType": [
                 "Selector",
                 "Report an Member : <:member:1438045591098753104>",
-                "Claim Giveaway : <:gift:1438045585570791555>",
-                "Server Issues : <:bot:1438504383397494896>",
-                "Host Giveaway : <:gift:1438045585570791555>",
-                "Host Event : <:calender:1438048778526396529>",
-                "Event Enquiry : <:bookmark:1438048772939583571>",
-                "Staff Report : <:shield:1443348011227811870>"
-
+                "Claim Giveaway : <:gift:1438045585570791555>"
             ],
             "Modal": [
                 {
@@ -94,84 +72,26 @@
                         "Discord ID | Username of that Member": 600,
                         "Please explain what he did": 600
                     },
-                    "channel_id": 1458531621014601738,
+                    "channel_id": 1489573877431537775,
                     "ticket_base_name": "member_report",
                     "file_upload": true,
                     "ping-roles": [
-                        1462459395421114654
+                        1489335690880880651
                     ]
                 },
                 {
                     "fields": {
                         "Mention the giveaway": 200
                     },
-                    "channel_id": 1458531621014601738,
+                    "channel_id": 1489573877431537775,
                     "ticket_base_name": "giveaway_claim",
                     "file_upload": true,
                     "ping-roles": [
-                        1430570784308461619
-                    ]
-                },
-                {
-                    "fields": {
-                        "Mention the Server issue": 1000
-                    },
-                    "channel_id": 1458531621014601738,
-                    "ticket_base_name": "server_issue",
-                    "file_upload": false,
-                    "ping-roles": [
-                        1462459395421114654
-                    ]
-                },
-                {
-                    "fields": {
-                        "Mention the item name": 500,
-                        "Any requirments?": 500
-                    },
-                    "channel_id": 1458531621014601738,
-                    "ticket_base_name": "giveaway_host",
-                    "file_upload": false,
-                    "ping-roles": [
-                        1430570784308461619
-                    ]
-                },
-                {
-                    "fields": {
-                        "Mention the event": 500,
-                        "Describe the event": 1000
-                    },
-                    "channel_id": 1458531621014601738,
-                    "ticket_base_name": "event_host",
-                    "file_upload": false,
-                    "ping-roles": [
-                        1456264139210227905
-                    ]
-                },
-                {
-                    "fields": {
-                        "Please explain your statement": 1000
-                    },
-                    "channel_id": 1458531621014601738,
-                    "ticket_base_name": "event_enquiry",
-                    "file_upload": false,
-                    "ping-roles": [
-                        1456264139210227905
-                    ]
-                },
-                {
-                    "fields": {
-                        "Discord ID | Username of that Staff": 600,
-                        "Please explain what he did": 600
-                    },
-                    "channel_id": 1458531621014601738,
-                    "ticket_base_name": "staff_report",
-                    "file_upload": true,
-                    "ping-roles": [
-                        1431980481532002334, 1431451555973959731, 1466895750888685669
+                        1489335690880880651
                     ]
                 }
             ]
         },
-        "guild_id": 970643838047760384
+        "guild_id": 1489333992338624746
     }
 ]

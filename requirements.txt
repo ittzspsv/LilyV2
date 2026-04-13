@@ -13,3 +13,4 @@ aiofiles
 lavalink
 flashtext
 python-dotenv
+DiscordTranscript

@@ -1,4 +1,7 @@
-# LILY V2
+<div align="center" style="display: flex; align-items: center; justify-content: center; gap: 16px;">
+  <img src=".github/images/Chiaki.png" width="80" />
+  <h1 style="margin: 0;">Lily V2</h1>
+</div>
 
 Multi-purpose Discord bot designed to do almost any stuffs
 
@@ -42,11 +45,11 @@ All modules are based on **Cogs**, meaning they can be removed or placed dependi
 
 ## BLOX FRUITS Modules
 
-| ![Stock](misc/Stock.png) | ![Moderation](misc/Combo.webp) | 
+| ![Stock](.github/misc/Stock.png) | ![Moderation](.github/misc/Combo.webp) | 
 |:--:|:--:|
 | **Stock System** | **Combo System** |
 
-| ![FruitValues](misc/FruitValues.png) | ![WinLoss](misc/WinLoss.png) | ![Combo System](misc/FruitSuggestor.webp) |
+| ![FruitValues](.github/misc/FruitValues.png) | ![WinLoss](.github/misc/WinLoss.png) | ![Combo System](.github/misc/FruitSuggestor.webp) |
 |:--:|:--:|:--:|
 | **Fruit Values** | **Win / Loss** | **Fruit Suggestor**| 
 
@@ -54,18 +57,18 @@ All modules are based on **Cogs**, meaning they can be removed or placed dependi
 
 ## MODERATION TOOLS
 
-| ![Preview](misc/Moderation.jpg) | ![Preview](misc/Modstats.jpg) |
+| ![Preview](.github/misc/Moderation.jpg) | ![Preview](.github/misc/Modstats.jpg) |
 |:--:|:--:|
 | **Mod Logs** | **Mod Stats** |
 
 ### MODERATION LOGGING
-![Preview](misc/Logging.jpg)
+![Preview](.github/misc/Logging.jpg)
 
 ---
 
 ## STAFF MANAGEMENT TOOLS
 
-| ![Preview](misc/Management.jpg) | ![Preview](misc/ManagementList.jpg) |
+| ![Preview](.github/misc/Management.jpg) | ![Preview](.github/misc/ManagementList.jpg) |
 |:--:|:--:|
 | **Staff Profile** | **Staff List** |
 
@@ -73,17 +76,17 @@ All modules are based on **Cogs**, meaning they can be removed or placed dependi
 
 ## LEVELING / ECONOMY MODULE
 
-| ![Preview](misc/levelcard.webp) | ![Preview](misc/profile_card.webp) |
+| ![Preview](.github/misc/levelcard.webp) | ![Preview](.github/misc/profile_card.webp) |
 |:--:|:--:|
 | **Leveling** | **Profile** |
 
-![Preview](misc/Leaderboard.webp)  
+![Preview](.github/misc/Leaderboard.webp)  
 **Leaderboard**
 
 ---
 
 ## GREETING MODULE: WELCOME AND GOODBYE
-![Preview](misc/welcome.png)
+![Preview](.github/misc/welcome.png)
 
 ---
 

@@ -12,16 +12,13 @@ from typing import Optional
 from Misc.sLilyEmbed import simple_embed
 
 
-from LilyManagement.db.sLilyStaffDatabaseAccess import fetch_staff_detail, fetch_all_staffs, add_staff, remove_staff, edit_staff, strike_staff, remove_strike, fetch_staff_strikes, add_loa, remove_loa, update_staff
+from LilyManagement.db.sLilyStaffDatabaseAccess import fetch_staff_detail, fetch_all_staffs, add_staff, remove_staff, edit_staff, strike_staff, remove_strike, fetch_staff_strikes, add_loa, remove_loa, update_staff, add_staff_quota, remove_staff_quota, fetch_staff_quota, get_staff_current_quota, remove_role, reset_messages, get_all_staff_quota_status
 import LilyManagement.db.sLilyStaffDatabaseAccess as LSDA
 
 from LilyManagement.components.sLilyStaffManagementComponents import StaffsView, StaffRoleView
 
 from discord.ext import commands
 
-
-async def initialize_cache():
-    pass
 
 async def GetRoles(role_names: tuple = ()):
     try:
@@ -522,7 +519,7 @@ async def StrikeStaff(ctx: commands.Context, staff: discord.Member, reason: str)
             staff_updates_channel = None
 
     embed = discord.Embed(
-        color=discord.Color.white(),
+        color=16777215,
         title="Strike Information",
         description=f"### {staff.mention} has been Striked!"
     )
@@ -922,3 +919,275 @@ async def UpdateStaffBatch(ctx: commands.Context, content: str, update_type: str
         embed=simple_embed(f"Batch of staffs has been {act}.")
     )
 
+async def MessageTracker(message: discord.Message):
+    if not message.guild:
+        return
+
+    if message.content.startswith(Configs.bot_command_prefix):
+        return
+    
+    try:
+        guild_cache = LSDA.staff_management_cache.get(message.guild.id, {})
+
+        approved_roles = guild_cache.keys()
+        allowed_channels = guild_cache.get("message_count_channel", [])
+
+        if (any(role.id in approved_roles for role in message.author.roles) and message.channel.id in allowed_channels):
+            await LSDA.update_message({
+                "guild_id": message.guild.id,
+                "staff_id": message.author.id
+            })
+    except Exception as e:
+        print(e)
+
+async def AddStaffQuota(ctx: commands.Context,quota_role: discord.Role,minimum_ms: int,minimum_msg: int,on_quota_pass: types.OnQuotaEvent = None,on_quota_fail: types.OnQuotaEvent = None,check_by: types.QuotaCheckBy = None):
+    if not ctx.guild:
+        return await ctx.send("This command can only be used in a server.")
+
+    payload = {
+        "guild_id": ctx.guild.id,
+        "role_id": quota_role.id,
+        "min_msg": minimum_msg,
+        "min_ms": minimum_ms,
+        "on_quota_passed": on_quota_pass.value.lower(),
+        "on_quota_failed": on_quota_fail.value.lower(),
+        "check_by": check_by
+    }
+
+    result = await LSDA.add_staff_quota(payload)
+
+    if not result.get("success"):
+        await ctx.reply(embed=simple_embed(result.get("message"), 'cross'))
+        return
+
+    await ctx.reply(embed=simple_embed(result.get("message")))
+
+async def RemoveStaffQuota(ctx: commands.Context, quota_id: str):
+    payload = {
+        "quota_id": int(quota_id)
+    }
+
+    result = await LSDA.remove_staff_quota(payload)
+
+    if not result.get("success"):
+        await ctx.reply(embed=simple_embed(result.get("message"), 'cross'))
+        return
+
+
+    await ctx.reply(embed=simple_embed(result.get("message")))
+
+async def FetchStaffQuota(ctx: commands.Context):
+    if not ctx.guild:
+        return await ctx.send("This command can only be used in a server.")
+
+    payload = {
+        "guild_id": ctx.guild.id
+    }
+
+    quotas = await LSDA.fetch_staff_quota(payload)
+
+    if not quotas:
+        return await ctx.reply(embed=simple_embed("No staff quotas configured.", 'cross'))
+
+    embed = discord.Embed(
+        title="Staff Quota",
+        description="- Showing all defined Staff Quota for this Server",
+        color=16777215
+    )
+
+    if ctx.guild.icon:
+        embed.set_thumbnail(url=ctx.guild.icon.url)
+    embed.set_image(url=Configs.img['border'])
+
+    for quota in quotas:
+        role = ctx.guild.get_role(quota["role_id"])
+        role_mention = role.mention if role else f"`{quota['role_id']}`"
+
+        embed.add_field(
+            name=f"Quota #{quota['quota_id']}",
+            value=(
+                f"- Role : {role_mention}\n"
+                f"- Minimum Messages : {quota['min_msg']}\n"
+                f"- Minimum Moderation Stats : {quota['min_ms']}\n"
+                f"- If Passed : {quota['on_quota_passed'] or 'None'}\n"
+                f"- If Failed : {quota['on_quota_failed'] or 'None'}\n"
+                f"- Quota Check By : {quota['check_by'] or 'None'}"
+            ),
+            inline=False
+        )
+
+    await ctx.reply(embed=embed)
+
+async def CheckStaffQuota(ctx, staff: discord.Member):
+    try:
+        response = await get_staff_current_quota({
+            "guild_id": ctx.guild.id,
+            "staff_id": staff.id
+        })
+
+        if not response.get("success"):
+            return await ctx.send(embed=simple_embed(f"{response.get("message")}", 'cross'))
+
+        msgs = response["messages"]
+        quota = response["quota"]
+        result = response["result"]
+        mod_stats = response.get("mod_stats_weekly", {})
+
+        min_msg = quota.get("min_msg", 0) or 0
+        min_ms = quota.get("min_ms", 0) or 0
+        weekly = msgs.get("weekly", 0) or 0
+        weekly_ms = mod_stats.get("weekly_ms", 0)
+        weekly_ms = weekly_ms or 0
+
+        remaining_msg = max(min_msg - weekly, 0)
+        remaining_ms = max(min_ms - weekly_ms, 0)
+
+        msg_status = (
+            f"{Configs.emoji['checked']} Passed ({weekly}/{min_msg})"
+            if result.get("message_quota_passed")
+            else f"{Configs.emoji['cross']} Failed ({weekly}/{min_msg}, need {remaining_msg} more)"
+        )
+        
+        ms_status = (
+            f"{Configs.emoji['checked']} Passed ({weekly_ms}/{min_ms})"
+            if result.get("ms_quota_passed")
+            else f"{Configs.emoji['cross']} Failed ({weekly_ms}/{min_ms}, need {remaining_ms} more)"
+        )
+
+        embed = discord.Embed(
+            title=f"Displaying Quota State for {staff}",
+            color=16777215
+        )
+
+        embed.set_thumbnail(url=staff.display_avatar.url)
+
+        embed.add_field(
+            name="Message Stats",
+            value=(
+                f"- **Daily:** {msgs['daily']}\n"
+                f"- **Weekly:** {msgs['weekly']}\n"
+                f"- **Monthly:** {msgs['monthly']}\n"
+                f"- **Total:** {msgs['total']}"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="Moderation Stats (7 Days)",
+            value=f"- **Total Actions:** {weekly_ms}",
+            inline=False
+        )
+
+        embed.add_field(
+            name="Quota Requirements",
+            value=(
+                f"- **Min Messages:** {quota['min_msg']}\n"
+                f"- **Min Mod Actions:** {quota['min_ms']}"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="Conclusion",
+            value=(
+                f"- **Messages:** {msg_status}\n"
+                f"- **Moderation:** {ms_status}"
+            ),
+            inline=False
+        )
+
+        embed.set_footer(text=f"Staff ID: {response['staff_id']}")
+
+        await ctx.reply(embed=embed)
+    except Exception as e:
+        print("CheckStaffQuota", e)
+
+async def RemoveRole(ctx: commands.Context, role: int):
+    response = await remove_role({"role_id": role})
+
+    if response.get("success"):
+        await ctx.reply(embed=simple_embed(f"{response.get("message")}"))
+    else:
+        await ctx.reply(embed=simple_embed(f"{response.get("message")}", 'cross'))
+
+async def EvaluateStaffQuota(ctx: commands.Context):
+    try:
+        await ctx.defer()
+
+        response = await get_all_staff_quota_status(ctx.guild.id)
+
+        if not response.get("success"):
+            return await ctx.reply(
+                embed=simple_embed(response.get("message", "Error occurred"))
+            )
+
+        passed_staffs = response.get("passed_staff", [])
+        failed_staffs = response.get("failed_staff", [])
+
+
+        passed_staffs_str = "\n".join([
+            f"<@{s['staff_id']}>"
+            for s in passed_staffs
+        ]) or "None"
+
+        failed_staffs_str = ""
+
+        for staff in failed_staffs:
+            staff_id = staff["staff_id"]
+
+            failed_staffs_str += (
+                f"<@{staff_id}>\n"
+            )
+
+        embed = discord.Embed(
+            title="Weekly Staff Quota Results",
+            color=0xFFFFFF,
+            description=(
+                "### Results Based on\n"
+                "- Weekly Messages\n"
+                "- Weekly Mod Stats"
+            ),
+        )
+
+        embed.add_field(
+            name="Passed Staffs",
+            value=passed_staffs_str,
+            inline=False
+        )
+
+        embed.add_field(
+            name="Failed Staffs",
+            value=failed_staffs_str or "None",
+            inline=False
+        )
+
+        if ctx.guild.icon:
+            embed.set_thumbnail(url=ctx.guild.icon.url)
+
+        channel_id = response.get("staff_updates_channel_id")
+        staff_updates_channel = None
+
+        if channel_id:
+            staff_updates_channel = ctx.guild.get_channel(channel_id)
+            if staff_updates_channel is None:
+                try:
+                    staff_updates_channel = await ctx.guild.fetch_channel(channel_id)
+                except Exception:
+                    staff_updates_channel = None
+
+        if staff_updates_channel:
+            await staff_updates_channel.send(embed=embed)
+
+
+        reset_response = await reset_messages({"guild_id": ctx.guild.id})
+
+        if reset_response.get("success"):
+            await ctx.send(embed=simple_embed(
+                "Evaluated Staff Quota and Reset successfully!"
+            ))
+        else:
+            await ctx.send(embed=simple_embed(
+                "Evaluated Staff Quota but failed to reset messages!"
+            ))
+    except Exception as e:
+        print(e)

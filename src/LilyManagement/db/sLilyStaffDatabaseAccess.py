@@ -1,8 +1,12 @@
 import aiosqlite
 from datetime import datetime, timezone
-import Config.sBotDetails as Configs
+import LilyModeration.db.sLilyModerationDatabaseAccess as LMDA
 
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, DefaultDict
+from collections import defaultdict
+
+
+from ast import literal_eval
 
 sdb = None
 
@@ -14,8 +18,31 @@ async def initialize():
     await sdb.execute("CREATE TABLE IF NOT EXISTS roles (role_id INTEGER PRIMARY KEY ,role_name TEXT NOT NULL UNIQUE,role_priority INTEGER NOT NULL, ban_limit INTEGER)")
     await sdb.commit()
     '''
+
+staff_management_cache = {}
+
 async def initialize_cache():
-    pass
+    global staff_management_cache
+
+    cursor = await sdb.execute("SELECT role_id, ban_limit, guild_id FROM roles WHERE role_type = 'Staff'")
+    rows = await cursor.fetchall()
+
+    for role_id, ban_limit, guild_id in rows:
+        if guild_id not in staff_management_cache:
+            staff_management_cache[guild_id] = {}
+
+        staff_management_cache[guild_id][role_id] = {
+            "ban_limit": ban_limit
+        }
+
+    cursor = await sdb.execute("SELECT messages_count_channel, guild_id FROM staff_configs")
+    rows = await cursor.fetchall()
+
+    for message_count_channel, guild_id in rows:
+        try:
+            staff_management_cache[guild_id]["message_count_channel"] = literal_eval(message_count_channel)
+        except:
+            staff_management_cache[guild_id]["message_count_channel"] = []
 
 async def fetch_staff_detail(staff_id: int):
     query = """
@@ -692,8 +719,8 @@ async def remove_loa(payload: dict) -> Dict[str, Any]:
         config = await cursor.fetchone()
 
         roles_to_remove = ()
-        if config and config["loa_role"]:
-            roles_to_remove = (config["loa_role"],)
+        if config and config[0]:
+            roles_to_remove = (config[0],)
 
         await sdb.commit()
 
@@ -904,4 +931,362 @@ async def update_staff(payload: dict) -> Dict[str, Any]:
     }
 
 async def add_staff_quota(payload: dict) -> Dict[str, Any]:
-    pass
+    guild_id: int = payload.get("guild_id")
+    role_id: int = payload.get("role_id")
+    min_msg: int = payload.get("min_msg")
+    min_ms: int = payload.get("min_ms")
+
+    on_quota_passed: str = payload.get("on_quota_passed")
+    on_quota_failed: str = payload.get("on_quota_failed")
+
+    check_by: str = payload.get("check_by")
+
+    # Constraints
+    if not all(
+        action is None or action in {'promote', 'demote', 'strike', 'Promote', 'Demote', 'Strike', 'none', 'None'}
+        for action in (on_quota_passed, on_quota_failed)):       
+            return {"success": False, "message": "Invalid parameters passed"}
+    
+    if check_by not in ("1d", "7d", "30d", None):
+        return {"success": False, "message": "Invalid parameter type passed (check_by)"}
+    
+    # Add Quota Now.
+    await sdb.execute('''
+            INSERT INTO staff_quota (role_id, guild_id, min_msg, min_ms, on_quota_passed, on_quota_failed, check_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (role_id, guild_id, min_msg, min_ms, on_quota_passed, on_quota_failed, check_by))
+
+    await sdb.commit()
+
+    return {"success": True, "message" : "Quota Defined Successfully"}
+
+async def fetch_staff_quota(payload: dict) -> List[Dict[str, Any]]:
+    guild_id: int = payload.get("guild_id")
+
+    cursor = await sdb.execute('''
+        SELECT quota_id, role_id, guild_id, min_msg, min_ms,
+               on_quota_passed, on_quota_failed, check_by
+        FROM staff_quota
+        WHERE guild_id = ?
+    ''', (guild_id,))
+
+    rows = await cursor.fetchall()
+
+    return [
+        {
+            "quota_id": row[0],
+            "role_id": row[1],
+            "guild_id": row[2],
+            "min_msg": row[3],
+            "min_ms": row[4],
+            "on_quota_passed": row[5],
+            "on_quota_failed": row[6],
+            "check_by": row[7],
+        }
+        for row in rows
+    ]
+
+async def remove_staff_quota(payload: dict) -> Dict[str, Any]:
+    quota_id: int = payload.get("quota_id")
+
+    cursor = await sdb.execute(
+        "DELETE FROM staff_quota WHERE quota_id = ?",
+        (quota_id,)
+    )
+
+    await sdb.commit()
+
+    if cursor.rowcount == 0:
+        return {"success": False, "message": "Quota not found"}
+
+    return {"success": True, "message": "Quota removed successfully"}
+
+async def update_message(payload: dict):
+    staff_id: int = payload.get("staff_id")
+    guild_id: int = payload.get("guild_id")
+
+    await sdb.execute('''
+        INSERT INTO staff_messages (
+            staff_id, guild_id,
+            daily_messages, weekly_messages, monthly_messages, total_messages
+        )
+        VALUES (?, ?, 1, 1, 1, 1)
+        ON CONFLICT(staff_id, guild_id) DO UPDATE SET
+            daily_messages = daily_messages + 1,
+            weekly_messages = weekly_messages + 1,
+            monthly_messages = monthly_messages + 1,
+            total_messages = total_messages + 1
+    ''', (staff_id, guild_id))
+
+    await sdb.commit()
+
+async def get_staff_current_quota(payload: dict) -> Dict[str, Any]:
+    guild_id: int = payload.get("guild_id")
+    staff_id: int = payload.get("staff_id")
+
+    msg_query = """
+    SELECT daily_messages, weekly_messages, monthly_messages, total_messages
+    FROM staff_messages
+    WHERE staff_id = ? AND guild_id = ?
+    """
+    async with sdb.execute(msg_query, (staff_id, guild_id)) as cursor:
+        msg_data = await cursor.fetchone()
+
+    if not msg_data:
+        return {"success": False, "message": "Staff messages not found"}
+
+    daily, weekly, monthly, total = msg_data
+
+    role_query = """
+    SELECT r.role_id
+    FROM staff_roles sr
+    JOIN roles r ON sr.role_id = r.role_id
+    WHERE sr.staff_id = ?
+    ORDER BY r.role_priority ASC
+    LIMIT 1
+    """
+    async with sdb.execute(role_query, (staff_id,)) as cursor:
+        role_data = await cursor.fetchone()
+
+    if not role_data:
+        return {"success": False,"message": "Staff role not found"}
+
+    role_id = role_data[0]
+
+    quota_query = """
+    SELECT min_msg, min_ms
+    FROM staff_quota
+    WHERE role_id = ? AND guild_id = ?
+    """
+    async with sdb.execute(quota_query, (role_id, guild_id)) as cursor:
+        quota_data = await cursor.fetchone()
+
+    if not quota_data:
+        return {"success": False, "message": "No quota has been defined for any of the staff roles assigned to this user. Please define a quota."}
+    
+    mod_stats = await LMDA.fetch_mod_stats({"guild_id" : guild_id, "moderator_id": staff_id, "page_start" : 0, "page_end": 0})
+
+    stats = mod_stats.get("stats") or {}
+    weekly_ms = sum(action_data.get("7d", 0) for action_data in stats.values())
+
+    min_msg = int(quota_data[0]) if quota_data[0] else 0
+    min_ms = int(quota_data[1]) if quota_data[1] else 0
+    message_quota_passed = weekly >= min_msg
+    ms_quota_passed = weekly_ms >= min_ms
+    
+
+    return {
+        "success" : True,
+        "message" : "Quota fetched successfully.",
+        "staff_id": staff_id,
+        "guild_id": guild_id,
+
+        "messages": {
+            "daily": daily,
+            "weekly": weekly,
+            "monthly": monthly,
+            "total": total,
+        },
+
+        "mod_stats_weekly" : {
+            "weekly_ms": weekly_ms
+        },
+
+        "quota": {
+            "min_msg": min_msg,
+            "min_ms": min_ms,
+        },
+
+        "result": {
+            "message_quota_passed": message_quota_passed,
+            "ms_quota_passed": ms_quota_passed
+        }
+    }
+
+async def remove_role(payload: dict) -> Dict[str, Any]:
+    role_id: int = payload.get("role_id", 0)
+
+    try:
+        await sdb.execute("DELETE FROM staff_roles WHERE role_id = ?", (role_id,))
+        await sdb.execute("DELETE FROM staff_quota WHERE role_id = ?", (role_id,))
+        await sdb.execute("DELETE FROM roles WHERE role_id = ?", (role_id,))
+
+        await sdb.commit()
+        
+        return {
+            "success": True,
+            "message": "Role removed successfully"
+        }
+    
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Role removal encountered with an error: {e}"
+        }
+    
+async def get_all_staff_quota_status(guild_id: int) -> Dict[str, Any]:
+    quota_query = """
+    SELECT quota_id, role_id, min_msg, min_ms, on_quota_passed, on_quota_failed, check_by
+    FROM staff_quota
+    WHERE guild_id = ?
+    """
+    async with sdb.execute(quota_query, (guild_id,)) as cursor:
+        quotas = await cursor.fetchall()
+
+    if not quotas:
+        return {
+            "success": False,
+            "message": "No quotas defined for this guild"
+        }
+
+    staff_query = """
+    SELECT staff_id, role_id, name
+    FROM staffs
+    WHERE guild_id = ? AND retired = 0 AND on_loa = 0
+    """
+    async with sdb.execute(staff_query, (guild_id,)) as cursor:
+        staff_rows = await cursor.fetchall()
+
+    if not staff_rows:
+        return {
+            "success": False,
+            "message": "No staff found for this guild"
+        }
+
+    role_map_query = """
+    SELECT staff_id, role_id
+    FROM staff_roles
+    """
+    async with sdb.execute(role_map_query) as cursor:
+        role_map_rows = await cursor.fetchall()
+
+    staff_roles_map: DefaultDict[int, List[int]] = defaultdict(list)
+    for staff_id, role_id in role_map_rows:
+        staff_roles_map[staff_id].append(role_id)
+
+    for staff_id, role_id, _ in staff_rows:
+        if role_id and role_id not in staff_roles_map[staff_id]:
+            staff_roles_map[staff_id].append(role_id)
+
+
+    passed_staff: List[Dict] = []
+    failed_staff: List[Dict] = []
+
+
+    for staff_id, base_role_id, name in staff_rows:
+
+        staff_roles = staff_roles_map.get(staff_id, [])
+
+        staff_passed_any = False
+        staff_fail_reasons = []
+        staff_results = []
+
+        for quota in quotas:
+            quota_id, quota_role_id, min_msg, min_ms, on_pass, on_fail, check_by = quota
+
+            if quota_role_id not in staff_roles:
+                continue
+
+            msg_query = """
+            SELECT weekly_messages
+            FROM staff_messages
+            WHERE staff_id = ? AND guild_id = ?
+            """
+            async with sdb.execute(msg_query, (staff_id, guild_id)) as cursor:
+                msg_row = await cursor.fetchone()
+
+            weekly_messages = msg_row[0] if msg_row else 0
+
+
+            mod_stats = await LMDA.fetch_mod_stats({
+                "guild_id": guild_id,
+                "moderator_id": staff_id,
+                "page_start": 0,
+                "page_end": 0
+            })
+
+            stats = mod_stats.get("stats") or {}
+            weekly_ms = sum(a.get("7d", 0) for a in stats.values())
+
+            msg_ok = weekly_messages >= int(min_msg or 0)
+            ms_ok = weekly_ms >= int(min_ms or 0)
+
+            quota_passed = msg_ok and ms_ok
+
+            staff_results.append({
+                "quota_id": quota_id,
+                "role_id": quota_role_id,
+                "passed": quota_passed,
+                "weekly_messages": weekly_messages,
+                "weekly_ms": weekly_ms,
+                "required": {
+                    "min_msg": int(min_msg or 0),
+                    "min_ms": int(min_ms or 0)
+                },
+                "failed_reasons": (
+                    [] if quota_passed else
+                    (["message_quota_failed"] if not msg_ok else []) +
+                    (["mod_stats_failed"] if not ms_ok else [])
+                )
+            })
+
+            if quota_passed:
+                staff_passed_any = True
+            else:
+                staff_fail_reasons.append(f"quota_{quota_id}_failed")
+
+
+        if staff_passed_any:
+            passed_staff.append({
+                "staff_id": staff_id,
+                "name": name,
+                "results": staff_results
+            })
+        else:
+            failed_staff.append({
+                "staff_id": staff_id,
+                "name": name,
+                "reasons": staff_fail_reasons,
+                "results": staff_results
+            })
+
+    cursor = await sdb.execute("""
+            SELECT staff_updates_channel FROM staff_configs WHERE guild_id = ?
+     """, (guild_id,))
+
+    config = await cursor.fetchone()
+
+    return {
+        "success": True,
+        "guild_id": guild_id,
+        "summary": {
+            "total_staff": len(staff_rows),
+            "passed": len(passed_staff),
+            "failed": len(failed_staff),
+            "total_quotas": len(quotas)
+        },
+        "passed_staff": passed_staff,
+        "failed_staff": failed_staff,
+        "staff_updates_channel_id" : config[0]
+    }
+
+async def reset_messages(payload: dict) -> Dict[str, Any]:
+    guild_id: int = payload.get("guild_id", 0)
+
+    if not guild_id:
+        return {"success": False, "message": "Invalid guild_id"}
+
+    query = """
+    UPDATE staff_messages
+    SET daily_messages = 0,
+        weekly_messages = 0
+    WHERE guild_id = ?
+    """
+
+    await sdb.execute(query, (guild_id,))
+    await sdb.commit()
+
+    return {
+        "success": True,
+        "message": f"Daily and weekly messages reset for guild {guild_id}"
+    }

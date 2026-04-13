@@ -6,12 +6,17 @@ import json
 import Config.sBotDetails as Configs
 import os
 import Misc.sLilyEmbed as LilyEmbed
-from LilyTicketTool.components.LilyTicketToolComponents import TicketSelector, TicketEmbed
+from LilyTicketTool.components.LilyTicketToolComponents import TicketSelector, TicketEmbed, TicketComponentEmbed
 import LilyTicketTool.components.LilyTicketToolComponents as LTTC
 from LilyUtility.sLilyUtility import load_json
 import asyncio
+import json
 
-from typing import Union
+import DiscordTranscript
+import io
+
+
+
 
 TICKET_VIEWS_PATH = Path("storage/view/TicketViews.json")
 
@@ -48,15 +53,14 @@ async def InitializeTicketView(bot):
         for panel in json_data:
             try:
                 config = panel.get("config")
+                guild_id: int = panel.get("guild_id")
                 if not config:
                     continue
 
                 basic = config["BasicConfigurations"]
 
                 channel_id = basic["TicketPanelSpawnChannel"]
-                log_channel_id = basic["TicketLoggingHandler"]
                 message_id = panel.get("message_id")
-                guild_id = panel.get("guild_id")
 
                 content, embeds = LilyEmbed.ParseAdvancedEmbed(
                     config["EmbedConfigs"]["TicketPanelEmbed"]
@@ -93,10 +97,21 @@ async def InitializeTicketView(bot):
                 except (discord.NotFound, discord.Forbidden):
                     continue
 
+                try:
+                    cursor = await LilyLogging.mdb.execute("SELECT ticket_id, opened_user_id,submission_json, message_id FROM tickets WHERE guild_id = ?", (guild_id,))
+                    rows = await cursor.fetchall()
+
+                    for ticket_id, opener_user_id, submission_json, message_id in rows:
+                        view = TicketComponentEmbed(opener_user_id, ticket_id, json.loads(submission_json), config)
+                        bot.add_view(view, message_id=message_id)
+                except Exception as e:
+                    print(f"Exception [Ticket Componnet Embed View] {e}")
+
                 await asyncio.sleep(1)
 
             except Exception as e:
                 print(f"[TicketPanel Restore ERROR] {e}")
+
 
         if updated:
             with open(
@@ -146,8 +161,22 @@ async def cTicketLogAction(ctx: commands.Context,thread: discord.Thread,opened_u
     except Exception as e:
         print(f"Exception [TicketLogAction] {e}")
 
-async def cleanup_ticket_data(thread: discord.Thread, message_id):
-        ticket_id = thread.id
+async def cTicketLogActionChannel(ctx: commands.Context,opened_user_id: int,ticket_type: str, logs_channel: discord.TextChannel, transcripts_file):
+    embed = discord.Embed(
+        title="Ticket Logs",
+        description=f"### __TICKET DETAILS__\n> - Ticket Opener : <@{opened_user_id}>\n",
+        color=0xFFFFFF
+    )
+
+    embed.set_image(url="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=695fa4b2&is=695e5332&hm=4fc10e3e38fa5a3270fab5cd8fff0928472594db43955848c443dcddef447f5e&")
+
+    embed.set_footer(text=ticket_type)
+    try:
+        await logs_channel.send(content=f'<@{opened_user_id}>', embed=embed, file=transcripts_file)
+    except Exception as e:
+        print(f"Exception [TicketLogAction] {e}")
+
+async def cleanup_ticket_data(ticket_id: int):
         await LilyLogging.mdb.execute(
             "DELETE FROM tickets WHERE ticket_id = ?",
             (ticket_id,)
@@ -156,19 +185,21 @@ async def cleanup_ticket_data(thread: discord.Thread, message_id):
 
 async def CloseTicketThread(ctx: commands.Context):
     await ctx.defer()
-    if not isinstance(ctx.channel, discord.Thread):
+    await ctx.reply(embed=LilyEmbed.simple_embed("Ticket close scheduling has been initiated. The channel will be deleted shortly."))
+    if not isinstance(ctx.channel, (discord.Thread, discord.TextChannel)):
         return await ctx.reply(
             embed=LilyEmbed.simple_embed(
-                "Attempted to Close an invalid Instigator Thread",
+                "Attempted to Close an invalid Instigator Ticket",
                 "cross"
             )
         )
 
     thread = ctx.channel
+    ticket_id: int = thread.id
     try:
         cursor = await LilyLogging.mdb.execute(
             """
-            SELECT opened_user_id, ticket_type, log_channel_id
+            SELECT opened_user_id, ticket_type, log_channel_id, submission_json
             FROM tickets
             WHERE ticket_id = ?;
             """,
@@ -179,14 +210,7 @@ async def CloseTicketThread(ctx: commands.Context):
         if not row:
             raise RuntimeError("Ticket data not found")
 
-        opened_user_id, ticket_type, logs_channel_id = row
-
-        await ctx.send(
-            embed=LilyEmbed.simple_embed("Ticket closed successfully."),
-            ephemeral=True
-        )
-
-        await thread.edit(archived=True, locked=True)
+        opened_user_id, ticket_type, logs_channel_id, submission_json_raw = row
 
         logs_channel = ctx.guild.get_channel(logs_channel_id)
         if not logs_channel:
@@ -195,33 +219,74 @@ async def CloseTicketThread(ctx: commands.Context):
             except discord.NotFound:
                 logs_channel = None
 
-        if logs_channel:
+
+        if isinstance(ctx.channel, discord.Thread):
+             thread.edit(archived=True, locked=True)
+        elif isinstance(ctx.channel, discord.TextChannel):
+            transcript = await DiscordTranscript.export(
+                ctx.channel,
+                limit=None,
+                tz_info="America/New_York",
+                military_time=True,
+                bot=ctx.bot,
+            )
+
+            if transcript is None:
+                return
+
+            transcript_file = discord.File(
+                io.BytesIO(transcript.encode()),
+                filename=f"transcript-{ctx.channel.name}.html",
+            )
+
+            await ctx.channel.delete(reason=f"Ticket Closed by {ctx.author}")
+            
+        if logs_channel and isinstance(thread, discord.Thread):
             await cTicketLogAction(
                 ctx=ctx,
                 thread=thread,
                 opened_user_id=opened_user_id,
                 ticket_type=ticket_type,
                 accessed_staff_ids=set(),
-                logs_channel=logs_channel
+                logs_channel=logs_channel,
+
             )
 
-        await cleanup_ticket_data(thread, None)
+        elif logs_channel and isinstance(thread, discord.TextChannel):
+            await cTicketLogActionChannel(
+                ctx=ctx,
+                opened_user_id=opened_user_id,
+                ticket_type=ticket_type,
+                logs_channel=logs_channel,
+                transcripts_file=transcript_file
+            )
+
+
+        await cleanup_ticket_data(ticket_id)
 
     except Exception as e:
         print(f"[TICKET CLOSE ERROR] {e}")
         await ctx.send(
             embed=LilyEmbed.simple_embed(
-                "Attempted to Close an invalid Instigator Thread",
+                "Attempted to Close an invalid Instigator Ticket",
                 "cross"
             ),
             ephemeral=True
         )
 
-async def open_thread_by_id(ctx: commands.Context, id: str):
-    try:
-        thread = await ctx.guild.fetch_channel(id)
-        thread.add_user(ctx.author)
-        await thread.send(embed=LilyEmbed.simple_embed("Thread Opened, please use `close_thread`"))
-    except Exception as e:
-        print(f"Exception [OpenThreadByID] {e}")
-    pass
+async def RenameTicket(ctx: commands.Context, name: str):
+    await ctx.defer()
+
+    cursor = await LilyLogging.mdb.execute(
+            """
+            SELECT opened_user_id
+            FROM tickets
+            WHERE ticket_id = ?;
+            """,
+            (ctx.channel.id,)
+        )
+    row = await cursor.fetchone()
+    if row and row[0]:
+        await ctx.channel.edit(name=name.replace(" ", "_"), reason=f"Ticket renamed by {ctx.author}")
+    else:
+        await ctx.reply(embed=LilyEmbed.simple_embed("Attempted to rename an invalid Instigator Ticket"))

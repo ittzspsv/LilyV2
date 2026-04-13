@@ -17,62 +17,45 @@ class LilyModeration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def resolve_user(self, ctx, member: str):
+        try:
+            return await commands.MemberConverter().convert(ctx, member)
+        except commands.MemberNotFound:
+            try:
+                user_id = int(member)
+                return await ctx.bot.fetch_user(user_id)
+            except ValueError:
+                await ctx.reply(embed=simple_embed("Invalid user ID", 'cross'))
+            except discord.NotFound:
+                await ctx.reply(embed=simple_embed("User not found.", 'cross'))
+            except discord.HTTPException as e:
+                await ctx.reply(embed=simple_embed(f"Fetch failed: {e}", 'cross'))
+        return None
+
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ban', description='bans a user with config = limited')
-    async def ban(self, ctx:commands.Context, member: str = None, *, reason="No reason provided"):
-        if member is None:
-            await ctx.reply(view=CommandInfo(ctx, "Ban", ["ban user reason", f"ban {ctx.me.mention} Toxicity!"]))
-            return
-
+    async def ban(self, ctx: commands.Context, member: str = None, *, reason="No reason provided"):
+        if not member:
+            return await ctx.reply(
+                view=CommandInfo(ctx, "Ban", ["ban user reason", f"ban {ctx.me.mention} Toxicity!"])
+            )
 
         await ctx.defer()
-        attachments = []
 
-        if ctx.message and ctx.message.attachments:
-            attachments = ctx.message.attachments
-
-        elif ctx.interaction and ctx.interaction.attachments:
-            attachments = ctx.interaction.attachments
+        attachments = (ctx.message.attachments if ctx.message else []) or \
+                    (ctx.interaction.attachments if ctx.interaction else [])
 
         proofs = [
             att for att in attachments
-            if att.content_type
-            and att.content_type.startswith(("image/", "video/"))
+            if att.content_type and att.content_type.startswith(("image/", "video/"))
         ]
-        role_ids = [role.id for role in ctx.author.roles if role.name != "@everyone"]
 
-        try:
-            target_user = None
-            try:
-                target_user = await commands.MemberConverter().convert(ctx, member)
-            except commands.MemberNotFound:
-                try:
-                    user_id = int(member)
-                    target_user = await ctx.bot.fetch_user(user_id)
-                except ValueError as v:
-                    await ctx.reply(embed=simple_embed(f"Value Error {v}", 'cross'))
-                    return
-                except discord.NotFound:
-                    await ctx.reply(embed=simple_embed(f"User ID {member} not found. Please check the ID.", 'cross'))
-                    return
-                except discord.HTTPException as e:
-                    await ctx.reply(embed=simple_embed(f"Failed to fetch user data: {e}", 'cross'))
-                    return
+        target_user = await self.resolve_user(ctx, member)
+        if not target_user:
+            return
 
-            if not target_user:
-                await ctx.reply(embed=simple_embed("No Valid Users to Ban", 'cross'))
-                return
-
-            if not await mLily.exceeded_ban_limit(ctx, ctx.author.id, role_ids):
-                await mLily.ban_user(ctx, target_user, reason, proofs)
-            else:
-                await ctx.reply(embed=simple_embed(f"Cannot ban the user! I'm Sorry But you have exceeded your daily limit\n"f"{await mLily.remaining_Ban_time(ctx, ctx.author.id, role_ids)}", 'cross'))
-                return
-
-        except Exception as e:
-            await ctx.reply(embed=simple_embed(f"An error occurred: {e}", 'cross'))
-
+        await mLily.ban_user(ctx, target_user, reason, proofs)
 
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
@@ -235,5 +218,41 @@ class LilyModeration(commands.Cog):
             f"**Ban Cooldowns for {target.display_name}:**\n{cooldown_text}"
         )
 
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='edit_case',description='Edit a case (only cases initiated by the command interactor can be edited)')
+    async def case_edit(self, ctx: commands.Context, case_id: int=None, * ,new_reason: str=None):
+        if case_id is None or new_reason is None:
+            await ctx.reply(
+                view=CommandInfo(
+                    ctx,
+                    "Case Edit",
+                    ["edit_case case_id new_reason", "edit_case 7777 Handled by mistake"]
+                )
+            )
+            return
+        await mLily.CaseEdit(ctx, case_id, new_reason, False)
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff Manager', 'Head Administrator', 'Developer')))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name='edit_case_absolute',description="Edit a case (can edit any user's case")
+    async def case_edit_absolute(self, ctx: commands.Context, case_id: int=None, *, new_reason: str=None):
+        if not new_reason:
+            await ctx.reply(
+                view=CommandInfo(
+                    ctx,
+                    "Case Edit Absolute",
+                    [
+                        "edit_case_absolute case_id new_reason",
+                        "edit_case_absolute 7777 Handled by mistake"
+                    ]
+                )
+            )
+            return
+
+        await mLily.CaseEdit(ctx, case_id, new_reason, True)
+
+
+    
 async def setup(bot):
     await bot.add_cog(LilyModeration(bot))

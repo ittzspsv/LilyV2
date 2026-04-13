@@ -113,11 +113,30 @@ async def fetch_mod_stats(payload: dict):
         min_timestamp = None
         max_timestamp = None
 
-    start_today = int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
-    period_7d = int((now - timedelta(days=7)).timestamp())
-    period_30d = int((now - timedelta(days=30)).timestamp())
 
-    stats = defaultdict(lambda: {"today": 0, "7d": 0, "30d": 0, "total": 0})
+    start_today = int(
+        now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    )
+
+
+    start_week = int(
+        (now - timedelta(days=now.weekday()))
+        .replace(hour=0, minute=0, second=0, microsecond=0)
+        .timestamp()
+    )
+
+
+    start_month = int(
+        now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        .timestamp()
+    )
+
+    stats = defaultdict(lambda: {
+        "today": 0,
+        "7d": 0,    
+        "30d": 0,    
+        "total": 0
+    })
 
     for log in all_logs:
         action = log["mod_type"]
@@ -125,14 +144,14 @@ async def fetch_mod_stats(payload: dict):
 
         stats[action]["total"] += 1
 
-        if ts >= period_7d:
-            stats[action]["7d"] += 1
-
-        if ts >= period_30d:
-            stats[action]["30d"] += 1
-
         if ts >= start_today:
             stats[action]["today"] += 1
+
+        if ts >= start_week:
+            stats[action]["7d"] += 1
+
+        if ts >= start_month:
+            stats[action]["30d"] += 1 
 
     shown_logs = all_logs[page_start:page_end]
 
@@ -185,7 +204,7 @@ async def fetch_mod_logs(payload: dict):
         rows = await cursor.fetchall()
     mod_type_counts = {row[0]: row[1] for row in rows}
 
-    select_query = "SELECT mod_type, reason, timestamp, moderator_id FROM modlogs WHERE guild_id = ? AND target_user_id = ?"
+    select_query = "SELECT mod_type, reason, timestamp, moderator_id, id FROM modlogs WHERE guild_id = ? AND target_user_id = ?"
     select_params = [guild_id, target_user_id]
     if moderator_id:
         select_query += " AND moderator_id = ?"
@@ -210,6 +229,7 @@ async def fetch_mod_logs(payload: dict):
 
     logs = [
         {
+            "case_id" : row[4],
             "moderator_id": row[3],
             "mod_type": row[0].lower(),
             "reason": row[1],
@@ -245,18 +265,25 @@ async def fetch_moderation_leaderboard(guild_id: int, lb_type: str = "total") ->
         SELECT 
             moderator_id,
             COUNT(*) AS total,
+
             COUNT(CASE 
-                WHEN datetime(replace(substr(timestamp,1,19),'T',' ')) >= datetime('now','-1 day') 
+                WHEN datetime(replace(substr(timestamp,1,19),'T',' ')) 
+                    >= datetime('now','start of day')
                 THEN 1 END) AS daily,
+
             COUNT(CASE 
-                WHEN datetime(replace(substr(timestamp,1,19),'T',' ')) >= datetime('now','-7 days') 
+                WHEN datetime(replace(substr(timestamp,1,19),'T',' ')) 
+                    >= datetime('now','weekday 1','start of day')
                 THEN 1 END) AS weekly,
+
             COUNT(CASE 
-                WHEN datetime(replace(substr(timestamp,1,19),'T',' ')) >= datetime('now','-30 days') 
+                WHEN datetime(replace(substr(timestamp,1,19),'T',' ')) 
+                    >= datetime('now','start of month')
                 THEN 1 END) AS monthly
+
         FROM modlogs
         WHERE moderator_id IN ({','.join(['?']*len(active_staff_id))})
-          AND guild_id = ?
+        AND guild_id = ?
         GROUP BY moderator_id
         ORDER BY {lb_type} DESC
         """,
@@ -282,3 +309,45 @@ async def fetch_moderation_leaderboard(guild_id: int, lb_type: str = "total") ->
         })
 
     return data
+
+async def edit_case(payload: dict):
+    staff_id: int = payload.get("staff_id")
+    case_id: int = payload.get("case_id")
+    case_statement: str = payload.get("case_statement")
+    absolute: bool = payload.get("absolute", False)
+
+    try:
+        cursor = await LilyLogging.mdb.execute(
+            "SELECT moderator_id FROM modlogs WHERE id = ?",
+            (case_id,)
+        )
+        row = await cursor.fetchone()
+
+        if row is None:
+            return {
+                "success": False,
+                "message": "Case not found."
+            }
+
+        if row[0] != staff_id and not absolute:
+            return {
+                "success": False,
+                "message": f"This case cannot be modified. Only <@{row[0]}> can modify it."
+            }
+
+        await LilyLogging.mdb.execute(
+            "UPDATE modlogs SET reason = ? WHERE id = ?",
+            (case_statement, case_id)
+        )
+        await LilyLogging.mdb.commit()
+
+        return {
+            "success": True,
+            "message": "Case edited successfully."
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"An error occurred: {e}"
+        }

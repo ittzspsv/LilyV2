@@ -18,6 +18,7 @@ class LilyManagement(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         await LSDB.initialize()
+        await LSDB.initialize_cache()
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
@@ -98,6 +99,11 @@ class LilyManagement(commands.Cog):
         except Exception as e:
             print(f"[on_member_update] Staff Sync Error: {e}")
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        pass
+        await smLily.MessageTracker(message=message)
+
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)), allow_per_server_owners=True)
     @commands.hybrid_command(name='staffdata', description='shows data for a particular staff')
     async def staffdata(self, ctx:commands.Context, user:discord.Member=None):
@@ -115,12 +121,12 @@ class LilyManagement(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Head Administrator', 'Senior Administrator')))
     @commands.hybrid_command(name='staff_strike', description='strikes a staff with a specified reason')
-    async def staffstrike(self, ctx: commands.Context, id: str, *, reason: str):
-        id = id.replace("<@", "").replace(">", "")
+    async def staffstrike(self, ctx: commands.Context, staff: discord.Member, *, reason: str):
         try:
-            await smLily.StrikeStaff(ctx, id, reason)
+            await smLily.StrikeStaff(ctx, staff, reason)
         except Exception as e:
-            await ctx.reply(f"Exception {e}")
+            await ctx.reply(embed=simple_embed(f"Failed to strike staff", 'cross'))
+            print(f"Staff Strike [Exception] {e}")
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Head Administrator', 'Senior Administrator')))
     @commands.hybrid_command(name='remove_strike', description='strikes a staff with a specified reason')
@@ -240,22 +246,42 @@ class LilyManagement(commands.Cog):
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Head Administrator', 'Senior Administrator')))
     @commands.hybrid_command(name="quota_add", description="Adds a staff quota to check by")
     async def add_quota(self, ctx: commands.Context, quota_role: discord.Role, minimum_ms: int, minimum_msg: int, on_quota_pass: types.OnQuotaEvent=None, on_quota_fail: types.OnQuotaEvent=None, check_by: types.QuotaCheckBy=None):
-        pass
+        await smLily.AddStaffQuota(ctx, quota_role, minimum_ms, minimum_msg, on_quota_pass, on_quota_fail, check_by)
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Head Administrator', 'Senior Administrator')))
     @commands.hybrid_command(name="quota_list", description="List all defined quotas for this server")
     async def list_quota(self, ctx: commands.Context):
-        pass
+        await smLily.FetchStaffQuota(ctx)
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Head Administrator', 'Senior Administrator')))
     @commands.hybrid_command(name="quota_remove", description="Remove a defined quota by it's ID")
     async def remove_quota(self, ctx: commands.Context, quota_id: str):
-        pass
+        await smLily.RemoveStaffQuota(ctx, int(quota_id))
 
     @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff',)))
     @commands.hybrid_command(name="quota_check", description="Check quota for a given staff")
-    async def check_quota(self, ctx: commands.Context, staff: discord.Member):
-        pass
+    async def check_quota(self, ctx: commands.Context, staff: discord.Member=None):
+        staff_member = None
+        if staff is None:
+            staff_member = ctx.author
+        else:
+            staff_member = staff
+        await smLily.CheckStaffQuota(ctx, staff_member)
+
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Head Administrator')))
+    @commands.hybrid_command(name="remove_staff_role", description="Removes a staff role from the database")
+    async def remove_role(self, ctx: commands.Context, role: discord.Role):
+        await smLily.RemoveRole(ctx, role.id)
+    
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Head Administrator')))
+    @commands.hybrid_command(name="remove_staff_role_raw", description="Removes a staff role from the database")
+    async def remove_role_raw(self, ctx: commands.Context, role: str):
+        await smLily.RemoveRole(ctx, int(role))
+
+    @PermissionEvaluator(RoleAllowed=lambda: smLily.GetRoles(('Staff Manager', 'Head Administrator')))
+    @commands.hybrid_command(name="quota_evaluate", description="Evaluates Staff quota and updates the results")
+    async def evaluate_staff_quota(self, ctx: commands.Context):
+        await smLily.EvaluateStaffQuota(ctx)
 
 
 

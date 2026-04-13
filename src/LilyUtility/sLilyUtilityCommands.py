@@ -14,12 +14,18 @@ from Misc.sLIlyGlobalComponents import CommandInfo as CI
 from LilyUtility.sLilyUtilityComponents import ProfileInformationComponent
 import LilyBloxFruits.sLilyBloxFruitsCache as BFC
 
+import LilyUtility.sLilyUtility as Util
 import discord
 from discord.ext import commands
 
-import Config.sBotDetails as Config
-from ast import literal_eval
+import io
+import secrets
 from enum import Enum
+
+import random
+
+import random
+from collections import Counter
 
 from Misc.sLilyEmbed import simple_embed
 
@@ -67,7 +73,7 @@ class LilyUtility(commands.Cog):
             with open("storage/configs/AutomodConfig.json", "w") as file:
                 json.dump(self.afk_cache, file, indent=4)
 
-            await message.channel.reply(embed=simple_embed(f"{message.author.mention} is no longer AFK. Welcome back!"))
+            await message.reply(embed=simple_embed(f"{message.author.mention} is no longer AFK. Welcome back!"))
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -130,6 +136,7 @@ class LilyUtility(commands.Cog):
         await ValueConfig.initialize_cache()
         await ctx.send(msg)
 
+    '''
     # MESSAGING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.hybrid_command(name='direct_message', description='Direct Messages to an user using the bot')
@@ -164,6 +171,8 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             print(f"Exception [USER DM] {e}")
             await ctx.send(embed=simple_embed("Failed to send Direct Message", 'cross'))
+
+    '''        
 
     # SLASH COMMAND SYNCING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
@@ -480,6 +489,148 @@ class LilyUtility(commands.Cog):
             json.dump(self.afk_cache, file, indent=4)
 
         await ctx.reply(embed=simple_embed(f"{ctx.author.mention} is now AFK : {message}"))
-        
+
+
+    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff Manager', 'Developer', 'Senior Administrator', 'Head Administrator')))
+    @commands.hybrid_command(name="add_keyword_automod", description="Puts the user to afk mode")
+    async def add_keyword_automod(self, ctx: commands.Context, *, keyword: str):
+        automod_rule_id = self.afk_cache.get("automod_rule_id")
+        if automod_rule_id:
+            try:
+                lily_automod = await ctx.guild.fetch_automod_rule(automod_rule_id)
+                automod_keywords = lily_automod.trigger.keyword_filter
+                if keyword not in automod_keywords:
+                    updated_keywords = automod_keywords + [keyword]
+                    new_trigger = discord.AutoModTrigger(keyword_filter=updated_keywords)
+                    await lily_automod.edit(trigger=new_trigger, reason=f"Automod keyword added by {ctx.author}")
+                    await ctx.reply(embed=simple_embed(f"Successfully added `{keyword}` to Automod"))
+            except Exception as e:
+                await ctx.reply(embed=simple_embed(f"Failed to added `{keyword}` to Automod"))
+                print(f"Exception [add_keyword_automod] {e}")
+
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff Manager', 'Developer', 'Senior Administrator', 'Head Administrator')))
+    @commands.hybrid_command(name="list_keyword_automod", description="Lists all automod keywords")
+    async def list_keyword_automod(self, ctx: commands.Context):
+        automod_rule_id = self.afk_cache.get("automod_rule_id")
+
+        if not automod_rule_id:
+            return await ctx.reply(embed=simple_embed("Automod rule not configured"))
+
+        try:
+            lily_automod = await ctx.guild.fetch_automod_rule(automod_rule_id)
+            automod_keywords = lily_automod.trigger.keyword_filter
+
+            if not automod_keywords:
+                return await ctx.reply(embed=simple_embed("No keywords found in Automod"))
+
+            keywords_text = "\n".join([f"- `{kw}`" for kw in automod_keywords])
+            await ctx.reply(f"**Automod Keywords:**\n{keywords_text}")
+
+        except Exception as e:
+            await ctx.reply(embed=simple_embed("Failed to fetch Automod keywords"))
+            print(f"Exception [list_keyword_automod] {e}")
+
+    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff Manager', 'Developer', 'Senior Administrator', 'Head Administrator')))
+    @commands.hybrid_command(name="remove_keyword_automod", description="Removes a keyword from automod")
+    async def remove_keyword_automod(self, ctx: commands.Context, *, keyword: str):
+        automod_rule_id = self.afk_cache.get("automod_rule_id")
+
+        if not automod_rule_id:
+            return await ctx.reply(embed=simple_embed("Automod rule not configured"))
+
+        try:
+            lily_automod = await ctx.guild.fetch_automod_rule(automod_rule_id)
+            automod_keywords = lily_automod.trigger.keyword_filter
+
+            if keyword not in automod_keywords:
+                return await ctx.reply(embed=simple_embed(f"`{keyword}` not found in Automod"))
+
+            updated_keywords = [kw for kw in automod_keywords if kw != keyword]
+
+            new_trigger = discord.AutoModTrigger(keyword_filter=updated_keywords)
+            await lily_automod.edit(trigger=new_trigger, reason=f"Automod keyword removed by {ctx.author}")
+
+            await ctx.reply(embed=simple_embed(f"Successfully removed `{keyword}` from Automod"))
+
+        except Exception as e:
+            await ctx.reply(embed=simple_embed(f"Failed to remove `{keyword}` from Automod"))
+            print(f"Exception [remove_keyword_automod] {e}")
+
+
+    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff Manager', 'Developer')))
+    async def show_overrides_json(self, ctx, channel: discord.TextChannel = None):
+        channel = channel or ctx.channel
+
+        data = {}
+        for target, overwrite in channel.overwrites.items():
+            allow, deny = overwrite.pair()
+
+            allow_perms = [perm for perm, value in allow if value]
+            deny_perms = [perm for perm, value in deny if value]
+
+            key = f"{target.id}"
+
+            data[key] = {
+                "name": getattr(target, "name", str(target)),
+                "type": "role" if isinstance(target, discord.Role) else "member",
+                "allow": allow_perms,
+                "deny": deny_perms,
+                "allow_value": allow.value,
+                "deny_value": deny.value
+            }
+
+        json_str = json.dumps(data, indent=4)
+
+        file = discord.File(
+            fp=io.StringIO(json_str),
+            filename=f"{channel.id}_overrides.json"
+        )
+        await ctx.send(file=file)
+          
+    @commands.hybrid_command(name="about", description="Know something about the bot")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def about(self, ctx: commands.Context):
+        embed = discord.Embed(
+            title="About Me!",
+            description="## Name : Lily\n- No Idea about this name to be honest.",
+            color=0xFFFFFF
+        )
+
+        embed.add_field(
+            name="Developers",
+            value="- Shree (Lead)\n- Texio\n- Lily.cs",
+            inline=False
+        )
+
+        embed.add_field(
+            name="Code Maintainer",
+            value="- ~~--------~~ Shree.",
+            inline=False
+        )
+
+        embed.add_field(
+            name="Profile and Banner Information",
+            value=(
+                "- [Avatar](https://danganronpa.fandom.com/wiki/Chiaki_Nanami_(Danganronpa_2))\n"
+                "- Character Source : Chaiki Nanami (Danganronpa 2 Goodbye Despair)\n"
+                "- Banner Source : Please Insert Coin"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="Licensing Terms",
+            value="- Open Source Free to Modify/Redistribute Licensing. (Incl. Credits)",
+            inline=False
+        )
+
+        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
+
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

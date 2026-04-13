@@ -30,10 +30,18 @@ class LilyTicketTool(commands.Cog):
                     await LTTT.spawn_ticket(ctx, json_data)
                     return
             
-
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
+    
+    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff', 'Engagement Staff Team')))
     @commands.hybrid_command(name='close', description='close a ticket thread')
     async def CloseTicket(self, ctx: commands.Context):
          await LTTT.CloseTicketThread(ctx)
+         
+    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff', 'Engagement Staff Team')))
+    @commands.hybrid_command(name='ticket_rename', description='renames a ticket channel')
+    async def rename_ticket(self, ctx: commands.Context, * ,name: str):
+         await LTTT.RenameTicket(ctx, name)
+
 async def setup(bot):
     await bot.add_cog(LilyTicketTool(bot))

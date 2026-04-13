@@ -8,6 +8,11 @@ from typing import Dict, Optional, List
 import Misc.sLilyEmbed as LilyEmbed
 import LilyUtility.sLilyUtility as LilyUtility
 
+import asyncio
+import json
+
+from datetime import datetime, timedelta, timezone
+
 bot = None
 
 class ReportComponent(discord.ui.LayoutView):
@@ -32,6 +37,220 @@ class ReportComponent(discord.ui.LayoutView):
         )
 
         self.add_item(self.container)
+
+class TicketComponentEmbed(discord.ui.LayoutView):
+    def __init__(self, opener: discord.Member | int, ticket_channel_id: int, submission_json: dict, core_json: dict):
+        super().__init__(timeout=None)
+
+        self.opener: Optional[discord.Member] = opener if isinstance(opener, discord.Member) else None
+
+        if isinstance(opener, discord.Member):
+            self.opener_id = opener.id
+        elif isinstance(opener, int):
+            self.opener_id = opener
+        else:
+            raise ValueError("Invalid Opener Type")
+        
+
+        self.ticket_channel_id: int = ticket_channel_id
+
+        self.submission_json = submission_json
+        self.core_json = core_json
+
+        self.current_claimer: Optional[discord.Member] = None
+        self.claim_expiry: Optional[datetime] = None
+        self.ticket_message: Optional[discord.Message] = None
+
+
+        base_name = self.submission_json.get("ticket_name_base", "ticket")
+        self.ticket_name: str = base_name.replace("_", " ").title()
+        field_details = self.submission_json.get("inputs", {})
+        self.ticket_description: str = "\n".join(f"**{k}**: ```{v}```" for k, v in field_details.items())
+
+        roles = submission_json.get("ping_roles", [])
+        self.ticket_mentions: str = " ".join(f"<@&{role_id}>" for role_id in roles) if roles else "No Mentions!"
+
+
+        self.allowed_roles = set(submission_json.get("ping_roles", []))
+        self.higher_staff_role_ids = set(self.core_json.get("BasicConfigurations").get("higher_staffs_role_id"))
+
+
+        # Secondary and primary embed panels
+
+        self.claim_ticket: discord.ui.Button = discord.ui.Button(
+            style=discord.ButtonStyle.green,
+            label="Claim Ticket",
+            custom_id=f"claim-ticket{self.ticket_channel_id}",
+        )
+
+        self.revoke_claim: discord.ui.Button = discord.ui.Button(
+                style=discord.ButtonStyle.danger,
+                label="Revoke Claim",
+                custom_id=f"revoke-claim{self.ticket_channel_id}",
+            )
+        
+        self.claim_ticket.callback = self.claim_ticket_callback
+        self.revoke_claim.callback = self.revoke_claim_callback
+
+        avatar_url = (
+            self.opener.display_avatar.url
+            if isinstance(self.opener, discord.Member)
+            else f"https://media.discordapp.net/attachments/1489584483756675083/1489584654871695522/Profile.webp?ex=69d0f350&is=69cfa1d0&hm=8c63722bd588bcbf162f252966f636497d217a587db7c7291bddd3ecd9c6c718&=&format=webp"
+        )
+
+        container = discord.ui.Container(
+            discord.ui.Section(
+                discord.ui.TextDisplay(content=f"## {self.ticket_name} | <@{self.opener_id}>"),
+                discord.ui.TextDisplay(content=f"{self.ticket_mentions}"),
+                discord.ui.TextDisplay(content=self.ticket_description),
+
+                accessory=discord.ui.Thumbnail(
+                    media=avatar_url,
+                ),
+            ),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
+            discord.ui.ActionRow(
+                self.claim_ticket,
+                self.revoke_claim
+            ),
+        )
+
+        self.add_item(container)
+
+    async def claim_ticket_callback(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+
+        is_staff = any(role.id in self.allowed_roles for role in interaction.user.roles)
+        is_opener = interaction.user.id == self.opener_id
+
+        if not is_staff or is_opener:
+            await interaction.followup.send(
+                embed=simple_embed("You are not allowed to claim this ticket!", 'cross'),
+                ephemeral=True
+            )
+            return
+        
+        if self.current_claimer:
+            await interaction.followup.send(
+                embed=simple_embed(f"{self.current_claimer.mention} has already claimed the ticket!", 'cross'),
+                ephemeral=True
+            ) 
+
+            return
+        
+        channel: discord.TextChannel = interaction.channel
+        await channel.set_permissions(
+            interaction.user,
+            send_messages=True,
+            embed_links=True,
+            attach_files=True,
+            add_reactions=True,
+            use_external_emojis=True,
+            read_message_history=True
+        )
+
+        self.current_claimer = interaction.user
+
+        self.claim_ticket.disabled = True
+        self.claim_ticket.label = "Claimed"
+        self.claim_ticket.style = discord.ButtonStyle.secondary
+
+        self.ticket_message = interaction.message
+
+        await interaction.message.edit(view=self)
+        await interaction.followup.send(embed=simple_embed(f"{interaction.user.mention} has claimed the ticket!"))
+        self.claim_expiry = datetime.now(timezone.utc) + timedelta(minutes=30)
+
+        asyncio.create_task(
+            self.auto_revoke_claim(
+                interaction.guild,
+                interaction.channel.id,
+                interaction.user.id,
+                self.claim_expiry
+            )
+        )
+
+    async def revoke_claim_callback(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+
+        if self.current_claimer is None:
+            await interaction.followup.send(
+                embed=simple_embed("No one has claimed this ticket!", 'cross'),
+                ephemeral=True
+            )
+            return
+
+        if not any(role.id in self.higher_staff_role_ids for role in interaction.user.roles):
+            await interaction.followup.send(
+                embed=simple_embed("You are not allowed to revoke ticket claims!", 'cross'),
+                ephemeral=True
+            )
+            return
+
+        if not self.current_claimer:
+            await interaction.followup.send(
+                embed=simple_embed("This ticket is not currently claimed.", 'cross'),
+                ephemeral=True
+            )
+            return
+
+        channel = interaction.channel
+        await channel.set_permissions(self.current_claimer, overwrite=None)  
+
+        self.current_claimer = None
+        self.claim_expiry = None
+
+
+        self.claim_ticket.disabled = False
+        self.claim_ticket.label = "Claim"
+        self.claim_ticket.style = discord.ButtonStyle.green
+
+        if interaction.message:
+            await interaction.message.edit(view=self)
+
+        await interaction.followup.send(
+            embed=simple_embed("Ticket claim has been revoked!"),
+            ephemeral=True
+        )
+
+        await channel.send(
+            embed=simple_embed(f"{interaction.user.mention} revoked the ticket claim.")
+        )
+
+    async def auto_revoke_claim(self,guild: discord.Guild,channel_id: int,user_id: int,expiry: datetime):
+        delay = (expiry - datetime.now(timezone.utc)).total_seconds()
+
+        if delay > 0:
+            await asyncio.sleep(delay)
+
+        if not self.current_claimer or self.current_claimer.id != user_id:
+            return
+
+        if self.claim_expiry != expiry:
+            return
+
+        channel = guild.get_channel(channel_id)
+        if not channel:
+            return
+
+        await channel.set_permissions(self.current_claimer, overwrite=None)
+
+        self.current_claimer = None
+        self.claim_expiry = None
+
+        self.claim_ticket.disabled = False
+        self.claim_ticket.label = "Claim"
+        self.claim_ticket.style = discord.ButtonStyle.green
+
+        try:
+            if self.ticket_message:
+                await self.ticket_message.edit(view=self)
+        except:
+            pass
+
+        await channel.send(
+            embed=simple_embed(f"<@{user_id}>'s claim has been revoked automatically.")
+        )
 
 class TicketModal(discord.ui.Modal):
     def __init__(self, title: str, modal_data: dict, json_data):
@@ -79,12 +298,12 @@ class TicketModal(discord.ui.Modal):
 
             self.add_item(self.images)
 
-    async def ticket_thread_constructor(self, interaction: discord.Interaction, core_json, submission_json):
+    async def ticket_thread_constructor(self, interaction: discord.Interaction, core_json, submission_json) -> discord.TextChannel | discord.Thread:
         channel_id: int = int(submission_json.get("channel_id"))
-        thread_channel: discord.TextChannel = interaction.guild.get_channel(channel_id)
-        if not thread_channel:
-            thread_channel: discord.TextChannel = await interaction.guild.fetch_channel(channel_id)
-
+        ticket_type: str = core_json.get("BasicConfigurations").get("TicketType")
+        if ticket_type not in ('channel', 'threads', 'thread'):
+            raise ValueError
+        
         proof_attachments = submission_json.get("proof_images")
         proofs_flag = False
         if proof_attachments:
@@ -98,20 +317,13 @@ class TicketModal(discord.ui.Modal):
         if roles:
             mentions = " ".join(f"<@&{role_id}>" for role_id in roles)
 
+        higher_staff_roles_ids = core_json.get("BasicConfigurations").get("higher_staffs_role_id")
+
         opener = interaction.user
         logging_channel_id = core_json.get("BasicConfigurations").get("TicketLoggingHandler")
-
         ticket_name_base = submission_json.get("ticket_name_base")
-        thread = await thread_channel.create_thread(
-            name=f"{ticket_name_base}-{opener.name}",
-            type=discord.ChannelType.private_thread,
-            auto_archive_duration=4320,
-            invitable=False
-        )
 
-        thread.jump_url
-
-        await thread.add_user(opener)
+        # Secondary and primary embed panels
         field_details = submission_json.get("inputs", {})
         content, embeds = LilyEmbed.ParseAdvancedEmbed(core_json['EmbedConfigs']['TicketChannelSpawnEmbed'])
         
@@ -124,19 +336,105 @@ class TicketModal(discord.ui.Modal):
         embed.set_thumbnail(url = Configs.img['logs'])
 
         embeds.append(embed)
-        
-        await LilyLogging.mdb.execute(
-            '''INSERT INTO tickets (ticket_id, opened_user_id, ticket_values, ticket_type, guild_id, log_channel_id)
-            VALUES (?, ?, ?, ?, ?, ?)'''
-        ,(thread.id, opener.id, str(field_details), ticket_name_base, interaction.guild.id, logging_channel_id))
+    
+        if ticket_type in ('threads', 'thread'):
+            thread_channel: discord.TextChannel = interaction.guild.get_channel(channel_id)
+            if not thread_channel:
+                thread_channel: discord.TextChannel = await interaction.guild.fetch_channel(channel_id)
 
-        await LilyLogging.mdb.commit()
-        await thread.send(content=mentions, embeds=embeds)
-        if proofs_flag:
-            await thread.send(content=f"{proof_url}")
-        
+            thread = await thread_channel.create_thread(
+                name=f"{ticket_name_base}-{opener.name}",
+                type=discord.ChannelType.private_thread,
+                auto_archive_duration=4320,
+                invitable=False
+            )
 
-        return thread
+            thread.jump_url
+
+            await thread.add_user(opener)
+            
+            await LilyLogging.mdb.execute(
+                '''INSERT INTO tickets (ticket_id, opened_user_id, submission_json, ticket_type, guild_id, log_channel_id)
+                VALUES (?, ?, ?, ?, ?, ?)'''
+            ,(thread.id, opener.id, json.dumps(submission_json), ticket_name_base, interaction.guild.id, logging_channel_id))
+
+            await LilyLogging.mdb.commit()
+            await thread.send(content=mentions, embeds=embeds)
+            if proofs_flag:
+                await thread.send(content=f"{proof_url}")
+            
+            return thread
+
+        else:
+            channel_category: discord.CategoryChannel = interaction.guild.get_channel(channel_id)
+            overwrites = {}
+
+            overwrites[interaction.guild.default_role] = discord.PermissionOverwrite(
+                view_channel=False
+            )
+            overwrites[opener] = discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                embed_links=True,
+                attach_files=True,
+                add_reactions=True,
+                use_external_emojis=True,
+                read_message_history=True
+            )
+
+            # Roles without claiming the ticket cannot send messages.
+            for role_id in roles:
+                role = interaction.guild.get_role(role_id)
+                if role:
+                    overwrites[role] = discord.PermissionOverwrite(
+                        view_channel=True,
+                        send_messages=False,
+                        embed_links=True,
+                        attach_files=True,
+                        add_reactions=True,
+                        use_external_emojis=True,
+                        read_message_history=True,
+                        create_public_threads=False,
+                        create_private_threads=False
+                    )
+            for role_id in higher_staff_roles_ids:
+                role = interaction.guild.get_role(role_id)
+                if role:
+                    overwrites[role] = discord.PermissionOverwrite(
+                        view_channel=True,
+                        send_messages=True,
+                        embed_links=True,
+                        attach_files=True,
+                        add_reactions=True,
+                        use_external_emojis=True,
+                        read_message_history=True,
+                        create_public_threads=False,
+                        create_private_threads=False
+                    )
+            if isinstance(channel_category, discord.CategoryChannel):
+                text_channel: discord.TextChannel = await interaction.guild.create_text_channel(
+                    name=f"{ticket_name_base}-{opener.name}",
+                    category=channel_category,
+                    overwrites=overwrites
+                )
+            else:
+                text_channel: discord.TextChannel = await interaction.guild.create_text_channel(
+                    name=f"{ticket_name_base}-{opener.name}",
+                    overwrites=overwrites
+                )
+
+            view = TicketComponentEmbed(opener=opener, ticket_channel_id=text_channel.id, submission_json=submission_json, core_json=core_json)
+            ticket_message: discord.Message = await text_channel.send(view=view)
+            if proofs_flag:
+                await text_channel.send(content=f"{proof_url}")
+
+            await LilyLogging.mdb.execute(
+                '''INSERT INTO tickets (ticket_id, opened_user_id, submission_json, ticket_type, guild_id, log_channel_id, message_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?)'''
+            ,(text_channel.id, opener.id, json.dumps(submission_json), ticket_name_base, interaction.guild.id, logging_channel_id, ticket_message.id))
+
+            await LilyLogging.mdb.commit()
+            return text_channel
 
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -183,7 +481,7 @@ class TicketModal(discord.ui.Modal):
             "proof_images" : self.images,
             "ping_roles" : ping_roles
         }
-        thread_channel = await self.ticket_thread_constructor(
+        thread_channel: discord.TextChannel | discord.Thread = await self.ticket_thread_constructor(
             interaction,
             self.json_data,
             submission

@@ -8,6 +8,7 @@ class OnQuotaEvent(str, Enum):
         Promote = "Promote"
         Demote = "Demote"
         Strike = "Strike"
+        none = "None"
 
 class QuotaCheckBy(str, Enum):
         DailyCheck = "1d"
