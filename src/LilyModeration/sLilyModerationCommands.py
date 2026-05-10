@@ -32,9 +32,15 @@ class LilyModeration(commands.Cog):
                 await ctx.reply(embed=simple_embed(f"Fetch failed: {e}", 'cross'))
         return None
 
+    @commands.hybrid_group()
+    async def moderation(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await ctx.reply(embed=simple_embed("Lily Moderation System Command Hierarchy!"))
+
+
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='ban', description='bans a user with config = limited')
+    @commands.hybrid_command(name='ban', description='ban/quarantine a user from the server')
     async def ban(self, ctx: commands.Context, member: str = None, *, reason="No reason provided"):
         if not member:
             return await ctx.reply(
@@ -59,7 +65,7 @@ class LilyModeration(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=LSM.GetBanRoles)
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
-    @commands.hybrid_command(name='execute', description='Execute an user with cutscene (WIP)')
+    @moderation.command(name='execute', description='Execute an user with cutscene (WIP)')
     async def execute(self, ctx: commands.Context, member: discord.Member):
         if not member:
             await ctx.reply(view=CommandInfo(ctx, "Execute", ["execute user", f"execute {ctx.me.mention}"]))
@@ -145,7 +151,7 @@ class LilyModeration(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='ms', description='checks logs for a particular moderator')
+    @moderation.command(name='stats', description='checks stats for a particular moderator or yourself')
     async def ms(self, ctx, member: discord.Member=None, page_start: int=0, page_end: int=0):
         await ctx.defer()
         user: discord.Member = None
@@ -163,7 +169,7 @@ class LilyModeration(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='modlogs', description='Checks logs for a particular user')
+    @moderation.command(name='logs', description='Checks logs for a particular user')
     async def modlogs(self, ctx, member: discord.User = None, mod_type: str = "all", page_start: int=0, page_end: int=5, moderator: discord.User = None):
         await ctx.defer()
         target_id = member.id if member else ctx.author.id
@@ -190,13 +196,13 @@ class LilyModeration(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='mod_insights', description='Get an detailed insights about moderation on this server')
+    @moderation.command(name='insights', description='Get an detailed insights about moderation on this server')
     async def moderation_insights(self, ctx: commands.Context):
         await mLily.moderation_insights(ctx)
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='fetch_ban_cd',description='Fetches all ban cooldowns less than or equal to 24 hours')
+    @moderation.command(name='fetch_ban_cd',description='Fetches all ban cooldowns less than or equal to 24 hours')
     async def ban_cd(self, ctx: commands.Context, member: discord.Member | None = None):
         target = member or ctx.author
 
@@ -220,7 +226,7 @@ class LilyModeration(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='edit_case',description='Edit a case (only cases initiated by the command interactor can be edited)')
+    @moderation.command(name='case_edit',description='Edit a case (only cases initiated by the command interactor can be edited)')
     async def case_edit(self, ctx: commands.Context, case_id: int=None, * ,new_reason: str=None):
         if case_id is None or new_reason is None:
             await ctx.reply(
@@ -235,7 +241,7 @@ class LilyModeration(commands.Cog):
 
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff Manager', 'Head Administrator', 'Developer')))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='edit_case_absolute',description="Edit a case (can edit any user's case")
+    @moderation.command(name='case_edit_absolute',description="Edit a case (can edit any user's case")
     async def case_edit_absolute(self, ctx: commands.Context, case_id: int=None, *, new_reason: str=None):
         if not new_reason:
             await ctx.reply(
@@ -253,6 +259,36 @@ class LilyModeration(commands.Cog):
         await mLily.CaseEdit(ctx, case_id, new_reason, True)
 
 
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff Manager', 'Head Administrator', 'Developer', 'Administrator')))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @moderation.command(name='case_delete',description="Delete a case ")
+    async def case_delete(self, ctx: commands.Context, case_id: str=None):
+        if not case_id:
+            await ctx.reply(
+                view=CommandInfo(
+                    ctx,
+                    "Case Delete",
+                    [
+                        "case_delete case_id",
+                        "case_delete 7777   "
+                    ]
+                )
+            )
+            return
+
+        await mLily.CaseDelete(ctx, int(case_id))
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Junior Moderator', 'Moderator', 'Senior Moderator', 'Staff Manager', 'Head Administrator', 'Developer', 'Administrator')))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @moderation.command(name='queue',description="Get all action queue")
+    async def queue(self, ctx: commands.Context):
+        await mLily.FetchModerationQueue(ctx)
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @moderation.command(name='queue_remove',description="Removes a member from the queue")
+    async def queue_remove(self, ctx: commands.Context, member: discord.Member):
+        await mLily.RemoveMemberFromQueue(ctx, member)
     
 async def setup(bot):
     await bot.add_cog(LilyModeration(bot))

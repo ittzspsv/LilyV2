@@ -12,7 +12,26 @@ from typing import Optional
 from Misc.sLilyEmbed import simple_embed
 
 
-from LilyManagement.db.sLilyStaffDatabaseAccess import fetch_staff_detail, fetch_all_staffs, add_staff, remove_staff, edit_staff, strike_staff, remove_strike, fetch_staff_strikes, add_loa, remove_loa, update_staff, add_staff_quota, remove_staff_quota, fetch_staff_quota, get_staff_current_quota, remove_role, reset_messages, get_all_staff_quota_status
+from LilyManagement.db.sLilyStaffDatabaseAccess import (
+    fetch_staff_detail, 
+    fetch_all_staffs, 
+    add_staff, 
+    remove_staff, 
+    edit_staff, 
+    strike_staff, 
+    remove_strike, 
+    fetch_staff_strikes, 
+    add_loa, 
+    remove_loa, 
+    update_staff, 
+    add_staff_quota, 
+    remove_staff_quota, 
+    fetch_staff_quota, 
+    get_staff_current_quota, 
+    remove_role, 
+    reset_messages, 
+    get_all_staff_quota_status, 
+    edit_strike)
 import LilyManagement.db.sLilyStaffDatabaseAccess as LSDA
 
 from LilyManagement.components.sLilyStaffManagementComponents import StaffsView, StaffRoleView
@@ -38,7 +57,7 @@ async def GetRoles(role_names: tuple = ()):
 
 async def GetBanRoles():
     try:
-        cursor = await LSDA.sdb.execute("SELECT role_id FROM roles WHERE ban_limit > 0")
+        cursor = await LSDA.sdb.execute("SELECT role_id FROM roles WHERE ban_limit > -1")
         rows = await cursor.fetchall()
 
         return [row[0] for row in rows]
@@ -349,7 +368,7 @@ async def AddStaff(ctx: commands.Context, staff: discord.Member):
 
     await ctx.reply(embed=simple_embed(response.get("message")))
 
-async def AddStaffBadge(ctx: commands.Context, staffs: str):
+async def AddStaffBatch(ctx: commands.Context, staffs: str):
     mention_ids = re.findall(r"<@!?(\d+)>", staffs)
     raw_ids = re.findall(r"(?:^|\s)(\d{6,})(?:\s|$)", staffs)
     ids = list({int(i) for i in mention_ids + raw_ids})
@@ -611,43 +630,60 @@ async def ListStrikes(ctx: commands.Context, staff: discord.Member):
 
     await ctx.reply(embed=embed)
 
-async def AddLOA(ctx: commands.Context, staff: discord.Member, reason: str):
-    response = await add_loa({
-        "staff_id": staff.id,
-        "reason": reason,
-        "loa_issued_by": ctx.author.id,
-        "guild_id": ctx.guild.id
+async def EditStrike(ctx: commands.Context, strike_id: int ,new_reason: str):
+    response = await edit_strike({
+        "guild_id" : ctx.guild.id, 
+        "strike_id": strike_id,
+        "staff_id": ctx.author.id,
+        "new_reason":  new_reason
     })
 
     if not response.get("success"):
-        await ctx.reply(embed=simple_embed(response.get("message")))
+        await ctx.reply(embed=simple_embed(response.get("message"), 'cross'))
         return
-
-    roles_to_remove = set(response.get("roles_to_remove", ()))
-    roles_to_add = set(response.get("roles_to_add", ()))
-
-    current_roles = set(staff.roles)
-
-    remove_roles = {
-        ctx.guild.get_role(rid)
-        for rid in roles_to_remove
-    }
-    remove_roles = {r for r in remove_roles if r}
-
-    add_roles = {
-        ctx.guild.get_role(rid)
-        for rid in roles_to_add
-    }
-    add_roles = {r for r in add_roles if r}
-
-    new_roles = (current_roles - remove_roles) | add_roles
-
-    await staff.edit(
-        roles=list(new_roles),
-        reason="LOA assigned"
-    )
-
+    
     await ctx.reply(embed=simple_embed(response.get("message")))
+
+async def AddLOA(ctx: commands.Context, staff: discord.Member, reason: str):
+    try:
+        response = await add_loa({
+            "staff_id": staff.id,
+            "reason": reason,
+            "loa_issued_by": ctx.author.id,
+            "guild_id": ctx.guild.id
+        })
+
+        if not response.get("success"):
+            await ctx.reply(embed=simple_embed(response.get("message"), 'cross'))
+            return
+
+        roles_to_remove = set(response.get("roles_to_remove", ()))
+        roles_to_add = set(response.get("roles_to_add", ()))
+
+        current_roles = set(staff.roles)
+
+        remove_roles = {
+            ctx.guild.get_role(rid)
+            for rid in roles_to_remove
+        }
+        remove_roles = {r for r in remove_roles if r}
+
+        add_roles = {
+            ctx.guild.get_role(rid)
+            for rid in roles_to_add
+        }
+        add_roles = {r for r in add_roles if r}
+
+        new_roles = (current_roles - remove_roles) | add_roles
+
+        await staff.edit(
+            roles=list(new_roles),
+            reason="LOA assigned"
+        )
+
+        await ctx.reply(embed=simple_embed(response.get("message")))
+    except Exception as e:
+        print(f"Exception [AddLOA] {e}")
 
 async def RemoveLOA(ctx: commands.Context, staff: discord.Member):
     response = await remove_loa({"staff_id": staff.id, "guild_id" : ctx.guild.id})
@@ -938,7 +974,7 @@ async def MessageTracker(message: discord.Message):
                 "staff_id": message.author.id
             })
     except Exception as e:
-        print(e)
+        pass
 
 async def AddStaffQuota(ctx: commands.Context,quota_role: discord.Role,minimum_ms: int,minimum_msg: int,on_quota_pass: types.OnQuotaEvent = None,on_quota_fail: types.OnQuotaEvent = None,check_by: types.QuotaCheckBy = None):
     if not ctx.guild:
@@ -1175,19 +1211,8 @@ async def EvaluateStaffQuota(ctx: commands.Context):
                 except Exception:
                     staff_updates_channel = None
 
-        if staff_updates_channel:
-            await staff_updates_channel.send(embed=embed)
 
-
-        reset_response = await reset_messages({"guild_id": ctx.guild.id})
-
-        if reset_response.get("success"):
-            await ctx.send(embed=simple_embed(
-                "Evaluated Staff Quota and Reset successfully!"
-            ))
-        else:
-            await ctx.send(embed=simple_embed(
-                "Evaluated Staff Quota but failed to reset messages!"
-            ))
+        await ctx.reply(embed=embed)
+        
     except Exception as e:
         print(e)

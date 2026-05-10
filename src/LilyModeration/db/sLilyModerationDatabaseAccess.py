@@ -2,43 +2,18 @@ import LilyLogging.sLilyLogging as LilyLogging
 import LilyManagement.db.sLilyStaffDatabaseAccess as LSDA
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-
-from typing import Tuple
-
 from typing import Dict, Any
 
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Dict
 
-import json
 
 async def fetch_mod_stats(payload: dict):
     guild_id: int = payload.get("guild_id")
     moderator_id: int = payload.get("moderator_id")
     page_start: int = payload.get("page_start")
     page_end: int = payload.get("page_end")
-
-    async with LilyLogging.mdb.execute("""
-        WITH action_count_per_hour AS (
-            SELECT 
-                CAST(strftime('%H', timestamp) AS INTEGER) AS hour,
-                COUNT(*) AS action_count
-            FROM modlogs
-            WHERE guild_id = ? AND moderator_id = ?
-            GROUP BY hour
-        ),
-        average_activity AS (
-            SELECT AVG(action_count) AS avg_count
-            FROM action_count_per_hour
-        )
-        SELECT hour, action_count
-        FROM action_count_per_hour
-        WHERE action_count >= (SELECT avg_count FROM average_activity)
-        ORDER BY hour
-    """, (guild_id, moderator_id)) as cursor:
-
-        peak_hours = await cursor.fetchall()
 
     async with LilyLogging.mdb.execute("""
         SELECT 
@@ -62,7 +37,6 @@ async def fetch_mod_stats(payload: dict):
         }
 
     all_logs = []
-
     for row in rows:
         ts = int(datetime.fromisoformat(row[3]).replace(tzinfo=timezone.utc).timestamp())
 
@@ -73,58 +47,17 @@ async def fetch_mod_stats(payload: dict):
             "timestamp": ts
         })
 
-    clusters = []
-    current_cluster = []
-    last_hour = None
-
-    for hour, count in peak_hours:
-        if last_hour is None or hour == last_hour + 1:
-            current_cluster.append((hour, count))
-        else:
-            clusters.append(current_cluster)
-            current_cluster = [(hour, count)]
-
-        last_hour = hour
-
-    if current_cluster:
-        clusters.append(current_cluster)
-
-    best_cluster = max(clusters, key=lambda c: sum(x[1] for x in c)) if clusters else []
-
-    if best_cluster:
-        start_hour = best_cluster[0][0]
-        end_hour = best_cluster[-1][0] + 1
-    else:
-        start_hour = None
-        end_hour = None
-
     now = datetime.now(timezone.utc)
-
-    if best_cluster:
-        start_hour = best_cluster[0][0]
-
-        start_dt = now.replace(hour=start_hour, minute=0, second=0, microsecond=0)
-
-        end_dt = start_dt + timedelta(hours=len(best_cluster))
-
-        min_timestamp = int(start_dt.timestamp())
-        max_timestamp = int(end_dt.timestamp())
-    else:
-        min_timestamp = None
-        max_timestamp = None
-
 
     start_today = int(
         now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
     )
-
 
     start_week = int(
         (now - timedelta(days=now.weekday()))
         .replace(hour=0, minute=0, second=0, microsecond=0)
         .timestamp()
     )
-
 
     start_month = int(
         now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -133,8 +66,8 @@ async def fetch_mod_stats(payload: dict):
 
     stats = defaultdict(lambda: {
         "today": 0,
-        "7d": 0,    
-        "30d": 0,    
+        "7d": 0,
+        "30d": 0,
         "total": 0
     })
 
@@ -151,7 +84,7 @@ async def fetch_mod_stats(payload: dict):
             stats[action]["7d"] += 1
 
         if ts >= start_month:
-            stats[action]["30d"] += 1 
+            stats[action]["30d"] += 1
 
     shown_logs = all_logs[page_start:page_end]
 
@@ -160,8 +93,7 @@ async def fetch_mod_stats(payload: dict):
         "logs": shown_logs,
         "total_logs": len(all_logs),
         "stats": stats,
-        "now": now,
-        "average_active_moderation_timestamp_range": [min_timestamp, max_timestamp]
+        "now": now
     }
 
 async def fetch_mod_logs(payload: dict):
@@ -273,7 +205,7 @@ async def fetch_moderation_leaderboard(guild_id: int, lb_type: str = "total") ->
 
             COUNT(CASE 
                 WHEN datetime(replace(substr(timestamp,1,19),'T',' ')) 
-                    >= datetime('now','weekday 1','start of day')
+                    >= datetime('now','weekday 1','start of day','-7 days')
                 THEN 1 END) AS weekly,
 
             COUNT(CASE 
@@ -350,4 +282,191 @@ async def edit_case(payload: dict):
         return {
             "success": False,
             "message": f"An error occurred: {e}"
+        }
+    
+async def delete_case(payload: dict) -> Dict[str, Any]:
+    case_id: int = payload.get("case_id")
+
+    if not case_id:
+        return {
+            "success": False,
+            "message": "Invalid case_id provided.",
+            "case_id": case_id
+        }
+
+    try:
+        cursor = await LilyLogging.mdb.execute(
+            "DELETE FROM modlogs WHERE id = ?", 
+            (case_id,)
+        )
+        await LilyLogging.mdb.commit()
+
+        if cursor.rowcount == 0:
+            return {
+                "success": False,
+                "message": "No case found with the given ID.",
+                "case_id": case_id
+            }
+
+        return {
+            "success": True,
+            "message": "Case deleted successfully.",
+            "case_id": case_id
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Failed to delete case: {str(e)}",
+            "case_id": case_id
+        }
+
+async def add_mod_queue(payload: dict):
+    try:
+        guild_id: int = payload.get("guild_id", 0)
+        moderator_id: int = payload.get("moderator_id", 0)
+        target_user_id: int = payload.get("target_user_id", 0)
+        mod_type: str = payload.get("mod_type", "default")
+        reason: str = payload.get("reason", "No reason has been provided!")
+        message_source: str = payload.get("message_source", "")
+
+        cursor = await LilyLogging.mdb.execute("""
+            INSERT INTO mod_logs_queue (
+                guild_id,
+                moderator_id,
+                target_user_id,
+                mod_type,
+                reason,
+                timestamp,
+                message_source
+            ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?)
+        """, (
+            guild_id,
+            moderator_id,
+            target_user_id,
+            mod_type,
+            reason,
+            message_source
+        ))
+
+        await LilyLogging.mdb.commit()
+
+        return {
+            "success": True,
+            "message": "Moderation action added to queue.",
+            "data": {
+                "insert_id": cursor.lastrowid,
+                "guild_id": guild_id,
+                "target_user_id": target_user_id,
+                "mod_type": mod_type
+            }
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Failed to add moderation action: {str(e)}",
+            "error": type(e).__name__
+        }
+
+async def clear_mod_queue(payload: dict):
+    guild_id: int = payload.get("guild_id", 0)
+    try:
+        await LilyLogging.mdb.execute("DELETE FROM mod_logs_queue WHERE guild_id = ?", (guild_id,))
+        await LilyLogging.mdb.commit()
+
+        return {
+            "success": True,
+            "message": "Successfully cleared queue"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": "Failed to clear the queue"
+        }
+
+async def clear_mod_queue_particular(payload: dict):
+    guild_id: int = payload.get("guild_id", 0)
+    user_id: int = payload.get("user_id", 0)
+    try:
+        await LilyLogging.mdb.execute("DELETE FROM mod_logs_queue WHERE guild_id = ? AND target_user_id = ?", (guild_id, user_id))
+        await LilyLogging.mdb.commit()
+
+        return {
+            "success": True,
+            "message": "Successfully removed member from the queue"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": "Failed to remove the member from queue"
+        }
+
+async def fetch_mod_queue(payload: dict) -> dict:
+    guild_id: int = payload.get("guild_id", 0)
+
+    cursor = await LilyLogging.mdb.execute("""
+        SELECT 
+            mod_type,
+            moderator_id,
+            target_user_id,
+            reason,
+            message_source
+        FROM mod_logs_queue
+        WHERE guild_id = ?
+    """, (guild_id,))
+
+    rows = await cursor.fetchall()
+
+    if not rows:
+        return {
+            "success": False,
+            "message": "No moderation queue found for this guild.",
+            "items": []
+        }
+
+    items = []
+    for row in rows:
+        items.append({
+            "mod_type": row[0],
+            "moderator_id": row[1],
+            "target_user_id": row[2],
+            "reason": row[3],
+            "message_source": row[4]
+        })
+
+    return {
+        "success": True,
+        "message": "Successfully fetched queue.",
+        "items": items
+    }
+
+async def get_mod_queue_entry(user_id: int, guild_id: int) -> dict:
+    try:
+        cursor = await LilyLogging.mdb.execute(
+            "SELECT moderator_id FROM mod_logs_queue WHERE target_user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
+        )
+
+        row = await cursor.fetchone()
+        await cursor.close()
+
+        if row:
+            return {
+                "success": True,
+                "moderator_id": row[0],
+                "message": "Entry found."
+            }
+
+        return {
+            "success": False,
+            "moderator_id": None,
+            "message": "No entry found for this user."
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "moderator_id": None,
+            "message": f"Error: {e}"
         }

@@ -1,10 +1,13 @@
 import re
 import word2number.w2n
 import LilyBloxFruits.core.sTradeFormatAlgorthim as TFA
-
+from LilyUtility.sLilyUtility import proper_capatilize
 import LilyBloxFruits.sLilyBloxFruitsCache as BFC
 
 from typing import Optional, Tuple, List
+
+
+
 
 async def extract_trade_details(message: str) -> Optional[Tuple[List, List, List, List]]:
     fruit_names, alias_map = await TFA.get_all_fruit_names()
@@ -78,7 +81,7 @@ async def extract_trade_details(message: str) -> Optional[Tuple[List, List, List
     your_fruits, your_fruit_type = await extract_fruits(your_message_split)
     their_fruits, their_fruit_types = await extract_fruits(their_message_split)
 
-    your_fruits = [fruit.title() for fruit in your_fruits]
-    their_fruits = [fruit.title() for fruit in their_fruits]
+    your_fruits = [proper_capatilize(fruit) for fruit in your_fruits]
+    their_fruits = [proper_capatilize(fruit) for fruit in their_fruits]
 
     return your_fruits, your_fruit_type, their_fruits, their_fruit_types

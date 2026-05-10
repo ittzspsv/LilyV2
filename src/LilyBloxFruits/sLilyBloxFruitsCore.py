@@ -13,6 +13,7 @@ import Config.sValueConfig as LilyConfig
 from Misc.sFruitImageFetcher import *
 import ui.sFruitValueGenerator as FVG
 import ui.sComboImageGenerator as CIG
+from LilyUtility.sLilyUtility import format_currency
 
 import LilyBloxFruits.components.sBloxFruitsComponent as Components
 
@@ -21,34 +22,6 @@ import ast
 
 import re
 import io
-
-
-def format_currency(val):
-    value = int(val)
-    if value >= 1_000_000_000_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000_000_000_000:.1f}DX"
-    elif value >= 1_000_000_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000_000_000:.1f}NX"
-    elif value >= 1_000_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000_000:.1f}OX"
-    elif value >= 1_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000:.1f}SPX"
-    elif value >= 1_000_000_000_000_000_000_000: 
-        return f"{value / 1_000_000_000_000_000_000_000:.1f}SX"
-    elif value >= 1_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000:.1f}QI"
-    elif value >= 1_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000:.1f}QT"
-    elif value >= 1_000_000_000_000: 
-        return f"{value / 1_000_000_000_000:.1f}T"
-    elif value >= 1_000_000_000:  
-        return f"{value / 1_000_000_000:.1f}B"
-    elif value >= 1_000_000:  
-        return f"{value / 1_000_000:.1f}M"
-    elif value >= 1_000:  
-        return f"{value / 1_000:.1f}k"
-    else:
-        return str(int(value))
 
 async def MessageEvaluate(bot, message: discord.Message):
         if not message.guild or message.author.bot:
@@ -140,7 +113,8 @@ async def MessageEvaluate(bot, message: discord.Message):
 
                     embed.set_footer(text="Powered By LilyValues")
 
-                    await message.reply(content=None, embed=embed)
+                    if len(embed.fields) > 0:
+                        await message.reply(content=None, embed=embed)
 
         elif await TFA.is_valid_trade_format(message.content.lower()):
             if not message.channel.id == LilyConfig.guild_configs.get(message.guild.id).get("channels").get("bf_win_loss_channel_id", 0):
@@ -152,6 +126,8 @@ async def MessageEvaluate(bot, message: discord.Message):
             their_fruits = []
             their_fruits_types=[]
             your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDA.extract_trade_details(message.content)
+            if len(your_fruits) > 4 or len(their_fruits) > 4:
+                return
 
             if img_mode == 1:
                 status_msg = await message.reply("Thinking...")
@@ -237,6 +213,8 @@ async def MessageEvaluate(bot, message: discord.Message):
             their_fruits = []
             their_fruits_types=[]
             your_fruits, your_fruit_types, their_fruits, their_fruits_types = await FDAE.extract_fruits_emoji(message.content)
+            if len(your_fruits) > 4 or len(their_fruits) > 4:
+                return
 
             if img_mode == 1: 
                 status_msg = await message.reply("Thinking...")

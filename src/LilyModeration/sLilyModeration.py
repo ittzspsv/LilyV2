@@ -16,12 +16,12 @@ from discord.utils import utcnow
 import os
 import random
 
-from LilyModeration.db.sLilyModerationDatabaseAccess import fetch_mod_logs, fetch_mod_stats, edit_case
+from LilyModeration.db.sLilyModerationDatabaseAccess import fetch_mod_logs, fetch_mod_stats, edit_case, delete_case, fetch_mod_queue, add_mod_queue, clear_mod_queue, get_mod_queue_entry, clear_mod_queue_particular
 import LilyManagement.db.sLilyStaffDatabaseAccess as LSDA
 
 
 from Misc.sLilyEmbed import simple_embed
-from LilyModeration.components.sLilyModerationComponents import ban_embed, mute_embed, warn_embed, ModerationInsights
+from LilyModeration.components.sLilyModerationComponents import ban_embed, mute_embed, warn_embed, ModerationInsights, moderation_queue_embed, ModerationQueueClear
 from LilyModeration.utils.LilyModerationUtilities import mute_parser
 
 
@@ -230,51 +230,36 @@ async def ms(ctx: commands.Context, moderator: discord.Member, page_start: int=0
     logs = result["logs"]
     stats = result["stats"]
     total_logs = result["total_logs"]
-    now = result["now"]
-    average_active_moderation_timestamp_range = result["average_active_moderation_timestamp_range"]
 
     embed1 = discord.Embed(
-            title=f"{Config.emoji['arrow']} {moderator.display_name}'s Moderation Stats",
-            description=f"### Average Active Moderation Time\n- <t:{average_active_moderation_timestamp_range[0]}:T> - <t:{average_active_moderation_timestamp_range[1]}:T>",
-            colour=16777215
-        )
+        title=f"{Config.emoji['arrow']} {moderator.display_name}'s Moderation Statistics",
+        description=f"## __TOTAL MODERATION STATS__\n### Total : **{str(total_logs)}**\n- Mutes : **{stats['mute']['total']}**\n- Warns: **{stats['warn']['total']}**\n- Quarantines: **{stats['quarantine']['total']}**\n- Bans: **{stats['ban']['total']}**",
+        colour=16777215
+
+    )
+
     embed1.set_thumbnail(url=moderator.avatar.url if moderator.avatar else Config.img['member'])
     embed1.set_image(url=Config.img['border'])
-    embed1.add_field(name=f"{Config.emoji['logs']} Total Logs", value=str(total_logs), inline=True)
-    embed1.add_field(name=f"{Config.emoji['shield']} Moderator ID", value=str(moderator.id), inline=True)
-    embed1.add_field(name=f"{Config.emoji['calender']} Date", value=now.strftime("%Y-%m-%d"), inline=True)
+
 
     embed2 = discord.Embed(
-            title=f"{Config.emoji['arrow']} Moderation Statistics Overview",
-            description=f"### Total Logs Evaluation\n-  **Mutes**: `{stats['mute']['total']}` | **Bans** : `{stats['ban']['total']}` | **Quarantines** : `{stats['quarantine']['total']}` | **Warns** : `{stats['warn']['total']}`",
+            title=f"Statistics Overview",
             colour=16777215
         )
-    embed2.set_image(url="https://media.discordapp.net/attachments/1404797630558765141/1437432525739003904/colorbarWhite.png")
+    embed2.set_image(url=Config.img['border'])
 
     actions = ["mute", "warn", "ban", "quarantine"]
 
     for action in actions:
-        embed2.add_field(
-            name=f"{action.title()} (Today)",
-            value=str(stats[action]["today"]),
-            inline=True
-        )
-        embed2.add_field(
-            name=f"{action.title()} (last 7 days)",
-            value=str(stats[action]["7d"]),
-            inline=True
-        )
-        embed2.add_field(
-            name=f"{action.title()} (last 30 days)",
-            value=str(stats[action]["30d"]),
-            inline=True
-        )
+        embed2.add_field(name=f"{action.title()} • Today", value=stats[action]["today"], inline=True)
+        embed2.add_field(name=f"{action.title()} • 7d", value=stats[action]["7d"], inline=True)
+        embed2.add_field(name=f"{action.title()} • 30d", value=stats[action]["30d"], inline=True)
 
     logs_text = ""
 
     for index, log in enumerate(logs, start=page_start + 1):
 
-        ts_unix = int(log["timestamp"].timestamp())
+        ts_unix = int(log["timestamp"])
 
         logs_text += (
             f"📌 **Log #{index} - {log['mod_type'].title()}**\n"
@@ -370,7 +355,7 @@ async def moderation_insights(ctx: commands.Context):
     view = ModerationInsights(ctx.me)
     view.message = await ctx.reply(view=view)
     
-async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = []):
+async def ban_user(ctx: commands.Context, user_input, reason="No reason provided", proofs: list = []):
     try:
         try:
             cur = await VC.cdb.execute(
@@ -403,15 +388,57 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
         member = user_input if isinstance(user_input, discord.Member) else None
         target = user_input
 
-        if member and (
-            member.top_role >= ctx.guild.me.top_role or
-            member.top_role >= ctx.author.top_role or
-            member.id in {ctx.guild.owner_id, ctx.bot.user.id, ctx.author.id}
-        ):
-            return await ctx.reply(embed=simple_embed("Cannot moderate this user.", 'cross'))
+        if not member:
+            return await ctx.reply(embed=simple_embed(
+                "User not in guild.", 'cross'
+            ))
+
+        if member:
+            response = await get_mod_queue_entry(member.id, ctx.guild.id)
+            if response.get("success"):
+                return await ctx.reply(
+                    embed=simple_embed(
+                        f"This user already has a pending action request from <@{response.get('moderator_id')}>.\nCheck `/moderation_queue` for details.",
+                        'cross'
+                    )
+                )
+
+            if (
+                member.top_role >= ctx.guild.me.top_role or
+                member.top_role >= ctx.author.top_role or
+                member.id in {ctx.guild.owner_id, ctx.bot.user.id, ctx.author.id}
+            ):
+                return await ctx.reply(
+                    embed=simple_embed("You can't take action on this user due to role hierarchy or restrictions.", 'cross')
+                )
 
         if await exceeded_ban_limit(ctx, ctx.author.id, valid_roles):
             remaining_time = await remaining_Ban_time(ctx, ctx.author.id, valid_roles)
+
+            # Apply a fallback here!
+            response = await add_mod_queue(
+                {
+                    "guild_id": ctx.guild.id,
+                    "moderator_id": ctx.author.id,
+                    "target_user_id" : member.id,
+                    "mod_type" : "quarantine" if jail_value == 1 else "ban",
+                    "reason" : reason,
+                    "message_source": ctx.message.jump_url   
+                }
+            )
+
+            try:
+                """ Try muting the user until than """
+                await member.edit(timed_out_until=datetime.now(timezone.utc) + timedelta(hours=6), reason=f'{reason} | In Ban Queue')
+            except:
+                ...
+
+
+            if response.get("success"):
+                return await ctx.reply(embed=simple_embed(
+                f"{response.get("message")}"
+            ))
+
             return await ctx.reply(embed=simple_embed(
                 f"Daily limit exceeded.\n{remaining_time}", 'cross'
             ))
@@ -480,6 +507,102 @@ async def ban_user(ctx, user_input, reason="No reason provided", proofs: list = 
     except Exception as e:
         return await ctx.reply(embed=simple_embed(f"Error: {e}", 'cross'))
 
+async def ban_queue_user(
+    interaction: discord.Interaction,
+    moderation_queue: list[dict]
+) -> str:
+    guild = interaction.guild
+    results = []
+
+    try:
+        try:
+            cur = await VC.cdb.execute(
+                "SELECT value FROM GlobalConfigs WHERE key = 'Jail'"
+            )
+            row = await cur.fetchone()
+            await cur.close()
+            jail_value = int(row[0] or 0)
+        except Exception:
+            jail_value = 0
+
+        for item in moderation_queue:
+            try:
+                mod_type = item.get("mod_type")
+                moderator_id = item.get("moderator_id")
+                user_id = item.get("target_user_id")
+                reason = item.get("reason", "No reason provided")
+                source = item.get("message_source")
+
+                if not user_id:
+                    results.append("Invalid user in queue")
+                    continue
+
+                if mod_type == "ban" and jail_value == 0:
+                    await guild.ban(
+                        discord.Object(id=user_id),
+                        reason=f"Queued | {reason}"
+                    )
+
+                    await LilyLogging.LogModerationAction(
+                        interaction, moderator_id, user_id, "ban", f'{reason} | Verified by {interaction.user.id}', []
+                    )
+
+                    results.append(f"Banned <@{user_id}>")
+
+                elif mod_type == "quarantine" or (mod_type == "ban" and jail_value == 1):
+                    try:
+                        member = guild.get_member(user_id) or await guild.fetch_member(user_id)
+                    except Exception:
+                        results.append(f"<@{user_id}> Not found!")
+                        continue
+
+                    quarantine_role = (
+                        discord.utils.get(guild.roles, name="Quarantine")
+                        or discord.utils.get(guild.roles, name="Prisoner")
+                    )
+
+                    if not quarantine_role:
+                        results.append("No quarantine role")
+                        continue
+
+                    if quarantine_role >= guild.me.top_role:
+                        results.append("Role hierarchy issue")
+                        continue
+
+                    if quarantine_role in member.roles:
+                        results.append(f"<@{user_id}> already quarantined")
+                        continue
+
+                    await member.add_roles(
+                        quarantine_role,
+                        reason=f"{reason} | Verified by {interaction.user}"
+                    )
+
+                    await LilyLogging.LogModerationAction(
+                        interaction, moderator_id, user_id, "quarantine", f'{reason} | Verified by {interaction.user.id}', []
+                    )
+
+                    results.append(f"Quarantined <@{user_id}>")
+
+                else:
+                    results.append(f"Unknown mod type for <@{user_id}>")
+                await asyncio.sleep(2)
+            except discord.Forbidden:
+                results.append(f"Missing permissions for <@{user_id}>")
+                await asyncio.sleep(2)
+            except discord.HTTPException as e:
+                results.append(f"HTTP error for <@{user_id}>: {e}")
+                await asyncio.sleep(2)
+            except Exception as e:
+                results.append(f"Error for <@{user_id}>: {e}")
+                await asyncio.sleep(2)
+
+        await clear_mod_queue({"guild_id": interaction.guild.id})
+        return "\n".join(results) if results else "Nothing processed."
+
+    except Exception as e:
+        return f"Error: {e}"
+    
 async def mute_user(ctx: commands.Context, user: discord.Member, duration: str, reason: str = "No reason provided", proofs: list = []):
 
     if user.timed_out_until and user.timed_out_until > discord.utils.utcnow():
@@ -584,3 +707,32 @@ async def CaseEdit(ctx: commands.Context, case_id: int, case_statement: str, abs
         await ctx.reply(embed=simple_embed(response.get("message")))
     else:
         await ctx.reply(embed=simple_embed(response.get("message"), 'cross'))
+
+async def CaseDelete(ctx: commands.Context, case_id: int):
+    response = await delete_case({"case_id": case_id})
+    if response.get("success"):
+        await ctx.reply(embed=simple_embed(response.get("message")))
+    else:
+        await ctx.reply(embed=simple_embed(response.get("message"), 'cross'))
+
+async def FetchModerationQueue(ctx: commands.Context):
+    try:
+        response = await fetch_mod_queue({"guild_id": ctx.guild.id})
+        if response.get("success"):
+            view = ModerationQueueClear(response.get("items", []), ctx.author, ban_queue_user)
+            message = await ctx.reply(view=view, embed=moderation_queue_embed(ctx, response.get("items", [])))
+            view.message = message
+        else:
+            await ctx.reply(embed=simple_embed(response.get("message", "Unknown Error!"), 'cross'))
+    except Exception as e:
+        print(f"Exception [FetchModerationQueue] {e}")
+
+async def RemoveMemberFromQueue(ctx: commands.Context, member: discord.Member):
+    try:
+        response = await clear_mod_queue_particular({"guild_id": ctx.guild.id, "user_id": member.id})
+        if response.get("success"):
+            await ctx.reply(embed=simple_embed(response.get("message", "Success!")))
+        else:
+            await ctx.reply(embed=simple_embed(response.get("message", "Success!"), 'cross'))
+    except Exception as e:
+        print(f"Exception [RemoveMemberFromQueue] {e}")

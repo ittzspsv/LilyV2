@@ -15,6 +15,7 @@ import Config.sValueConfig as VC
 import Misc.sFruitImageDownloader as FID
 from .. import sLilyBloxFruitsCore as LBFC
 from .. import sLilyBloxFruitsCache as BFC
+from Misc.sLilyEmbed import simple_embed
 
 
 import Misc.sLilyEmbed as LilyEmbed
@@ -37,8 +38,13 @@ class LilyBloxFruits(commands.Cog):
     async def on_message(self, message: discord.Message):
         await LBFC.MessageEvaluate(self.bot, message)
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer',)))
-    @commands.hybrid_command(name='update_image_blox_fruits', description='updates an image of blox fruits')
+    @commands.hybrid_group()
+    async def bloxfruits(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await ctx.reply(embed=simple_embed("Lily Blox Fruits Command Hierarchy!"))
+
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(()))
+    @bloxfruits.command(name='update_image', description='updates an image of blox fruits')
     async def UpdateImageBloxFruits(self, ctx: commands.Context, name: str = ""):
         parser = [n.strip() for n in name.split(",") if n.strip()]
 
@@ -68,9 +74,9 @@ class LilyBloxFruits(commands.Cog):
 
         await ctx.send("\n".join(results))
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('ValueTeam', 'Developer')))
-    @commands.hybrid_command(name='update_bf_value', description='updates an value of an item in blox fruits')
-    async def UpdateValue(self, ctx: commands.Context,name: str,physical_value: str = None,permanent_value: str = None,physical_demand: str = None,permanent_demand: str = None,demand_type: str = None,permanent_demand_type: str = None,category: str = None,aliases: str = None,icon_url: str = None):
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(()))
+    @bloxfruits.command(name='update_value', description='updates an value of an item in blox fruits')
+    async def UpdateValue(self, ctx: commands.Context,name: str,physical_value: str = None ,permanent_value: str = None,physical_demand: str = None,permanent_demand: str = None,demand_type: str = None,permanent_demand_type: str = None,category: str = None,aliases: str = None,icon_url: str = None):
         await ctx.defer()
         def parse_number(value):
             if value is None:
@@ -146,7 +152,7 @@ class LilyBloxFruits(commands.Cog):
             print(f"Exception [UpdateValue] {e}")
             await ctx.send(embed=LilyEmbed.simple_embed(f"An error occurred", 'cross'))
 
-    @commands.hybrid_command(name='add_combo', description='Adds a combo to the database')
+    @bloxfruits.command(name='add_combo', description='Adds a combo to the database')
     async def add_combo(self, ctx: commands.Context, *, combo: str = None):
         await ctx.defer()
         if not combo:
@@ -214,7 +220,7 @@ class LilyBloxFruits(commands.Cog):
         except Exception as e:
             await ctx.reply(f"Unexpected error: {e}")
 
-    @commands.hybrid_command(name='find_combo', description='Finds a combo in the database')
+    @bloxfruits.command(name='find_combo', description='Finds a combo in the database')
     async def find_combo(self, ctx: commands.Context, *, build: str = None):
         await ctx.defer()
         if not build:
@@ -273,8 +279,8 @@ class LilyBloxFruits(commands.Cog):
         except Exception as e:
             await ctx.reply(f"Exception: {e}")
 
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
-    @commands.hybrid_command(name='delete_combo', description='deletes a combo by its id')
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(()))
+    @bloxfruits.command(name='delete_combo', description='deletes a combo by its id')
     async def delete_combo(self, ctx: commands.Context, combo_id: str):
         try:
             row = await LCM.DeleteComboByID(combo_id)
@@ -285,8 +291,8 @@ class LilyBloxFruits(commands.Cog):
         except Exception as e:
             await ctx.reply(embed=LilyEmbed.simple_embed(f"Exception Occured {e}", 'cross'))
     
-    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Developer')))
-    @commands.hybrid_command(name='combo_lookup_by_id', description='Lookup a combo by its id')
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(()))
+    @bloxfruits.command(name='combo_lookup', description='Lookup a combo by its id')
     async def combo_lookup_by_id(self, ctx: commands.Context, combo_id: str):
         await ctx.defer()
         try:

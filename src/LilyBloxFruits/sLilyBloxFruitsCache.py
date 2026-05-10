@@ -4,7 +4,6 @@ You may disable this cache if you want to fetch items manually from database, bu
 '''
 
 import aiosqlite
-import asyncio
 import ast
 from typing import Dict, Set, List, Union
 
@@ -94,3 +93,4 @@ async def initialize():
 
     fruit_names_sorted = sorted(fruit_names, key=len, reverse=True)
     fruit_set = set(fruit_names_sorted)
+

@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 import re
 import discord
+from LilyUtility.sLilyUtility import format_currency
 
 def draw_gradient_text(
     image, 
@@ -52,33 +53,6 @@ def draw_gradient_text(
         y -= text_h
 
     image.paste(gradient, (int(x), int(y)), gradient)
-
-def format_currency(val):
-    value = int(val)
-    if value >= 1_000_000_000_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000_000_000_000:.1f}DX"
-    elif value >= 1_000_000_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000_000_000:.1f}NX"
-    elif value >= 1_000_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000_000:.1f}OX"
-    elif value >= 1_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000:.1f}SPX"
-    elif value >= 1_000_000_000_000_000_000_000: 
-        return f"{value / 1_000_000_000_000_000_000_000:.1f}SX"
-    elif value >= 1_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000:.1f}QI"
-    elif value >= 1_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000:.1f}QT"
-    elif value >= 1_000_000_000_000: 
-        return f"{value / 1_000_000_000_000:.1f}T"
-    elif value >= 1_000_000_000:  
-        return f"{value / 1_000_000_000:.1f}B"
-    elif value >= 1_000_000:  
-        return f"{value / 1_000_000:.1f}M"
-    elif value >= 1_000:  
-        return f"{value / 1_000:.1f}k"
-    else:
-        return str(int(value))
 
 async def GenerateWelcome(member: discord.Member):
     background_img = 'src/ui/Greetings/Welcome.png'

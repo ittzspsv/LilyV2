@@ -65,6 +65,10 @@ def parse_date(ts: Optional[str]) -> Optional[datetime]:
 def iso(dt: datetime) -> str:
     return dt.astimezone(UTC).replace(microsecond=0).isoformat()
 
+
+def proper_capatilize(text):
+    return " ".join(word[:1].upper() + word[1:] for word in text.split())
+
 async def get_safe_member(*,bot: Optional[commands.Bot],guild: Union[discord.Guild, int], id: int) -> Optional[discord.Member]:
     if isinstance(guild, discord.Guild):
         member = guild.get_member(id)
@@ -107,61 +111,3 @@ async def fetch_json(session, url, method="GET", **kwargs):
             raise Exception(f"HTTP {resp.status}: {text}")
         return await resp.json()
     
-async def get_user_data(username: str):
-    async with aiohttp.ClientSession() as session:
-        data = await fetch_json(
-            session,
-            "https://users.roblox.com/v1/usernames/users",
-            method="POST",
-            json={"usernames": [username], "excludeBannedUsers": False}
-        )
-
-        if not data["data"]:
-            raise Exception("User not found")
-
-        user = data["data"][0]
-        user_id = user["id"]
-
-        user_info = await fetch_json(
-            session,
-            f"https://users.roblox.com/v1/users/{user_id}"
-        )
-
-        avatar_data = await fetch_json(
-            session,
-            f"https://thumbnails.roblox.com/v1/users/avatar?userIds={user_id}&size=420x420&format=Png&isCircular=false"
-        )
-
-        avatar_url = avatar_data["data"][0]["imageUrl"]
-
-        presence_data = await fetch_json(
-            session,
-            "https://presence.roblox.com/v1/presence/users",
-            method="POST",
-            json={"userIds": [user_id]}
-        )
-
-        presence = presence_data["userPresences"][0]["userPresenceType"]
-
-        presence_map = {
-            0: "Offline",
-            1: "Online",
-            2: "In Game",
-            3: "In Studio"
-        }
-
-        status = presence_map.get(presence, "Unknown")
-
-        created = user_info["created"]
-        dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
-        unix_timestamp = int(dt.timestamp())
-
-        return {
-            "display_name" : user_info["displayName"],
-            "name" : user_info["name"],
-            "user_id" : str(user_id),
-            "avatar_url" : avatar_url,
-            "status" : status,
-            "created_at" : unix_timestamp,
-            "description" : user_info["description"] or "No Description"
-        }

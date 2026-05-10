@@ -25,6 +25,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
 
         self.permanent_emoji = discord.utils.get(self.bot.emojis, name="perm") or "✅"
         self.gamepass_emoji = discord.utils.get(self.bot.emojis, name="gamepass") or "🎟️"
+        self.fruit_skins_emoji = Config.fruit_emojis['galaxy_kitsune']
         self.default_emoji = discord.utils.get(self.bot.emojis, name="default") or "🍉"
         self.overpay_emoji = "🔥"
         self.fair_emoji = "🤝"
@@ -42,7 +43,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                 discord.SelectOption(label="Default", value="default", emoji=self.default_emoji),
                 discord.SelectOption(label="Suggest Permanent", value="permanent", emoji=self.permanent_emoji),
                 discord.SelectOption(label="Suggest Gamepass", value="gamepass", emoji=self.gamepass_emoji),
-                discord.SelectOption(label="Suggest Fruit Skins", value="fruit_skins"),
+                discord.SelectOption(label="Suggest Fruit Skins", value="fruit_skins", emoji=self.fruit_skins_emoji),
             ]
         )
         self.basic_select.callback = self.basic_select_callback
@@ -58,7 +59,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
 
         self.storage_select = discord.ui.Select(
             custom_id="storage_select",
-            options=[discord.SelectOption(label=str(i), value=str(i)) for i in range(1, 5)]
+            options=[discord.SelectOption(label=str(i), value=str(i), emoji=Config.fruit_emojis['fruit_storage']) for i in range(1, 5)]
         )
         self.storage_select.callback = self.storage_select_callback
 
@@ -70,12 +71,12 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         self.suggest_button.callback = self.suggest_button_callback
 
         container = discord.ui.Container(
-            discord.ui.TextDisplay(content="## TRADE SUGGESTOR CONFIGURATION\n\n### • Customize your Suggester Settings, Then Click Suggest"),
-            discord.ui.TextDisplay(content="**BASIC SUGGESTIONS**"),
+            discord.ui.TextDisplay(content="## Trade Suggestor Configuration\n\n### • Customize your Suggester Settings, Then Click Suggest"),
+            discord.ui.TextDisplay(content="**Basic Suggestions**"),
             discord.ui.ActionRow(self.basic_select),
-            discord.ui.TextDisplay(content="**TRADE PRICING SUGGESTIONS**"),
+            discord.ui.TextDisplay(content="**Trade Pricing Suggestions**"),
             discord.ui.ActionRow(self.pricing_select),
-            discord.ui.TextDisplay(content="**TOTAL FRUIT CAPACITY**"),
+            discord.ui.TextDisplay(content=f"**Your Total Fruit Storage**"),
             discord.ui.ActionRow(self.storage_select),
             discord.ui.ActionRow(self.suggest_button),
             accent_colour=discord.Colour(16777215),

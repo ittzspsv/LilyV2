@@ -4,7 +4,9 @@
 </div>
 
 Multi-purpose Discord bot designed to do almost any stuffs
-
+> [!WARNING]
+> This bot has grown overly complex and is currently being completely rewritten. Because the codebase is tightly coupled, it’s become hard to follow and contains a lot of duplicated logic. The goal now is to simplify the structure and remove unnecessary redundancy.
+> A key mistake in my first project was not paying enough attention to architecture while scaling.
 ---
 
 ## MODULES

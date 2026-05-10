@@ -1,20 +1,16 @@
 import json
-try:
-    import Config.sValueConfig as VC
-    import Config.sBotDetails as Config
-    from LilyBloxFruits.core.sTradeFormatAlgorthim import *
-    from ui.sWinOrLossImageGenerator import *
+import Config.sValueConfig as VC
+import Config.sBotDetails as Config
+from LilyBloxFruits.core.sTradeFormatAlgorthim import *
+from LilyUtility.sLilyUtility import proper_capatilize
+from ui.sWinOrLossImageGenerator import *
 
-    from .. import sLilyBloxFruitsCache as FruitCache
-except:
-    pass
-
+import LilyBloxFruits.sLilyBloxFruitsCache as FruitCache
 from PIL import Image
 
 async def fetch_fruit_details(fruit_name: str):
-
     if isinstance(fruit_name, str):
-        fruit_name = ' '.join(i if i[0].isdigit() else i.capitalize() for i in fruit_name.split())
+        fruit_name = proper_capatilize(fruit_name)
         data = FruitCache.item_dict.get(fruit_name, {}) or FruitCache.item_dict.get(fruit_name.title(), {})
 
         return data
@@ -103,7 +99,6 @@ async def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_frui
         if (total_value_of_your_fruit < total_value_of_their_fruit and fruit_exceed_limit != 1):
             WORLT = "W"
             output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
-            output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
             output_dict["Your_IndividualValues"] = your_fruit_individual_values
             output_dict["Their_IndividualValues"] = their_fruit_individual_values
             output_dict["Your_TotalValue"] = total_value_of_your_fruit
@@ -116,7 +111,6 @@ async def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_frui
         elif (total_value_of_your_fruit == total_value_of_their_fruit) and fruit_exceed_limit != 1:
             WORLT = "Fair"
             output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
-            output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
             output_dict["Your_IndividualValues"] = your_fruit_individual_values
             output_dict["Their_IndividualValues"] = their_fruit_individual_values
             output_dict["Your_TotalValue"] = total_value_of_your_fruit
@@ -129,7 +123,6 @@ async def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_frui
         elif fruit_exceed_limit != 1:
             WORLT = "L"
             output_dict["TradeConclusion"] = f"It's a {WORLT} Trade"
-            output_dict["TradeDescription"] = f"**The trade that you are trying to do or you have already done is a {WORLT} trade.  here's why**"
             output_dict["Your_IndividualValues"] = your_fruit_individual_values
             output_dict["Their_IndividualValues"] = their_fruit_individual_values
             output_dict["Your_TotalValue"] = total_value_of_your_fruit
@@ -157,10 +150,3 @@ async def j_LorW(your_fruits=[], your_fruit_type=[], their_fruits=[], their_frui
             img = Image.open('src/ui/TooManyFruitRequests.png')
             img.resize((int(img.width * 0.7), int(img.height * 0.7)))
             return img
-
-
-'''
-sentence = "i wana trade 2 leopard for 4 doughs"
-print(sentence)
-print("is it a valid trade format : " , is_valid_trade_format(sentence, fruit_names))
-print(extract_trade_details(sentence))'''

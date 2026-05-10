@@ -145,7 +145,7 @@ def SuggestBuilder(pool: Optional[List], target_value, max_gamepass=2, overpay=F
             new_gp = gp_count + (1 if category == "gamepass" else 0)
             new_sel = sel + [(name, ftype, val, category)]
 
-            if new_total not in new_dp or abs(new_total - target_value) < abs(new_total - target_value):
+            if new_total not in new_dp or abs(new_total - target_value) < abs(total - target_value):
                 new_dp[new_total] = (item_count + 1, new_perm, new_gp, new_sel)
 
         dp = new_dp

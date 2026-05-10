@@ -15,9 +15,6 @@ import json
 import DiscordTranscript
 import io
 
-
-
-
 TICKET_VIEWS_PATH = Path("storage/view/TicketViews.json")
 
 def save_ticket_view(channel_id: int, message_id: int, config: dict, guild_id: int):
@@ -185,7 +182,13 @@ async def cleanup_ticket_data(ticket_id: int):
 
 async def CloseTicketThread(ctx: commands.Context):
     await ctx.defer()
-    await ctx.reply(embed=LilyEmbed.simple_embed("Ticket close scheduling has been initiated. The channel will be deleted shortly."))
+
+    await ctx.reply(
+        embed=LilyEmbed.simple_embed(
+            "Ticket close scheduling has been initiated. The channel will be deleted shortly."
+        )
+    )
+
     if not isinstance(ctx.channel, (discord.Thread, discord.TextChannel)):
         return await ctx.reply(
             embed=LilyEmbed.simple_embed(
@@ -194,8 +197,9 @@ async def CloseTicketThread(ctx: commands.Context):
             )
         )
 
-    thread = ctx.channel
-    ticket_id: int = thread.id
+    channel = ctx.channel
+    ticket_id: int = channel.id
+
     try:
         cursor = await LilyLogging.mdb.execute(
             """
@@ -203,7 +207,7 @@ async def CloseTicketThread(ctx: commands.Context):
             FROM tickets
             WHERE ticket_id = ?;
             """,
-            (thread.id,)
+            (ticket_id,)
         )
 
         row = await cursor.fetchone()
@@ -212,6 +216,7 @@ async def CloseTicketThread(ctx: commands.Context):
 
         opened_user_id, ticket_type, logs_channel_id, submission_json_raw = row
 
+
         logs_channel = ctx.guild.get_channel(logs_channel_id)
         if not logs_channel:
             try:
@@ -219,12 +224,25 @@ async def CloseTicketThread(ctx: commands.Context):
             except discord.NotFound:
                 logs_channel = None
 
+        if isinstance(channel, discord.Thread):
+            if logs_channel:
+                await cTicketLogAction(
+                    ctx=ctx,
+                    thread=channel,
+                    opened_user_id=opened_user_id,
+                    ticket_type=ticket_type,
+                    accessed_staff_ids=set(),
+                    logs_channel=logs_channel,
+                )
 
-        if isinstance(ctx.channel, discord.Thread):
-             thread.edit(archived=True, locked=True)
-        elif isinstance(ctx.channel, discord.TextChannel):
+            await channel.edit(archived=True, locked=True)
+
+            await cleanup_ticket_data(ticket_id)
+            return
+
+        elif isinstance(channel, discord.TextChannel):
             transcript = await DiscordTranscript.export(
-                ctx.channel,
+                channel,
                 limit=None,
                 tz_info="America/New_York",
                 military_time=True,
@@ -232,46 +250,39 @@ async def CloseTicketThread(ctx: commands.Context):
             )
 
             if transcript is None:
-                return
+                return await ctx.send("Failed to generate transcript.")
 
             transcript_file = discord.File(
                 io.BytesIO(transcript.encode()),
-                filename=f"transcript-{ctx.channel.name}.html",
+                filename=f"transcript-{channel.name}.html",
             )
 
-            await ctx.channel.delete(reason=f"Ticket Closed by {ctx.author}")
-            
-        if logs_channel and isinstance(thread, discord.Thread):
-            await cTicketLogAction(
-                ctx=ctx,
-                thread=thread,
-                opened_user_id=opened_user_id,
-                ticket_type=ticket_type,
-                accessed_staff_ids=set(),
-                logs_channel=logs_channel,
+            if logs_channel:
+                await cTicketLogActionChannel(
+                    ctx=ctx,
+                    opened_user_id=opened_user_id,
+                    ticket_type=ticket_type,
+                    logs_channel=logs_channel,
+                    transcripts_file=transcript_file
+                )
 
-            )
+            try:
+                await channel.delete(reason=f"Ticket Closed by {ctx.author}")
+            except discord.Forbidden:
+                return await ctx.send("Missing permissions to delete channel.")
+            except discord.HTTPException as e:
+                return await ctx.send(f"Failed to delete channel: {e}")
 
-        elif logs_channel and isinstance(thread, discord.TextChannel):
-            await cTicketLogActionChannel(
-                ctx=ctx,
-                opened_user_id=opened_user_id,
-                ticket_type=ticket_type,
-                logs_channel=logs_channel,
-                transcripts_file=transcript_file
-            )
-
-
-        await cleanup_ticket_data(ticket_id)
+            await cleanup_ticket_data(ticket_id)
 
     except Exception as e:
         print(f"[TICKET CLOSE ERROR] {e}")
+
         await ctx.send(
             embed=LilyEmbed.simple_embed(
                 "Attempted to Close an invalid Instigator Ticket",
                 "cross"
-            ),
-            ephemeral=True
+            )
         )
 
 async def RenameTicket(ctx: commands.Context, name: str):

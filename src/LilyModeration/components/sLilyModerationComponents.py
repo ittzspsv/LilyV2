@@ -1,9 +1,10 @@
 import discord
+from discord.ext import commands
 import LilyModeration.db.sLilyModerationDatabaseAccess as LMDA
 
 from Misc.sLilyEmbed import simple_embed
 
-from typing import Optional
+from typing import Optional, Callable
 
 import Config.sBotDetails as Config
 
@@ -118,11 +119,6 @@ def ban_embed(moderator: discord.Member, reason: Optional[str], appealLink: Opti
             inline=False,
         )
         .add_field(
-            name=f"{Config.emoji['shield']} Moderator",
-            value=moderator.name,
-            inline=False,
-        )
-        .add_field(
             name=f"{Config.emoji['bot']} Server",
             value=server_name,
             inline=False,
@@ -146,11 +142,7 @@ def mute_embed(moderator: discord.Member, reason: Optional[str], guild_name: str
         value=reason,
         inline=False,
     )
-    embed.add_field(
-        name=f"{Config.emoji['shield']} Moderator",
-        value=moderator.mention,
-        inline=False,
-    )
+
     embed.add_field(
         name=f"{Config.emoji['bot']} Server",
         value=guild_name,
@@ -175,14 +167,71 @@ def warn_embed(moderator: discord.Member, reason: Optional[str], guild_name: str
         inline=False,
     )
     embed.add_field(
-        name=f"{Config.emoji['shield']} Moderator",
-        value=moderator.mention,
-        inline=False,
-    )
-    embed.add_field(
         name=f"{Config.emoji['bot']} Server",
         value=guild_name,
         inline=False,
     )
 
+    return embed
+
+class ModerationQueueClear(discord.ui.View):
+    def __init__(self, moderation_queue: list[dict], interactor: discord.Member, ban_callback: Callable):
+        super().__init__(timeout=300)
+        self.moderation_queue = moderation_queue
+        self.interactor: discord.Member = interactor
+        self.ban_callback = ban_callback
+        self.message: Optional[discord.Message] = None
+
+    @discord.ui.button(
+    label="Clear Moderation Queue",
+    style=discord.ButtonStyle.danger
+)
+    async def clear_queue(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        if interaction.user.id != self.interactor.id:
+            return await interaction.response.send_message(
+                embed=simple_embed("You cannot interact with this!", 'cross'),
+                ephemeral=True
+            )
+
+        await interaction.response.defer(thinking=True)
+
+        summary = await self.ban_callback(interaction, self.moderation_queue)
+
+        for child in self.children:
+            child.disabled = True
+
+        if self.message:
+            await self.message.delete()
+
+        await interaction.followup.send(
+            embed=simple_embed(f"Queue Processed:\n{summary}"),
+            view=self,
+        )
+
+def moderation_queue_embed(ctx: commands.Context, moderation_queue: list[dict]) -> discord.Embed:
+    embed = discord.Embed(
+        color=16777215,
+        title="Moderation Queue",
+        description="- If a staff member can’t perform an action, it will be added to this queue. Another staff member who has permission can then review and complete it.\n### Queue List",
+    )
+    embed.set_thumbnail(url=ctx.me.display_avatar.url)
+
+
+    items_example = {
+        "mod_type": "ban",
+        "moderator_id": 12232323,
+        "target_user_id": 987986978,
+        "reason": "Hello what the hell!",
+        "message_source": "url"
+    }
+
+
+    for i, items in enumerate(moderation_queue):
+        embed.add_field(
+                name=f"📌 Queue #{i} • {items.get("mod_type", "Not defined")}",
+                value=f"> - User: <@{items.get("target_user_id")}>\n> - Moderator: <@{items.get("moderator_id")}>\n> - Reason: {items.get("reason")}\n> - [Message]({items.get("message_source")})",
+                inline=True,
+            )
+    
     return embed

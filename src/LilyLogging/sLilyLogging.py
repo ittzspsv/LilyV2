@@ -50,24 +50,70 @@ async def WriteLog(ctx: commands.Context, user_id: int, log_txt: str):
     embed = write_log_embed(timestamp, user_id, log_txt)
     await channel.send(embed=embed)
 
-async def LogModerationAction(ctx: commands.Context,moderator_id: int,target_user_id: int,mod_type: str,reason: str = "No reason provided", proofs: Optional[Sequence[Union[discord.Attachment, str]]] = None) -> None:
+async def LogModerationAction(
+    ctx: commands.Context | discord.Interaction,
+    moderator_id: int,
+    target_user_id: int,
+    mod_type: str,
+    reason: str = "No reason provided",
+    proofs: Optional[Sequence[Union[discord.Attachment, str]]] = None
+) -> None:
     global mdb
+
+    if not ctx.guild:
+        return
+
+    guild = ctx.guild
     timestamp = datetime.now(pytz.utc).isoformat()
 
     await mdb.execute("""
         INSERT INTO modlogs (guild_id, moderator_id, target_user_id, mod_type, reason, timestamp)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (ctx.guild.id, moderator_id, target_user_id, mod_type.lower(), reason, timestamp))
+    """, (
+        guild.id,
+        moderator_id,
+        target_user_id,
+        mod_type.lower(),
+        reason,
+        timestamp
+    ))
     await mdb.commit()
 
-    logs_channel: int = VC.guild_configs.get(ctx.guild.id).get("channels").get("logs_channel", 0)
+    logs_channel: int = (
+        VC.guild_configs
+        .get(guild.id, {})
+        .get("channels", {})
+        .get("logs_channel", 0)
+    )
 
-    channel = ctx.bot.get_channel(logs_channel)
-    if not channel:
+    if not logs_channel:
         return
 
-    embeds_to_send = moderation_embed(moderator_id, target_user_id, mod_type, reason, proofs, LilyUtility.utcnow())
-    await channel.send(content=f'<@{target_user_id}>', embeds=embeds_to_send)
+    channel = guild.get_channel(logs_channel)
+
+    if not channel:
+        try:
+            channel = await guild.fetch_channel(logs_channel)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            return
+
+    embeds_to_send = moderation_embed(
+        moderator_id,
+        target_user_id,
+        mod_type,
+        reason,
+        proofs,
+        LilyUtility.utcnow()
+    )
+
+    try:
+        await channel.send(
+            content=f"<@{target_user_id}>",
+            embeds=embeds_to_send
+        )
+    except (discord.Forbidden, discord.HTTPException):
+        pass
+
 
 async def LogValueAction(ctx: commands.Context,triggered: discord.Member,value_dict: dict):
     try:

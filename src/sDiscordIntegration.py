@@ -8,7 +8,6 @@ import LilyBloxFruits.sLilyBloxFruitsCore as LBFC
 import aiohttp
 import Config.sValueConfig as ValueConfig
 import os
-import logging
 import LilySecurity.sLilySecurity as LilySecurity
 import LilyUtility.sLilyGreetings as LG
 
@@ -80,6 +79,9 @@ class Lily(commands.Bot):
 
         await LilySecurity.LilySecurityEvaluate(message)
 
+        """ Ai Messages """
+        print("Hello World")
+
         await self.process_commands(message)
 
     async def on_member_join(self, member: discord.Member):
@@ -99,8 +101,7 @@ class Lily(commands.Bot):
             await ctx.reply(embed=simple_embed(str(error), 'cross'))
 
         elif isinstance(error, commands.CommandOnCooldown):
-            await ctx.reply(f"So fast! Try again after {error.retry_after:.1f} seconds.")
-
+            await ctx.reply(embed=simple_embed(f"So fast! Try again after {error.retry_after:.1f} seconds.", 'cross'))
         else:
             pass
 

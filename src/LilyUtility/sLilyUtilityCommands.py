@@ -1,4 +1,4 @@
-from LilyRulesets.sLilyRulesets import PermissionEvaluator, rPermissionEvaluator
+from LilyRulesets.sLilyRulesets import PermissionEvaluator
 import LilyLogging.sLilyLogging as LilyLogging
 import re
 import json
@@ -608,7 +608,7 @@ class LilyUtility(commands.Cog):
 
         embed.add_field(
             name="Code Maintainer",
-            value="- ~~--------~~ Shree.",
+            value="- Senior Shree.",
             inline=False
         )
 
@@ -632,5 +632,23 @@ class LilyUtility(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    '''
+    @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff Manager', 'Developer', 'Senior Administrator', 'Head Administrator')))
+    @commands.hybrid_command(name="set_channel_override_perms", description="set channel override perms")
+    async def set_channel_override_perms(
+    self,
+    ctx: commands.Context,
+    channel: discord.TextChannel,
+    role: discord.Role
+):
+        overwrite = discord.PermissionOverwrite(
+            manage_channels=True,        
+            manage_permissions=True     
+        )
+
+        await channel.set_permissions(role, overwrite=overwrite)
+
+        await ctx.send(f"Success!")
+    '''
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

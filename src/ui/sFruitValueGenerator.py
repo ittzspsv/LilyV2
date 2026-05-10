@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
+from LilyUtility.sLilyUtility import format_currency
 
 FONT_PATH = "src/ui/font/Berlin Sans FB Bold.ttf"
 NUMBER_FONT_PATH = "src/ui/font/Game Bubble.ttf"
@@ -13,33 +14,6 @@ def load_font(path, size):
         return ImageFont.truetype(path, size)
     except:
         return ImageFont.load_default()
-
-def format_currency(val):
-    value = int(val)
-    if value >= 1_000_000_000_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000_000_000_000:.1f}DX"
-    elif value >= 1_000_000_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000_000_000:.1f}NX"
-    elif value >= 1_000_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000_000:.1f}OX"
-    elif value >= 1_000_000_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000_000_000:.1f}SPX"
-    elif value >= 1_000_000_000_000_000_000_000: 
-        return f"{value / 1_000_000_000_000_000_000_000:.1f}SX"
-    elif value >= 1_000_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000_000:.1f}QI"
-    elif value >= 1_000_000_000_000_000:  
-        return f"{value / 1_000_000_000_000_000:.1f}QT"
-    elif value >= 1_000_000_000_000: 
-        return f"{value / 1_000_000_000_000:.1f}T"
-    elif value >= 1_000_000_000:  
-        return f"{value / 1_000_000_000:.1f}B"
-    elif value >= 1_000_000:  
-        return f"{value / 1_000_000:.1f}M"
-    elif value >= 1_000:  
-        return f"{value / 1_000:.1f}k"
-    else:
-        return str(int(value))
 
 def fit_font_size(draw, text, font_path, max_width, starting_size=46, min_size=20):
     font_size = starting_size
@@ -126,7 +100,6 @@ def draw_gradient_text(image, position, text, font, gradient_colors,
 
         draw = ImageDraw.Draw(image)
         draw.text(position, text, font=font, fill=flat_color, anchor=anchor)
-
 
 def get_icon_path(folder, fruit_name):
     for ext in [".png", ".webp", ".jpg", ".jpeg"]:
