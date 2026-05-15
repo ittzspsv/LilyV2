@@ -24,10 +24,28 @@ class LilyDatabaseAccess:
             raise RuntimeError("Database not connected")
         return self.db
 
-    async def execute(self, query: str, params: tuple = ()):
+    async def execute(self, query: str, params: tuple = (), commit: bool = True):
         async with self._lock:
             assert self.db is not None
-            await self.db.execute(query, params)
+            cursor = await self.db.execute(query, params)
+
+            if commit:
+                await self.db.commit()
+
+            return cursor.lastrowid
+
+    async def executemany(self, query: str, params: list[tuple], commit: bool = True):
+        async with self._lock:
+            assert self.db is not None
+
+            await self.db.executemany(query, params)
+
+            if commit:
+                await self.db.commit()
+
+    async def commit(self):
+        async with self._lock:
+            assert self.db is not None
             await self.db.commit()
 
     async def fetch_one(self, query: str, params: tuple = ()):
