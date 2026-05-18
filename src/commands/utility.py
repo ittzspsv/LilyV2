@@ -13,10 +13,49 @@ from core.utils.embeds.sLilyEmbed import ParseAdvancedEmbed
 from core.utils.types.types import ChannelEnum, CommandEnum
 from core.logging.lily_logging import LilyLoggingController
 from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from core.utils.components.sLIlyGlobalComponents import RoleCustomizationModal
 from discord.ext import commands
+from discord.ext.commands import MemberConverter
 from discord import app_commands
 
+from typing import cast
 
+class UserIDView(discord.ui.View):
+    def __init__(self, username: str):
+        super().__init__(timeout=60)
+        self.add_item(UserIDButton(username))
+
+class UserIDButton(discord.ui.Button):
+        def __init__(self, username: str):
+            super().__init__(
+                label="Get User ID",
+                style=discord.ButtonStyle.primary
+            )
+            self.username = username
+
+        async def callback(self, interaction: discord.Interaction):
+            converter = MemberConverter()
+            try:
+                bot: commands.Bot = cast(commands.Bot, interaction.client)
+                if not interaction.message:
+                    return
+                ctx = await bot.get_context(interaction.message)
+
+                member: discord.Member = await converter.convert(
+                    ctx,
+                    self.username
+                )
+
+                await interaction.response.send_message(
+                    f"User ID: {member.id}",
+                    ephemeral=True
+                )
+
+            except commands.CommandError:
+                await interaction.response.send_message(
+                    "Error processing the user.",
+                    ephemeral=True
+                )
 
 class LilyUtility(commands.Cog):
     def __init__(self, bot):
@@ -61,6 +100,16 @@ class LilyUtility(commands.Cog):
     async def on_ready(self):
         self.initialize_cache()
 
+    @commands.hybrid_group()
+    async def set(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await ctx.reply(embed=simple_embed("Lily Utility Setters"))
+
+    @commands.hybrid_group()
+    async def configure(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await ctx.reply(embed=simple_embed("Lily Utility Configurators"))
+
     '''
     # MESSAGING UTILITY
     @PermissionEvaluator(RoleAllowed=lambda: LSM.GetRoles(('Staff',)))
@@ -84,18 +133,18 @@ class LilyUtility(commands.Cog):
                 )
 
                 await user.send(embed=embed)
-                await ctx.send(embed=simple_embed("Sent Successfully"))
+                await ctx.reply(embed=simple_embed("Sent Successfully"))
             else:
                 await user.send(content=message)
                 await LilyLogging.WriteLog(ctx, ctx.author.id, f"Sent Message to {user.id} DM : {message}")
-                await ctx.send(embed=simple_embed("Sent Successfully"))
+                await ctx.reply(embed=simple_embed("Sent Successfully"))
 
         except discord.Forbidden:
-            await ctx.send(embed=simple_embed("I can't DM this user. They may have DMs disabled.", 'cross'))
+            await ctx.reply(embed=simple_embed("I can't DM this user. They may have DMs disabled.", 'cross'))
 
         except Exception as e:
             print(f"Exception [USER DM] {e}")
-            await ctx.send(embed=simple_embed("Failed to send Direct Message", 'cross'))
+            await ctx.reply(embed=simple_embed("Failed to send Direct Message", 'cross'))
 
     '''        
 
@@ -118,7 +167,7 @@ class LilyUtility(commands.Cog):
                     description=description,
                     color=discord.Color.blue()
                 )
-                await ctx.send(embed=embed)
+                await ctx.reply(embed=embed)
                 await asyncio.sleep(0.5)
         except Exception as e:
             print(f"Exception [SERVER LIST] {e}")
@@ -127,9 +176,9 @@ class LilyUtility(commands.Cog):
     @commands.hybrid_command(name='id', description='returns the id of a specific usertype')
     async def id(self, ctx:commands.Context, user:discord.Member=None):
         if user== None:
-            await ctx.send(ctx.author.id)
+            await ctx.reply(ctx.author.id)
         else:
-            await ctx.send(content=f'{user.id}')
+            await ctx.reply(content=f'{user.id}')
         
     @commands.hybrid_command(name='purge',description='Purge Message with specified amount')
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
@@ -148,11 +197,11 @@ class LilyUtility(commands.Cog):
 
         try:
             deleted = await ctx.channel.purge(limit=amount, check=check, bulk=True)
-            await ctx.send(embed=simple_embed(f"Deleted {len(deleted)} message(s)."), delete_after=5)
+            await ctx.reply(embed=simple_embed(f"Deleted {len(deleted)} message(s)."), delete_after=5)
         except discord.Forbidden:
-            await ctx.send(embed=simple_embed("I do not have permission to delete messages.", 'cross'))
+            await ctx.reply(embed=simple_embed("I do not have permission to delete messages.", 'cross'))
         except discord.HTTPException as e:
-            await ctx.send(embed=simple_embed("An Unknown error occured", 'cross'))
+            await ctx.reply(embed=simple_embed("An Unknown error occured", 'cross'))
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='ping',description='sends the latency of the bot')
@@ -186,7 +235,7 @@ class LilyUtility(commands.Cog):
             and ctx.author != user
             and ctx.author.top_role <= user.top_role
         ):
-            return await ctx.send(embed=simple_embed("You cannot modify someone with equal or higher top role.", 'cross'))
+            return await ctx.reply(embed=simple_embed("You cannot modify someone with equal or higher top role.", 'cross'))
 
         role = None
 
@@ -202,49 +251,58 @@ class LilyUtility(commands.Cog):
             role = discord.utils.find(lambda r: r.name.lower() == role_name, ctx.guild.roles)
 
         if role is None:
-            return await ctx.send(embed=simple_embed(f"Role `{role_input}` not found on this server.", 'cross'))
+            return await ctx.reply(embed=simple_embed(f"Role `{role_input}` not found on this server.", 'cross'))
 
         if role > ctx.author.top_role and ctx.author != ctx.guild.owner:
-            return await ctx.send(embed=simple_embed("You cannot assign a role that is higher than your top role.", 'cross'))
+            return await ctx.reply(embed=simple_embed("You cannot assign a role that is higher than your top role.", 'cross'))
 
         if ctx.guild.me.top_role <= role:
-            return await ctx.send("I cannot manage that role because it is above my top role.")
+            return await ctx.reply(embed=simple_embed("I cannot manage that role because it is above my top role.", 'cross'))
+        
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        author_role_ids = [role.id for role in ctx.author.roles]
+        try:
+            mode = bot_db.get_role_assignment_scope(ctx.guild.id, author_role_ids)
+            role_ids = bot_db.get_role_assignment_roles(ctx.guild.id, author_role_ids)
 
-        role_allotment = await LSM.GetAssignableRoles(ctx.author.roles)
-        if role_allotment:
-            mode, role_ids = next(iter(role_allotment.items()))
-            if mode == 'all':
-                if role in user.roles:
-                    await user.remove_roles(role, reason=f"Role removed by {ctx.author}")
-                    return await ctx.send(f"Removed role **{role.name}** from **{user.name}**.")
-                else:
-                    await user.add_roles(role, reason=f"Role given by {ctx.author}")
-                    return await ctx.send(f"Added role **{role.name}** to **{user.name}**.")
-            elif mode == 'specified':
-                if role.id in role_ids:
+            if mode:
+                if mode == 'none':
+                    return await ctx.reply(embed=simple_embed(f'You are not allowed for role assignment', 'cross'))
+
+                if mode == 'all':
                     if role in user.roles:
                         await user.remove_roles(role, reason=f"Role removed by {ctx.author}")
-                        return await ctx.send(f"Removed role **{role.name}** from **{user.name}**.")
+                        return await ctx.reply(embed=simple_embed(f"Removed role **{role.name}** from **{user.name}**."))
                     else:
                         await user.add_roles(role, reason=f"Role given by {ctx.author}")
-                        return await ctx.send(f"Added role **{role.name}** to **{user.name}**.")
-                else:
-                    return await ctx.send(f"You are not allowed to assign this role.")
-            elif mode == 'except':
-                if role.id not in role_ids:
-                    if role in user.roles:
-                        await user.remove_roles(role, reason=f"Role removed by {ctx.author}")
-                        return await ctx.send(f"Removed role **{role.name}** from **{user.name}**.")
+                        return await ctx.reply(embed=simple_embed(f"Added role **{role.name}** to **{user.name}**."))
+                elif mode == 'specific':
+                    if role.id in role_ids:
+                        if role in user.roles:
+                            await user.remove_roles(role, reason=f"Role removed by {ctx.author}")
+                            return await ctx.reply(embed=simple_embed(f"Removed role **{role.name}** from **{user.name}**."))
+                        else:
+                            await user.add_roles(role, reason=f"Role given by {ctx.author}")
+                            return await ctx.reply(embed=simple_embed(f"Added role **{role.name}** to **{user.name}**."))
                     else:
-                        await user.add_roles(role, reason=f"Role given by {ctx.author}")
-                        return await ctx.send(f"Added role **{role.name}** to **{user.name}**.")
-                else:
-                    return await ctx.send(f"You are not allowed to assign this role.")
-        else:
-            return await ctx.send(f"Column encountered a NULL parameter which is not expected")
+                        return await ctx.reply(embed=simple_embed(f"You are not allowed for role assignment", 'cross'))
+                elif mode == 'except':
+                    if role.id not in role_ids:
+                        if role in user.roles:
+                            await user.remove_roles(role, reason=f"Role removed by {ctx.author}")
+                            return await ctx.reply(embed=simple_embed(f"Removed role **{role.name}** from **{user.name}**."))
+                        else:
+                            await user.add_roles(role, reason=f"Role given by {ctx.author}")
+                            return await ctx.reply(embed=simple_embed(f"Added role **{role.name}** to **{user.name}**."))
+                    else:
+                        return await ctx.reply(embed=simple_embed(f"You are not allowed to assign this role.", 'cross'))
+            else:
+                return await ctx.reply(embed=simple_embed(f"Column encountered a NULL parameter which is not expected", 'cross'))
+        except Exception as e:
+            print(e)
 
 
-    @commands.hybrid_command(name='set_role_icon', description='Sets a role icon for a specific role')
+    @set.command(name='role_icon', description='Sets a role icon for a specific role')
     @permission(command_name="set_role_icon", restrict=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def role_icon(self, ctx: commands.Context, role: discord.Role=None, icon: discord.Attachment=None):        
@@ -275,10 +333,10 @@ class LilyUtility(commands.Cog):
             banner_bytes = await banner.read()
             await bot_member.edit(avatar=avatar_bytes,banner=banner_bytes,bio=bio)
 
-            await ctx.send("Profile Edit Success, Will be updated within few mins.")
+            await ctx.reply("Profile Edit Success, Will be updated within few mins.")
         except Exception as e:
             print(f"Exception [edit_profile] {e}")
-            await ctx.send("An Unknown error Occured")
+            await ctx.reply("An Unknown error Occured")
 
     @commands.hybrid_command(name='check_reaction', description='Checks if an user has reacted to an message')
     @permission(command_name="check_reaction")
@@ -289,7 +347,7 @@ class LilyUtility(commands.Cog):
         try:
             message = await ctx.channel.fetch_message(message_id)
         except discord.NotFound:
-            return await ctx.send("Message not found!")
+            return await ctx.reply("Message not found!")
 
         reacted = False
         for reaction in message.reactions:
@@ -302,9 +360,9 @@ class LilyUtility(commands.Cog):
                     break
 
         if reacted:
-            await ctx.send(embed=simple_embed(f"{member.mention} has reacted"))
+            await ctx.reply(embed=simple_embed(f"{member.mention} has reacted"))
         else:
-            await ctx.send(embed=simple_embed(f"{member.mention} has not reacted", 'cross'))
+            await ctx.reply(embed=simple_embed(f"{member.mention} has not reacted", 'cross'))
         
     @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     @commands.hybrid_command(name="afk", description="Puts the user to afk mode")
@@ -388,7 +446,7 @@ class LilyUtility(commands.Cog):
 
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
     
     @commands.cooldown(rate=1, per=80, type=commands.BucketType.user)
     @commands.hybrid_command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
@@ -403,18 +461,18 @@ class LilyUtility(commands.Cog):
                     async with aiohttp.ClientSession() as session:
                         async with session.get(embed_json_config) as resp:
                             if resp.status != 200:
-                                await ctx.send("Failed to fetch data from the provided link.")
+                                await ctx.reply("Failed to fetch data from the provided link.")
                                 return
                             embed_json_config = await resp.text()
                 except Exception as fetch_error:
-                    await ctx.send(f"Fetch Failure {str(fetch_error)}")
+                    await ctx.reply(f"Fetch Failure {str(fetch_error)}")
                     return
 
             
             try:
                 json_data = json.loads(embed_json_config)
             except json.JSONDecodeError:
-                await ctx.send("Invalid JSON Format")
+                await ctx.reply("Invalid JSON Format")
                 return
             
             try:
@@ -424,13 +482,13 @@ class LilyUtility(commands.Cog):
                 await ctx.reply(embed=simple_embed("Embed sent successfully."))
                 await logs_controller.write_log(ctx, ctx.author.id, f"Has Sent an Embed to <#{channel_to_send.id}>")
             except Exception as embed_error:
-                await ctx.send(f"Parser Failure: {str(embed_error)}")
+                await ctx.reply(f"Parser Failure: {str(embed_error)}")
 
         except Exception as e:
-            await ctx.send(f"Unhandled Exception: {str(e)}")
+            await ctx.reply(f"Unhandled Exception: {str(e)}")
 
     @permission(command_name="set_channel")
-    @commands.hybrid_command(name="set_channel", description="Creates an embed based on JSON config and sends it to a specific channel")
+    @set.command(name="channel", description="Creates an embed based on JSON config and sends it to a specific channel")
     async def assign_channel(self, ctx: commands.Context, type: ChannelEnum, channel: discord.TextChannel):
         if ctx.guild is None:
             await ctx.reply(embed=simple_embed("This command can only be used inside an guild", 'cross'))
@@ -456,7 +514,7 @@ class LilyUtility(commands.Cog):
         return filtered[:25]
     
     @permission(command_name="set_permission")
-    @commands.hybrid_command(name="set_permission", description="Allocates permission to certain role for a command")
+    @set.command(name="permission", description="Allocates permission to certain role for a command")
     @app_commands.autocomplete(command=command_autocomplete)
     async def set_permission(self, ctx: commands.Context, command: str, role: discord.Role):
         try:
@@ -475,7 +533,7 @@ class LilyUtility(commands.Cog):
         await ctx.reply(embed=simple_embed(f"Successfully assigned `{cmd_enum.value.title()}` permission to {role.mention}"))
 
     @permission(command_name="set_prefix")
-    @commands.hybrid_command(name="set_prefix", description="Change prefix of the bot")
+    @set.command(name="prefix", description="Change prefix of the bot")
     async def set_prefix(self, ctx: commands.Context, prefix: str):
         if ctx.guild is None:
             await ctx.reply(embed=simple_embed("This command can only be used inside an guild", 'cross'))
@@ -486,8 +544,27 @@ class LilyUtility(commands.Cog):
 
         await ctx.reply(embed=simple_embed(f"Successfully assigned **{prefix}** as prefix"))
 
+    @permission(command_name="configure_role")
+    @configure.command(name="role", description="Configure some attributes of the role")
+    async def configure_role(self, ctx: commands.Context, role: discord.Role):
+        if ctx.interaction is None:
+            await ctx.reply(embed=simple_embed(
+                "This command can only be used as a slash command."
+            ,'cross'), delete_after=5)
+            return
+        interaction = ctx.interaction
+        try:
+            await interaction.response.send_modal(RoleCustomizationModal(role.id, self.bot.db))
+        except Exception as e:
+            print(e)
 
-
+    @commands.hybrid_command(name='get_member_id', description='Sets the profile of the bot per server')
+    async def userid(self, ctx, username: str):
+        view = UserIDView(username)
+        await ctx.send(
+            f"Press the button to get the ID for `{username}`",
+            view=view
+        )
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

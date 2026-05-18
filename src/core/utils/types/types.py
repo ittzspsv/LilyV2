@@ -71,3 +71,5 @@ class CommandEnum(str, Enum):
 
     PURGE = "purge"
     SET_PREFIX = "set_prefix"
+    ROLE = "role"
+    AFK = "afk"

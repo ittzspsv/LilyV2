@@ -9,6 +9,7 @@ from typing import Optional
 from core.utils.lily_utility import utcnow
 from core.features.moderation.components.sLilyModerationComponents import *
 from core.features.moderation.utils.moderation_utils import mute_parser
+from ..components.sLilyModerationComponents import CaseProofsView
 
 
 import discord
@@ -127,7 +128,7 @@ class LilyModerationController:
                     return await ctx.reply(embed=simple_embed(str(response.get("message"))))
 
 
-            async def notify_and_log(action: str):
+            async def notify_and_log(action: str) -> int | None:
                 if ctx.guild is None:
                     return
 
@@ -140,11 +141,11 @@ class LilyModerationController:
                 except Exception:
                     pass
 
-                await self.logging_controller.log_moderation_action(
+                case_id = await self.logging_controller.log_moderation_action(
                     ctx, ctx.author.id, user_id, action, reason, proofs.copy()
                 )
 
-                return
+                return case_id
 
             if jail_value == 0:
                 await ctx.guild.ban(
@@ -168,14 +169,36 @@ class LilyModerationController:
                 return await ctx.reply(embed=simple_embed("Already quarantined.", 'cross'))
 
             await member.add_roles(
-                quarantine_role,
-                reason=f"Quarantine by {ctx.author} | {reason}",
+                    quarantine_role,
+                    reason=f"Quarantine by {ctx.author} | {reason}",
             )
-            await ctx.reply(embed=simple_embed(
-                f"Quarantined: <@{user_id}>\n**Remaining:** {max(0, status.remaining_count - 1)}"
-            ))
-            await notify_and_log("quarantine")
-            return
+
+            """ If no proofs has been attached always send a button view to attach proofs """
+            if len(proofs) > 0:
+                """ If there are proofs for the case """
+                await ctx.reply(embed=simple_embed(
+                    f"Quarantined: <@{user_id}>\n**Remaining:** {max(0, status.remaining_count - 1)}"
+                ))
+                await notify_and_log("quarantine")
+                return
+            else:
+                """ Else log the case first, get the case ID for proofs attachment """
+                case_id = await notify_and_log("quarantine")
+                if case_id:
+                    view = CaseProofsView(case_id, self.logging_controller, None)
+                    msg = await ctx.reply(
+                        embed=simple_embed(
+                            f"Quarantined: <@{user_id}>\n**Remaining:** {max(0, status.remaining_count - 1)}"
+                        ),
+                        view=view
+                    )
+
+                    view.message = msg
+                    
+                else:
+                    await ctx.reply(embed=simple_embed(
+                    f"Quarantined: <@{user_id}>\n**Remaining:** {max(0, status.remaining_count - 1)}"
+                ))
             
 
         except discord.HTTPException as e:
@@ -313,11 +336,23 @@ class LilyModerationController:
 
             await user.edit(timed_out_until=until, reason=reason)
 
-            await ctx.reply(embed=simple_embed(
-                f"Muted: <@{user.id}>"
-            ))
+            if len(proofs) > 0:
+                await ctx.reply(embed=simple_embed(
+                    f"Muted: <@{user.id}>"
+                ))
 
-            await self.logging_controller.log_moderation_action(ctx, ctx.author.id, user.id, "mute", reason, proofs)
+            case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author.id, user.id, "mute", reason, proofs)
+
+            if case_id and len(proofs) <= 0:
+                view = CaseProofsView(case_id, self.logging_controller, None)
+                msg = await ctx.reply(
+                    embed=simple_embed(
+                        f"Muted: <@{user.id}>"
+                    ),
+                    view=view
+                )
+
+                view.message = msg
 
         except ValueError as ve:
             await ctx.reply(embed=simple_embed(str(ve)))
@@ -352,7 +387,10 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed("Command requires member object inorder to execute", 'cross'))
             return
         
-        await self.logging_controller.log_moderation_action(ctx, ctx.author.id, member.id, "warn", reason, proofs)
+        if len(proofs) > 0:
+            await ctx.reply(embed=simple_embed(f"{member.mention} has been warned"))
+
+        case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author.id, member.id, "warn", reason, proofs)
 
         embed = warn_embed(ctx.author, reason, ctx.guild.name)
         try:
@@ -360,7 +398,10 @@ class LilyModerationController:
         except Exception as e:
             print(e)
 
-        await ctx.reply(embed=simple_embed(f"{member.mention} has been warned"))
+        if case_id and len(proofs) <= 0:
+            view = CaseProofsView(case_id, self.logging_controller, None)
+            msg = await ctx.reply(embed=simple_embed(f"{member.mention} has been warned"), view=view)
+            view.message = msg
 
     async def case_edit(self, ctx: commands.Context, case_id: int, case_statement: str, absolute: bool=False):
         response = await self.logs_db.edit_case(**{"staff_id": ctx.author.id, "case_id": case_id, "case_statement": case_statement, "absolute": absolute})
@@ -472,7 +513,8 @@ class LilyModerationController:
         result = await self.logs_db.fetch_mod_logs(**payload)
 
         if not result["success"]:
-            return simple_embed("No Logs Found For the given filters")
+            await ctx.reply(embed=simple_embed("No cases found.", 'cross'))
+            return
 
         embed =  build_mod_logs_embed(
             user=user,

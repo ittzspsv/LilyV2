@@ -72,6 +72,10 @@ class Lily(commands.Bot):
         
         await self.modify_status.start()
 
+    async def on_guild_join(self, guild: discord.Guild):
+        if self.db is not None:
+            await self.db.guild_initialize(guild.id)
+
     @tasks.loop(minutes=60)
     async def modify_status(self):
         member_count = 0

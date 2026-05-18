@@ -278,53 +278,65 @@ class TicketModal(discord.ui.Modal):
     def __init__(self, title: str, modal_data: dict, json_data, logs_db: LoggingDatabase):
         super().__init__(title=title)
 
-        self.images = None
         self.logs_db: LoggingDatabase = logs_db
+        self.images = None
 
         if not isinstance(modal_data, dict):
             raise TypeError(f"modal_data must be a dict, got {type(modal_data)}")
 
         fields = modal_data.get("fields")
         file_upload_bool = modal_data.get("file_upload", False)
-        if not isinstance(fields, dict):
-            raise TypeError(f"fields must be a dict, got {type(fields)}")
+
+        if not isinstance(fields, list):
+            raise TypeError(f"fields must be a list, got {type(fields)}")
 
         self.inputs = {}
         self.modal_data = modal_data
         self.json_data = json_data
-        self.images = None
 
-        for label, max_length in fields.items():
-            style = discord.TextStyle.paragraph if max_length > 100 else discord.TextStyle.short
+        for field in fields:
+            if not isinstance(field, dict):
+                raise TypeError(f"Each field must be a dict, got {type(field)}")
 
-            text_input = discord.ui.TextInput(
-                label=label[:45],
-                placeholder=f"Max {max_length} characters",
-                max_length=max_length,
-                required=True,
-                style=style
+            label = field.get("label", "")
+            description = field.get("description", "")
+            length = field.get("length", 100)
+            field_type = field.get("type", "short")
+
+            style = (
+                discord.TextStyle.paragraph
+                if field_type == "long"
+                else discord.TextStyle.short
             )
 
-            self.inputs[label] = text_input
-            self.add_item(text_input)
+            items = discord.ui.Label(
+                text=label,
+                description=description if description else None,
+                component=discord.ui.TextInput(
+                    style=style,
+                    max_length=length
+                )
+            )
+
+            self.inputs[label] = items
+            self.add_item(items)
 
         if file_upload_bool:
             self.images = discord.ui.Label(
-                text='Images',
+                text='Proofs',
                 description='Please provide a valid proof.',
                 component=discord.ui.FileUpload(
                     max_values=10,
                     custom_id='report_images',
-                    required=False,
+                    required=True,
                 ),
             )
-
             self.add_item(self.images)
+        
 
     async def ticket_thread_constructor(self, interaction: discord.Interaction, core_json, submission_json) -> discord.TextChannel | discord.Thread | None:
         if interaction.guild is None:
             return None
-
 
         channel_id: int = int(submission_json.get("channel_id"))
         ticket_type: str = core_json.get("BasicConfigurations").get("TicketType")
@@ -458,6 +470,13 @@ class TicketModal(discord.ui.Modal):
 
             view = TicketComponentEmbed(opener=opener, ticket_channel_id=text_channel.id, submission_json=submission_json, core_json=core_json)
             ticket_message: discord.Message = await text_channel.send(view=view)
+
+            """ Pin the message to the channel so that it's easily viewable """
+            try:
+                await ticket_message.pin()
+            except discord.Forbidden:
+                pass
+
             if proofs_flag:
                 await text_channel.send(content=f"{proof_url}")
 
@@ -473,7 +492,11 @@ class TicketModal(discord.ui.Modal):
             return text_channel
 
     async def on_submit(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            return
+
         await interaction.response.defer(ephemeral=True)
+
         if self.images:
             self.images = [attachment.url for attachment in self.images.component.values]
         else:
@@ -524,44 +547,57 @@ class TicketSelector(discord.ui.View):
     def __init__(self, json_data: dict, logs_db: LoggingDatabase):
         super().__init__(timeout=None)
 
-        self.ticket_options = json_data.get("TicketType", [])[1:]
-        self.logs_db: LoggingDatabase  = logs_db
-        self.modal_fields = json_data.get("Modal", [])
-        self.labels = []
         self.json_data = json_data
+        self.logs_db = logs_db
+        self.tickets = json_data.get("Tickets", [])
 
-        select_options = []
-        for i, opt in enumerate(self.ticket_options):
-            parts = opt.split(":", 1)
-            label = parts[0].strip()
-            emoji = parts[1].strip() if len(parts) > 1 else None
-            self.labels.append(label)
-
-            select_options.append(
-                discord.SelectOption(label=label, value=str(i), emoji=emoji) if emoji else
-                discord.SelectOption(label=label, value=str(i))
+        options = [
+            discord.SelectOption(
+                label=ticket["label"],
+                value=str(index)
             )
-        self.add_item(self.ModalSelect(select_options, self.modal_fields, self.labels, self.json_data, logs_db))
+            for index, ticket in enumerate(self.tickets)
+        ]
 
-    class ModalSelect(discord.ui.Select):
-        def __init__(self, options, modal_fields, labels, json_data,  logs_db: LoggingDatabase):
-            super().__init__(placeholder="Choose a ticket type...", options=options, custom_id=f'ticket_selector_main')
-            self.modal_fields = modal_fields
-            self.labels = labels
-            self.json_data = json_data
-            self.logs_db: LoggingDatabase = logs_db
+        self.add_item(
+            TicketSelect(
+                options=options,
+                tickets=self.tickets,
+                json_data=self.json_data,
+                logs_db=self.logs_db
+            )
+        )
 
-        async def callback(self, interaction: discord.Interaction):
-            index = int(self.values[0])
-            label = self.labels[index]
+class TicketSelect(discord.ui.Select):
+    def __init__(
+        self,
+        options: list[discord.SelectOption],
+        tickets: list[dict],
+        json_data: dict,
+        logs_db: LoggingDatabase
+    ):
+        super().__init__(
+            placeholder="Choose a ticket type...",
+            options=options,
+            custom_id="ticket_selector_main"
+        )
 
-            if index < len(self.modal_fields):
-                modal_entry = self.modal_fields[index]
-            else:
-                modal_entry = {"fields": {"Details": 300}}
+        self.tickets = tickets
+        self.json_data = json_data
+        self.logs_db = logs_db
 
-            modal = TicketModal(title=label, modal_data=modal_entry, json_data=self.json_data, logs_db=self.logs_db)
-            await interaction.response.send_modal(modal)
+    async def callback(self, interaction: discord.Interaction):
+        selected_index = int(self.values[0])
+        selected_ticket = self.tickets[selected_index]
+
+        modal = TicketModal(
+            title=selected_ticket["label"],
+            modal_data=selected_ticket,
+            json_data=self.json_data,
+            logs_db=self.logs_db
+        )
+
+        await interaction.response.send_modal(modal)
 
 async def TicketLogAction(interaction: discord.Interaction,thread: discord.Thread,opened_user_id: int,ticket_type: str,accessed_staff_ids: set, logs_channel: discord.TextChannel):
     embed = discord.Embed(

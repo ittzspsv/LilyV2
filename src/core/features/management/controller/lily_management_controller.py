@@ -57,8 +57,6 @@ class LilyManagementController:
             view = StaffsView(ctx, self.db ,overall_details, role_user_map)
             view.message = await ctx.reply(view=view)
 
-            await ctx.reply(view=view)
-
         except Exception as e:
             print(f"Error fetching staff list: {e}")
 

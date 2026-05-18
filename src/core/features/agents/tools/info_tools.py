@@ -2,6 +2,8 @@ from lily_agent import tool
 from pydantic import BaseModel, Field
 from typing import Optional
 
+from ..data.overload_data import OverloadData
+
 import discord
 import re
 
@@ -12,8 +14,10 @@ class GuildDetails(BaseModel):
     guild_id: str
 
 
-@tool(description="Get to know about detail of a Discord member/user. Get their name, when they joined on, what's their profile and a lot of information by calling this tool.", parameters=MemberDetails)
-async def get_member_details(member_id: str, message: discord.Message):
+@tool(description="Get to know about detail of a Discord member/user. Get their name, when they joined on, what's their profile and a lot of information by calling this tool.", parameters=MemberDetails, overload=True)
+async def get_member_details(member_id: str, data: OverloadData):
+    message = data.message
+
     if message.guild is None:
         return
 
@@ -47,8 +51,9 @@ async def get_member_details(member_id: str, message: discord.Message):
             "Failed to retrieve the user!"
       )
     
-@tool(description="Get to know about detail of this guild", parameters=GuildDetails)
-async def get_guild_details(guild_id: int, message: discord.Message) -> str:
+@tool(description="Get to know about detail of this guild", parameters=GuildDetails, overload=True)
+async def get_guild_details(guild_id: int, data: OverloadData) -> str:
+    message = data.message
     guild = message.guild
 
     if guild is None:

@@ -1,5 +1,5 @@
 from ..sLilyDatabaseAccess import LilyDatabaseAccess
-from typing import List, Optional, Final, Set
+from typing import List, Optional, Final, Set, Dict
 from dataclasses import dataclass
 
 import json
@@ -127,8 +127,16 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
 
         role_rows = await self.fetch_all("""
-            SELECT guild_id, role_id, ban_limit, ban_queue
-            FROM roles
+            SELECT
+                r.guild_id,
+                r.role_id,
+                r.ban_limit,
+                r.ban_queue,
+                r.assignment_scope,
+                ra.target_role_id
+            FROM roles r
+            LEFT JOIN role_assignments ra
+                ON r.id = ra.role_ref_id
         """)
 
         for row in role_rows:
@@ -138,10 +146,20 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             if not cache:
                 continue
 
-            cache["roles"][row["role_id"]] = {
-                "limit": row["ban_limit"] or 0,
-                "ban_queue": row["ban_queue"] or 0
-            }
+            role_id = row["role_id"]
+
+            if role_id not in cache["roles"]:
+                cache["roles"][role_id] = {
+                    "limit": row["ban_limit"] or 0,
+                    "ban_queue": row["ban_queue"] or 0,
+                    "assignment_scope": row["assignment_scope"] or "none",
+                    "assignment_roles": set()
+                }
+
+            if row["target_role_id"] is not None:
+                cache["roles"][role_id]["assignment_roles"].add(
+                    row["target_role_id"]
+                )
 
 
         row = await self.fetch_one("""
@@ -199,6 +217,20 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
         return commands
     
+    async def guild_initialize(self, guild_id: int) -> None:
+        await self.execute(
+            "INSERT OR IGNORE INTO data (guild_id) VALUES (?)",
+            (guild_id,)
+        )
+
+        if guild_id not in self.cache:
+            self.cache[guild_id] = {
+                "channels": {},
+                "permissions": {},
+                "roles": {},
+                "prefix": ""
+            }
+
     def get_ban_limit(self, guild_id: int, role_ids: List[int]) -> int:
         guild = self.cache.get(guild_id)
         if not guild:
@@ -215,17 +247,225 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         return max(limits) if limits else 0
     
     def ban_queue(self, guild_id: int, role_ids: List[int]) -> bool:
+        """Works based on Deny-overrides-Allow permission system"""
         guild = self.cache.get(guild_id)
         if not guild:
             return False
 
         role_limits = guild.get("roles", {})
 
-        return any(
-            role_id in role_limits and role_limits[role_id].get("ban_queue", 0) == 1
-            for role_id in role_ids
-        )
+        has_allow = False
+
+        for role_id in role_ids:
+            perm = role_limits.get(role_id, {}).get("ban_queue")
+
+            if perm == 0:
+                return False
+
+            if perm == 1:
+                has_allow = True
+
+        return has_allow
     
+    """ Role getters and setters """
+
+    def get_role_assignment_scope(self, guild_id: int, role_ids: List[int]) -> str:
+        guild_cache = self.cache.get(guild_id)
+        if not guild_cache:
+            return "none"
+
+        roles_cache = guild_cache.get("roles", {})
+
+        priority = {
+            "none": 0,
+            "specific": 1,
+            "except": 2,
+            "all": 3
+        }
+
+        highest_scope = "none"
+
+        for role_id in role_ids:
+            role_data = roles_cache.get(role_id)
+            if not role_data:
+                continue
+
+            scope = role_data.get("assignment_scope", "none")
+
+            if priority[scope] > priority[highest_scope]:
+                highest_scope = scope
+
+                if highest_scope == "all":
+                    return "all"
+
+        return highest_scope
+
+    def get_role_assignment_roles(self, guild_id: int, role_ids: List[int]) -> Set[int]:
+        guild_cache = self.cache.get(guild_id)
+        if not guild_cache:
+            return set()
+
+        roles_cache = guild_cache.get("roles", {})
+
+        assignment_roles = set()
+
+        for role_id in role_ids:
+            role_data = roles_cache.get(role_id)
+            if not role_data:
+                continue
+
+            assignment_roles.update(
+                role_data.get("assignment_roles", set())
+            )
+
+        return assignment_roles
+
+    async def set_role_assignment_scope(
+        self,
+        guild_id: int,
+        role_id: int,
+        scope: str
+    ) -> None:
+        
+        await self.execute("""
+        UPDATE roles
+        SET assignment_scope = ?
+        WHERE guild_id = ? AND role_id = ?
+    """, (scope, guild_id, role_id))
+
+
+        guild_cache = self.cache.get(guild_id)
+        if not guild_cache:
+            return
+
+        role_cache = guild_cache.get("roles", {}).get(role_id)
+        if not role_cache:
+            return
+
+        role_cache["assignment_scope"] = scope
+
+    async def set_role_assignment_roles(
+        self,
+        guild_id: int,
+        role_id: int,
+        roles: Set[int]
+    ) -> None:
+
+        role_row = await self.fetch_one("""
+            SELECT id
+            FROM roles
+            WHERE guild_id = ? AND role_id = ?
+        """, (guild_id, role_id))
+
+        if not role_row:
+            return
+
+        role_ref_id = role_row["id"]
+
+        await self.execute("""
+            DELETE FROM role_assignment
+            WHERE role_id = ?
+        """, (role_ref_id,))
+
+        for assignment_role_id in roles:
+            await self.execute("""
+                INSERT INTO role_assignment (role_id, assignment_role_id)
+                VALUES (?, ?)
+            """, (role_ref_id, assignment_role_id))
+
+        guild_cache = self.cache.get(guild_id)
+        if not guild_cache:
+            return
+
+        role_cache = guild_cache.get("roles", {}).get(role_id)
+        if role_cache:
+            role_cache["assignment_roles"] = set(roles)
+
+    async def configure_role(
+        self,
+        guild_id: int,
+        role_id: int,
+        ban_limit: int,
+        ban_queue: int,
+        assignment_scope: str,
+        roles: Set[int]
+    ) -> Dict[str, str | bool]:
+        try:            
+            await self.execute("""
+                INSERT INTO roles (
+                    guild_id,
+                    role_id,
+                    ban_limit,
+                    ban_queue,
+                    assignment_scope
+                )
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(guild_id, role_id)
+                DO UPDATE SET
+                    ban_limit = excluded.ban_limit,
+                    ban_queue = excluded.ban_queue,
+                    assignment_scope = excluded.assignment_scope
+            """, (
+                guild_id,
+                role_id,
+                ban_limit,
+                ban_queue,
+                assignment_scope
+            ))
+
+            role_row = await self.fetch_one("""
+                SELECT id
+                FROM roles
+                WHERE guild_id = ? AND role_id = ?
+            """, (guild_id, role_id))
+
+            if not role_row:
+                return {
+                    "success": False,
+                    "message": "An unknown error occured!"
+                }
+
+            role_ref_id = role_row["id"]
+
+            await self.execute("""
+                DELETE FROM role_assignments
+                WHERE role_ref_id = ?
+            """, (role_ref_id,))
+
+            for target_role_id in roles:
+                await self.execute("""
+                    INSERT INTO role_assignments (
+                        role_ref_id,
+                        target_role_id
+                    )
+                    VALUES (?, ?)
+                """, (role_ref_id, target_role_id))
+
+            guild_cache = self.cache.setdefault(guild_id, {
+                "channels": {},
+                "permissions": {},
+                "roles": {},
+                "prefix": ""
+            })
+
+            guild_cache["roles"][role_id] = {
+                "limit": ban_limit,
+                "ban_queue": ban_queue,
+                "assignment_scope": assignment_scope,
+                "assignment_roles": set(roles)
+            }
+
+            return {
+                "success": True,
+                "message": "Successfully configured role!"
+            }
+
+
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f'{e}'
+            }
 
     """ Value Assignments """
     async def set_prefix(self, guild_id: int, prefix: str):

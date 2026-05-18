@@ -141,8 +141,8 @@ class LoggingDatabase(LilyDatabaseAccess):
             cooldown_breakdown: Optional[str] = None
 
             if exceeded and bans:
-                trigger_ts = datetime.fromisoformat(bans[max_limit - 1][0])
-                cooldown_end = trigger_ts + timedelta(hours=24)
+                oldest_ts = datetime.fromisoformat(bans[0][0])
+                cooldown_end = oldest_ts + timedelta(hours=24)
 
                 if cooldown_end > now:
                     remaining = cooldown_end - now
@@ -605,7 +605,6 @@ class LoggingDatabase(LilyDatabaseAccess):
             "items": items
         }
 
-    
     """ Tickets Database """
     async def get_ticket_by_id(self, ticket_id: int) -> Optional[Tuple]:
         row = await self.fetch_one(

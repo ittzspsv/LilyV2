@@ -44,3 +44,53 @@ class ProofComponentModal(discord.ui.Modal):
             await interaction.followup.send(embed=simple_embed(f"Successfully appended proofs for •{self.case_id.component.value}"))
         else:
             await interaction.followup.send(embed=simple_embed(f"Failed to append proofs for •{self.case_id.component.value}. Please verify that the case ID is valid", 'cross'))
+
+class ProofsComponentCommandModal(discord.ui.Modal):
+    images = discord.ui.Label(
+        text='Proofs',
+        description='Upload any relevant proofs for this case',
+        component=discord.ui.FileUpload(
+            max_values=10,
+            custom_id='report_images',
+            required=True,
+        ),
+    )
+
+    footer = discord.ui.TextDisplay(
+        'Please ensure that every proof you have attached here is valid!'
+    )
+
+    def __init__(self, controller, case_id: int, cmd_view: discord.ui.View, msg: discord.Message) -> None:
+        super().__init__(title="Case Proofs")
+        self.controller = controller
+        self.case_id = case_id
+        self.cmd_view = cmd_view
+        self.msg = msg
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+
+        assert isinstance(self.images.component, discord.ui.FileUpload)
+
+        files = self.images.component.values
+        success = await self.controller.send_proofs(interaction, files, self.case_id)
+
+        for child in self.cmd_view.children:
+            if isinstance(child, discord.ui.Button):
+                child.disabled = True
+
+        await self.msg.edit(view=self.cmd_view)
+
+        if success:
+            await interaction.followup.send(
+                embed=simple_embed(
+                    f"Successfully appended proofs for {self.case_id}"
+                )
+            )
+        else:
+            await interaction.followup.send(
+                embed=simple_embed(
+                    f"Failed to append proofs for {self.case_id}. Please verify that the case ID is valid",
+                    'cross'
+                )
+            )

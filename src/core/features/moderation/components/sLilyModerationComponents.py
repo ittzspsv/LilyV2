@@ -4,6 +4,7 @@ from core.utils.embeds.sLilyEmbed import simple_embed
 from typing import Optional, Callable
 from datetime import datetime, timezone
 from core.database.integrations.logging import LoggingDatabase
+from core.logging.components.logging_components import ProofsComponentCommandModal
 
 import core.configs.sBotDetails as Config
 
@@ -387,3 +388,22 @@ def build_mod_logs_embed(
 
     return [embed_summary, embed_logs]
 
+class CaseProofsView(discord.ui.View):
+    def __init__(self, case_id: int, controller, message: Optional[discord.Message]):
+        super().__init__(timeout=None)
+
+        self.case_id = case_id
+        self.controller = controller
+        self.message = message
+
+    @discord.ui.button(
+        label="Attach Proofs",
+        style=discord.ButtonStyle.secondary
+    )
+    async def click_button(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        assert isinstance(self.message, discord.Message)
+        await interaction.response.send_modal(ProofsComponentCommandModal(controller=self.controller, case_id=self.case_id, cmd_view=self, msg=self.message))

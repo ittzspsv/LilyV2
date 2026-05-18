@@ -46,7 +46,7 @@ class LilyLoggingController:
         mod_type: str,
         reason: str = "No reason provided",
         proofs: Optional[Sequence[Union[discord.Attachment, str]]] = None
-    ) -> None:
+    ) -> int | None:
         if ctx.guild is None:
             content = "Guild object is required for this command to be executed"
             if isinstance(ctx, commands.Context):
@@ -77,7 +77,7 @@ class LilyLoggingController:
 
         logs_channel_id = self.bot_db.get_channel(ctx.guild.id, "logs_channel")
         if not logs_channel_id:
-            return
+            return case_id
 
         channel = ctx.guild.get_channel(logs_channel_id)
 
@@ -85,7 +85,7 @@ class LilyLoggingController:
             try:
                 channel = await ctx.guild.fetch_channel(logs_channel_id)
             except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                return
+                return case_id
 
         if isinstance(channel, discord.TextChannel):
             await channel.send(
@@ -114,6 +114,8 @@ class LilyLoggingController:
 
                 """ Store the message id on the database for future retrieval """
                 await self.db.log_proof_action(case_id, message.id, ctx.author.id)
+
+        return case_id
 
     async def post_log(
         self,

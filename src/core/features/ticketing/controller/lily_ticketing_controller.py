@@ -284,7 +284,7 @@ class LilyTicketingController:
                 )
             )
 
-    async def close_ticket_thread(self, ctx: commands.Context, reason: str):
+    async def close_ticket_thread(self, ctx: commands.Context):
         if ctx.guild is None:
             await ctx.reply(
                 embed=simple_embed(

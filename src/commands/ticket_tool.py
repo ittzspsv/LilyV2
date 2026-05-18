@@ -48,9 +48,9 @@ class LilyTicketTool(commands.Cog):
     @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     @ticket.command(name='close', description='close a ticket thread')
     @permission(command_name="ticket_close")
-    async def CloseTicket(self, ctx: commands.Context, reason: str):
+    async def CloseTicket(self, ctx: commands.Context):
          if self.controller is not None:
-            await self.controller.close_ticket_thread(ctx, reason)
+            await self.controller.close_ticket_thread(ctx)
          
     @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     @ticket.command(name='rename', description='renames a ticket channel')

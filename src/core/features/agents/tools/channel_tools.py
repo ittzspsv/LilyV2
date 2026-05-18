@@ -1,6 +1,7 @@
 from lily_agent import tool
 from pydantic import BaseModel, Field
 from typing import Optional
+from ..data.overload_data import OverloadData
 
 import discord
 
@@ -10,8 +11,9 @@ class CreateChannel(BaseModel):
     category: Optional[str] = Field(..., description="The cateogory of the channel.")
 
 
-@tool(description="Create a discord text channel", parameters=CreateChannel)
-async def create_channel(channel_name: str, reason: str ,category: Optional[str] ,message: discord.Message):
+@tool(description="Create a discord text channel", parameters=CreateChannel, overload=True)
+async def create_channel(channel_name: str, reason: str ,category: Optional[str] ,data: OverloadData):
+    message = data.message
     guild = message.guild
 
     if isinstance(message.author, discord.Member) and not message.author.guild_permissions.manage_channels:
