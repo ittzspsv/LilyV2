@@ -865,8 +865,11 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         base_condition = "WHERE guild_id = ? AND target_user_id = ?"
         base_params: list = [guild_id, target_user_id]
 
+        aliased_condition = "WHERE ml.guild_id = ? AND ml.target_user_id = ?"
+
         if moderator_id:
             base_condition += " AND moderator_id = ?"
+            aliased_condition += " AND ml.moderator_id = ?"
             base_params.append(moderator_id)
 
         normalized_type = mod_type.lower()
@@ -899,24 +902,33 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
         log_params = base_params.copy()
         log_query = (
-            f"SELECT id, moderator_id, mod_type, reason, timestamp"
-            f" FROM modlogs {base_condition}"
+            f"SELECT ml.id, ml.moderator_id, ml.mod_type, ml.reason, ml.timestamp, "
+            f"GROUP_CONCAT(p.id) AS proof_ids, "
+            f"GROUP_CONCAT(p.proof_reference) AS proof_references "
+            f"FROM modlogs ml "
+            f"LEFT JOIN proofs p ON ml.id = p.case_id "
+            f"{aliased_condition} " 
+            f"GROUP BY ml.id"
         )
         if type_filter:
-            log_query += " AND lower(mod_type) = ?"
+            log_query += " AND lower(ml.mod_type) = ?" 
             log_params.append(normalized_type)
 
-        log_query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+        log_query += " ORDER BY ml.timestamp DESC LIMIT ? OFFSET ?"
         log_params.extend([limit, start])
 
         log_rows = await self.fetch_all(log_query, tuple(log_params))
-
         logs = [
             {
                 "case_id": row["id"],
                 "moderator_id": row["moderator_id"],
                 "mod_type": row["mod_type"].lower(),
                 "reason": row["reason"],
+                "proofs_reference": (
+                    [int(x.strip()) for x in row["proof_references"].split(",")]
+                    if row["proof_references"]
+                    else []
+                ),
                 "timestamp": row["timestamp"],
             }
             for row in log_rows
@@ -925,6 +937,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         return {
             "success": True,
             "total_logs": total_count,
+            "proofs_exists": any(log["proofs_reference"] for log in logs),
             "counts": mod_type_counts,
             "logs": logs,
         }

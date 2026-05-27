@@ -8,7 +8,7 @@ from typing import Optional
 from core.utils.lily_utility import utcnow
 from core.features.moderation.components.sLilyModerationComponents import *
 from core.features.moderation.utils.moderation_utils import mute_parser
-from ..components.sLilyModerationComponents import CaseProofsView
+from ..components.sLilyModerationComponents import CaseProofsView, ProofsView
 
 
 import discord
@@ -521,9 +521,13 @@ class LilyModerationController:
             total_count=result["total_logs"],
             page_start=page_start
         )
+        logging_channel_id = self.bot_db.get_channel(ctx.guild.id, "logs_channel")
+        if logging_channel_id is not None and result["proofs_exists"]:
+            view = ProofsView(result["logs"], logging_channel_id)
+            await ctx.reply(embeds=embed, view=view)
+        else:
+            await ctx.reply(embeds=embed)
 
-        await ctx.reply(embeds=embed)
-    
     async def moderation_insights(self, ctx: commands.Context):
         if ctx.guild is None:
             await ctx.reply(

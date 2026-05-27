@@ -7,6 +7,7 @@ from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from core.logging.components.logging_components import ProofsComponentCommandModal
 
 import core.configs.sBotDetails as Config
+import io
 
 class Leaderboard(discord.ui.LayoutView):
     def __init__(self, bot: discord.Member, leaderboard_type: str, ms_data: list):
@@ -452,6 +453,118 @@ def build_mod_logs_embed_absolute(
         )
 
     return [embed_summary, embed_logs]
+
+class ProofsView(discord.ui.View):
+    def __init__(self, logs, logging_channel_id: int):
+        super().__init__(timeout=180)
+
+        self.logs_channel_id = logging_channel_id
+        self.channel = None
+
+        self.options = []
+        self.proofs = {}
+        for log in logs:
+            if log["proofs_reference"]:
+                self.options.append(
+                    discord.SelectOption(label=f"Proofs #{log['case_id']}", description="All proofs associated with that case", value=log["case_id"])
+                )
+
+                self.proofs[log['case_id']] = log["proofs_reference"]
+
+        self.proofs_selector = discord.ui.Select(
+            placeholder="Show Proofs...",
+            min_values=1,
+            max_values=1,
+            options=self.options
+        )
+
+        self.proofs_selector.callback = self.proofs_selector_callback
+        self.add_item(self.proofs_selector)
+
+    async def proofs_selector_callback(self, interaction: discord.Interaction):
+        if not interaction.guild:
+            return
+        case_id = int(self.proofs_selector.values[0])
+        proofs_msg_id = self.proofs[case_id]
+
+        await interaction.response.defer()
+
+
+        if not self.logs_channel_id:
+            await interaction.followup.send(
+                embed=simple_embed(
+                    "Proofs cannot be retrieved: logging channel is not configured.",
+                    "cross"
+                ),
+                ephemeral=True
+            )
+            return
+        
+        if self.channel is None:
+            self.channel = interaction.guild.get_channel(self.logs_channel_id)
+
+            if self.channel is None:
+                try:
+                    self.channel = await interaction.guild.fetch_channel(self.logs_channel_id)
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                    await interaction.followup.send(
+                        embed=simple_embed(
+                            "Proofs cannot be retrieved: logging channel is missing or inaccessible.",
+                            "cross"
+                        ),
+                        ephemeral=True
+                    )
+                    return
+            
+        if not isinstance(self.channel, discord.TextChannel):
+            return
+
+        files: list[discord.File] = []
+
+        for message_id in proofs_msg_id:
+            try:
+                message = await self.channel.fetch_message(message_id)
+            except discord.NotFound:
+                continue
+            except discord.Forbidden:
+                await interaction.followup.send(
+                    embed=simple_embed(
+                        "Missing permission to read messages in the logging channel.",
+                        "cross"
+                    ),
+                    ephemeral=True
+                )
+                return
+            except discord.HTTPException:
+                continue
+
+            for attachment in message.attachments:
+                try:
+                    data = await attachment.read()
+                    files.append(
+                        discord.File(
+                            fp=io.BytesIO(data),
+                            filename=attachment.filename
+                        )
+                    )
+                except discord.HTTPException:
+                    continue
+
+        if not files:
+            await interaction.followup.send(
+                embed=simple_embed(
+                    "No valid proof attachments were found for this case.",
+                    "cross"
+                ),
+                ephemeral=True
+            )
+            return
+
+        await interaction.followup.send(
+            content=f"Proofs for case `{case_id}`",
+            files=files,
+            ephemeral=True
+        )
 
 class CaseProofsView(discord.ui.View):
     def __init__(self, case_id: int, controller, message: Optional[discord.Message]):
