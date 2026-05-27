@@ -4,13 +4,10 @@ discord.py
 rapidfuzz
 pillow
 word2number
-websocket-client
 python-dotenv
-aiosqlite
-Unidecode
 aiohttp
 aiofiles
 lavalink
-flashtext
 python-dotenv
 DiscordTranscript
+asqlite

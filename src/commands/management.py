@@ -9,23 +9,22 @@ from typing import Optional
 from core.features.permissions.lily_permissions import permission
 from core.utils import lily_utility as LilyUtility
 from core.utils.embeds.sLilyEmbed import simple_embed
-from core.database.integrations.management import ManagementDatabase
 from core.features.management.controller.lily_management_controller import LilyManagementController
 from core.features.management.types.staff_management_types import *
+from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 
 
 class LilyManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db: Optional[ManagementDatabase] = None
         self.controller: Optional[LilyManagementController] = None
+        self.db: Optional[BotGlobalsDatabaseAccess] = None
 
         self.message_reset_schedular.start()
 
     async def on_load(self):
-        self.db = await ManagementDatabase.connect("storage/management/staff_management.db")
-        self.db.logs_db = self.bot.logs_db
-        self.controller = LilyManagementController(self.db,  self.bot.db)
+        self.controller = LilyManagementController(self.bot.db)
+        self.db = self.bot.db
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
@@ -114,12 +113,12 @@ class LilyManagement(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def message_reset_schedular(self):
-        if self.db is None:
+        if self.bot.db is None:
             return
 
         now = LilyUtility.utcnow()
 
-        row = await self.db.fetch_one(
+        row = await self.bot.db.fetch_one(
             "SELECT next_day_update, next_week_update, next_month_update FROM updates"
         )
 
@@ -135,10 +134,10 @@ class LilyManagement(commands.Cog):
                 hour=0, minute=0, second=0, microsecond=0
             )
 
-            await self.db.execute(
+            await self.bot.db.execute(
                 "UPDATE updates SET next_day_update = ?", 
                 (LilyUtility.iso(new_day),),
-                commit=False
+                commit=True
             )
 
         if next_week and now >= next_week:
@@ -152,10 +151,10 @@ class LilyManagement(commands.Cog):
                 hour=0, minute=0, second=0, microsecond=0
             )
 
-            await self.db.execute(
+            await self.bot.db.execute(
                 "UPDATE updates SET next_week_update = ?", 
                 (LilyUtility.iso(new_week),),
-                commit=False
+                commit=True
             )
 
         if next_month and now >= next_month:
@@ -168,28 +167,30 @@ class LilyManagement(commands.Cog):
 
             new_month = new_month.replace(hour=0, minute=0, second=0, microsecond=0)
 
-            await self.db.execute(
+            await self.bot.db.execute(
                 "UPDATE updates SET next_month_update = ?", 
                 (LilyUtility.iso(new_month),),
-                commit=False
+                commit=True
             )
-
-        await self.db.commit()
 
     async def daily_callback(self):
         if self.db is None:
             return
-        await self.db.execute("UPDATE staff_messages SET daily_messages = 0")
+
+        await self.db.reset_messages("daily")
 
     async def weekly_callback(self):
         if self.db is None:
             return
-        await self.db.execute("UPDATE staff_messages SET weekly_messages = 0")
+        
+        await self.db.reset_messages("weekly")
 
     async def monthly_callback(self):
         if self.db is None:
             return
-        await self.db.execute("UPDATE staff_messages SET monthly_messages = 0")
+        
+
+        await self.db.reset_messages("monthly")
 
     @commands.hybrid_group(name="staff", description="Staff management commands")
     async def staff(self, ctx: commands.Context):
@@ -275,7 +276,7 @@ class LilyManagement(commands.Cog):
         if self.controller is not None:
             await self.controller.strike_staff(ctx, staff, reason)
 
-    @strike.command(name='strike_remove', description='strikes a staff with a specified reason')
+    @strike.command(name='remove', description='strikes a staff with a specified reason')
     @permission(command_name="strike_remove")
     async def removestrike(self, ctx: commands.Context, strike_id: str):
         if self.controller is not None:
@@ -416,9 +417,9 @@ class LilyManagement(commands.Cog):
 
     @quota.command(name="evaluate", description="Evaluates Staff quota and updates the results")
     @permission(command_name="quota_evaluate")
-    async def evaluate_staff_quota(self, ctx: commands.Context):
+    async def evaluate_staff_quota(self, ctx: commands.Context, role: discord.Role):
         if self.controller is not None:
-            await self.controller.evaluate_staff_quota(ctx)
+            await self.controller.evaluate_staff_quota(ctx, role)
         
     @staff_role.command(name="remove", description="Removes a staff role from the database")
     @permission(command_name="staff_role_remove")

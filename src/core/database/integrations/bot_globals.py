@@ -1,15 +1,18 @@
 from ..sLilyDatabaseAccess import LilyDatabaseAccess
-from typing import List, Optional, Final, Set, Dict
+from typing import List, Optional, Final, Set, Dict, Any, Tuple
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone, UTC
+from collections import defaultdict
 
 import json
+import pytz
+
 
 @dataclass
 class GlobalConfig:
     jail: int
 
 
-""" Commands that can be mapped """
 COMMANDS: Final[Set[str]] = {
     "staff_data",
     "staff_list",
@@ -51,15 +54,26 @@ COMMANDS: Final[Set[str]] = {
     "queue_remove",
     "ticket_close",
     "ticket_rename",
-    "ticket_add"
+    "ticket_add",
 }
 
 CHANNEL: Final[Set[str]] = {
     "bf_win_loss",
     "bf_fruit_values",
     "logs_channel",
-    "staff_updates"
+    "staff_updates",
 }
+
+
+@dataclass
+class BanLimitStatus:
+    exceeded: bool
+    max_limit: int
+    recent_ban_count: int
+    remaining_count: int
+    remaining_time: Optional[str]
+    cooldown_breakdown: Optional[str]
+
 
 class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
     def __init__(self):
@@ -69,64 +83,58 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         self._gconfig: Optional[GlobalConfig] = None
         self._cache_ready = False
 
-    async def load_cache(self):
-        """
-        {
-            guild_id: {
-                channels: { type: [ids] },
-                permissions: { cmd: [role_ids] },
-                roles: { role_id: {limit, ban_queue} },
-                prefix: str
-            }
-        }
+    async def load_cache(self) -> None:
         """
 
+        Cache layout per guild:
+        {
+            guild_id: {
+                channels:    { channel_type: [channel_id, ...] },
+                permissions: { command:      [role_id, ...]    },
+                roles:       { role_id:      { limit, ban_queue,
+                                               assignment_scope,
+                                               assignment_roles } },
+                prefix: str,
+            }
+        }
+
+        """
         self.cache.clear()
 
         guilds = await self.fetch_all("SELECT guild_id, prefix FROM data")
-
         for g in guilds:
             gid = g["guild_id"]
-
             self.cache[gid] = {
                 "channels": {},
                 "permissions": {},
                 "roles": {},
-                "prefix": g["prefix"] or ""
+                "prefix": g["prefix"] or "",
             }
 
-
-        channel_rows = await self.fetch_all("""
-            SELECT guild_id, channel_type, channel_id
-            FROM guild_channels
-        """)
-
+        channel_rows = await self.fetch_all(
+            "SELECT guild_id, channel_type, channel_id FROM guild_channels"
+        )
         for row in channel_rows:
             gid = row["guild_id"]
-
             cache = self.cache.get(gid)
-            if not cache:
+            if cache is None:
                 continue
+            cache["channels"].setdefault(row["channel_type"], []).append(
+                row["channel_id"]
+            )
 
-            cache["channels"].setdefault(row["channel_type"], []).append(row["channel_id"])
-
-
-        perm_rows = await self.fetch_all("""
-            SELECT guild_id, role_id, command
-            FROM permissions
-        """)
-
+        perm_rows = await self.fetch_all(
+            "SELECT guild_id, role_id, command FROM permissions"
+        )
         for row in perm_rows:
             gid = row["guild_id"]
-
             cache = self.cache.get(gid)
-            if not cache:
+            if cache is None:
                 continue
-
             cache["permissions"].setdefault(row["command"], []).append(row["role_id"])
 
-
-        role_rows = await self.fetch_all("""
+        role_rows = await self.fetch_all(
+            """
             SELECT
                 r.guild_id,
                 r.role_id,
@@ -136,36 +144,29 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 ra.target_role_id
             FROM roles r
             LEFT JOIN role_assignments ra
-                ON r.id = ra.role_ref_id
-        """)
-
+                ON  ra.guild_id = r.guild_id
+                AND ra.role_id  = r.role_id
+            """
+        )
         for row in role_rows:
             gid = row["guild_id"]
-
             cache = self.cache.get(gid)
-            if not cache:
+            if cache is None:
                 continue
 
             role_id = row["role_id"]
-
             if role_id not in cache["roles"]:
                 cache["roles"][role_id] = {
                     "limit": row["ban_limit"] or 0,
                     "ban_queue": row["ban_queue"] or 0,
                     "assignment_scope": row["assignment_scope"] or "none",
-                    "assignment_roles": set()
+                    "assignment_roles": set(),
                 }
 
             if row["target_role_id"] is not None:
-                cache["roles"][role_id]["assignment_roles"].add(
-                    row["target_role_id"]
-                )
+                cache["roles"][role_id]["assignment_roles"].add(row["target_role_id"])
 
-
-        row = await self.fetch_one("""
-            SELECT value FROM globals WHERE key = 'Jail'
-        """)
-
+        row = await self.fetch_one("SELECT value FROM globals WHERE key = 'Jail'")
         if row and row["value"]:
             self._gconfig = GlobalConfig(jail=int(row["value"]))
 
@@ -176,207 +177,142 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         return self._gconfig
 
     def get_prefix(self, guild_id: int) -> str:
-        return (
-            self.cache.get(guild_id, {}).get("prefix")
-            or "."
-        )
+        return self.cache.get(guild_id, {}).get("prefix") or "."
 
     def get_channels(self, guild_id: int, channel_name: str) -> list[int]:
         guild_data = self.cache.get(guild_id)
         if not guild_data:
             return []
-
         return guild_data.get("channels", {}).get(channel_name, [])
-    
+
     def get_channel(self, guild_id: int, channel_name: str) -> int | None:
         channels = self.get_channels(guild_id, channel_name)
-
         return channels[0] if channels else None
-        
-    def has_permission(self, guild_id: int, command: str | None ,roles: List[int]) -> bool:
+
+    def has_permission(
+        self, guild_id: int, command: str | None, roles: List[int]
+    ) -> bool:
         if command is None:
             return False
         guild_cache = self.cache.get(guild_id)
         if not guild_cache:
             return False
-
         allowed_roles = guild_cache["permissions"].get(command, [])
-
         return any(role_id in allowed_roles for role_id in roles)
 
-    def get_permissions(self, guild_id: int ,role: int) -> List[str]:
+    def get_permissions(self, guild_id: int, role: int) -> List[str]:
         guild_cache = self.cache.get(guild_id)
         if not guild_cache:
             return []
+        return [
+            cmd for cmd, values in guild_cache["permissions"].items() if role in values
+        ]
 
-        commands = []
-
-        for key, values in guild_cache["permissions"].items():
-            if role in values:
-                commands.append(key)
-
-        return commands
-    
     async def guild_initialize(self, guild_id: int) -> None:
         await self.execute(
-            "INSERT OR IGNORE INTO data (guild_id) VALUES (?)",
-            (guild_id,)
+            "INSERT OR IGNORE INTO data (guild_id) VALUES (?)", (guild_id,)
         )
-
         if guild_id not in self.cache:
             self.cache[guild_id] = {
                 "channels": {},
                 "permissions": {},
                 "roles": {},
-                "prefix": ""
+                "prefix": "",
             }
 
     def get_ban_limit(self, guild_id: int, role_ids: List[int]) -> int:
         guild = self.cache.get(guild_id)
         if not guild:
             return 0
-
         role_limits = guild.get("roles", {})
-
-        limits = [
-            role_limits[role_id]["limit"]
-            for role_id in role_ids
-            if role_id in role_limits
-        ]
-
+        limits = [role_limits[rid]["limit"] for rid in role_ids if rid in role_limits]
         return max(limits) if limits else 0
-    
+
     def ban_queue(self, guild_id: int, role_ids: List[int]) -> bool:
-        """Works based on Deny-overrides-Allow permission system"""
         guild = self.cache.get(guild_id)
         if not guild:
             return False
-
         role_limits = guild.get("roles", {})
-
         has_allow = False
-
-        for role_id in role_ids:
-            perm = role_limits.get(role_id, {}).get("ban_queue")
-
+        for rid in role_ids:
+            perm = role_limits.get(rid, {}).get("ban_queue")
             if perm == 0:
                 return False
-
             if perm == 1:
                 has_allow = True
-
         return has_allow
-    
-    """ Role getters and setters """
 
     def get_role_assignment_scope(self, guild_id: int, role_ids: List[int]) -> str:
         guild_cache = self.cache.get(guild_id)
         if not guild_cache:
             return "none"
-
         roles_cache = guild_cache.get("roles", {})
-
-        priority = {
-            "none": 0,
-            "specific": 1,
-            "except": 2,
-            "all": 3
-        }
-
+        priority = {"none": 0, "specific": 1, "except": 2, "all": 3}
         highest_scope = "none"
-
-        for role_id in role_ids:
-            role_data = roles_cache.get(role_id)
+        for rid in role_ids:
+            role_data = roles_cache.get(rid)
             if not role_data:
                 continue
-
             scope = role_data.get("assignment_scope", "none")
-
             if priority[scope] > priority[highest_scope]:
                 highest_scope = scope
-
                 if highest_scope == "all":
                     return "all"
-
         return highest_scope
 
     def get_role_assignment_roles(self, guild_id: int, role_ids: List[int]) -> Set[int]:
         guild_cache = self.cache.get(guild_id)
         if not guild_cache:
             return set()
-
         roles_cache = guild_cache.get("roles", {})
-
-        assignment_roles = set()
-
-        for role_id in role_ids:
-            role_data = roles_cache.get(role_id)
+        result: Set[int] = set()
+        for rid in role_ids:
+            role_data = roles_cache.get(rid)
             if not role_data:
                 continue
-
-            assignment_roles.update(
-                role_data.get("assignment_roles", set())
-            )
-
-        return assignment_roles
+            result.update(role_data.get("assignment_roles", set()))
+        return result
 
     async def set_role_assignment_scope(
-        self,
-        guild_id: int,
-        role_id: int,
-        scope: str
+        self, guild_id: int, role_id: int, scope: str
     ) -> None:
-        
-        await self.execute("""
-        UPDATE roles
-        SET assignment_scope = ?
-        WHERE guild_id = ? AND role_id = ?
-    """, (scope, guild_id, role_id))
-
-
+        await self.execute(
+            """
+            UPDATE roles
+            SET assignment_scope = ?
+            WHERE guild_id = ? AND role_id = ?
+            """,
+            (scope, guild_id, role_id),
+        )
         guild_cache = self.cache.get(guild_id)
         if not guild_cache:
             return
-
         role_cache = guild_cache.get("roles", {}).get(role_id)
-        if not role_cache:
-            return
-
-        role_cache["assignment_scope"] = scope
+        if role_cache:
+            role_cache["assignment_scope"] = scope
 
     async def set_role_assignment_roles(
-        self,
-        guild_id: int,
-        role_id: int,
-        roles: Set[int]
+        self, guild_id: int, role_id: int, roles: Set[int]
     ) -> None:
-
-        role_row = await self.fetch_one("""
-            SELECT id
-            FROM roles
+        await self.execute(
+            """
+            DELETE FROM role_assignments
             WHERE guild_id = ? AND role_id = ?
-        """, (guild_id, role_id))
-
-        if not role_row:
-            return
-
-        role_ref_id = role_row["id"]
-
-        await self.execute("""
-            DELETE FROM role_assignment
-            WHERE role_id = ?
-        """, (role_ref_id,))
-
-        for assignment_role_id in roles:
-            await self.execute("""
-                INSERT INTO role_assignment (role_id, assignment_role_id)
-                VALUES (?, ?)
-            """, (role_ref_id, assignment_role_id))
-
+            """,
+            (guild_id, role_id),
+        )
+        for target_role_id in roles:
+            await self.execute(
+                """
+                INSERT OR IGNORE INTO role_assignments
+                    (guild_id, role_id, target_role_id)
+                VALUES (?, ?, ?)
+                """,
+                (guild_id, role_id, target_role_id),
+            )
         guild_cache = self.cache.get(guild_id)
         if not guild_cache:
             return
-
         role_cache = guild_cache.get("roles", {}).get(role_id)
         if role_cache:
             role_cache["assignment_roles"] = set(roles)
@@ -388,117 +324,80 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         ban_limit: int,
         ban_queue: int,
         assignment_scope: str,
-        roles: Set[int]
+        roles: Set[int],
     ) -> Dict[str, str | bool]:
-        try:            
-            await self.execute("""
+        try:
+            await self.execute(
+                """
                 INSERT INTO roles (
-                    guild_id,
-                    role_id,
-                    ban_limit,
-                    ban_queue,
-                    assignment_scope
+                    guild_id, role_id, ban_limit, ban_queue, assignment_scope
                 )
                 VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(guild_id, role_id)
-                DO UPDATE SET
-                    ban_limit = excluded.ban_limit,
-                    ban_queue = excluded.ban_queue,
+                ON CONFLICT(guild_id, role_id) DO UPDATE SET
+                    ban_limit        = excluded.ban_limit,
+                    ban_queue        = excluded.ban_queue,
                     assignment_scope = excluded.assignment_scope
-            """, (
-                guild_id,
-                role_id,
-                ban_limit,
-                ban_queue,
-                assignment_scope
-            ))
+                """,
+                (guild_id, role_id, ban_limit, ban_queue, assignment_scope),
+            )
 
-            role_row = await self.fetch_one("""
-                SELECT id
-                FROM roles
-                WHERE guild_id = ? AND role_id = ?
-            """, (guild_id, role_id))
-
-            if not role_row:
-                return {
-                    "success": False,
-                    "message": "An unknown error occured!"
-                }
-
-            role_ref_id = role_row["id"]
-
-            await self.execute("""
-                DELETE FROM role_assignments
-                WHERE role_ref_id = ?
-            """, (role_ref_id,))
-
+            await self.execute(
+                "DELETE FROM role_assignments WHERE guild_id = ? AND role_id = ?",
+                (guild_id, role_id),
+            )
             for target_role_id in roles:
-                await self.execute("""
-                    INSERT INTO role_assignments (
-                        role_ref_id,
-                        target_role_id
-                    )
-                    VALUES (?, ?)
-                """, (role_ref_id, target_role_id))
+                await self.execute(
+                    """
+                    INSERT OR IGNORE INTO role_assignments
+                        (guild_id, role_id, target_role_id)
+                    VALUES (?, ?, ?)
+                    """,
+                    (guild_id, role_id, target_role_id),
+                )
 
-            guild_cache = self.cache.setdefault(guild_id, {
-                "channels": {},
-                "permissions": {},
-                "roles": {},
-                "prefix": ""
-            })
-
+            guild_cache = self.cache.setdefault(
+                guild_id,
+                {"channels": {}, "permissions": {}, "roles": {}, "prefix": ""},
+            )
             guild_cache["roles"][role_id] = {
                 "limit": ban_limit,
                 "ban_queue": ban_queue,
                 "assignment_scope": assignment_scope,
-                "assignment_roles": set(roles)
+                "assignment_roles": set(roles),
             }
 
-            return {
-                "success": True,
-                "message": "Successfully configured role!"
-            }
+            return {"success": True, "message": "Successfully configured role!"}
 
+        except Exception as exc:
+            return {"success": False, "message": str(exc)}
 
-        except Exception as e:
-            return {
-                "success": False,
-                "message": f'{e}'
-            }
-
-    """ Value Assignments """
-    async def set_prefix(self, guild_id: int, prefix: str):
+    async def set_prefix(self, guild_id: int, prefix: str) -> None:
         if guild_id not in self.cache:
             self.cache[guild_id] = {
                 "channels": {},
                 "permissions": {},
                 "roles": {},
-                "prefix": prefix
+                "prefix": prefix,
             }
         else:
             self.cache[guild_id]["prefix"] = prefix
 
         await self.execute(
             """
-            INSERT INTO data (guild_id, prefix)
-            VALUES (?, ?)
-            ON CONFLICT(guild_id)
-            DO UPDATE SET prefix = excluded.prefix
+            INSERT INTO data (guild_id, prefix) VALUES (?, ?)
+            ON CONFLICT(guild_id) DO UPDATE SET prefix = excluded.prefix
             """,
-            (guild_id, prefix)
+            (guild_id, prefix),
         )
 
-    async def set_channel(self, guild_id: int, channel_id: int, channel_type: str):
-        guild = self.cache.setdefault(guild_id, {
-            "channels": {},
-            "permissions": {},
-            "roles": {},
-            "prefix": "."
-        })
-
+    async def set_channel(
+        self, guild_id: int, channel_id: int, channel_type: str
+    ) -> None:
+        guild = self.cache.setdefault(
+            guild_id,
+            {"channels": {}, "permissions": {}, "roles": {}, "prefix": "."},
+        )
         channel_list = guild["channels"].setdefault(channel_type, [])
-
         if channel_id not in channel_list:
             channel_list.append(channel_id)
 
@@ -507,19 +406,39 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             INSERT OR IGNORE INTO guild_channels (guild_id, channel_type, channel_id)
             VALUES (?, ?, ?)
             """,
-            (guild_id, channel_type, channel_id)
+            (guild_id, channel_type, channel_id),
         )
 
-    async def set_permission(self, guild_id: int, role_id: int, command: str):
-        guild = self.cache.setdefault(guild_id, {
-            "channels": {},
-            "permissions": {},
-            "roles": {},
-            "prefix": "."
-        })
+    async def set_webhook(self, guild_id: int, channel_type ,webhook_url: str) -> None:
+        await self.execute(
+            """
+            INSERT OR IGNORE INTO guild_webhooks (guild_id, channel_type, webhook_url)
+            VALUES (?, ?, ?)
+            """,
+            (guild_id, channel_type, webhook_url),
+        )
 
+    async def get_webhooks_of_type(self, channel_type: str) -> dict[int, str | None]:
+        rows = await self.fetch_all(
+            """
+            SELECT guild_id, webhook_url
+            FROM guild_webhooks
+            WHERE channel_type = ?
+            """,
+            (channel_type,),
+        )
+
+        return {
+            row["guild_id"]: row["webhook_url"]
+            for row in rows
+        }
+
+    async def set_permission(self, guild_id: int, role_id: int, command: str) -> None:
+        guild = self.cache.setdefault(
+            guild_id,
+            {"channels": {}, "permissions": {}, "roles": {}, "prefix": "."},
+        )
         role_list = guild["permissions"].setdefault(command, [])
-
         if role_id not in role_list:
             role_list.append(role_id)
 
@@ -528,37 +447,30 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             INSERT OR IGNORE INTO permissions (guild_id, role_id, command)
             VALUES (?, ?, ?)
             """,
-            (guild_id, role_id, command)
+            (guild_id, role_id, command),
         )
-
-    """ Value Removals """
 
     async def remove_channel(
         self,
         guild_id: int,
         channel_id: int,
-        channel_type: Optional[str] = None
-    ):
+        channel_type: Optional[str] = None,
+    ) -> None:
         guild = self.cache.get(guild_id)
-        if not guild:
-            return
-
-        channels = guild.get("channels", {})
-
-        if channel_type:
-            if channel_type in channels:
-                if channel_id in channels[channel_type]:
-                    channels[channel_type].remove(channel_id)
-
-                if not channels[channel_type]:
-                    del channels[channel_type]
-        else:
-            for ctype in list(channels.keys()):
-                if channel_id in channels[ctype]:
-                    channels[ctype].remove(channel_id)
-
-                if not channels[ctype]:
-                    del channels[ctype]
+        if guild:
+            channels = guild.get("channels", {})
+            if channel_type:
+                if channel_type in channels:
+                    channels[channel_type] = [
+                        c for c in channels[channel_type] if c != channel_id
+                    ]
+                    if not channels[channel_type]:
+                        del channels[channel_type]
+            else:
+                for ctype in list(channels.keys()):
+                    channels[ctype] = [c for c in channels[ctype] if c != channel_id]
+                    if not channels[ctype]:
+                        del channels[ctype]
 
         if channel_type:
             await self.execute(
@@ -566,43 +478,34 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 DELETE FROM guild_channels
                 WHERE guild_id = ? AND channel_id = ? AND channel_type = ?
                 """,
-                (guild_id, channel_id, channel_type)
+                (guild_id, channel_id, channel_type),
             )
         else:
             await self.execute(
-                """
-                DELETE FROM guild_channels
-                WHERE guild_id = ? AND channel_id = ?
-                """,
-                (guild_id, channel_id)
+                "DELETE FROM guild_channels WHERE guild_id = ? AND channel_id = ?",
+                (guild_id, channel_id),
             )
 
     async def remove_permission(
         self,
         guild_id: int,
         role_id: int,
-        command: Optional[str] = None
-    ):
+        command: Optional[str] = None,
+    ) -> None:
         guild = self.cache.get(guild_id)
-        if not guild:
-            return
-
-        permissions = guild.get("permissions", {})
-
-        if command:
-            if command in permissions:
-                if role_id in permissions[command]:
+        if guild:
+            permissions = guild.get("permissions", {})
+            if command:
+                if command in permissions and role_id in permissions[command]:
                     permissions[command].remove(role_id)
-
-                if not permissions[command]:
-                    del permissions[command]
-        else:
-            for cmd in list(permissions.keys()):
-                if role_id in permissions[cmd]:
-                    permissions[cmd].remove(role_id)
-
-                if not permissions[cmd]:
-                    del permissions[cmd]
+                    if not permissions[command]:
+                        del permissions[command]
+            else:
+                for cmd in list(permissions.keys()):
+                    if role_id in permissions[cmd]:
+                        permissions[cmd].remove(role_id)
+                    if not permissions[cmd]:
+                        del permissions[cmd]
 
         if command:
             await self.execute(
@@ -610,45 +513,31 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 DELETE FROM permissions
                 WHERE guild_id = ? AND role_id = ? AND command = ?
                 """,
-                (guild_id, role_id, command)
+                (guild_id, role_id, command),
             )
         else:
             await self.execute(
-                """
-                DELETE FROM permissions
-                WHERE guild_id = ? AND role_id = ?
-                """,
-                (guild_id, role_id)
+                "DELETE FROM permissions WHERE guild_id = ? AND role_id = ?",
+                (guild_id, role_id),
             )
 
-
-    """ Ticket store """
     async def save_ticket_view(
         self,
         guild_id: int,
         channel_id: int,
         message_id: int,
-        config: dict
+        config: dict,
     ) -> None:
         await self.execute(
             """
-            INSERT OR REPLACE INTO ticket_views (
-                guild_id,
-                channel_id,
-                message_id,
-                config_json
-            )
+            INSERT OR REPLACE INTO ticket_views
+                (guild_id, channel_id, message_id, config_json)
             VALUES (?, ?, ?, ?)
             """,
-            (
-                guild_id,
-                channel_id,
-                message_id,
-                json.dumps(config)
-            )
+            (guild_id, channel_id, message_id, json.dumps(config)),
         )
 
-    async def get_ticket_views(self, guild_id: Optional[int] = None):
+    async def get_ticket_views(self, guild_id: Optional[int] = None) -> list:
         if guild_id:
             return await self.fetch_all(
                 """
@@ -656,21 +545,2019 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 FROM ticket_views
                 WHERE guild_id = ?
                 """,
-                (guild_id,)
+                (guild_id,),
             )
-
         return await self.fetch_all(
-            """
-            SELECT guild_id, channel_id, message_id, config_json
-            FROM ticket_views
-            """
+            "SELECT guild_id, channel_id, message_id, config_json FROM ticket_views"
         )
-    
-    async def delete_ticket_view(self, message_id: int):
+
+    async def delete_ticket_view(self, message_id: int) -> None:
+        await self.execute(
+            "DELETE FROM ticket_views WHERE message_id = ?", (message_id,)
+        )
+
+    async def write_log(self, guild_id: int, user_id: int, log_txt: str) -> None:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         await self.execute(
             """
-            DELETE FROM ticket_views
-            WHERE message_id = ?
+            INSERT INTO botlogs (guild_id, member_id, timestamp, log)
+            VALUES (?, ?, ?, ?)
             """,
-            (message_id,)
+            (guild_id, user_id, timestamp, log_txt),
         )
+
+    async def log_moderation_action(
+        self,
+        guild_id: int,
+        moderator_id: int,
+        target_user_id: int,
+        mod_type: str,
+        reason: str = "No reason provided",
+    ) -> Optional[int]:
+        timestamp = datetime.now(pytz.utc).isoformat()
+        await self.ensure_staff(moderator_id, guild_id)
+        await self.ensure_member(target_user_id, guild_id)
+
+        row_id = await self.execute(
+            """
+            INSERT INTO modlogs
+                (guild_id, moderator_id, target_user_id, mod_type, reason, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                guild_id,
+                moderator_id,
+                target_user_id,
+                mod_type.lower(),
+                reason,
+                timestamp,
+            ),
+        )
+        return row_id
+
+    async def log_proof_action(
+        self,
+        guild_id: int,
+        case_id: int,
+        proof_reference: int,
+        author: int,
+    ) -> None:
+        await self.ensure_staff(author, guild_id)
+        await self.execute(
+            """
+            INSERT INTO proofs (guild_id, case_id, proof_reference, author)
+            VALUES (?, ?, ?, ?)
+            """,
+            (guild_id, case_id, proof_reference, author),
+        )
+
+    async def retrieve_proofs(self, case_id: int) -> list[int]:
+        rows = await self.fetch_all(
+            "SELECT proof_reference FROM proofs WHERE case_id = ?", (case_id,)
+        )
+        return [row["proof_reference"] for row in rows]
+
+    async def get_ban_limit_status(
+        self,
+        guild_id: int,
+        moderator_id: int,
+        moderator_role_ids: list[int],
+    ) -> BanLimitStatus:
+        _default = BanLimitStatus(
+            exceeded=True,
+            max_limit=0,
+            recent_ban_count=0,
+            remaining_count=0,
+            remaining_time=None,
+            cooldown_breakdown=None,
+        )
+        if not moderator_role_ids:
+            return _default
+
+        now = datetime.now(pytz.utc)
+        past_24h = (now - timedelta(hours=24)).isoformat()
+
+        try:
+            max_limit = self.get_ban_limit(guild_id, moderator_role_ids)
+            if max_limit == 0:
+                return _default
+
+            bans = await self.fetch_all(
+                """
+                SELECT timestamp
+                FROM   modlogs
+                WHERE  guild_id      = ?
+                AND    moderator_id  = ?
+                AND    mod_type      IN ('ban', 'quarantine')
+                AND    timestamp     >= ?
+                ORDER BY timestamp ASC
+                """,
+                (guild_id, moderator_id, past_24h),
+            )
+
+            recent_ban_count = len(bans)
+            exceeded = recent_ban_count >= max_limit
+            remaining_count = max(0, max_limit - recent_ban_count)
+            remaining_time: Optional[str] = None
+            cooldown_breakdown: Optional[str] = None
+
+            if exceeded and bans:
+                oldest_ts = datetime.fromisoformat(bans[0]["timestamp"])
+                cooldown_end = oldest_ts + timedelta(hours=24)
+
+                if cooldown_end > now:
+                    remaining = cooldown_end - now
+                    hours, rem = divmod(int(remaining.total_seconds()), 3600)
+                    minutes = rem // 60
+                    remaining_time = f"You can ban again in {hours}h {minutes}m"
+
+                lines = []
+                for index, row in enumerate(bans, start=1):
+                    ban_time = datetime.fromisoformat(row["timestamp"])
+                    ban_cooldown_end = ban_time + timedelta(hours=24)
+                    if ban_cooldown_end > now:
+                        remaining = ban_cooldown_end - now
+                        hours, rem = divmod(int(remaining.total_seconds()), 3600)
+                        minutes = rem // 60
+                        lines.append(f"{index}. Recovery in **{hours}h {minutes}m**")
+
+                if lines:
+                    cooldown_breakdown = "**Ban's Cooldown State.**\n" + "\n".join(
+                        lines
+                    )
+
+            return BanLimitStatus(
+                exceeded=exceeded,
+                max_limit=max_limit,
+                recent_ban_count=recent_ban_count,
+                remaining_count=remaining_count,
+                remaining_time=remaining_time,
+                cooldown_breakdown=cooldown_breakdown,
+            )
+
+        except Exception as exc:
+            print("Error in get_ban_limit_status:", exc)
+            return _default
+
+    async def get_mod_queue_entry(self, user_id: int, guild_id: int) -> dict:
+        try:
+            row = await self.fetch_one(
+                """
+                SELECT moderator_id FROM mod_logs_queue
+                WHERE target_user_id = ? AND guild_id = ?
+                """,
+                (user_id, guild_id),
+            )
+            if row:
+                return {
+                    "success": True,
+                    "moderator_id": row["moderator_id"],
+                    "message": "Entry found.",
+                }
+            return {
+                "success": False,
+                "moderator_id": None,
+                "message": "No entry found for this user.",
+            }
+        except Exception as exc:
+            return {
+                "success": False,
+                "moderator_id": None,
+                "message": f"Error: {exc}",
+            }
+
+    async def add_mod_queue(
+        self,
+        guild_id: int,
+        moderator_id: int,
+        target_user_id: int,
+        mod_type: str,
+        reason: str,
+        message_source: str,
+    ) -> Dict[str, Any]:
+        try:
+            await self.ensure_staff(moderator_id, guild_id)
+            await self.ensure_member(target_user_id, guild_id)
+
+            await self.execute(
+                """
+                INSERT INTO mod_logs_queue (
+                    guild_id, moderator_id, target_user_id,
+                    mod_type, reason, timestamp, message_source
+                ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?)
+                """,
+                (
+                    guild_id,
+                    moderator_id,
+                    target_user_id,
+                    mod_type,
+                    reason,
+                    message_source,
+                ),
+            )
+            return {"success": True, "message": "Moderation action added to queue."}
+
+        except Exception as exc:
+            return {
+                "success": False,
+                "message": f"Failed to add moderation action: {exc}",
+                "error": type(exc).__name__,
+            }
+
+    async def fetch_mod_stats(
+        self,
+        guild_id: int,
+        moderator_id: int,
+        page_start: int,
+        page_end: int,
+    ) -> Dict[str, Any]:
+        now = datetime.now(timezone.utc)
+        start_today = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        start_week = (
+            (now - timedelta(days=now.weekday()))
+            .replace(hour=0, minute=0, second=0, microsecond=0)
+            .isoformat()
+        )
+        start_month = now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        ).isoformat()
+
+        stats_rows = await self.fetch_all(
+            """
+            SELECT
+                mod_type,
+                COUNT(*) AS total,
+                COUNT(CASE WHEN timestamp >= ? THEN 1 END) AS today,
+                COUNT(CASE WHEN timestamp >= ? THEN 1 END) AS week,
+                COUNT(CASE WHEN timestamp >= ? THEN 1 END) AS month
+            FROM modlogs
+            WHERE guild_id = ? AND moderator_id = ?
+            GROUP BY mod_type
+            """,
+            (start_today, start_week, start_month, guild_id, moderator_id),
+        )
+
+        if not stats_rows:
+            return {
+                "success": False,
+                "message": "No Logs Found",
+                "logs": [],
+                "stats": {},
+            }
+
+        page_rows = await self.fetch_all(
+            """
+            SELECT
+                target_user_id,
+                mod_type,
+                reason,
+                CAST(strftime('%s', timestamp) AS INTEGER) AS timestamp
+            FROM modlogs
+            WHERE guild_id = ? AND moderator_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ? OFFSET ?
+            """,
+            (guild_id, moderator_id, page_end - page_start, page_start),
+        )
+
+        total_logs = sum(row["total"] for row in stats_rows)
+
+        stats = {
+            row["mod_type"].lower(): {
+                "today": row["today"],
+                "7d": row["week"],
+                "30d": row["month"],
+                "total": row["total"],
+            }
+            for row in stats_rows
+        }
+        stats = defaultdict(lambda: {"today": 0, "7d": 0, "30d": 0, "total": 0}, stats)
+
+        logs = [
+            {
+                "target_user_id": row["target_user_id"],
+                "mod_type": row["mod_type"].lower(),
+                "reason": row["reason"],
+                "timestamp": row["timestamp"],
+            }
+            for row in page_rows
+        ]
+
+        return {
+            "success": True,
+            "logs": logs,
+            "total_logs": total_logs,
+            "stats": stats,
+            "now": now,
+        }
+
+    async def fetch_mod_logs(
+        self,
+        guild_id: int,
+        target_user_id: int,
+        moderator_id: int,
+        mod_type: str = "all",
+        page_start: int | None = None,
+        page_end: int | None = None,
+    ) -> Dict[str, Any]:
+        DEFAULT_FETCH_LIMIT = 5
+
+        base_condition = "WHERE guild_id = ? AND target_user_id = ?"
+        base_params: list = [guild_id, target_user_id]
+
+        if moderator_id:
+            base_condition += " AND moderator_id = ?"
+            base_params.append(moderator_id)
+
+        normalized_type = mod_type.lower()
+        type_filter = normalized_type != "all"
+
+        count_params = base_params.copy()
+        count_query = f"SELECT COUNT(*) AS cnt FROM modlogs {base_condition}"
+        if type_filter:
+            count_query += " AND lower(mod_type) = ?"
+            count_params.append(normalized_type)
+
+        count_row = await self.fetch_one(count_query, tuple(count_params))
+        total_count = count_row["cnt"] if count_row else 0
+
+        if not total_count:
+            return {"success": False, "message": "No logs found"}
+
+        type_rows = await self.fetch_all(
+            f"""
+            SELECT lower(mod_type) AS mod_type, COUNT(*) AS cnt
+            FROM modlogs {base_condition}
+            GROUP BY lower(mod_type)
+            """,
+            tuple(base_params),
+        )
+        mod_type_counts = {r["mod_type"]: r["cnt"] for r in type_rows}
+
+        start = page_start or 0
+        limit = (page_end - start) if page_end is not None else DEFAULT_FETCH_LIMIT
+
+        log_params = base_params.copy()
+        log_query = (
+            f"SELECT id, moderator_id, mod_type, reason, timestamp"
+            f" FROM modlogs {base_condition}"
+        )
+        if type_filter:
+            log_query += " AND lower(mod_type) = ?"
+            log_params.append(normalized_type)
+
+        log_query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+        log_params.extend([limit, start])
+
+        log_rows = await self.fetch_all(log_query, tuple(log_params))
+
+        logs = [
+            {
+                "case_id": row["id"],
+                "moderator_id": row["moderator_id"],
+                "mod_type": row["mod_type"].lower(),
+                "reason": row["reason"],
+                "timestamp": row["timestamp"],
+            }
+            for row in log_rows
+        ]
+
+        return {
+            "success": True,
+            "total_logs": total_count,
+            "counts": mod_type_counts,
+            "logs": logs,
+        }
+
+    async def fetch_moderation_leaderboard(
+        self, guild_id: int, lb_type: str = "total"
+    ) -> Dict:
+        valid_types = {"total", "daily", "weekly", "monthly"}
+        if lb_type not in valid_types:
+            lb_type = "total"
+
+        staff_rows = await self.fetch_all(
+            "SELECT staff_id FROM staffs WHERE guild_id = ? AND retired = 0 AND on_loa = 0",
+            (guild_id,),
+        )
+        active_staff_ids = tuple(row["staff_id"] for row in staff_rows) or (-1,)
+
+        rows = await self.fetch_all(
+            f"""
+            SELECT
+                moderator_id,
+                COUNT(*) AS total,
+                COUNT(CASE
+                    WHEN datetime(replace(substr(timestamp,1,19),'T',' '))
+                        >= datetime('now','start of day')
+                    THEN 1 END) AS daily,
+                COUNT(CASE
+                    WHEN datetime(replace(substr(timestamp,1,19),'T',' '))
+                        >= datetime('now','weekday 1','start of day','-7 days')
+                    THEN 1 END) AS weekly,
+                COUNT(CASE
+                    WHEN datetime(replace(substr(timestamp,1,19),'T',' '))
+                        >= datetime('now','start of month')
+                    THEN 1 END) AS monthly
+            FROM modlogs
+            WHERE moderator_id IN ({",".join(["?"] * len(active_staff_ids))})
+            AND guild_id = ?
+            GROUP BY moderator_id
+            ORDER BY {lb_type} DESC
+            """,
+            (*active_staff_ids, guild_id),
+        )
+
+        leaderboard = []
+        for row in rows:
+            value = row[lb_type]
+            leaderboard.append({"moderator_id": row["moderator_id"], "ms": value})
+
+        return {"moderator_statistics_leaderboard": leaderboard}
+
+    async def case_exists(self, case_id: int, guild_id: int) -> bool:
+        row = await self.fetch_one(
+            "SELECT moderator_id FROM modlogs WHERE id = ? AND guild_id = ?",
+            (case_id, guild_id),
+        )
+        return row is not None
+
+    async def edit_case(
+        self,
+        staff_id: int,
+        case_id: int,
+        case_statement: str,
+        absolute: bool,
+    ) -> Dict[str, Any]:
+        try:
+            row = await self.fetch_one(
+                "SELECT moderator_id FROM modlogs WHERE id = ?", (case_id,)
+            )
+            if row is None:
+                return {"success": False, "message": "Case not found."}
+
+            if row["moderator_id"] != staff_id and not absolute:
+                return {
+                    "success": False,
+                    "message": (
+                        f"This case cannot be modified. "
+                        f"Only <@{row['moderator_id']}> can modify it."
+                    ),
+                }
+
+            await self.execute(
+                "UPDATE modlogs SET reason = ? WHERE id = ?",
+                (case_statement, case_id),
+            )
+            return {"success": True, "message": "Case edited successfully."}
+
+        except Exception as exc:
+            return {"success": False, "message": f"An error occurred: {exc}"}
+
+    async def delete_case(self, case_id: int) -> Dict[str, Any]:
+        if not case_id:
+            return {
+                "success": False,
+                "message": "Invalid case_id provided.",
+                "case_id": case_id,
+            }
+        try:
+            await self.execute("DELETE FROM proofs WHERE case_id = ?", (case_id,))
+            await self.execute("DELETE FROM modlogs WHERE id = ?", (case_id,))
+            return {
+                "success": True,
+                "message": "Case deleted successfully.",
+                "case_id": case_id,
+            }
+        except Exception as exc:
+            return {
+                "success": False,
+                "message": f"Failed to delete case: {exc}",
+                "case_id": case_id,
+            }
+
+    async def clear_mod_queue(self, guild_id: int) -> Dict[str, Any]:
+        try:
+            await self.execute(
+                "DELETE FROM mod_logs_queue WHERE guild_id = ?", (guild_id,)
+            )
+            return {"success": True, "message": "Successfully cleared queue"}
+        except Exception:
+            return {"success": False, "message": "Failed to clear the queue"}
+
+    async def clear_mod_queue_particular(
+        self, guild_id: int, user_id: int
+    ) -> Dict[str, Any]:
+        try:
+            await self.execute(
+                """
+                DELETE FROM mod_logs_queue
+                WHERE guild_id = ? AND target_user_id = ?
+                """,
+                (guild_id, user_id),
+            )
+            return {
+                "success": True,
+                "message": "Successfully removed member from the queue",
+            }
+        except Exception:
+            return {
+                "success": False,
+                "message": "Failed to remove the member from queue",
+            }
+
+    async def fetch_mod_queue(self, guild_id: int) -> dict:
+        rows = await self.fetch_all(
+            """
+            SELECT mod_type, moderator_id, target_user_id, reason, message_source
+            FROM mod_logs_queue
+            WHERE guild_id = ?
+            """,
+            (guild_id,),
+        )
+        if not rows:
+            return {
+                "success": False,
+                "message": "No moderation queue found for this guild.",
+                "items": [],
+            }
+
+        items = [
+            {
+                "mod_type": row["mod_type"],
+                "moderator_id": row["moderator_id"],
+                "target_user_id": row["target_user_id"],
+                "reason": row["reason"],
+                "message_source": row["message_source"],
+            }
+            for row in rows
+        ]
+        return {
+            "success": True,
+            "message": "Successfully fetched queue.",
+            "items": items,
+        }
+
+    async def get_ticket_by_id(self, ticket_id: int) -> Optional[Tuple]:
+        row = await self.fetch_one(
+            """
+            SELECT opened_user_id, ticket_type, log_channel_id,
+                   submission_json, claimer_user_id
+            FROM tickets
+            WHERE ticket_id = ?
+            """,
+            (ticket_id,),
+        )
+        return tuple(row) if row else None
+
+    async def get_ticket_by_opener(self, opener_id: int, guild_id: int) -> List[Tuple]:
+        rows = await self.fetch_all(
+            """
+            SELECT ticket_id FROM tickets
+            WHERE opened_user_id = ? AND guild_id = ?
+            """,
+            (opener_id, guild_id),
+        )
+        return [tuple(row) for row in rows]
+
+    async def get_ticket_owner(self, ticket_id: int) -> Optional[int]:
+        row = await self.fetch_one(
+            "SELECT opened_user_id FROM tickets WHERE ticket_id = ?",
+            (ticket_id,),
+        )
+        return row["opened_user_id"] if row else None
+
+    async def get_guild_tickets(self, guild_id: int) -> List[Tuple]:
+        rows = await self.fetch_all(
+            """
+            SELECT ticket_id, opened_user_id, submission_json, message_id
+            FROM tickets WHERE guild_id = ?
+            """,
+            (guild_id,),
+        )
+        return [tuple(row) for row in rows]
+
+    async def get_ticket_claimer(self, ticket_id: int) -> int | None:
+        row = await self.fetch_one(
+            "SELECT claimer_user_id FROM tickets WHERE ticket_id = ?",
+            (ticket_id,),
+        )
+        return row["claimer_user_id"] if row else None
+
+    async def reset_ticket_claimer(self, ticket_id: int) -> None:
+        await self.execute(
+            "UPDATE tickets SET claimer_user_id = NULL WHERE ticket_id = ?",
+            (ticket_id,),
+        )
+
+    async def set_ticket_claimer(self, claimer: int, ticket_id: int) -> None:
+        await self.execute(
+            "UPDATE tickets SET claimer_user_id = ? WHERE ticket_id = ?",
+            (claimer, ticket_id),
+        )
+
+    async def create_ticket_log(
+        self,
+        guild_id: int,
+        opened_user_id: int,
+        staff_handled: int | None,
+        reason: str | None,
+        ticket_type: str,
+        transcripts_reference: int | None,
+    ) -> int | None:
+        await self.ensure_member(opened_user_id, guild_id)
+        if staff_handled:
+            await self.ensure_staff(staff_handled, guild_id)
+
+        row_id = await self.execute(
+            """
+            INSERT INTO ticket_logs (
+                guild_id, opened_user_id, staff_handled, reason,
+                ticket_type, timestamp, transcripts_reference
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                guild_id,
+                opened_user_id,
+                staff_handled,
+                reason,
+                ticket_type,
+                datetime.now(UTC).isoformat(),
+                transcripts_reference,
+            ),
+        )
+        return row_id
+
+    async def get_ticket_log(self, id: int, guild_id: int) -> dict[str, Any] | None:
+        row = await self.fetch_one(
+            """
+            SELECT opened_user_id, staff_handled, reason, ticket_type,
+                   timestamp, transcripts_reference
+            FROM ticket_logs
+            WHERE id = ? AND guild_id = ?
+            """,
+            (id, guild_id),
+        )
+        if row is None:
+            return None
+        return {
+            "opened_user_id": row["opened_user_id"],
+            "staff_handled": row["staff_handled"],
+            "reason": row["reason"],
+            "ticket_type": row["ticket_type"],
+            "timestamp": row["timestamp"],
+            "transcripts_reference": row["transcripts_reference"],
+        }
+
+    async def get_member_ticket_logs(
+        self, guild_id: int, member_id: int
+    ) -> list[dict[str, Any]]:
+        rows = await self.fetch_all(
+            """
+            SELECT id, guild_id, opened_user_id, staff_handled, reason,
+                   ticket_type, timestamp, transcripts_reference
+            FROM ticket_logs
+            WHERE guild_id = ? AND opened_user_id = ?
+            ORDER BY id DESC
+            """,
+            (guild_id, member_id),
+        )
+        return [
+            {
+                "id": row["id"],
+                "guild_id": row["guild_id"],
+                "opened_user_id": row["opened_user_id"],
+                "staff_handled": row["staff_handled"],
+                "reason": row["reason"],
+                "ticket_type": row["ticket_type"],
+                "timestamp": row["timestamp"],
+                "transcripts_reference": row["transcripts_reference"],
+            }
+            for row in rows
+        ]
+
+    async def delete_ticket(self, ticket_id: int) -> None:
+        await self.execute("DELETE FROM tickets WHERE ticket_id = ?", (ticket_id,))
+
+    async def create_ticket(
+        self,
+        ticket_id: int,
+        guild_id: int,
+        opened_user_id: int,
+        ticket_type: str,
+        log_channel_id: int,
+        submission_json: dict,
+        message_id: Optional[int] = None,
+    ) -> None:
+        await self.ensure_member(opened_user_id, guild_id)
+        await self.execute(
+            """
+            INSERT INTO tickets (
+                ticket_id, guild_id, opened_user_id, ticket_type,
+                log_channel_id, submission_json, message_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                ticket_id,
+                guild_id,
+                opened_user_id,
+                ticket_type,
+                log_channel_id,
+                json.dumps(submission_json),
+                message_id,
+            ),
+        )
+
+    async def update_ticket_message_id(self, ticket_id: int, message_id: int) -> None:
+        await self.execute(
+            "UPDATE tickets SET message_id = ? WHERE ticket_id = ?",
+            (message_id, ticket_id),
+        )
+
+    async def update_ticket_submission(
+        self, ticket_id: int, submission_json: dict
+    ) -> None:
+        await self.execute(
+            "UPDATE tickets SET submission_json = ? WHERE ticket_id = ?",
+            (json.dumps(submission_json), ticket_id),
+        )
+
+    async def ensure_member(self, member_id: int, guild_id: int) -> None:
+        await self.execute(
+            "INSERT OR IGNORE INTO members (member_id, guild_id) VALUES (?, ?)",
+            (member_id, guild_id),
+        )
+
+    async def ensure_staff(self, staff_id: int, guild_id: int) -> None:
+        await self.execute(
+            """
+            INSERT OR IGNORE INTO staffs (staff_id, guild_id, name)
+            VALUES (?, ?, 'Unknown')
+            """,
+            (staff_id, guild_id),
+        )
+
+    async def fetch_staff_detail(self, staff_id: int) -> Dict[str, Any]:
+        query = """
+        SELECT
+            s.name,
+            GROUP_CONCAT(DISTINCT r.role_name) AS roles,
+            s.on_loa,
+            COALESCE(sc.strikes_count, 0) AS strikes_count,
+            s.joined_on,
+            s.timezone,
+            s.responsibility,
+            s.retired
+        FROM staffs s
+        LEFT JOIN staff_roles sr
+            ON s.staff_id = sr.staff_id AND s.guild_id = sr.guild_id
+        LEFT JOIN roles r
+            ON sr.role_id = r.role_id AND sr.guild_id = r.guild_id
+        LEFT JOIN (
+            SELECT guild_id, issued_to_id, COUNT(*) AS strikes_count
+            FROM strikes
+            GROUP BY guild_id, issued_to_id
+        ) sc
+            ON sc.guild_id = s.guild_id AND sc.issued_to_id = s.staff_id
+        WHERE s.staff_id = ?
+        GROUP BY
+            s.staff_id, s.guild_id, s.name, s.on_loa,
+            s.joined_on, s.timezone, s.responsibility, s.retired,
+            sc.strikes_count
+        """
+        row = await self.fetch_one(query, (staff_id,))
+        if not row:
+            return {}
+
+        name = row["name"]
+        role_names = row["roles"]
+        is_loa = row["on_loa"]
+        strikes_count = row["strikes_count"]
+        joined_on_str = row["joined_on"]
+        tz_str = row["timezone"]
+        responsibility = row["responsibility"]
+        retired = row["retired"]
+
+        roles_list = role_names.split(",") if role_names else []
+
+        if joined_on_str:
+            joined_on = datetime.strptime(joined_on_str, "%d/%m/%Y")
+            joined_on_timestamp = int(joined_on.timestamp())
+        else:
+            joined_on_timestamp = int(datetime.now(timezone.utc).timestamp())
+
+        return {
+            "name": name,
+            "role_name": roles_list,
+            "is_loa": is_loa,
+            "strikes_count": strikes_count,
+            "joined_on": joined_on_timestamp,
+            "timezone": tz_str,
+            "responsibility": responsibility,
+            "retired": retired,
+        }
+
+    async def fetch_all_staffs(self, guild_id: int) -> Dict[str, Any]:
+        count_rows = await self.fetch_all(
+            """
+            SELECT
+                r.role_type,
+                COUNT(DISTINCT s.staff_id) AS total_staffs,
+                COUNT(DISTINCT CASE WHEN s.on_loa = 1 THEN s.staff_id END) AS loa_staffs,
+                COUNT(DISTINCT CASE WHEN s.on_loa = 0 AND s.retired = 0 THEN s.staff_id END) AS active_staffs
+            FROM staffs s
+            JOIN staff_roles sr
+                ON s.staff_id = sr.staff_id
+            AND s.guild_id = sr.guild_id
+            JOIN roles r
+                ON sr.role_id = r.role_id
+            AND sr.guild_id = r.guild_id
+            WHERE s.guild_id = ?
+            GROUP BY r.role_type;
+            """,
+            (guild_id,),
+        )
+
+        role_count_result: Dict[str, Any] = {}
+        for row in count_rows:
+            role_count_result[row["role_type"]] = {
+                "total": row["total_staffs"],
+                "loa": row["loa_staffs"],
+                "active": row["active_staffs"],
+            }
+
+        rows = await self.fetch_all(
+            """
+            SELECT
+                r.role_id AS role_id,
+                r.role_name AS role_name,
+                s.staff_id AS staff_id,
+                s.name AS name,
+                m.avatar_url AS avatar_url,
+                s.joined_on AS joined_on,
+                s.timezone AS timezone,
+                r.role_type AS role_type
+            FROM roles r
+            LEFT JOIN staff_ranks srk
+                ON  srk.guild_id = r.guild_id
+                AND srk.role_id  = r.role_id
+            LEFT JOIN staff_roles sr
+                ON  sr.guild_id = r.guild_id
+                AND sr.role_id  = r.role_id
+            LEFT JOIN staffs s
+                ON  s.staff_id  = sr.staff_id
+                AND s.guild_id  = sr.guild_id
+                AND s.retired   = 0
+            LEFT JOIN members m
+                ON  m.member_id = s.staff_id
+                AND m.guild_id  = s.guild_id
+            WHERE r.guild_id = ?
+            ORDER BY srk.priority, s.name;
+            """,
+            (guild_id,),
+        )
+
+        role_user_map: Dict[Any, Any] = {}
+        time_now = datetime.now(timezone.utc)
+
+        for row in rows:
+            role_id = row["role_id"]
+            role_name = row["role_name"]
+            staff_id = row["staff_id"]
+            name = row["name"]
+            avatar_url = row["avatar_url"] or "https://cdn3.emoji.gg/emojis/928205-membericon.png"
+            joined_on = row["joined_on"]
+            tz_str = row["timezone"]
+            role_type = row["role_type"]
+
+            try:
+                dt = (
+                    datetime.strptime(joined_on, "%d/%m/%Y").replace(
+                        tzinfo=timezone.utc
+                    )
+                    if joined_on
+                    else time_now
+                )
+            except ValueError:
+                dt = time_now
+
+            unix_timestamp = int(dt.timestamp())
+
+            role = role_user_map.setdefault(
+                role_id,
+                {"role_name": role_name, "role_type": role_type, "staff": []},
+            )
+
+            if staff_id is not None:
+                role["staff"].append(
+                    {
+                        "name": name,
+                        "id": staff_id,
+                        "avatar_profile": avatar_url,
+                        "joined_on": unix_timestamp,
+                        "timezone": tz_str or "Default",
+                    }
+                )
+
+        return {"overall": role_count_result, "roles": role_user_map}
+
+    async def add_staff(
+        self, staff_id: int, guild_id: int, name: str, avatar_url: str
+    ) -> Dict[str, Any]:
+        row = await self.fetch_one(
+            "SELECT retired FROM staffs WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id),
+        )
+
+        if row:
+            await self.ensure_member(staff_id, guild_id)
+            if row["retired"] == 1:
+                await self.execute(
+                    """
+                    UPDATE staffs
+                    SET retired = 0, name = ?, avatar_url = ?
+                    WHERE staff_id = ? AND guild_id = ?
+                    """,
+                    (name, avatar_url, staff_id, guild_id),
+                    commit=True,
+                )
+            else:
+                return {"success": False, "message": "Staff entry already exists"}
+        else:
+            today = datetime.now().strftime("%d/%m/%Y")
+            await self.execute(
+                """
+                INSERT INTO staffs (
+                    staff_id, name, guild_id, on_loa, retired,
+                    timezone, responsibility, avatar_url, joined_on
+                )
+                VALUES (?, ?, ?, 0, 0, 'Default', 'None', ?, ?)
+                """,
+                (staff_id, name, guild_id, avatar_url, today),
+                commit=True,
+            )
+
+        base_roles: list[int] = []
+        try:
+            configs = await self.fetch_all(
+                "SELECT role_id FROM roles WHERE guild_id = ? AND role_type = 'staff_base'",
+                (guild_id,),
+            )
+
+            base_roles = [row["role_id"] for row in configs]
+        except Exception:
+            pass  # staff_configs may not exist in all deployments
+
+        initial_role_row = await self.fetch_one(
+            """
+            SELECT r.role_id
+            FROM roles r
+            JOIN staff_ranks srk
+                ON  srk.guild_id = r.guild_id
+                AND srk.role_id  = r.role_id
+            WHERE r.guild_id  = ?
+            AND   r.role_type = 'staff'
+            ORDER BY srk.priority DESC
+            LIMIT 1
+            """,
+            (guild_id,),
+        )
+        initial_role: Optional[int] = (
+            initial_role_row["role_id"] if initial_role_row else None
+        )
+
+        if initial_role:
+
+            await self.execute(
+                """
+                INSERT OR IGNORE INTO staff_roles (staff_id, guild_id, role_id)
+                VALUES (?, ?, ?)
+                """,
+                (staff_id, guild_id, initial_role),
+                commit=True,
+            )
+
+        roles_to_add = set(base_roles)
+        if initial_role:
+            roles_to_add.add(initial_role)
+
+        return {
+            "success": True,
+            "roles_to_add": list(roles_to_add),
+            "message": "Staff added successfully",
+        }
+
+    async def remove_staff(self, staff_id: int, guild_id: int) -> Dict[str, Any]:
+        row = await self.fetch_one(
+            "SELECT retired FROM staffs WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id),
+        )
+        if not row:
+            return {"success": False, "message": "Staff not found"}
+        if row["retired"] == 1:
+            return {"success": False, "message": "Staff is already retired"}
+
+        await self.execute(
+            "UPDATE staffs SET retired = 1 WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id),
+            commit=True,
+        )
+
+        role_rows = await self.fetch_all(
+            "SELECT role_id FROM staff_roles WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id),
+        )
+        role_ids = [r["role_id"] for r in role_rows]
+
+        base_roles: list[int] = []
+        try:
+            configs = await self.fetch_all(
+                "SELECT role_id FROM roles WHERE guild_id = ? AND role_type = 'staff_base'",
+                (guild_id,),
+            )
+
+            base_roles = [row["role_id"] for row in configs]
+        except Exception:
+            pass
+
+        await self.execute(
+            "DELETE FROM staff_roles WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id),
+            commit=True,
+        )
+
+        return {
+            "success": True,
+            "message": "Staff marked as retired",
+            "roles_to_remove": list(set(role_ids + base_roles)),
+        }
+
+    async def edit_staff(
+        self,
+        staff_id: int,
+        guild_id: int,
+        name: Optional[str],
+        joined_on: Optional[str],
+        timezone: Optional[str],
+        responsibility: Optional[str],
+    ) -> Dict[str, Any]:
+        fields = {
+            "name": name,
+            "joined_on": joined_on,
+            "timezone": timezone,
+            "responsibility": responsibility,
+        }
+        update_columns = {k: v for k, v in fields.items() if v is not None}
+
+        if not update_columns:
+            return {"success": False, "message": "No fields provided to update"}
+
+        row = await self.fetch_one(
+            "SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id),
+        )
+        if not row:
+            return {
+                "success": False,
+                "message": f"No staff found with ID {staff_id}",
+            }
+
+        set_clause = ", ".join(f"{col} = ?" for col in update_columns)
+        values: List[Any] = list(update_columns.values())
+        values.extend([staff_id, guild_id])
+
+        await self.execute(
+            f"UPDATE staffs SET {set_clause} WHERE staff_id = ? AND guild_id = ?",
+            tuple(values),
+        )
+        return {
+            "success": True,
+            "message": f"Staff ID {staff_id} updated successfully",
+        }
+
+    async def strike_staff(
+        self,
+        staff_id: int,
+        guild_id: int,
+        issued_by: int,
+        reason: str,
+    ) -> Dict[str, Any]:
+        await self.ensure_staff(issued_by, guild_id)
+        await self.ensure_staff(staff_id, guild_id)
+
+        exists = await self.fetch_one(
+            "SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id),
+        )
+        if not exists:
+            return {"success": False, "message": "Staff member not found"}
+
+        await self.execute(
+            """
+            INSERT INTO strikes (issued_by_id, issued_to_id, reason, date, guild_id)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                issued_by,
+                staff_id,
+                reason,
+                datetime.today().strftime("%d/%m/%Y"),
+                guild_id,
+            ),
+        )
+        return {
+            "success": True,
+            "staff_id": staff_id,
+            "issued_by": issued_by,
+            "reason": reason,
+            "message": f"Successfully striked staff <@{staff_id}>",
+        }
+
+    async def remove_strike(
+        self, strike_id: int, guild_id: int
+    ) -> Dict[str, str | bool]:
+        row = await self.fetch_one(
+            """
+            SELECT issued_to_id FROM strikes
+            WHERE strike_id = ? AND guild_id = ?
+            """,
+            (strike_id, guild_id),
+        )
+        if not row:
+            return {
+                "success": False,
+                "message": f"No strike with ID `{strike_id}` found",
+            }
+
+        staff_id = row["issued_to_id"]
+        await self.execute("DELETE FROM strikes WHERE strike_id = ?", (strike_id,))
+        return {
+            "success": True,
+            "message": f"Strike `{strike_id}` removed from <@{staff_id}>",
+        }
+
+    async def edit_strike(
+        self,
+        strike_id: int,
+        guild_id: int,
+        staff_id: int,
+        new_reason: str,
+    ) -> Dict[str, str | bool]:
+        row = await self.fetch_one(
+            """
+            SELECT issued_to_id, issued_by_id FROM strikes
+            WHERE strike_id = ? AND guild_id = ?
+            """,
+            (strike_id, guild_id),
+        )
+        if not row:
+            return {
+                "success": False,
+                "message": f"No strike with ID `{strike_id}` found",
+            }
+
+        if row["issued_by_id"] != staff_id:
+            return {
+                "success": False,
+                "message": "Only the staff who issued the strike can edit it.",
+            }
+
+        await self.execute(
+            "UPDATE strikes SET reason = ? WHERE strike_id = ? AND guild_id = ?",
+            (new_reason, strike_id, guild_id),
+        )
+        return {
+            "success": True,
+            "message": f"Strike `{strike_id}` edited successfully!",
+        }
+
+    async def fetch_staff_strikes(
+        self, staff_id: int, guild_id: int
+    ) -> Dict[str, bool | str | List[dict]]:
+        try:
+            rows = await self.fetch_all(
+                """
+                SELECT strike_id, reason, date, issued_by_id
+                FROM strikes
+                WHERE issued_to_id = ? AND guild_id = ?
+                ORDER BY strike_id DESC
+                """,
+                (staff_id, guild_id),
+            )
+            if not rows:
+                return {"success": False, "message": "No strikes found", "data": []}
+
+            strikes = [
+                {
+                    "strike_id": row["strike_id"],
+                    "reason": row["reason"],
+                    "date": row["date"],
+                    "manager": row["issued_by_id"],
+                }
+                for row in rows
+            ]
+            return {"success": True, "message": "Strikes fetched", "data": strikes}
+
+        except Exception as exc:
+            return {"success": False, "message": str(exc), "data": []}
+
+    async def add_loa(
+        self,
+        guild_id: int,
+        staff_id: int,
+        reason: str,
+        loa_issued_by: int,
+    ) -> Dict[str, Any]:
+        if not staff_id:
+            return {"success": False, "message": "Missing staff_id"}
+
+        row = await self.fetch_one(
+            "SELECT on_loa FROM staffs WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id),
+        )
+        if row and row["on_loa"] == 1:
+            return {"success": False, "message": "Staff is already on LOA"}
+
+        try:
+            await self.execute(
+                "UPDATE staffs SET on_loa = 1 WHERE staff_id = ? AND guild_id = ?",
+                (staff_id, guild_id),
+                commit=True,
+            )
+            await self.execute(
+                """
+                INSERT INTO leaves (staff_id, reason, issued_by, guild_id)
+                VALUES (?, ?, ?, ?)
+                """,
+                (staff_id, reason, loa_issued_by, guild_id),
+                commit=True,
+            )
+
+            role_rows = await self.fetch_all(
+                "SELECT role_id FROM staff_roles WHERE staff_id = ? AND guild_id = ?",
+                (staff_id, guild_id),
+            )
+            roles_to_remove = [r["role_id"] for r in role_rows]
+
+            roles_to_add: tuple = ()
+
+            try:
+                config = await self.fetch_one(
+                    "SELECT loa_role, staff_role_base FROM staff_configs WHERE guild_id = ?",
+                    (guild_id,),
+                )
+                if config:
+                    if config["loa_role"]:
+                        roles_to_add = (config["loa_role"],)
+                    if config["staff_role_base"]:
+                        roles_to_remove.extend(
+                            int(r)
+                            for r in config["staff_role_base"].split(",")
+                            if r.strip()
+                        )
+            except Exception:
+                pass
+
+            return {
+                "success": True,
+                "message": "Staff added to LOA successfully!",
+                "roles_to_remove": roles_to_remove,
+                "roles_to_add": roles_to_add,
+            }
+
+        except Exception as exc:
+            return {"success": False, "message": str(exc)}
+
+    async def remove_loa(self, staff_id: int, guild_id: int) -> Dict[str, Any]:
+        if not staff_id:
+            return {"success": False, "message": "Missing staff_id"}
+
+        try:
+            await self.execute(
+                "UPDATE staffs SET on_loa = 0 WHERE staff_id = ? AND guild_id = ?",
+                (staff_id, guild_id),
+            )
+
+            role_rows = await self.fetch_all(
+                "SELECT role_id FROM staff_roles WHERE staff_id = ? AND guild_id = ?",
+                (staff_id, guild_id),
+            )
+            roles_to_add = [r["role_id"] for r in role_rows]
+
+            roles_to_remove: tuple = ()
+
+            try:
+                config = await self.fetch_one(
+                    "SELECT loa_role, staff_role_base FROM staff_configs WHERE guild_id = ?",
+                    (guild_id,),
+                )
+                if config:
+                    if config["loa_role"]:
+                        roles_to_remove = (config["loa_role"],)
+                    if config["staff_role_base"]:
+                        roles_to_add.extend(
+                            int(r)
+                            for r in config["staff_role_base"].split(",")
+                            if r.strip()
+                        )
+            except Exception:
+                pass
+
+            return {
+                "success": True,
+                "message": "Staff removed from LOA successfully!",
+                "roles_to_add": roles_to_add,
+                "roles_to_remove": roles_to_remove,
+            }
+
+        except Exception as exc:
+            return {"success": False, "message": str(exc)}
+
+    async def fetch_loa_staffs(
+        self, guild_id: int, role_type: str
+    ) -> List[Dict[str, Any]]:
+        rows = await self.fetch_all(
+            """
+            SELECT DISTINCT s.staff_id, s.joined_on, s.avatar_url
+            FROM staffs s
+            JOIN staff_roles sr ON s.staff_id = sr.staff_id AND s.guild_id = sr.guild_id
+            JOIN roles r        ON sr.role_id  = r.role_id  AND sr.guild_id = r.guild_id
+            WHERE s.on_loa = 1 AND s.guild_id = ? AND r.role_type = ?
+            """,
+            (guild_id, role_type),
+        )
+
+        result = []
+        for row in rows:
+            try:
+                dt = datetime.strptime(row["joined_on"] or "01/01/2000", "%d/%m/%Y")
+            except ValueError:
+                dt = datetime(2000, 1, 1)
+
+            result.append(
+                {
+                    "staff_id": row["staff_id"],
+                    "joined_on": int(dt.timestamp()),
+                    "avatar_url": row["avatar_url"],
+                }
+            )
+        return result
+
+    async def update_staff(
+        self,
+        guild_id: int,
+        staff_id: int,
+        update_type: str,
+        reason: str,
+        updated_by: int,
+    ) -> Dict[str, Any]:
+        if staff_id == updated_by:
+            return {"success": False, "message": "You cannot update yourself."}
+        if update_type not in ("promotion", "demotion"):
+            return {"success": False, "message": "Invalid update_type."}
+
+        current_role_row = await self.fetch_one(
+            """
+            SELECT sr.role_id, srk.priority, r.role_id AS _check
+            FROM staff_roles sr
+            JOIN roles r
+                ON sr.role_id = r.role_id
+            AND sr.guild_id = r.guild_id
+            LEFT JOIN staff_ranks srk
+                ON srk.role_id = r.role_id
+            AND srk.guild_id = r.guild_id
+            WHERE sr.staff_id = ?
+            AND sr.guild_id = ?
+            AND r.role_type = 'staff'
+            ORDER BY srk.priority ASC
+            LIMIT 1;
+            """,
+            (staff_id, guild_id),
+        )
+        if not current_role_row:
+            return {"success": False, "message": "No staff role assigned."}
+
+        current_role_id = current_role_row["role_id"]
+        current_priority = current_role_row["priority"]
+
+        updater_row = await self.fetch_one(
+            """
+            SELECT srk.priority
+            FROM staff_roles sr
+            JOIN roles r
+                ON sr.role_id = r.role_id
+            AND sr.guild_id = r.guild_id
+            JOIN staff_ranks srk
+                ON srk.role_id = r.role_id
+            AND srk.guild_id = r.guild_id
+            WHERE sr.staff_id = ?
+            AND sr.guild_id = ?
+            AND r.role_type = 'staff'
+            ORDER BY srk.priority ASC
+            LIMIT 1
+            """,
+            (updated_by, guild_id),
+        )
+        if not updater_row:
+            return {"success": False, "message": "Updater has no staff role."}
+
+        updater_priority = updater_row["priority"]
+
+        if current_priority <= updater_priority:
+            return {
+                "success": False,
+                "message": "You cannot update someone with equal or higher role.",
+            }
+
+        if update_type == "promotion":
+            next_row = await self.fetch_one(
+                """
+                SELECT r.role_id, srk.priority
+                FROM roles r
+                JOIN staff_ranks srk
+                    ON srk.role_id = r.role_id
+                AND srk.guild_id = r.guild_id
+                WHERE r.guild_id = ?
+                AND r.role_type = 'staff'
+                AND srk.priority < ?
+                ORDER BY srk.priority DESC
+                LIMIT 1;
+                """,
+                (guild_id, current_priority),
+            )
+        else:
+            next_row = await self.fetch_one(
+                """
+                SELECT r.role_id, srk.priority
+                FROM roles r
+                JOIN staff_ranks srk
+                    ON srk.role_id = r.role_id
+                AND srk.guild_id = r.guild_id
+                WHERE r.guild_id = ?
+                AND r.role_type = 'staff'
+                AND srk.priority > ?
+                ORDER BY srk.priority ASC
+                LIMIT 1
+                """,
+                (guild_id, current_priority),
+            )
+
+        if not next_row:
+            label = "highest" if update_type == "promotion" else "lowest"
+            return {"success": False, "message": f"Already at {label} role."}
+
+        new_role_id = next_row["role_id"]
+        new_priority = next_row["priority"]
+
+        if new_priority < updater_priority:
+            return {
+                "success": False,
+                "message": "You cannot update someone beyond your own role priority.",
+            }
+
+        await self.execute(
+            """
+            UPDATE staff_roles
+            SET role_id = ?
+            WHERE staff_id = ? AND guild_id = ? AND role_id = ?
+            """,
+            (new_role_id, staff_id, guild_id, current_role_id),
+            commit=True,
+        )
+
+        await self.execute(
+            """
+            INSERT INTO rank_updates (
+                guild_id, staff_id, updated_by,
+                old_role_id, new_role_id, update_type, reason
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                guild_id,
+                staff_id,
+                updated_by,
+                current_role_id,
+                new_role_id,
+                update_type,
+                reason,
+            ),
+            commit=True,
+        )
+
+        return {
+            "success": True,
+            "message": f"{update_type.title()} successful",
+            "old_role_id": current_role_id,
+            "new_role_id": new_role_id,
+            "staff_id": staff_id,
+        }
+
+    async def add_staff_quota(
+        self,
+        guild_id: int,
+        role_id: int,
+        min_msg: int,
+        min_ms: int,
+        check_by: str,
+    ) -> Dict[str, Any]:
+        if check_by not in ("1d", "7d", "30d", None):
+            return {
+                "success": False,
+                "message": "Invalid parameter type passed (check_by)",
+            }
+
+        await self.execute(
+            """
+            INSERT INTO staff_quota
+                (role_id, guild_id, min_msg, min_ms, check_by)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                role_id,
+                guild_id,
+                min_msg,
+                min_ms,
+                check_by
+            ),
+        )
+        return {"success": True, "message": "Quota Defined Successfully"}
+
+    async def fetch_staff_quota(self, guild_id: int) -> List[Dict[str, Any]]:
+        rows = await self.fetch_all(
+            """
+            SELECT quota_id, role_id, guild_id, min_msg, min_ms, check_by
+            FROM staff_quota
+            WHERE guild_id = ?
+            """,
+            (guild_id,),
+        )
+        return [
+            {
+                "quota_id": row["quota_id"],
+                "role_id": row["role_id"],
+                "guild_id": row["guild_id"],
+                "min_msg": row["min_msg"],
+                "min_ms": row["min_ms"],
+                "check_by": row["check_by"]
+            }
+            for row in rows
+        ]
+
+    async def remove_staff_quota(self, guild_id: int, quota_id: int) -> Dict[str, Any]:
+        await self.execute(
+            "DELETE FROM staff_quota WHERE quota_id = ? AND guild_id = ?",
+            (quota_id, guild_id),
+        )
+        return {"success": True, "message": "Quota removed successfully"}
+
+    async def get_staff_current_quota(
+        self, guild_id: int, staff_id: int
+    ) -> Dict[str, Any]:
+        msg_row = await self.fetch_one(
+            """
+            SELECT daily_messages, weekly_messages, monthly_messages, total_messages
+            FROM messages
+            WHERE member_id = ? AND guild_id = ?
+            """,
+            (staff_id, guild_id),
+        )
+        if not msg_row:
+            return {"success": False, "message": "Staff messages not found"}
+
+        daily = msg_row["daily_messages"]
+        weekly = msg_row["weekly_messages"]
+        monthly = msg_row["monthly_messages"]
+        total = msg_row["total_messages"]
+
+        role_row = await self.fetch_one(
+            """
+            SELECT sr.role_id
+            FROM staff_roles sr
+            JOIN roles r
+                ON sr.role_id = r.role_id
+            AND sr.guild_id = r.guild_id
+            LEFT JOIN staff_ranks srk
+                ON srk.role_id = r.role_id
+            AND srk.guild_id = r.guild_id
+            WHERE sr.staff_id = ?
+            AND sr.guild_id = ?
+            AND r.role_type = 'staff'
+            ORDER BY srk.priority ASC
+            LIMIT 1;
+            """,
+            (staff_id, guild_id),
+        )
+        if not role_row:
+            return {"success": False, "message": "Staff role not found"}
+
+        role_id = role_row["role_id"]
+
+        quota_row = await self.fetch_one(
+            "SELECT min_msg, min_ms FROM staff_quota WHERE role_id = ? AND guild_id = ?",
+            (role_id, guild_id),
+        )
+        if not quota_row:
+            return {
+                "success": False,
+                "message": (
+                    "No quota has been defined for any of the staff roles "
+                    "assigned to this user. Please define a quota."
+                ),
+            }
+
+        mod_stats = await self.fetch_mod_stats(
+            guild_id=guild_id, moderator_id=staff_id, page_start=0, page_end=0
+        )
+        stats = mod_stats.get("stats") or {}
+        weekly_ms = sum(v.get("7d", 0) for v in stats.values())
+
+        min_msg = int(quota_row["min_msg"] or 0)
+        min_ms = int(quota_row["min_ms"] or 0)
+
+        return {
+            "success": True,
+            "message": "Quota fetched successfully.",
+            "staff_id": staff_id,
+            "guild_id": guild_id,
+            "messages": {
+                "daily": daily,
+                "weekly": weekly,
+                "monthly": monthly,
+                "total": total,
+            },
+            "mod_stats_weekly": {"weekly_ms": weekly_ms},
+            "quota": {"min_msg": min_msg, "min_ms": min_ms},
+            "result": {
+                "message_quota_passed": weekly >= min_msg,
+                "ms_quota_passed": weekly_ms >= min_ms,
+            },
+        }
+
+    async def update_message(self, staff_id: int, guild_id: int, avatar_url: str | None = None) -> None:
+
+        """ Updating their profile each message to keep them upto date. """
+        
+        await self.execute(
+                """
+                INSERT INTO members (member_id, guild_id, avatar_url)
+                VALUES (?, ?, ?)
+                ON CONFLICT(member_id, guild_id)
+                DO UPDATE SET
+                    avatar_url = excluded.avatar_url;
+                """, (staff_id, guild_id, avatar_url)
+        )
+        await self.execute(
+            """
+            INSERT INTO messages (
+                member_id, guild_id,
+                daily_messages, weekly_messages, monthly_messages, total_messages
+            )
+            VALUES (?, ?, 1, 1, 1, 1)
+            ON CONFLICT(member_id, guild_id) DO UPDATE SET
+                daily_messages   = daily_messages   + 1,
+                weekly_messages  = weekly_messages  + 1,
+                monthly_messages = monthly_messages + 1,
+                total_messages   = total_messages   + 1
+            """,
+            (staff_id, guild_id),
+        )
+            
+    async def remove_role(self, guild_id: int, role_id: int) -> Dict[str, Any]:
+        try:
+            await self.execute(
+                "DELETE FROM staff_roles WHERE role_id = ? AND guild_id = ?",
+                (role_id, guild_id),
+                commit=True,
+            )
+            await self.execute(
+                "DELETE FROM staff_quota WHERE role_id = ? AND guild_id = ?",
+                (role_id, guild_id),
+                commit=True,
+            )
+            await self.execute(
+                "DELETE FROM roles WHERE role_id = ? AND guild_id = ?",
+                (role_id, guild_id),
+                commit=True,
+            )
+
+            guild_cache = self.cache.get(guild_id)
+            if guild_cache:
+                guild_cache.get("roles", {}).pop(role_id, None)
+
+            return {"success": True, "message": "Role removed successfully"}
+
+        except Exception as exc:
+            return {
+                "success": False,
+                "message": f"Role removal encountered an error: {exc}",
+            }
+
+    async def get_all_staff_quota_status(self, guild_id: int) -> Dict[str, Any]:
+        quotas = await self.fetch_all(
+            """
+            SELECT quota_id, role_id, min_msg, min_ms,check_by
+            FROM staff_quota WHERE guild_id = ?
+            """,
+            (guild_id,),
+        )
+        if not quotas:
+            return {"success": False, "message": "No quotas defined for this guild"}
+
+        quota_role_ids = [q["role_id"] for q in quotas if q["role_id"] is not None]
+        if not quota_role_ids:
+            return {"success": False, "message": "No valid quota roles found"}
+
+        placeholders = ",".join("?" for _ in quota_role_ids)
+        staff_rows = await self.fetch_all(
+            f"""
+            SELECT DISTINCT s.staff_id, s.name
+            FROM staffs s
+            JOIN staff_roles r ON s.staff_id = r.staff_id AND s.guild_id = r.guild_id
+            WHERE s.guild_id = ? AND s.retired = 0 AND s.on_loa = 0
+            AND r.role_id IN ({placeholders})
+            """,
+            (guild_id, *quota_role_ids),
+        )
+        if not staff_rows:
+            return {
+                "success": False,
+                "message": "No applicable staff found for quota evaluation",
+            }
+
+        role_map_rows = await self.fetch_all(
+            """
+            SELECT sr.staff_id, sr.role_id
+            FROM staff_roles sr
+            JOIN roles r ON sr.role_id = r.role_id AND sr.guild_id = r.guild_id
+            WHERE r.guild_id = ?
+            """,
+            (guild_id,),
+        )
+        staff_roles_map: Dict[int, list] = defaultdict(list)
+        for row in role_map_rows:
+            staff_roles_map[row["staff_id"]].append(row["role_id"])
+
+        passed_staff: list = []
+        failed_staff: list = []
+
+        for staff_row in staff_rows:
+            sid = staff_row["staff_id"]
+            name = staff_row["name"]
+            staff_roles = staff_roles_map.get(sid, [])
+
+            applicable = [q for q in quotas if q["role_id"] in staff_roles]
+            if not applicable:
+                continue
+
+            msg_row = await self.fetch_one(
+                "SELECT weekly_messages FROM messages WHERE member_id = ? AND guild_id = ?",
+                (sid, guild_id),
+            )
+            weekly_messages = msg_row["weekly_messages"] if msg_row else 0
+
+            mod_stats = await self.fetch_mod_stats(
+                guild_id=guild_id, moderator_id=sid, page_start=0, page_end=0
+            )
+            stats = mod_stats.get("stats") or {}
+            weekly_ms = sum(v.get("7d", 0) for v in stats.values())
+
+            staff_results: list = []
+            staff_passed_any = False
+            staff_fail_reasons: list = []
+
+            for quota in applicable:
+                msg_ok = int(weekly_messages or 0) >= int(quota["min_msg"] or 0)
+                ms_ok = int(weekly_ms or 0) >= int(quota["min_ms"] or 0)
+                quota_passed = msg_ok and ms_ok
+
+                staff_results.append(
+                    {
+                        "quota_id": quota["quota_id"],
+                        "role_id": quota["role_id"],
+                        "passed": quota_passed,
+                        "weekly_messages": weekly_messages,
+                        "weekly_ms": weekly_ms,
+                        "required": {
+                            "min_msg": int(quota["min_msg"] or 0),
+                            "min_ms": int(quota["min_ms"] or 0),
+                        },
+                        "failed_reasons": (
+                            []
+                            if quota_passed
+                            else (
+                                (["message_quota_failed"] if not msg_ok else [])
+                                + (["mod_stats_failed"] if not ms_ok else [])
+                            )
+                        ),
+                    }
+                )
+                if quota_passed:
+                    staff_passed_any = True
+                else:
+                    staff_fail_reasons.append(f"quota_{quota['quota_id']}_failed")
+
+            if staff_passed_any:
+                passed_staff.append(
+                    {"staff_id": sid, "name": name, "results": staff_results}
+                )
+            else:
+                failed_staff.append(
+                    {
+                        "staff_id": sid,
+                        "name": name,
+                        "reasons": staff_fail_reasons,
+                        "results": staff_results,
+                    }
+                )
+
+        return {
+            "success": True,
+            "guild_id": guild_id,
+            "summary": {
+                "total_staff": len(staff_rows),
+                "passed": len(passed_staff),
+                "failed": len(failed_staff),
+                "total_quotas": len(quotas),
+            },
+            "passed_staff": passed_staff,
+            "failed_staff": failed_staff,
+        }
+
+    async def get_quota_status(self, guild_id: int, quota_id: int) -> Dict[str, Any]:
+        quota = await self.fetch_one(
+            """
+            SELECT quota_id, role_id, min_msg, min_ms, check_by
+            FROM staff_quota WHERE guild_id = ? AND quota_id = ?
+            """,
+            (guild_id, quota_id),
+        )
+        if not quota:
+            return {"success": False, "message": f"No quota found with id {quota_id} for this guild"}
+
+        PERIOD_TO_MSG_COL: Final = {
+            "1d":  "daily_messages",
+            "7d":  "weekly_messages",
+            "30d": "monthly_messages",
+        }
+        PERIOD_TO_MOD_KEY: Final = {
+            "1d":  "today",
+            "7d":  "7d",
+            "30d": "30d",
+        }
+
+        role_id  = quota["role_id"]
+        min_msg  = int(quota["min_msg"] or 0)
+        min_ms   = int(quota["min_ms"] or 0)
+        check_by = (quota["check_by"] or "7d").strip().lower()
+
+        msg_col = PERIOD_TO_MSG_COL.get(check_by, "weekly_messages")
+        mod_key = PERIOD_TO_MOD_KEY.get(check_by, "7d")
+
+        staff_rows = await self.fetch_all(
+            """
+            SELECT DISTINCT s.staff_id, s.name
+            FROM staffs s
+            JOIN staff_roles r
+            ON s.staff_id = r.staff_id AND s.guild_id = r.guild_id
+            WHERE s.guild_id = ?
+            AND s.retired  = 0
+            AND s.on_loa   = 0
+            AND r.role_id  = ?
+            """,
+            (guild_id, role_id),
+        )
+        if not staff_rows:
+            return {
+                "success": False,
+                "message": f"No active staff found under role <@&{role_id}> for quota {quota_id}",
+            }
+
+        passed_staff: list = []
+        failed_staff: list = []
+
+        for staff_row in staff_rows:
+            sid  = staff_row["staff_id"]
+            name = staff_row["name"]
+
+            msg_row = await self.fetch_one(
+                f"SELECT {msg_col} FROM messages WHERE member_id = ? AND guild_id = ?",
+                (sid, guild_id),
+            )
+            period_messages = int(msg_row[msg_col] if msg_row else 0)
+
+            mod_stats = await self.fetch_mod_stats(
+                guild_id=guild_id, moderator_id=sid, page_start=0, page_end=0
+            )
+            stats = mod_stats.get("stats") or {}
+            period_ms = sum(v.get(mod_key, 0) for v in stats.values())
+
+            msg_ok = period_messages >= min_msg
+            ms_ok = period_ms >= min_ms
+            did_pass = msg_ok and ms_ok
+
+            failed_reasons = []
+            if not msg_ok:
+                failed_reasons.append("message_quota_failed")
+            if not ms_ok:
+                failed_reasons.append("mod_stats_failed")
+
+            staff_entry = {
+                "staff_id":        sid,
+                "name":            name,
+                "passed":          did_pass,
+                "period":          check_by,
+                "period_messages": period_messages,
+                "period_ms":       period_ms,
+                "required": {
+                    "min_msg": min_msg,
+                    "min_ms":  min_ms,
+                },
+                "failed_reasons": failed_reasons,
+            }
+
+            if did_pass:
+                passed_staff.append(staff_entry)
+            else:
+                failed_staff.append(staff_entry)
+
+        return {
+            "success":  True,
+            "guild_id": guild_id,
+            "quota": {
+                "quota_id":        quota_id,
+                "role_id":         role_id,
+                "check_by":        check_by,
+                "requirements": {
+                    "min_msg": min_msg,
+                    "min_ms":  min_ms,
+                },
+            },
+            "summary": {
+                "total_staff": len(staff_rows),
+                "passed":      len(passed_staff),
+                "failed":      len(failed_staff),
+            },
+            "passed_staff": passed_staff,
+            "failed_staff": failed_staff,
+        }
+
+    async def get_quota_id_from_role(self, guild_id: int, role_id: int) -> int | None:
+        row = await self.fetch_one(
+            "SELECT quota_id FROM staff_quota WHERE guild_id = ? AND role_id = ?",
+            (guild_id, role_id)
+        )
+
+        return row["quota_id"] if row else None
+
+    async def reset_messages(self, type: str) -> None:
+        await self.execute(f"UPDATE messages SET {type}_messages = 0")
+        
+    async def get_message_leaderboard(
+        self,
+        guild_id: int,
+        type: str,
+        top_k: int = 10,
+    ) -> List[Tuple[int, int]]:
+        valid_types = {
+            "daily": "daily_messages",
+            "weekly": "weekly_messages",
+            "monthly": "monthly_messages",
+            "total": "total_messages",
+        }
+
+        column = valid_types[type]
+
+        rows = await self.fetch_all(
+            f"""
+            SELECT member_id, {column}
+            FROM messages
+            WHERE guild_id = ?
+            ORDER BY {column} DESC
+            LIMIT ?
+            """,
+            (guild_id, top_k),
+        )
+
+        return [
+            (row["member_id"], row[column])
+            for row in rows
+        ]
+
+    async def ticket_stats(self, guild_id: int, staff_id: int) -> Dict[str, int]:
+        rows = await self.fetch_all(
+            """
+            SELECT ticket_type, COUNT(*) AS count
+            FROM ticket_logs
+            WHERE staff_handled = ? AND guild_id = ?
+            GROUP BY ticket_type
+            """,
+            (staff_id, guild_id)
+        )
+
+        return {
+            row["ticket_type"].replace("_", " ").title(): row["count"]
+            for row in rows
+        } 

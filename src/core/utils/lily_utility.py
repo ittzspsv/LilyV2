@@ -3,7 +3,7 @@ import os
 import json
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Any, Dict
 
 import discord
 import aiohttp
@@ -110,4 +110,3 @@ async def fetch_json(session, url, method="GET", **kwargs):
             text = await resp.text()
             raise Exception(f"HTTP {resp.status}: {text}")
         return await resp.json()
-    

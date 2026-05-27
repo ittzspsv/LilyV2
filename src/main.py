@@ -8,7 +8,6 @@ from discord.ext import commands, tasks
 import core.configs.sBotDetails as Config
 
 from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.database.integrations.logging import LoggingDatabase
 from core.logging.lily_logging import LilyLoggingController
 from core.utils.embeds.sLilyEmbed import simple_embed
 from core.features.agents.controller.lily_agent_controller import LilyAgentController
@@ -26,7 +25,6 @@ class Lily(commands.Bot):
 
         self.lily_session = None
         self.db: Optional[BotGlobalsDatabaseAccess] = None
-        self.logs_db: Optional[LoggingDatabase] = None
         self.logging_controller: Optional[LilyLoggingController] = None
         self.agent_controller: LilyAgentController = LilyAgentController()
 
@@ -35,9 +33,7 @@ class Lily(commands.Bot):
     async def setup_hook(self):
         """ Bot Globals Database """
         self.db = await BotGlobalsDatabaseAccess.connect("storage/configs/Configs.db")
-        self.logs_db = await LoggingDatabase.connect("storage/logs/Logs.db")
-        self.logging_controller = LilyLoggingController(self.db, self.logs_db)
-        self.logs_db.bot_db = self.db
+        self.logging_controller = LilyLoggingController(self.db)
 
         extensions = [
             "commands.moderation",
@@ -80,8 +76,8 @@ class Lily(commands.Bot):
     async def modify_status(self):
         member_count = 0
         for guild in bot.guilds:
-            member_count += guild.member_count
-            activity = discord.Activity(type=discord.ActivityType.watching, name=f"{member_count:,} members!")
+            member_count += guild.member_count or 0
+        activity = discord.Activity(type=discord.ActivityType.watching, name=f"{member_count:,} members!")
         await bot.change_presence(activity=activity)
 
     async def on_message(self, message:discord.Message): 

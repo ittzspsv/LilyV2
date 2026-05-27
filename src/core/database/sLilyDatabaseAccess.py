@@ -1,66 +1,55 @@
-import aiosqlite
-import asyncio
+import asqlite
 from typing import Optional
+
 
 class LilyDatabaseAccess:
     def __init__(self) -> None:
-        self.db: Optional[aiosqlite.Connection] = None
+        self.pool: Optional[asqlite.Pool] = None
         self.cache = {}
-        self._lock = asyncio.Lock()
 
     @classmethod
-    async def connect(cls, db_path: str = "database.db"):
+    async def connect(cls, db_path: str = "database.db", pool_size: int = 4):
         self = cls()
-        self.db = await aiosqlite.connect(db_path)
-        self.db.row_factory = aiosqlite.Row
+        self.pool = await asqlite.create_pool(db_path, size=pool_size)
         await self.load_cache()
         return self
-    
+
     async def refresh_cache(self):
         await self.load_cache()
-    
-    def _validate_db(self) -> aiosqlite.Connection:
-        if self.db is None:
-            raise RuntimeError("Database not connected")
-        return self.db
 
-    async def execute(self, query: str, params: tuple = (), commit: bool = True):
-        async with self._lock:
-            assert self.db is not None
-            cursor = await self.db.execute(query, params)
+    def _validate_pool(self) -> asqlite.Pool:
+        if self.pool is None:
+            raise RuntimeError("Database pool not connected")
+        return self.pool
 
+    async def execute(self, query: str, params: tuple = (), commit: bool = True) -> Optional[int]:
+        pool = self._validate_pool()
+        async with pool.acquire() as conn:
+            cursor = await conn.execute(query, params)
             if commit:
-                await self.db.commit()
+                await conn.commit()
+            return cursor.get_cursor().lastrowid
 
-            return cursor.lastrowid
-
-    async def executemany(self, query: str, params: list[tuple], commit: bool = True):
-        async with self._lock:
-            assert self.db is not None
-
-            await self.db.executemany(query, params)
-
+    async def executemany(self, query: str, params: list[tuple], commit: bool = True) -> None:
+        pool = self._validate_pool()
+        async with pool.acquire() as conn:
+            await conn.executemany(query, params)
             if commit:
-                await self.db.commit()
-
-    async def commit(self):
-        async with self._lock:
-            assert self.db is not None
-            await self.db.commit()
+                await conn.commit()
 
     async def fetch_one(self, query: str, params: tuple = ()):
-        assert self.db is not None
-        async with self.db.execute(query, params) as cursor:
-            return await cursor.fetchone()
+        pool = self._validate_pool()
+        async with pool.acquire() as conn:
+            return await conn.fetchone(query, params)
 
     async def fetch_all(self, query: str, params: tuple = ()):
-        assert self.db is not None
-        async with self.db.execute(query, params) as cursor:
-            return await cursor.fetchall()
+        pool = self._validate_pool()
+        async with pool.acquire() as conn:
+            return await conn.fetchall(query, params)
 
     async def load_cache(self):
         raise NotImplementedError
 
     async def close(self):
-        assert self.db is not None
-        await self.db.close()
+        pool = self._validate_pool()
+        await pool.close()

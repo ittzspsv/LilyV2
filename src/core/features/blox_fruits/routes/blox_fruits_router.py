@@ -4,7 +4,7 @@ from ..embeds.blox_fruits_embed import build_fruit_value_embed, build_win_loss_e
 from ..utils.trade_extractor import extract_trade_details
 from ..utils.trade_calculator import win_or_lose
 from typing import Optional, Any
-from ..components.blox_fruits_components import TradeSuggestorComponent
+from ..components.blox_fruits_components import TradeSuggestorComponent, InviteView
 import re
 import discord
 import io
@@ -54,7 +54,7 @@ class BloxFruitsController:
                     embed = build_fruit_value_embed(item_data)
 
                     if len(embed.fields) > 0:
-                        await message.reply(content=None, embed=embed)
+                        await message.reply(content=None, embed=embed, view=InviteView())
 
     async def win_loss(self, message: discord.Message):
         your_fruits, your_fruit_types, their_fruits, their_fruit_types = extract_trade_details(message.content, self.db)
@@ -94,7 +94,7 @@ class BloxFruitsController:
                     their_fruit_types[:4]
                 )
 
-                await message.reply(embed=embed)
+                await message.reply(embed=embed, view=InviteView())
 
     async def trade_suggestor(self, message: discord.Message ,fruits, fruit_types):
         view = TradeSuggestorComponent(

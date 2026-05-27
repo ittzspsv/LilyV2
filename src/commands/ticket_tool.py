@@ -19,8 +19,8 @@ class LilyTicketTool(commands.Cog):
 
     async def on_load(self):
          self.controller = LilyTicketingController(
-              self.bot.logs_db,
-              self.bot.db
+              self.bot.db,
+              self.bot.logging_controller
          )
 
     @commands.hybrid_group()
@@ -48,9 +48,9 @@ class LilyTicketTool(commands.Cog):
     @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     @ticket.command(name='close', description='close a ticket thread')
     @permission(command_name="ticket_close")
-    async def CloseTicket(self, ctx: commands.Context):
+    async def CloseTicket(self, ctx: commands.Context, * ,reason: str="No reason provided"):
          if self.controller is not None:
-            await self.controller.close_ticket_thread(ctx)
+            await self.controller.close_ticket_thread(ctx, reason)
          
     @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     @ticket.command(name='rename', description='renames a ticket channel')
@@ -65,6 +65,16 @@ class LilyTicketTool(commands.Cog):
     async def ticket_add(self, ctx: commands.Context, user: discord.Member):
          if self.controller is not None:
             await self.controller.ticket_add_user(ctx, user)
+
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @permission(command_name="ticket_stats")
+    @ticket.command(name='stats', description='Retrive your ticket stats')
+    async def ticket_stats(self, ctx: commands.Context, staff: discord.Member=None):
+        if self.controller is not None:
+            member = staff if staff is not None else ctx.author
+            await self.controller.ticket_stats(ctx, member)
+
+
 
 async def setup(bot):
     cog = LilyTicketTool(bot)

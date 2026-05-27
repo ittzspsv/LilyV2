@@ -1,4 +1,3 @@
-from ....database.integrations.management import ManagementDatabase
 from ....database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from core.configs.sBotDetails import emoji, img, bot_command_prefix
 from discord.ext import commands
@@ -16,13 +15,12 @@ import asyncio
 import re
 
 class LilyManagementController:
-    def __init__(self, db: ManagementDatabase, bot_db: BotGlobalsDatabaseAccess) -> None:
-        self.db = db
+    def __init__(self, bot_db: BotGlobalsDatabaseAccess) -> None:
         self.bot_db: BotGlobalsDatabaseAccess = bot_db
 
     async def fetch_staff_detail(self, ctx: commands.Context ,staff: discord.Member) -> None:
         try:
-            data_dict = await self.db.fetch_staff_detail(staff.id)
+            data_dict = await self.bot_db.fetch_staff_detail(staff.id)
 
             if not data_dict:
                 raise ValueError("Staff data not found in database.")
@@ -49,12 +47,12 @@ class LilyManagementController:
             await ctx.reply(embed=embed)
             return
         try:
-            data = await self.db.fetch_all_staffs(ctx.guild.id)
+            data = await self.bot_db.fetch_all_staffs(ctx.guild.id)
 
             overall_details = data["overall"]
             role_user_map = data["roles"]
 
-            view = StaffsView(ctx, self.db ,overall_details, role_user_map)
+            view = StaffsView(ctx, self.bot_db ,overall_details, role_user_map)
             view.message = await ctx.reply(view=view)
 
         except Exception as e:
@@ -67,49 +65,42 @@ class LilyManagementController:
             )
 
             await ctx.reply(embed=embed)
-        
+    
     async def update_all_staffs(self, ctx: commands.Context) -> None:
         if ctx.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
-                description="Cannot execute this command without an guild object",
+                description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-
             await ctx.reply(embed=embed)
             return
 
         guild_id = ctx.guild.id
 
-        rows = await self.db.fetch_all(
+        rows = await self.bot_db.fetch_all(
             "SELECT staff_id FROM staffs WHERE retired = 0 AND on_loa = 0 AND guild_id = ?",
             (guild_id,)
         )
-        staff_ids = [row[0] for row in rows]
+        staff_ids = [row["staff_id"] for row in rows]
 
-        db_roles = await self.db.fetch_all("""
-            SELECT role_id, role_type
-            FROM roles
-            WHERE guild_id = ?
-        """, (guild_id,))
-
-        staff_role_ids = {r[0] for r in db_roles if r[1] == "Staff"}
-        responsibility_role_ids = {r[0] for r in db_roles if r[1] == "Responsibility"}
+        db_roles = await self.bot_db.fetch_all(
+            "SELECT role_id, role_type FROM roles WHERE guild_id = ?",
+            (guild_id,)
+        )
+        staff_role_ids          = {r["role_id"] for r in db_roles if r["role_type"] == "staff"}
+        responsibility_role_ids = {r["role_id"] for r in db_roles if r["role_type"] == "responsibility"}
 
         for staff_id in staff_ids:
-
-            staff_member = ctx.guild.get_member(staff_id)
-
-            if not staff_member:
-                try:
-                    staff_member = await ctx.guild.fetch_member(staff_id)
-                except discord.NotFound:
-                    continue
-
             try:
+                staff_member = ctx.guild.get_member(staff_id)
+                if not staff_member:
+                    try:
+                        staff_member = await ctx.guild.fetch_member(staff_id)
+                    except discord.NotFound:
+                        continue
 
                 top_staff_role = None
-
                 for role in reversed(staff_member.roles):
                     if role.id in staff_role_ids:
                         top_staff_role = role
@@ -120,38 +111,44 @@ class LilyManagementController:
                     if role.id in responsibility_role_ids
                 }
 
-                await self.db.execute(
-                    "DELETE FROM staff_roles WHERE staff_id = ?",
-                    (staff_id,),
-                    commit=False
+                await self.bot_db.execute(
+                    "DELETE FROM staff_roles WHERE staff_id = ? AND guild_id = ?",
+                    (staff_id, guild_id)
                 )
 
                 if top_staff_role is None and not discord_responsibilities:
-                    await self.db.execute("""
-                        UPDATE staffs
-                        SET retired = 1
-                        WHERE staff_id = ? AND guild_id = ?
-                    """, (staff_id, guild_id), commit=False)
-
+                    await self.bot_db.execute(
+                        "UPDATE staffs SET retired = 1 WHERE staff_id = ? AND guild_id = ?",
+                        (staff_id, guild_id)
+                    )
                     continue
 
-                await self.db.execute("""
+                await self.bot_db.execute(
+                    """
                     UPDATE staffs
                     SET retired = 0, avatar_url = ?
                     WHERE staff_id = ? AND guild_id = ?
-                """, (staff_member.display_avatar.url, staff_id, guild_id), commit=False)
+                    """,
+                    (staff_member.display_avatar.url, staff_id, guild_id)
+                )
 
-                assert top_staff_role is not None
-                await self.db.execute("""
-                    INSERT INTO staff_roles (staff_id, role_id)
-                    VALUES (?, ?)
-                """, (staff_id, top_staff_role.id), commit=False)
+                if top_staff_role is not None:
+                    await self.bot_db.execute(
+                        """
+                        INSERT OR IGNORE INTO staff_roles (staff_id, guild_id, role_id)
+                        VALUES (?, ?, ?)
+                        """,
+                        (staff_id, guild_id, top_staff_role.id)
+                    )
 
                 if discord_responsibilities:
-                    await self.db.executemany("""
-                        INSERT INTO staff_roles (staff_id, role_id)
-                        VALUES (?, ?)
-                    """, [(staff_id, rid) for rid in discord_responsibilities], commit=False)
+                    await self.bot_db.executemany(
+                        """
+                        INSERT OR IGNORE INTO staff_roles (staff_id, guild_id, role_id)
+                        VALUES (?, ?, ?)
+                        """,
+                        [(staff_id, guild_id, rid) for rid in discord_responsibilities]
+                    )
 
                 print(f"[Update_All_Staffs] Updated {staff_member.name}")
 
@@ -161,8 +158,8 @@ class LilyManagementController:
 
             await asyncio.sleep(1)
 
-        await self.db.commit()
-        await ctx.reply(embed=simple_embed(f"Updated Every staff roles on the Database!"))
+        await ctx.reply(embed=simple_embed("Updated every staff role in the database!"))
+
     
     async def add_staff(self, ctx: commands.Context, staff: discord.Member) -> None:
         if ctx.guild is None:
@@ -174,7 +171,7 @@ class LilyManagementController:
 
             await ctx.reply(embed=embed)
             return
-        response = await self.db.add_staff(staff.id, ctx.guild.id, staff.display_name, staff.display_avatar.url)
+        response = await self.bot_db.add_staff(staff.id, ctx.guild.id, staff.display_name, staff.display_avatar.url)
 
         if not response.get("success"):
             await ctx.reply(embed=simple_embed(response.get("message") or "Unknown Object Passed and Failed", "cross"))
@@ -216,7 +213,7 @@ class LilyManagementController:
                 except:
                     continue
 
-            response = await self.db.add_staff(staff_id, ctx.guild.id, staff.display_name, staff.display_avatar.url)
+            response = await self.bot_db.add_staff(staff_id, ctx.guild.id, staff.display_name, staff.display_avatar.url)
 
             if not response.get("success"):
                 continue
@@ -255,7 +252,7 @@ class LilyManagementController:
             staff_id = staff.id
             member = staff
 
-        response = await self.db.remove_staff(staff_id, ctx.guild.id)
+        response = await self.bot_db.remove_staff(staff_id, ctx.guild.id)
 
         if not response.get("success"):
             await ctx.reply(embed=simple_embed(response.get("message") or "Unknown object has been passed and it failed!", "cross"))
@@ -309,38 +306,41 @@ class LilyManagementController:
         await ctx.reply(embed=simple_embed(response.get("message") or "Unknown object has been passed, but it's an success!"))
 
     async def edit_staff(self, ctx: commands.Context,staff_id: int,name: str ,joined_on: Optional[str] = None,timezone: Optional[str] = None, responsibility: Optional[str] = None):
-        if ctx.guild is None:
-            embed = discord.Embed(
-                title=f"{emoji['cross']} Error",
-                description="Cannot execute this command without an guild object",
-                colour=0xf50000
-            )
-
-            await ctx.reply(embed=embed)
-            return
-        payload = {
-            "staff_id": staff_id,
-            "guild_id": ctx.guild.id,
-            "name": name,
-            "joined_on": joined_on,
-            "timezone": timezone,
-            "responsibility": responsibility
-        }
-
-        result = await self.db.edit_staff(**payload)
-
-        if result.get("success"):
-            await ctx.reply(
-                embed=simple_embed(
-                    result["message"]
+        try:
+            if ctx.guild is None:
+                embed = discord.Embed(
+                    title=f"{emoji['cross']} Error",
+                    description="Cannot execute this command without an guild object",
+                    colour=0xf50000
                 )
-            )
-        else:
-            await ctx.reply(
-                embed=simple_embed(
-                    result["message"],'cross'
+
+                await ctx.reply(embed=embed)
+                return
+            payload = {
+                "staff_id": staff_id,
+                "guild_id": ctx.guild.id,
+                "name": name,
+                "joined_on": joined_on,
+                "timezone": timezone,
+                "responsibility": responsibility
+            }
+
+            result = await self.bot_db.edit_staff(**payload)
+
+            if result.get("success"):
+                await ctx.reply(
+                    embed=simple_embed(
+                        result["message"]
+                    )
                 )
-            )
+            else:
+                await ctx.reply(
+                    embed=simple_embed(
+                        result["message"],'cross'
+                    )
+                )
+        except Exception as e:
+            print(f"Staff Edit Exception {e}")
 
     async def strike_staff(self, ctx: commands.Context, staff: discord.Member, reason: str):
         try:
@@ -360,7 +360,7 @@ class LilyManagementController:
                 "reason": reason
             }
 
-            response = await self.db.strike_staff(**payload)
+            response = await self.bot_db.strike_staff(**payload)
 
             if not response.get("success"):
                 await ctx.reply(embed=simple_embed(response.get("message") or "An unknown object has been returned and failed", "cross"))
@@ -433,7 +433,7 @@ class LilyManagementController:
             "guild_id": ctx.guild.id
         }
 
-        result = await self.db.remove_strike(**payload)
+        result = await self.bot_db.remove_strike(**payload)
 
         status: bool = bool(result.get("success"))
         message: str = str(result.get("message") or "An unknown error occurred")
@@ -453,7 +453,7 @@ class LilyManagementController:
             await ctx.reply(embed=embed)
             return
 
-        result = await self.db.fetch_staff_strikes(
+        result = await self.bot_db.fetch_staff_strikes(
             staff_id=staff.id,
             guild_id=ctx.guild.id
         )
@@ -479,7 +479,7 @@ class LilyManagementController:
             )
             await ctx.reply(embed=embed)
             return
-        response = await self.db.edit_strike(**{
+        response = await self.bot_db.edit_strike(**{
             "guild_id" : ctx.guild.id, 
             "strike_id": strike_id,
             "staff_id": ctx.author.id,
@@ -502,7 +502,7 @@ class LilyManagementController:
             await ctx.reply(embed=embed)
             return
         try:
-            response = await self.db.add_loa(**{
+            response = await self.bot_db.add_loa(**{
                 "staff_id": staff.id,
                 "reason": reason,
                 "loa_issued_by": ctx.author.id,
@@ -550,7 +550,7 @@ class LilyManagementController:
             )
             await ctx.reply(embed=embed)
             return
-        response = await self.db.remove_loa(**{"staff_id": staff.id, "guild_id" : ctx.guild.id})
+        response = await self.bot_db.remove_loa(**{"staff_id": staff.id, "guild_id" : ctx.guild.id})
 
         if not response.get("success"):
             await ctx.reply(embed=simple_embed(str(response.get("message"))))
@@ -591,9 +591,15 @@ class LilyManagementController:
             )
             await ctx.reply(embed=embed)
             return
+
         try:
-            rows = await self.db.fetch_all(
-                "SELECT role_id, role_name FROM roles WHERE guild_id = ? ORDER BY role_priority ASC",
+            rows = await self.bot_db.fetch_all(
+                """
+                SELECT role_id, priority
+                FROM staff_ranks
+                WHERE guild_id = ?
+                ORDER BY priority ASC
+                """,
                 (ctx.guild.id,)
             )
 
@@ -603,28 +609,48 @@ class LilyManagementController:
 
             role_names = []
             role_mentions = []
+            priorities = []
 
-            for role_id, role_name in rows:
+            for role_id, priority in rows:
                 role = ctx.guild.get_role(role_id)
+
+                priorities.append(str(priority))
+
                 if role:
                     role_names.append(role.name)
                     role_mentions.append(role.mention)
                 else:
-                    role_names.append(role_name)
+                    role_names.append(f"Unknown Role ({role_id})")
                     role_mentions.append(f"<@&{role_id}>")
 
             embed = discord.Embed(
                 title="Permission Assigned Roles",
                 colour=0xffffff
             )
-            embed.add_field(name="Role Names", value="\n".join(role_names), inline=True)
-            embed.add_field(name="Role Reference", value="\n".join(role_mentions), inline=True)
+
+            embed.add_field(
+                name="Role Names",
+                value="\n".join(role_names),
+                inline=True
+            )
+
+            embed.add_field(
+                name="Role Reference",
+                value="\n".join(role_mentions),
+                inline=True
+            )
+
+            embed.add_field(
+                name="Priority",
+                value="\n".join(priorities),
+                inline=True
+            )
 
             await ctx.reply(embed=embed)
 
         except Exception as e:
             print(f"Exception [GetAllStaffRoles] {e}")
-            await ctx.reply(embed=simple_embed(f"Error fetching staff roles", 'cross'))
+            await ctx.reply(embed=simple_embed("Error fetching staff roles", 'cross'))
 
     async def update_staff(self, ctx: commands.Context, staff: discord.Member, reason: str, update_type: str):
         if ctx.guild is None:
@@ -643,7 +669,7 @@ class LilyManagementController:
             ))
             return
 
-        result = await self.db.update_staff(
+        result = await self.bot_db.update_staff(
             guild_id=ctx.guild.id,
             staff_id=staff.id,
             update_type=update_type,
@@ -762,7 +788,7 @@ class LilyManagementController:
             if ctx.author.id == staff_id:
                 continue
 
-            result = await self.db.update_staff(
+            result = await self.bot_db.update_staff(
                     guild_id=ctx.guild.id,
                     staff_id=staff_id,
                     update_type=update_type,
@@ -842,26 +868,23 @@ class LilyManagementController:
     async def on_message(self, message: discord.Message):
         if not message.guild:
             return
-
-        if message.content.startswith(bot_command_prefix):
-            return
         
         if isinstance(message.author, discord.User):
             return
         
         try:
-            approved_roles = self.db.get_staff_roles(message.guild.id)
             allowed_channels = self.bot_db.get_channels(message.guild.id, "valid_channel")
 
-            if (any(role.id in approved_roles for role in message.author.roles) and message.channel.id in allowed_channels):
-                await self.db.update_message(**{
+            if message.channel.id in allowed_channels:
+                await self.bot_db.update_message(**{
                     "guild_id": message.guild.id,
-                    "staff_id": message.author.id
+                    "staff_id": message.author.id,
+                    "avatar_url": message.author.display_avatar.url
                 })
         except Exception as e:
             pass
 
-    async def add_staff_quota(self, ctx: commands.Context,quota_role: discord.Role,minimum_ms: int,minimum_msg: int,on_quota_pass: OnQuotaEvent,on_quota_fail: OnQuotaEvent,check_by: QuotaCheckBy):
+    async def add_staff_quota(self, ctx: commands.Context,quota_role: discord.Role,minimum_ms: int,minimum_msg: int, check_by: QuotaCheckBy):
         if ctx.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
@@ -876,12 +899,10 @@ class LilyManagementController:
             "role_id": quota_role.id,
             "min_msg": minimum_msg,
             "min_ms": minimum_ms,
-            "on_quota_passed": on_quota_pass.value.lower(),
-            "on_quota_failed": on_quota_fail.value.lower(),
             "check_by": check_by
         }
 
-        result = await self.db.add_staff_quota(**payload)
+        result = await self.bot_db.add_staff_quota(**payload)
 
         if not result.get("success"):
             await ctx.reply(embed=simple_embed(str(result.get("message")), 'cross'))
@@ -903,7 +924,7 @@ class LilyManagementController:
             "quota_id": int(quota_id)
         }
 
-        result = await self.db.remove_staff_quota(**payload)
+        result = await self.bot_db.remove_staff_quota(**payload)
 
         if not result.get("success"):
             await ctx.reply(embed=simple_embed(str(result.get("message")), 'cross'))
@@ -922,7 +943,7 @@ class LilyManagementController:
             await ctx.reply(embed=embed)
             return
 
-        quotas = await self.db.fetch_staff_quota(ctx.guild.id)
+        quotas = await self.bot_db.fetch_staff_quota(ctx.guild.id)
 
         if not quotas:
             return await ctx.reply(embed=simple_embed("No staff quotas configured.", 'cross'))
@@ -947,8 +968,6 @@ class LilyManagementController:
                     f"- Role : {role_mention}\n"
                     f"- Minimum Messages : {quota['min_msg']}\n"
                     f"- Minimum Moderation Stats : {quota['min_ms']}\n"
-                    f"- If Passed : {quota['on_quota_passed'] or 'None'}\n"
-                    f"- If Failed : {quota['on_quota_failed'] or 'None'}\n"
                     f"- Quota Check By : {quota['check_by'] or 'None'}"
                 ),
                 inline=False
@@ -966,7 +985,7 @@ class LilyManagementController:
             await ctx.reply(embed=embed)
             return
         try:
-            response = await self.db.get_staff_current_quota(**{
+            response = await self.bot_db.get_staff_current_quota(**{
                 "guild_id": ctx.guild.id,
                 "staff_id": staff.id
             })
@@ -1057,14 +1076,14 @@ class LilyManagementController:
             )
             await ctx.reply(embed=embed)
             return
-        response = await self.db.remove_role(role)
+        response = await self.bot_db.remove_role(ctx.guild.id, role)
 
         if response.get("success"):
             await ctx.reply(embed=simple_embed(f"{response.get("message")}"))
         else:
             await ctx.reply(embed=simple_embed(f"{response.get("message")}", 'cross'))
 
-    async def evaluate_staff_quota(self, ctx: commands.Context):
+    async def evaluate_staff_quota(self, ctx: commands.Context, role: discord.Role):
         if ctx.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
@@ -1073,72 +1092,76 @@ class LilyManagementController:
             )
             await ctx.reply(embed=embed)
             return
-        try:
-            await ctx.defer()
+        await ctx.defer()
 
-            response = await self.db.get_all_staff_quota_status(ctx.guild.id)
+        quota_id = await self.bot_db.get_quota_id_from_role(ctx.guild.id, role.id)
+        if quota_id is None:
+            return await ctx.reply(
+                embed=simple_embed("No quota has been defined for this role", 'cross')
+            )
 
-            if not response.get("success"):
-                return await ctx.reply(
-                    embed=simple_embed(response.get("message", "Error occurred"))
+        response = await self.bot_db.get_quota_status(
+            ctx.guild.id,
+            quota_id,
+        )
+
+        if not response.get("success"):
+            return await ctx.reply(
+                embed=simple_embed(
+                    response.get("message", "Error occurred"),
+                    'cross'
                 )
+                
+            )
 
-            passed_staffs = response.get("passed_staff", [])
-            failed_staffs = response.get("failed_staff", [])
+        quota = response["quota"]
+        summary = response["summary"]
 
+        passed_staff = response["passed_staff"]
+        failed_staff = response["failed_staff"]
 
-            passed_staffs_str = "\n".join([
+        passed_staff_str = "\n".join(
+            f"<@{s['staff_id']}>"
+            for s in passed_staff
+        ) or "None"
+
+        failed_staff_str = "\n".join(
+            (
                 f"<@{s['staff_id']}>"
-                for s in passed_staffs
-            ]) or "None"
-
-            failed_staffs_str = ""
-
-            for staff in failed_staffs:
-                staff_id = staff["staff_id"]
-
-                failed_staffs_str += (
-                    f"<@{staff_id}>\n"
-                )
-
-            embed = discord.Embed(
-                title="Weekly Staff Quota Results",
-                color=0xFFFFFF,
-                description=(
-                    "### Results Based on\n"
-                    "- Weekly Messages\n"
-                    "- Weekly Mod Stats"
-                ),
             )
+            for s in failed_staff
+        ) or "None"
 
-            embed.add_field(
-                name="Passed Staffs",
-                value=passed_staffs_str,
-                inline=False
-            )
+        embed = discord.Embed(
+            color=0xFFFFFF,
+            description=f"### Quota Evaluation for <@&{quota['role_id']}>"
+        )
 
-            embed.add_field(
-                name="Failed Staffs",
-                value=failed_staffs_str or "None",
-                inline=False
-            )
+        embed.add_field(
+            name="Quota Summary",
+            value=(
+                f"Total Staff: **{summary['total_staff']}**\n"
+                f"Passed: **{summary['passed']}**\n"
+                f"Failed: **{summary['failed']}**"
+            ),
+            inline=False,
+        )
 
-            if ctx.guild.icon:
-                embed.set_thumbnail(url=ctx.guild.icon.url)
+        embed.add_field(
+            name="Passed Staff",
+            value=passed_staff_str,
+            inline=False,
+        )
 
-            channel_id = response.get("staff_updates_channel_id")
-            staff_updates_channel = None
+        embed.add_field(
+            name="Failed Staff",
+            value=failed_staff_str,
+            inline=False,
+        )
 
-            if channel_id:
-                staff_updates_channel = ctx.guild.get_channel(channel_id)
-                if staff_updates_channel is None:
-                    try:
-                        staff_updates_channel = await ctx.guild.fetch_channel(channel_id)
-                    except Exception:
-                        staff_updates_channel = None
+        if ctx.guild.icon:
+            embed.set_thumbnail(url=ctx.guild.icon.url)
 
+        embed.set_image(url=img['border'])
 
-            await ctx.reply(embed=embed)
-            
-        except Exception as e:
-            print(e)
+        await ctx.reply(embed=embed)

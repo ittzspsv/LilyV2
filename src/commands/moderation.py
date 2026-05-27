@@ -15,7 +15,7 @@ class LilyModeration(commands.Cog):
         self.controller: Optional[LilyModerationController] = None
 
     async def on_load(self):
-        self.controller = LilyModerationController(self.bot.logs_db, self.bot.db, self.bot.logging_controller)
+        self.controller = LilyModerationController(self.bot.db, self.bot.logging_controller)
 
     async def resolve_user(self, ctx, member: str):
         try:
@@ -116,7 +116,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='mute', description='Mute a user with desired input')
     @permission(command_name="unban")
-    async def mute(self, ctx:commands.Context, member:discord.Member, duration:str="1",*, reason="No reason provided"):
+    async def mute(self, ctx:commands.Context, member:discord.Member=None, duration:str="1",*, reason="No reason provided"):
         if self.controller is None:
             return
         await ctx.defer()
@@ -130,7 +130,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='warn', description='Warn a user with a specific reason')
     @permission(command_name="warn")
-    async def warn(self, ctx:commands.Context, member:discord.Member,*, reason="No reason provided"):
+    async def warn(self, ctx:commands.Context, member:discord.Member=None,*, reason="No reason provided"):
         if self.controller is None:
             return
         await ctx.defer()
@@ -265,7 +265,6 @@ class LilyModeration(commands.Cog):
             return
         
         await self.controller.logging_controller.retrieve_proofs(ctx, int(case_id))
-
 
 
     @commands.hybrid_command(name='queue', description='Get moderation queue')

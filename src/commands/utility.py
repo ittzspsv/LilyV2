@@ -5,57 +5,20 @@ import aiohttp
 import asyncio
 import time
 
+from discord.utils import MISSING
+
 import core.utils.components.sLilyComponentV2 as CV2
 from core.utils.embeds.sLilyEmbed import simple_embed
 from core.features.permissions.lily_permissions import permission
 from core.utils.components.sLIlyGlobalComponents import CommandInfo as CI
 from core.utils.embeds.sLilyEmbed import ParseAdvancedEmbed
-from core.utils.types.types import ChannelEnum, CommandEnum
+from core.utils.types.types import ChannelEnum, CommandEnum, NotifiersEnum
 from core.logging.lily_logging import LilyLoggingController
 from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from core.utils.components.sLIlyGlobalComponents import RoleCustomizationModal
 from discord.ext import commands
-from discord.ext.commands import MemberConverter
 from discord import app_commands
 
-from typing import cast
-
-class UserIDView(discord.ui.View):
-    def __init__(self, username: str):
-        super().__init__(timeout=60)
-        self.add_item(UserIDButton(username))
-
-class UserIDButton(discord.ui.Button):
-        def __init__(self, username: str):
-            super().__init__(
-                label="Get User ID",
-                style=discord.ButtonStyle.primary
-            )
-            self.username = username
-
-        async def callback(self, interaction: discord.Interaction):
-            converter = MemberConverter()
-            try:
-                bot: commands.Bot = cast(commands.Bot, interaction.client)
-                if not interaction.message:
-                    return
-                ctx = await bot.get_context(interaction.message)
-
-                member: discord.Member = await converter.convert(
-                    ctx,
-                    self.username
-                )
-
-                await interaction.response.send_message(
-                    f"User ID: {member.id}",
-                    ephemeral=True
-                )
-
-            except commands.CommandError:
-                await interaction.response.send_message(
-                    "Error processing the user.",
-                    ephemeral=True
-                )
 
 class LilyUtility(commands.Cog):
     def __init__(self, bot):
@@ -431,9 +394,9 @@ class LilyUtility(commands.Cog):
         embed.add_field(
             name="Profile and Banner Information",
             value=(
-                "- [Avatar](https://danganronpa.fandom.com/wiki/Chiaki_Nanami_(Danganronpa_2))\n"
-                "- Character Source : Chaiki Nanami (Danganronpa 2 Goodbye Despair)\n"
-                "- Banner Source : Please Insert Coin"
+                "- [Avatar (Modified)](https://x.com/marmalade_icons/status/1116802730536906755?s=20)\n"
+                "- Character Source : Kaede Akamatsu (Danganronpa V3: Killing Harmony)\n"
+                "- Banner Source : Custom Fan art"
             ),
             inline=False
         )
@@ -499,6 +462,27 @@ class LilyUtility(commands.Cog):
 
         await ctx.reply(embed=simple_embed(f"Successfully assigned `{type.value.title()}` for {channel.mention}"))
 
+
+    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @permission(command_name="set_notifiers")
+    @set.command(name="notifiers", description="Creates a notifier (webhook) when an value updates")
+    async def set_notifiers(self, ctx: commands.Context, type: NotifiersEnum, channel: discord.TextChannel=None, webhook_url: str=None):
+        if ctx.guild is None:
+            await ctx.reply(embed=simple_embed("This command can only be used inside an guild", 'cross'))
+            return
+        
+        db: BotGlobalsDatabaseAccess = self.bot.db
+        if channel is not None:
+            await ctx.defer()
+            webhook = await channel.create_webhook(name="Lily Listeners")
+            webhook_url = webhook.url
+            await db.set_webhook(ctx.guild.id, type.value, webhook_url)
+            await ctx.reply(embed=simple_embed(f"Successfully created a webhook to listen `{type.value}`"))
+        else:
+            await db.set_webhook(ctx.guild.id, type.value, webhook_url)
+            await ctx.reply(embed=simple_embed(f"Successfully assigned a webhook to listen `{type.value}`"))
+
+
     async def command_autocomplete(
         self,
         interaction: discord.Interaction,
@@ -558,13 +542,39 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             print(e)
 
-    @commands.hybrid_command(name='get_member_id', description='Sets the profile of the bot per server')
-    async def userid(self, ctx, username: str):
-        view = UserIDView(username)
-        await ctx.send(
-            f"Press the button to get the ID for `{username}`",
-            view=view
-        )
+    @commands.command(name="nick", description="Set a nickname for a member")
+    @permission(command_name="nick")
+    async def set_nickname(self, ctx: commands.Context, member: discord.Member=None, *, name: str=None):
+        if member is None and name is None:
+            await ctx.reply(view=CI(ctx, "Nick", ["nick {user} {nickname}", f"nick {ctx.me.mention} Lilyy", f"nick lily Lilly"]))
+            return
+
+        try:
+            await member.edit(
+                nick=name,
+                reason=f"Changed by {ctx.author}"
+            )
+
+            await ctx.reply(
+                embed=simple_embed(
+                    f"Successfully changed {member.mention}'s nickname to **{name}**."
+                )
+            )
+
+        except discord.Forbidden:
+            await ctx.reply(
+                embed=simple_embed(
+                    "I don't have permission to change that member's nickname.", 'cross'
+                )
+            )
+
+        except discord.HTTPException as e:
+            await ctx.reply(
+                embed=simple_embed(
+                    f"Failed to change nickname: {e}", 'cross'
+                )
+            )
+
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

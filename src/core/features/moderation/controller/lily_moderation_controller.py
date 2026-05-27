@@ -1,5 +1,4 @@
 from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.database.integrations.logging import LoggingDatabase
 from core.logging.lily_logging import LilyLoggingController
 from discord.ext import commands
 from core.utils.embeds.sLilyEmbed import simple_embed
@@ -16,8 +15,7 @@ import discord
 import asyncio
 
 class LilyModerationController:
-    def __init__(self, logs_db: LoggingDatabase, bot_db: BotGlobalsDatabaseAccess, logging_controller: LilyLoggingController) -> None:
-        self.logs_db = logs_db
+    def __init__(self, bot_db: BotGlobalsDatabaseAccess, logging_controller: LilyLoggingController) -> None:
         self.logging_controller: LilyLoggingController = logging_controller
         self.bot_db: BotGlobalsDatabaseAccess = bot_db
 
@@ -47,7 +45,7 @@ class LilyModerationController:
                 return await ctx.reply(embed=simple_embed("User not in guild.", 'cross'))
 
             if member:
-                response = await self.logs_db.get_mod_queue_entry(member.id, ctx.guild.id)
+                response = await self.bot_db.get_mod_queue_entry(member.id, ctx.guild.id)
                 if response.get("success"):
                     return await ctx.reply(
                         embed=simple_embed(
@@ -97,7 +95,7 @@ class LilyModerationController:
                         )
                     )
             author_roles = [role.id for role in ctx.author.roles if role.name != "@everyone"]
-            status = await self.logs_db.get_ban_limit_status(ctx.guild.id, ctx.author.id, author_roles)
+            status = await self.bot_db.get_ban_limit_status(ctx.guild.id, ctx.author.id, author_roles)
 
             """ Validate status first """
 
@@ -107,7 +105,7 @@ class LilyModerationController:
                 ))
 
             if self.bot_db.ban_queue(ctx.guild.id, author_roles):
-                response = await self.logs_db.add_mod_queue(**{
+                response = await self.bot_db.add_mod_queue(**{
                     "guild_id"       : ctx.guild.id,
                     "moderator_id"   : ctx.author.id,
                     "target_user_id" : member.id,
@@ -293,7 +291,7 @@ class LilyModerationController:
                     results.append(f"Error for <@{user_id}>: {e}")
                     await asyncio.sleep(2)
 
-            await self.logs_db.clear_mod_queue(interaction.guild.id)
+            await self.bot_db.clear_mod_queue(interaction.guild.id)
             return "\n".join(results) if results else "Nothing processed."
 
         except Exception as e:
@@ -404,7 +402,7 @@ class LilyModerationController:
             view.message = msg
 
     async def case_edit(self, ctx: commands.Context, case_id: int, case_statement: str, absolute: bool=False):
-        response = await self.logs_db.edit_case(**{"staff_id": ctx.author.id, "case_id": case_id, "case_statement": case_statement, "absolute": absolute})
+        response = await self.bot_db.edit_case(**{"staff_id": ctx.author.id, "case_id": case_id, "case_statement": case_statement, "absolute": absolute})
 
         if response.get("success"):
             await ctx.reply(embed=simple_embed(str(response.get("message"))))
@@ -412,7 +410,7 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed(str(response.get("message")), 'cross'))
 
     async def case_delete(self, ctx: commands.Context, case_id: int):
-        response = await self.logs_db.delete_case(case_id)
+        response = await self.bot_db.delete_case(case_id)
         if response.get("success"):
             await ctx.reply(embed=simple_embed(str(response.get("message"))))
         else:
@@ -427,7 +425,7 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed("Command requires member object inorder to execute", 'cross'))
             return
         try:
-            response = await self.logs_db.fetch_mod_queue(ctx.guild.id)
+            response = await self.bot_db.fetch_mod_queue(ctx.guild.id)
             if response.get("success"):
                 view = ModerationQueueClear(response.get("items", []), ctx.author, self.ban_queue_user)
                 message = await ctx.reply(view=view, embed=moderation_queue_embed(ctx, response.get("items", [])))
@@ -442,7 +440,7 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed("Command requires guild object inorder to execute", 'cross'))
             return
         try:
-            response = await self.logs_db.clear_mod_queue_particular(**{"guild_id": ctx.guild.id, "user_id": member.id})
+            response = await self.bot_db.clear_mod_queue_particular(**{"guild_id": ctx.guild.id, "user_id": member.id})
             if response.get("success"):
                 await ctx.reply(embed=simple_embed(response.get("message", "Success!")))
             else:
@@ -460,7 +458,7 @@ class LilyModerationController:
             )
             return
 
-        result = await self.logs_db.fetch_mod_stats(
+        result = await self.bot_db.fetch_mod_stats(
             guild_id=ctx.guild.id,
             moderator_id=moderator.id,
             page_start=page_start,
@@ -510,7 +508,7 @@ class LilyModerationController:
             "page_end": page_end
         }
 
-        result = await self.logs_db.fetch_mod_logs(**payload)
+        result = await self.bot_db.fetch_mod_logs(**payload)
 
         if not result["success"]:
             await ctx.reply(embed=simple_embed("No cases found.", 'cross'))
@@ -535,5 +533,5 @@ class LilyModerationController:
                 )
             )
             return
-        view = ModerationInsights(ctx.guild.me, self.logs_db)
+        view = ModerationInsights(ctx.guild.me, self.bot_db)
         view.message = await ctx.reply(view=view)

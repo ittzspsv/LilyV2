@@ -4,7 +4,7 @@ import core.configs.sBotDetails as Configs
 from typing import Dict, Optional
 from discord.ext import commands
 from core.utils.embeds.sLilyEmbed import simple_embed
-from ....database.integrations.management import ManagementDatabase
+from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 
 from typing import List, Dict, Any
 
@@ -153,23 +153,23 @@ class LOAStaffsView(discord.ui.LayoutView):
         self.add_item(self.container)
 
 class StaffsView(discord.ui.LayoutView):
-    def __init__(self, ctx: commands.Context, db: ManagementDatabase ,overall_details: Dict, role_users_map):
+    def __init__(self, ctx: commands.Context, db: BotGlobalsDatabaseAccess ,overall_details: Dict, role_users_map):
         super().__init__(timeout=500)
 
         self.message: Optional[discord.Message] = None
-        self.db: ManagementDatabase = db
+        self.db: BotGlobalsDatabaseAccess = db
         self.role_users_map = role_users_map
 
         role_select_options = [
             discord.SelectOption(label=data["role_name"], value=str(role_id))
             for role_id, data in role_users_map.items()
-            if role_id and data["role_name"] and data["role_type"] == "Staff"
+            if role_id and data["role_name"] and data["role_type"] == "staff"
         ]
 
         responsibility_select_options = [
             discord.SelectOption(label=data["role_name"], value=str(role_id))
             for role_id, data in role_users_map.items()
-            if role_id and data["role_name"] and data["role_type"] == "Responsibility"
+            if role_id and data["role_name"] and data["role_type"] == "responsibility"
         ]
 
         self.roles_selector = discord.ui.Select(
@@ -210,9 +210,9 @@ class StaffsView(discord.ui.LayoutView):
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.TextDisplay(content="### Server Staff Team\n- List of Role Category who has **Moderation/Administration/Management** Authority"),
             discord.ui.TextDisplay(content=f"### __Overall Details__\n"
-                        f"- **ON LOA** - `{overall_details.get("Staff").get('loa')}`\n"
-                        f"- **Active Staffs** - `{overall_details.get("Staff").get('active')}`\n"
-                        f"- **Total Staffs** - `{overall_details.get("Staff").get('total')}`"),
+                        f"- **ON LOA** - `{overall_details.get("staff").get('loa')}`\n"
+                        f"- **Active Staffs** - `{overall_details.get("staff").get('active')}`\n"
+                        f"- **Total Staffs** - `{overall_details.get("staff").get('total')}`"),
             discord.ui.ActionRow(self.roles_selector),
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.Section(
@@ -223,9 +223,9 @@ class StaffsView(discord.ui.LayoutView):
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.TextDisplay(content="### Server Community Engagement Team\n- List of Role Category who engages the Community"),
             discord.ui.TextDisplay(content=f"### __Overall Details__\n"
-                        f"- **ON LOA** - `{overall_details.get("Responsibility").get('loa')}`\n"
-                        f"- **Active Staffs** - `{overall_details.get("Responsibility").get('active')}`\n"
-                        f"- **Total Staffs** - `{overall_details.get("Responsibility").get('total')}`"),
+                        f"- **ON LOA** - `{overall_details.get("responsibility").get('loa')}`\n"
+                        f"- **Active Staffs** - `{overall_details.get("responsibility").get('active')}`\n"
+                        f"- **Total Staffs** - `{overall_details.get("responsibility").get('total')}`"),
             discord.ui.ActionRow(self.responsibility_selector),
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.Section(
@@ -263,19 +263,22 @@ class StaffsView(discord.ui.LayoutView):
 
     async def loa_staffs_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        staff_datas: List[Dict[str, Any]] = await self.db.fetch_loa_staffs(interaction.guild.id, "Staff")
+        staff_datas: List[Dict[str, Any]] = await self.db.fetch_loa_staffs(interaction.guild.id, "staff")
         view = LOAStaffsView(interaction, staff_datas)
         await interaction.followup.send(view=view, ephemeral=True)
 
     async def responsibility_loa_staff_btn_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
-        staff_datas: List[Dict[str, Any]] = await self.db.fetch_loa_staffs(interaction.guild.id, "Responsibility")
+        staff_datas: List[Dict[str, Any]] = await self.db.fetch_loa_staffs(interaction.guild.id, "responsibility")
         view = LOAStaffsView(interaction, staff_datas)
         await interaction.followup.send(view=view, ephemeral=True)
 
     async def on_timeout(self):
         self.roles_selector.disabled = True
+        self.responsibility_selector.disabled = True
+        self.loa_staffs_btn.disabled = True
+        self.responsibility_loa_staff_btn.disabled = True
         if self.message is None:
             return
         try:

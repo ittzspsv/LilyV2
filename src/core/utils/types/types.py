@@ -5,9 +5,21 @@ from enum import Enum, unique
 class ChannelEnum(str, Enum):
     BF_WIN_LOSS = "bf_win_loss"
     BF_FRUIT_VALUES = "bf_fruit_values"
-    LOGS_CHANNEL = "logs_channel"
+    LOGS = "logs_channel"
     STAFF_UPDATES = "staff_updates"
     VALID_CHANNEL = "valid_channel"
+
+@unique
+class NotifiersEnum(str, Enum):
+    DAILY_MS_LEADERBOARD = "daily_ms_leaderboard"
+    WEEKLY_MS_LEADERBOARD = "weekly_ms_leaderboard"
+    MONTHLY_MS_LEADERBOARD = "monthly_ms_leaderboard"
+    DAILY_MESSAGES_LEADERBOARD = "daily_messages_leaderboard"
+    WEEKLY_MESSAGES_LEADERBOARD = "weekly_messages_leaderboard"
+    MONTHLY_MESSAGES_LEADERBOARD = "monthly_messages_leaderboard"
+    DAILY_QUOTA = "daily_quota"
+    WEEKLY_QUOTA = "weekly_quota"
+    MONTHLY_QUOTA = "monthly_quota"
 
 @unique
 class CommandEnum(str, Enum):
@@ -73,3 +85,5 @@ class CommandEnum(str, Enum):
     SET_PREFIX = "set_prefix"
     ROLE = "role"
     AFK = "afk"
+    NICK = "nick"
+    TICKET_STATS = "ticket_stats"

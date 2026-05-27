@@ -184,7 +184,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                     await interaction.delete_original_response()
                 except:
                     pass
-                await self.message.reply(embed=embed)
+                await self.message.reply(embed=embed, view=InviteView())
 
         except Exception as e:
             try:
@@ -194,3 +194,15 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                 )
             except:
                 print("Cannot send followup; interaction expired:", e)
+
+class InviteView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+        self.add_item(
+            discord.ui.Button(
+                label="Add Bot",
+                url="https://discord.com/oauth2/authorize?client_id=1240222509811499050&permissions=140794709184&integration_type=0&scope=bot",
+                style=discord.ButtonStyle.link
+            )
+        )

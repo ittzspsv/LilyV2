@@ -1,5 +1,4 @@
 from ..database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from ..database.integrations.logging import LoggingDatabase
 from .embeds.logging_embeds import write_log_embed, moderation_embed
 
 from discord.ext import commands
@@ -11,17 +10,17 @@ from .components.logging_components import ProofComponentModal
 
 import discord
 import io
+import aiohttp
 
 class LilyLoggingController:
-    def __init__(self, bot_db: BotGlobalsDatabaseAccess, db: LoggingDatabase) -> None:
+    def __init__(self, bot_db: BotGlobalsDatabaseAccess) -> None:
         self.bot_db = bot_db
-        self.db = db
 
     async def write_log(self, ctx: commands.Context, user_id: int, log_txt: str) -> None:
         if ctx.guild is None:
             return
 
-        await self.db.write_log(ctx.guild.id, user_id, log_txt)
+        await self.bot_db.write_log(ctx.guild.id, user_id, log_txt)
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         
@@ -59,7 +58,7 @@ class LilyLoggingController:
 
             return
 
-        case_id = await self.db.log_moderation_action(
+        case_id = await self.bot_db.log_moderation_action(
             ctx.guild.id,
             moderator_id,
             target_user_id,
@@ -95,17 +94,35 @@ class LilyLoggingController:
 
             """ Also try sending proofs If the staff member has attached proofs"""
             if proofs and case_id:
-                files: List[discord.File] = []
-                for proof in proofs:
-                    if isinstance(proof, discord.Attachment):
-                        data = await proof.read()
-                        file = discord.File(
-                            fp=io.BytesIO(data),
-                            filename=proof.filename
-                        )
-                        files.append(file)
-                    else:
-                        continue
+                async with aiohttp.ClientSession() as session:
+                    files: List[discord.File] = []
+                    for proof in proofs:
+                        if isinstance(proof, discord.Attachment):
+                            data = await proof.read()
+                            file = discord.File(
+                                fp=io.BytesIO(data),
+                                filename=proof.filename
+                            )
+                            files.append(file)
+                        elif isinstance(proof, str):
+                            async with session.get(proof) as resp:
+                                if resp.status != 200:
+                                    raise ValueError(f"Failed to fetch image: {proof}")
+
+                                data = await resp.read()
+
+                                filename = proof.split("?")[0].split("/")[-1]
+                                if not filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".webp")):
+                                    filename += ".png"
+
+                                file = discord.File(
+                                    fp=io.BytesIO(data),
+                                    filename=filename
+                                )
+
+                                files.append(file)
+                        else:
+                            continue
                 """ Send the proofs to the logging channel """
                 message = await channel.send(
                     content=f"Proofs <@{target_user_id}>",
@@ -113,7 +130,11 @@ class LilyLoggingController:
                 )
 
                 """ Store the message id on the database for future retrieval """
-                await self.db.log_proof_action(case_id, message.id, ctx.author.id)
+                if isinstance(ctx, commands.Context):
+                    await self.bot_db.log_proof_action(ctx.guild.id, case_id, message.id, ctx.author.id)
+                elif isinstance(ctx, discord.Interaction):
+                    await self.bot_db.log_proof_action(ctx.guild.id, case_id, message.id, ctx.user.id)
+
 
         return case_id
 
@@ -162,7 +183,7 @@ class LilyLoggingController:
         if interaction.guild is None:
             return False
         
-        case_exists = await self.db.case_exists(case_id, interaction.guild.id)
+        case_exists = await self.bot_db.case_exists(case_id, interaction.guild.id)
         if not case_exists:
             return False
 
@@ -197,7 +218,7 @@ class LilyLoggingController:
             )
 
             """ Store the message id on the database for future retrieval """
-            await self.db.log_proof_action(case_id, message.id, interaction.user.id)
+            await self.bot_db.log_proof_action(interaction.guild.id, case_id, message.id, interaction.user.id)
 
             return True
         else:
@@ -220,7 +241,7 @@ class LilyLoggingController:
         await ctx.defer()
 
         """ Check the validity of the case """
-        validity = await self.db.case_exists(case_id, ctx.guild.id)
+        validity = await self.bot_db.case_exists(case_id, ctx.guild.id)
         if not validity:
             await ctx.reply(
                 embed=simple_embed(
@@ -230,7 +251,7 @@ class LilyLoggingController:
             )
             return
 
-        message_ids = await self.db.retrieve_proofs(case_id)
+        message_ids = await self.bot_db.retrieve_proofs(case_id)
 
         if not message_ids:
             await ctx.reply(

@@ -82,6 +82,7 @@ class LilyBloxFruits(commands.Cog):
         category: Optional[str] = None,
         aliases: Optional[str] = None,
         icon_url: Optional[str] = None,
+        rarity: Optional[str] = None
     ):
         if self.db is None:
             return
@@ -124,6 +125,7 @@ class LilyBloxFruits(commands.Cog):
                 current_category,
                 current_aliases,
                 current_icon_url,
+                current_rarity,
             ) = row
 
             physical_value = parse_number(physical_value)
@@ -145,6 +147,7 @@ class LilyBloxFruits(commands.Cog):
                 "category": category or current_category,
                 "aliases": aliases,
                 "icon_url": icon_url or current_icon_url,
+                "rarity": rarity or current_rarity
             }
 
             set_clause = ", ".join(f"{k} = ?" for k in update_fields)

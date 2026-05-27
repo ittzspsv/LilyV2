@@ -3,7 +3,7 @@ from discord.ext import commands
 from core.utils.embeds.sLilyEmbed import simple_embed
 from typing import Optional, Callable
 from datetime import datetime, timezone
-from core.database.integrations.logging import LoggingDatabase
+from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from core.logging.components.logging_components import ProofsComponentCommandModal
 
 import core.configs.sBotDetails as Config
@@ -48,12 +48,12 @@ class Leaderboard(discord.ui.LayoutView):
         self.add_item(self.container)
 
 class ModerationInsights(discord.ui.LayoutView):
-    def __init__(self, bot: discord.Member, logs_db: LoggingDatabase):
+    def __init__(self, bot: discord.Member, db: BotGlobalsDatabaseAccess):
         super().__init__(timeout=300)
 
         self.bot = bot
         self.message: Optional[discord.Message] = None
-        self.logs_db: LoggingDatabase = logs_db
+        self.logs_db: BotGlobalsDatabaseAccess = db
 
         self.ms_leaderboard_options = discord.ui.Select(
             custom_id="ms_leaderboard_options",
@@ -255,8 +255,7 @@ def build_ms_embed(
     embed1 = discord.Embed(
         title=f"{Config.emoji['arrow']} {moderator.display_name}'s Moderation Statistics",
         description=(
-            f"## __TOTAL MODERATION STATS__\n"
-            f"### Total : **{total_logs}**\n"
+            f"### Total Stats : **{total_logs}**\n"
             f"- Mutes : **{stats['mute']['total']}**\n"
             f"- Warns: **{stats['warn']['total']}**\n"
             f"- Quarantines: **{stats['quarantine']['total']}**\n"
@@ -339,6 +338,72 @@ def build_mod_logs_embed(
             title=f"{Config.emoji['arrow']} {user.display_name}'s Moderation Logs",
         )
         .set_thumbnail(url=user.avatar.url if user.avatar else Config.img['member'])
+        .set_image(url=Config.img['border'])
+        .add_field(name="Total Logs", value=str(total_count), inline=True)
+        .add_field(name="Date", value=now.strftime("%Y-%m-%d"), inline=True)
+    )
+
+    summary_text = "\n".join(
+        f"- {action.title()}s: `{count}`"
+        for action, count in mod_type_counts.items()
+    )
+
+    embed_summary.add_field(
+        name="Logs Summary",
+        value=summary_text or "No actions recorded",
+        inline=False
+    )
+
+    embed_logs = (
+        discord.Embed(
+            color=16777215,
+            title=f"{Config.emoji['arrow']} Log's Overview",
+        )
+        .set_thumbnail(url=Config.img['logs'])
+        .set_image(url=Config.img['border'])
+    )
+
+    for index, log in enumerate(display_logs, start=page_start + 1):
+
+        ts = log.get("timestamp")
+
+        try:
+            dt = datetime.fromisoformat(ts)
+        except Exception:
+            dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+
+        ts_unix = int(dt.timestamp())
+        reason_text = log.get("reason") or "No reason provided"
+
+        embed_logs.add_field(
+            name=f"📌 Log #{log.get('case_id')} • {log['mod_type'].title()}",
+            value=(
+                f"> {Config.emoji['shield']} Moderator : <@{log['moderator_id']}>\n"
+                f"> {Config.emoji['pencil']} Reason : **{reason_text}**\n"
+                f"> {Config.emoji['clock']} Time : <t:{ts_unix}:R>"
+            ),
+            inline=False
+        )
+
+    return [embed_summary, embed_logs]
+
+def build_mod_logs_embed_absolute(
+    username: str,
+    avatar: str,
+    display_logs: list[dict],
+    mod_type_counts: dict,
+    total_count: int,
+    page_start: int = 0
+) -> list[discord.Embed]:
+
+    now = datetime.now(timezone.utc)
+
+    embed_summary = (
+        discord.Embed(
+            color=16777215,
+            title=f"{Config.emoji['arrow']} {username}'s Moderation Logs",
+        )
+        .set_thumbnail(url=avatar if avatar else Config.img['member'])
         .set_image(url=Config.img['border'])
         .add_field(name="Total Logs", value=str(total_count), inline=True)
         .add_field(name="Date", value=now.strftime("%Y-%m-%d"), inline=True)
