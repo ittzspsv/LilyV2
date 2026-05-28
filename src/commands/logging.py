@@ -1,11 +1,7 @@
-import discord
-
 from discord.ext import commands
 from typing import Optional
 from ..core.logging.lily_logging import LilyLoggingController
 
-
-import core.configs.sBotDetails as Config
 
 class LilyLogging(commands.Cog):
     def __init__(self, bot):

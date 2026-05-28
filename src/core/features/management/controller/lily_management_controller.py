@@ -2,12 +2,13 @@ from ....database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from core.configs.sBotDetails import emoji, img, bot_command_prefix
 from discord.ext import commands
 from core.utils.embeds.sLilyEmbed import simple_embed
-from ..types.staff_management_types import RoleType, OnQuotaEvent, QuotaCheckBy
-from typing import Optional
+from ..types.staff_management_types import QuotaCheckBy
+from typing import Optional, cast
 from ..embeds.staff_management_embed import *
 
 from ..components.staff_management_components import (
-    StaffsView
+    StaffsView,
+    LOARequestModal
 )
 
 import discord
@@ -20,7 +21,8 @@ class LilyManagementController:
 
     async def fetch_staff_detail(self, ctx: commands.Context ,staff: discord.Member) -> None:
         try:
-            data_dict = await self.bot_db.fetch_staff_detail(staff.id)
+            assert isinstance(ctx.guild, discord.Guild)
+            data_dict = await self.bot_db.fetch_staff_detail(staff.id, ctx.guild.id)
 
             if not data_dict:
                 raise ValueError("Staff data not found in database.")
@@ -159,7 +161,6 @@ class LilyManagementController:
             await asyncio.sleep(1)
 
         await ctx.reply(embed=simple_embed("Updated every staff role in the database!"))
-
     
     async def add_staff(self, ctx: commands.Context, staff: discord.Member) -> None:
         if ctx.guild is None:
@@ -304,6 +305,17 @@ class LilyManagementController:
                     embed=embed
                 )
         await ctx.reply(embed=simple_embed(response.get("message") or "Unknown object has been passed, but it's an success!"))
+        """ Send DM'S If Available """
+
+        if member is not None:
+            assert isinstance(ctx.author, discord.Member)
+            await member.send(
+                embed=staff_remove_embed(
+                    ctx.author,
+                    reason,
+                    ctx.guild.name
+                )
+            )
 
     async def edit_staff(self, ctx: commands.Context,staff_id: int,name: str ,joined_on: Optional[str] = None,timezone: Optional[str] = None, responsibility: Optional[str] = None):
         try:
@@ -372,6 +384,8 @@ class LilyManagementController:
 
 
             channel_id = self.bot_db.get_channel(ctx.guild.id, "staff_updates")
+            assert isinstance(ctx.author, discord.Member)
+            await staff.send(embed=strike_embed(ctx.author, reason, ctx.guild.name))
 
             staff_updates_channel: discord.TextChannel | None = None
 
@@ -440,6 +454,21 @@ class LilyManagementController:
 
         if status:
             await ctx.reply(embed=simple_embed(message))
+
+            """ Notify the staff that his strike has been removed """
+            staff_id: int = cast(int, result.get("issued_to"))
+            issued_by: int = cast(int, result.get("issued_by"))
+            reason: str = cast(str, result.get("reason"))
+
+            staff_member = ctx.guild.get_member(staff_id)
+            if staff_member is None:
+                try:
+                    staff_member = await ctx.guild.fetch_member(staff_id)
+                except Exception:
+                    return
+            assert isinstance(ctx.author, discord.Member)
+            await staff_member.send(embed=staff_strike_remove_embed(ctx.author, issued_by, reason, ctx.guild.name))
+
         else:
             await ctx.reply(embed=simple_embed(message, "cross"))
 
@@ -581,6 +610,46 @@ class LilyManagementController:
         )
 
         await ctx.reply(embed=simple_embed(str(response.get("message"))))
+
+    async def list_loa(self, ctx: commands.Context, staff: discord.Member):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("Run this command only inside a guild", 'cross'))
+        
+        results = await self.bot_db.loa_list(staff.id, ctx.guild.id)
+        
+
+        if len(results) <= 0:
+            return await ctx.reply(embed=simple_embed("No LOA found for this user", 'cross'))
+
+        embed = discord.Embed(
+            color=16777215,
+            description=f"### Listing LOA for {staff.mention}\n",
+        )
+
+
+        embed.set_thumbnail(url=staff.display_avatar.url)
+        embed.set_image(url=img['border'])
+
+
+        for result in results:
+            embed.add_field(
+                name=f"📌 LOA #{result["leave_id"]}",
+                value=f"- **Reason**: {result["reason"]}\n- **Assigned by**: <@{result["issued_by"]}>",
+                inline=False
+            )
+
+        await ctx.reply(embed=embed)
+
+    async def request_loa(self, ctx: commands.Context):
+        interaction = ctx.interaction
+        if interaction is None:
+            return await ctx.reply(embed=simple_embed("Please use the slash version of this command", 'cross'))
+
+        await interaction.response.send_modal(LOARequestModal(self.bot_db))
+
+    async def loa_delete(self, ctx: commands.Context, leave_id: int):
+        await self.bot_db.delete_loa(leave_id=leave_id)
+        await ctx.reply(embed=simple_embed("Successfully deleted LOA"))
 
     async def get_all_staff_roles(self, ctx: commands.Context):
         if ctx.guild is None:

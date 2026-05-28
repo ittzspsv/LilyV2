@@ -1,18 +1,18 @@
 import os
 from typing import Optional
-
 import aiohttp
 import discord
-from discord.ext import commands, tasks
-
 import core.configs.sBotDetails as Config
+from discord.ext import commands, tasks
+from dotenv import load_dotenv
 
 from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from core.features.agents.controller.lily_agent_controller import LilyAgentController
 from core.logging.lily_logging import LilyLoggingController
 from core.utils.embeds.sLilyEmbed import simple_embed
-from core.features.agents.controller.lily_agent_controller import LilyAgentController
-    
-from dotenv import load_dotenv
+from api.app import LilyAPI
+
+import uvicorn
 
 load_dotenv("token.env")
 
@@ -30,10 +30,18 @@ class Lily(commands.Bot):
 
         super().__init__(command_prefix=self.prefix,intents=intents,help_command=None)
 
+    async def start_api(self):
+        config = uvicorn.Config(self.api.app, host="0.0.0.0", port=8000, loop="asyncio")
+        server = uvicorn.Server(config)
+        await server.serve()
+
     async def setup_hook(self):
         """ Bot Globals Database """
         self.db = await BotGlobalsDatabaseAccess.connect("storage/configs/Configs.db")
         self.logging_controller = LilyLoggingController(self.db)
+
+        #self.api = LilyAPI(self.db)
+        #self.loop.create_task(self.start_api())
 
         extensions = [
             "commands.moderation",

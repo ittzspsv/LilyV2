@@ -1,18 +1,20 @@
-from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.logging.lily_logging import LilyLoggingController
-from discord.ext import commands
-from core.utils.embeds.sLilyEmbed import simple_embed
+import asyncio
 from datetime import datetime, timedelta, timezone
-from core.configs.sBotDetails import appeal_server_link
 from typing import Optional
-from core.utils.lily_utility import utcnow
-from core.features.moderation.components.sLilyModerationComponents import *
-from core.features.moderation.utils.moderation_utils import mute_parser
-from ..components.sLilyModerationComponents import CaseProofsView, ProofsView
-
 
 import discord
-import asyncio
+from discord.ext import commands
+
+from core.configs.sBotDetails import appeal_server_link
+from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from core.features.moderation.components.sLilyModerationComponents import *
+from core.features.moderation.utils.moderation_utils import mute_parser
+from core.logging.lily_logging import LilyLoggingController
+from core.utils.embeds.sLilyEmbed import simple_embed
+from core.utils.lily_utility import utcnow
+
+from ..components.sLilyModerationComponents import CaseProofsView, ProofsView
+
 
 class LilyModerationController:
     def __init__(self, bot_db: BotGlobalsDatabaseAccess, logging_controller: LilyLoggingController) -> None:
@@ -356,10 +358,10 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed(str(ve)))
         except discord.HTTPException as e:
             print(f"[MuteUser] {e}")
-            await ctx.reply(embed=simple_embed(f"Failed to mute the user", 'cross'))
+            await ctx.reply(embed=simple_embed("Failed to mute the user", 'cross'))
         except Exception as e:
             print(f"[MuteUser] {e}")
-            await ctx.reply(embed=simple_embed(f"Failed to mute the user", 'cross'))
+            await ctx.reply(embed=simple_embed("Failed to mute the user", 'cross'))
 
     async def unmute(self, ctx: commands.Context, user: discord.Member):
         

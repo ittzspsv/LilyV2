@@ -33,7 +33,7 @@ class LilyModeration(commands.Cog):
         return None
 
     @commands.hybrid_group()
-    async def moderation(self, ctx: commands.Context):
+    async def mod(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await ctx.reply(embed=simple_embed("Lily Moderation System Command Hierarchy!"))
 
@@ -154,7 +154,7 @@ class LilyModeration(commands.Cog):
         await ctx.defer()
         await self.controller.unmute(ctx, member)
 
-    @moderation.command(name='stats', description='checks stats for a particular moderator or yourself')
+    @mod.command(name='stats', description='checks stats for a particular moderator or yourself')
     @permission(command_name="ms")
     async def ms(self, ctx, member: discord.Member = None, page_start: int = 0, page_end: int = 0):
         if self.controller is None:
@@ -207,7 +207,7 @@ class LilyModeration(commands.Cog):
         except Exception as e:
             print(f"Exception [ModLogs] : {e}")
 
-    @moderation.command(name='insights', description='Get detailed moderation insights')
+    @mod.command(name='insights', description='Get detailed moderation insights')
     @permission(command_name="moderation_insights")
     async def moderation_insights(self, ctx: commands.Context):
         if self.controller is None:
@@ -267,14 +267,14 @@ class LilyModeration(commands.Cog):
         await self.controller.logging_controller.retrieve_proofs(ctx, int(case_id))
 
 
-    @commands.hybrid_command(name='queue', description='Get moderation queue')
+    @mod.command(name='queue', description='Get moderation queue')
     @permission(command_name="queue")
     async def queue(self, ctx: commands.Context):
         if self.controller is None:
             return
         await self.controller.fetch_moderation_queue(ctx)
 
-    @moderation.command(name='queue_remove', description='Remove member from queue')
+    @mod.command(name='queue_remove', description='Remove member from queue')
     @permission(command_name="queue_remove")
     async def queue_remove(self, ctx: commands.Context, member: discord.Member):
         if self.controller is None:

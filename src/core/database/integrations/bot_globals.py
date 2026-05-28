@@ -1312,7 +1312,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             (staff_id, guild_id),
         )
 
-    async def fetch_staff_detail(self, staff_id: int) -> Dict[str, Any]:
+    async def fetch_staff_detail(self, staff_id: int, guild_id: int) -> Dict[str, Any]:
         query = """
         SELECT
             s.name,
@@ -1322,7 +1322,8 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             s.joined_on,
             s.timezone,
             s.responsibility,
-            s.retired
+            s.retired,
+            MAX(m.avatar_url) AS avatar_url
         FROM staffs s
         LEFT JOIN staff_roles sr
             ON s.staff_id = sr.staff_id AND s.guild_id = sr.guild_id
@@ -1334,13 +1335,15 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             GROUP BY guild_id, issued_to_id
         ) sc
             ON sc.guild_id = s.guild_id AND sc.issued_to_id = s.staff_id
-        WHERE s.staff_id = ?
+        LEFT JOIN members m
+            ON m.member_id = s.staff_id AND m.guild_id = s.guild_id
+        WHERE s.staff_id = ? AND s.guild_id = ?
         GROUP BY
             s.staff_id, s.guild_id, s.name, s.on_loa,
             s.joined_on, s.timezone, s.responsibility, s.retired,
-            sc.strikes_count
+            sc.strikes_count;
         """
-        row = await self.fetch_one(query, (staff_id,))
+        row = await self.fetch_one(query, (staff_id, guild_id))
         if not row:
             return {}
 
@@ -1352,6 +1355,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         tz_str = row["timezone"]
         responsibility = row["responsibility"]
         retired = row["retired"]
+        avatar_url = row["avatar_url"]
 
         roles_list = role_names.split(",") if role_names else []
 
@@ -1363,6 +1367,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
         return {
             "name": name,
+            "avatar_url": avatar_url,
             "role_name": roles_list,
             "is_loa": is_loa,
             "strikes_count": strikes_count,
@@ -1690,10 +1695,10 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
     async def remove_strike(
         self, strike_id: int, guild_id: int
-    ) -> Dict[str, str | bool]:
+    ) -> Dict[str, str | bool | int]:
         row = await self.fetch_one(
             """
-            SELECT issued_to_id FROM strikes
+            SELECT issued_to_id ,issued_by_id, reason FROM strikes
             WHERE strike_id = ? AND guild_id = ?
             """,
             (strike_id, guild_id),
@@ -1709,6 +1714,9 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         return {
             "success": True,
             "message": f"Strike `{strike_id}` removed from <@{staff_id}>",
+            "issued_to": row["issued_to_id"],
+            "issued_by": row["issued_by_id"],
+            "reason": row["reason"]
         }
 
     async def edit_strike(
@@ -1799,12 +1807,14 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 (staff_id, guild_id),
                 commit=True,
             )
+
+            started_on = datetime.now(timezone.utc).isoformat()
             await self.execute(
                 """
-                INSERT INTO leaves (staff_id, reason, issued_by, guild_id)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO leaves (staff_id, reason, issued_by, guild_id, started_on)
+                VALUES (?, ?, ?, ?, ?)
                 """,
-                (staff_id, reason, loa_issued_by, guild_id),
+                (staff_id, reason, loa_issued_by, guild_id, started_on),
                 commit=True,
             )
 
@@ -1853,6 +1863,23 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 (staff_id, guild_id),
             )
 
+            ended_on = datetime.now(timezone.utc).isoformat()
+
+            await self.execute(
+                """
+                UPDATE leaves
+                SET ended_on = ?
+                WHERE leave_id = (
+                    SELECT leave_id
+                    FROM leaves
+                    WHERE staff_id = ? AND guild_id = ?
+                    ORDER BY leave_id DESC
+                    LIMIT 1
+                )
+                """,
+                (ended_on, staff_id, guild_id)
+            )
+
             role_rows = await self.fetch_all(
                 "SELECT role_id FROM staff_roles WHERE staff_id = ? AND guild_id = ?",
                 (staff_id, guild_id),
@@ -1887,6 +1914,101 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
         except Exception as exc:
             return {"success": False, "message": str(exc)}
+
+    async def loa_list(self, staff_id: int, guild_id: int) -> List[Dict[str, Any]]:
+        rows = await self.fetch_all(
+            "SELECT leave_id, reason, issued_by FROM leaves WHERE staff_id = ? AND guild_id = ? ORDER BY leave_id DESC",
+            (staff_id, guild_id)
+        )
+
+        return [
+            {
+                "leave_id": row["leave_id"],
+                "reason": row["reason"],
+                "issued_by": row["issued_by"]
+            }
+            for row in rows
+        ]
+
+    async def add_loa_pending(
+        self,
+        staff_id: int,
+        guild_id: int,
+        message_id: int,
+        reason: str,
+        days: str
+    ):
+        await self.ensure_staff(staff_id, guild_id)
+
+        await self.execute(
+            """
+            INSERT INTO leaves_pending (
+                staff_id,
+                guild_id,
+                message_id,
+                reason,
+                days
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                staff_id,
+                guild_id,
+                message_id,
+                reason,
+                days
+            )
+        )
+
+    async def delete_loa_pending(self, staff_id: int, guild_id: int):
+        await self.execute(
+            "DELETE FROM leaves_pending WHERE staff_id = ? AND guild_id = ?",
+            (staff_id, guild_id)
+        )
+
+    async def has_loa_pending(
+        self,
+        staff_id: int,
+        guild_id: int
+    ) -> tuple[bool, str | None, int | None]:
+        result = await self.fetch_one(
+            """
+            SELECT id, reason
+            FROM leaves_pending
+            WHERE staff_id = ? AND guild_id = ?
+            LIMIT 1
+            """,
+            (staff_id, guild_id)
+        )
+
+        if not result:
+            return False, None, None
+
+        loa_id, reason = result
+
+        return True, reason, loa_id
+
+    async def fetch_all_loa_pending(self) -> List[Dict]:
+        rows = await self.fetch_all(
+            """
+            SELECT
+                lp.staff_id,
+                lp.guild_id,
+                lp.reason,
+                lp.days,
+                lp.message_id,
+                m.avatar_url AS staff_pfp
+            FROM leaves_pending lp
+            INNER JOIN members m
+                ON lp.staff_id = m.member_id
+                AND lp.guild_id = m.guild_id
+            """
+        )
+
+        return [dict(row) for row in rows]
+
+    async def delete_loa(self, leave_id: int):
+        await self.execute("DELETE FROM leaves WHERE leave_id = ?", (leave_id,))
 
     async def fetch_loa_staffs(
         self, guild_id: int, role_type: str

@@ -8,6 +8,7 @@ class ChannelEnum(str, Enum):
     LOGS = "logs_channel"
     STAFF_UPDATES = "staff_updates"
     VALID_CHANNEL = "valid_channel"
+    LOA_REQUEST_CHANNEL = "loa_request"
 
 @unique
 class NotifiersEnum(str, Enum):
@@ -87,3 +88,6 @@ class CommandEnum(str, Enum):
     AFK = "afk"
     NICK = "nick"
     TICKET_STATS = "ticket_stats"
+    LOA_DELETE = "loa_delete"
+    LOA_REQUEST = "loa_request"
+    

@@ -2,6 +2,7 @@ import discord
 
 from core.configs.sBotDetails import emoji, img
 from discord.ext import commands
+from typing import Optional
 
 def build_staff_embed(staff: discord.Member, data: dict) -> discord.Embed:
     name = data.get("name")
@@ -203,5 +204,136 @@ def build_staff_batch_update_embed(
         value=f"- {reason}",
         inline=False,
     )
+
+    return embed
+
+def strike_embed(moderator: discord.Member, reason: Optional[str], guild_name: str) -> discord.Embed:
+    embed = discord.Embed(
+        color=16777215,
+        title=f"{emoji['arrow']} You Have Been Striked!",
+    )
+    embed.set_thumbnail(url=img['warn'])
+    embed.add_field(
+        name=f"{emoji['bookmark']} Reason",
+        value=reason,
+        inline=False,
+    )
+
+    embed.add_field(
+        name=f"{emoji["member"]} Striked by",
+        value=moderator.mention
+    )
+    embed.add_field(
+        name=f"{emoji['bot']} Server",
+        value=guild_name,
+        inline=False,
+    )
+
+    return embed
+
+def staff_remove_embed(moderator: discord.Member, reason: Optional[str], guild_name: str) -> discord.Embed:
+    embed = discord.Embed(
+        color=16777215,
+        title=f"{emoji['arrow']} You Have Been removed from the Staff Team!",
+    )
+    embed.set_thumbnail(url=img['warn'])
+    embed.add_field(
+        name=f"{emoji['bookmark']} Reason",
+        value=reason,
+        inline=False,
+    )
+
+    embed.add_field(
+        name=f"{emoji["member"]} Removed by",
+        value=moderator.mention
+    )
+    embed.add_field(
+        name=f"{emoji['bot']} Server",
+        value=guild_name,
+        inline=False,
+    )
+
+    return embed
+
+def loa_accept_embed(accepted_by: int, guild_name: str) -> discord.Embed:
+    embed = discord.Embed(
+        color=16777215,
+        title=f"{emoji['arrow']} Your LOA has been accepted!",
+    )
+
+    embed.set_thumbnail(url=img['warn'])
+    embed.add_field(
+        name=f"{emoji["member"]} Accepted by",
+        value=f'<@{accepted_by}>'
+    )
+    embed.add_field(
+        name=f"{emoji['bot']} Server",
+        value=guild_name,
+        inline=False,
+    )
+
+    return embed
+
+def loa_reject_embed(rejected_by: int, guild_name: str, reason: str) -> discord.Embed:
+    embed = discord.Embed(
+        color=16777215,
+        title=f"{emoji['arrow']} Your LOA has been Rejected!",
+    )
+
+    embed.set_thumbnail(url=img['warn'])
+    embed.add_field(
+        name=f"{emoji["member"]} Rejected by",
+        value=f'<@{rejected_by}>',
+        inline=False
+    )
+    embed.add_field(
+        name=f"{emoji['bookmark']} Reason",
+        value=reason,
+        inline=False,
+    )
+    embed.add_field(
+        name=f"{emoji['bot']} Server",
+        value=guild_name,
+        inline=False,
+    )
+
+    return embed
+
+
+def staff_strike_remove_embed(
+    removed_by: discord.Member,
+    moderator: int,
+    reason: Optional[str],
+    guild_name: str
+) -> discord.Embed:
+    
+    embed = discord.Embed(
+        color=16777215,
+        title=f"{emoji['arrow']} A strike has been removed!",
+        description=(
+            f"- A strike which was issued to you previously "
+            f"by <@{moderator}> has been removed!"
+        )
+    )
+
+    embed.add_field(
+        name=f"{emoji['member']} Strike Removed By",
+        value=removed_by.mention,
+        inline=False
+    )
+
+    embed.add_field(
+        name=f"{emoji['bookmark']} Strike Reason",
+        value=reason or "No reason provided.",
+        inline=False
+    )
+
+    embed.add_field(
+        name=f"{emoji['bot']} Server",
+        value=guild_name,
+        inline=False
+    )
+
+    embed.set_thumbnail(url=img['warn'])
 
     return embed

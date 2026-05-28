@@ -1,4 +1,3 @@
-
 import re
 import discord
 
@@ -12,6 +11,7 @@ from core.utils.embeds.sLilyEmbed import simple_embed
 from core.features.management.controller.lily_management_controller import LilyManagementController
 from core.features.management.types.staff_management_types import *
 from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from core.features.management.components.staff_management_components import LOARequestView
 
 
 class LilyManagement(commands.Cog):
@@ -26,90 +26,30 @@ class LilyManagement(commands.Cog):
         self.controller = LilyManagementController(self.bot.db)
         self.db = self.bot.db
 
-    @commands.Cog.listener()
-    async def on_member_update(self, before: discord.Member, after: discord.Member):
-        if before.roles == after.roles:
-            return
+        """ Initialize all LOA views """
+        if self.db is not None:
+            rows = await self.db.fetch_all_loa_pending()
+            for row in rows:
+                try:
+                    view = LOARequestView(
+                        self.db,
+                        row["staff_id"],
+                        row["guild_id"],
+                        row["staff_pfp"],
+                        row["reason"],
+                        row["days"]
+                    )
 
-        staff_id = after.id
-        guild_id = after.guild.id
-
-        try:
-            cursor = await LSDB.sdb.execute(
-                "SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?",
-                (staff_id, guild_id)
-            )
-            exists = await cursor.fetchone()
-
-            if not exists:
-                return
-           
-
-            cursor = await LSDB.sdb.execute("""
-                SELECT role_id, role_type
-                FROM roles
-                WHERE guild_id = ?
-            """, (guild_id,))
-            db_roles = await cursor.fetchall()
-
-            staff_role_ids = {r[0] for r in db_roles if r[1] == "Staff"}
-            responsibility_role_ids = {r[0] for r in db_roles if r[1] == "Responsibility"}
-
-
-            top_staff_role = None
-            for role in sorted(after.roles, key=lambda r: r.position, reverse=True):
-                if role.id in staff_role_ids:
-                    top_staff_role = role
-                    break
-
-            discord_responsibilities = {
-                role.id for role in after.roles
-                if role.id in responsibility_role_ids
-            }
-
-            async with LSDB.sdb.execute("BEGIN IMMEDIATE"):
-                await LSDB.sdb.execute(
-                    "DELETE FROM staff_roles WHERE staff_id = ?",
-                    (staff_id,)
-                )
-
-                if not top_staff_role:
-                    await LSDB.sdb.execute("""
-                        UPDATE staffs
-                        SET retired = 1
-                        WHERE staff_id = ? AND guild_id = ?
-                    """, (staff_id, guild_id))
-
-                    await LSDB.sdb.commit()
-                    return
-
-                await LSDB.sdb.execute("""
-                    UPDATE staffs
-                    SET retired = 0
-                    WHERE staff_id = ? AND guild_id = ?
-                """, (staff_id, guild_id))
-
-                await LSDB.sdb.execute("""
-                    INSERT INTO staff_roles (staff_id, role_id)
-                    VALUES (?, ?)
-                """, (staff_id, top_staff_role.id))
-
-                if discord_responsibilities:
-                    await LSDB.sdb.executemany("""
-                        INSERT INTO staff_roles (staff_id, role_id)
-                        VALUES (?, ?)
-                    """, [(staff_id, rid) for rid in discord_responsibilities])
-            print(f"[On_Role Update] Updated {after.name} Role On The Database")
-            await LSDB.sdb.commit()
-
-        except Exception as e:
-            print(f"[on_member_update] Staff Sync Error: {e}")
+                    self.bot.add_view(view, message_id=row["message_id"])
+                except Exception as e:
+                    print(f"Exception [LOARequestView] {e}")
+                    continue
+            print("LOA Views Initialized!")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if self.controller is not None:
             await self.controller.on_message(message=message)
-
 
     @tasks.loop(minutes=5)
     async def message_reset_schedular(self):
@@ -356,12 +296,37 @@ class LilyManagement(commands.Cog):
         if self.controller is not None:
             await self.controller.add_loa(ctx, staff, reason)
 
+    @loa.command(name='delete', description='Delete an LOA entry from the database')
+    @permission(command_name="loa_delete")
+    async def loa_delete(self, ctx: commands.Context, leave_id: int):
+        if self.controller is not None:
+            await self.controller.loa_delete(ctx, leave_id)
+
+
 
     @loa.command(name='remove', description='Removes a staff leave')
     @permission(command_name="loa_remove")
     async def remove_loa(self, ctx: commands.Context, staff: discord.Member):
         if self.controller is not None:
             await self.controller.remove_loa(ctx, staff)
+
+    @loa.command(name="show", description="List all LOA for a particular staff")
+    @permission(command_name="loa_show")
+    async def show_loa(self, ctx: commands.Context, staff: discord.Member=None):
+        if staff is None:
+            current_staff = ctx.author
+        else:
+            current_staff = staff
+
+        if self.controller is not None and isinstance(current_staff, discord.Member):
+            await self.controller.list_loa(ctx, current_staff)
+
+    @loa.command(name="request", description="Request LOA")
+    @permission(command_name="loa_request")
+    async def request_loa(self, ctx: commands.Context):
+        if self.controller is not None:
+            await self.controller.request_loa(ctx)
+
 
     @rank.command(name='promote', description='Promotes a staff to upper rank')
     @permission(command_name="rank_promote")
@@ -405,7 +370,6 @@ class LilyManagement(commands.Cog):
     async def remove_quota(self, ctx: commands.Context, quota_id: str):
         if self.controller is not None:
             await self.controller.remove_staff_quota(ctx, quota_id)
-
 
     @quota.command(name="check", description="Check quota for a given staff")
     @permission(command_name="quota_check")

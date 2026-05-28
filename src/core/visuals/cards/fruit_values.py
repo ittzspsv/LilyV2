@@ -1,10 +1,7 @@
 from PIL import Image, ImageDraw, ImageFilter
-import os
 from core.utils.lily_utility import format_currency
-from typing import List, Final
-from core.visuals.components.gradient_text import draw_gradient_text
-from core.visuals.components.neon_text import draw_neon_text
-from core.visuals.utils.pillow_utils import load_font, fit_font_size
+from typing import Final
+from core.visuals.utils.pillow_utils import load_font, fit_font_size, get_icon_path
 
 FONT_PATH: Final = "public/fonts/Berlin Sans FB Bold.ttf"
 NUMBER_FONT_PATH: Final = "public/fonts/Game Bubble.ttf"
@@ -14,19 +11,6 @@ ICON_SIZE: Final = 220
 GLOW_OPACITY: Final = 220
 
 
-def get_icon_path(folder, fruit_name):
-    for ext in [".png", ".webp", ".jpg", ".jpeg"]:
-        candidate = os.path.join(folder, f"{fruit_name}{ext}")
-        if os.path.exists(candidate):
-            return candidate
-
-    fruit_lower = fruit_name.lower()
-    for f in os.listdir(folder):
-        name, ext = os.path.splitext(f)
-        if name.lower() == fruit_lower and ext.lower() in [".png", ".webp", ".jpg", ".jpeg"]:
-            return os.path.join(folder, f)
-
-    return None
 
 def value_img(data):
     fruit_name = data.get("fruit_name", "UNKNOWN")
