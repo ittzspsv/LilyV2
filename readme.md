@@ -95,6 +95,12 @@ All modules are based on **Cogs**, meaning they can be removed or placed dependi
 
 ---
 
+## QUOTES
+
+![Preview](.github/misc/quote.webp)
+
+---
+
 ## SUPPORT
 
 Feel free to contact me personally through my Discord **[spshree]** if you want more games to be added to the bot.
