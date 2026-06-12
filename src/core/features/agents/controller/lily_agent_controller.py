@@ -58,6 +58,7 @@ class LilyAgentController:
         return False
 
     async def on_message(self, bot: discord.Client ,message: discord.Message):
+        return
         if message.guild is None:
             return
         

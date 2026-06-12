@@ -1,9 +1,13 @@
 import discord
-import core.configs.sBotDetails as config
+import src.core.configs.sBotDetails as config
 from ..embeds.blox_fruits_embed import build_win_loss_embed
 from ..utils.trade_calculator import win_or_lose
 from ..utils.trade_suggestor import trade_suggestor
 from ....database.integrations.blox_fruits import BloxFruitsDatabase
+from src.core.utils.lily_utility import format_currency
+from typing import List
+from ..utils.trade_calculator import calculate_fruit_values
+
 
 class TradeSuggestorComponent(discord.ui.LayoutView):
     def __init__(self, db: BloxFruitsDatabase ,your_fruits, your_types, message, neglect_fruits, type):
@@ -127,7 +131,7 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
         try:
             await interaction.response.defer()
 
-            their_fruits, their_types, success = await trade_suggestor(
+            their_fruits, their_types, success = trade_suggestor(
                 self.db,
                 self.your_fruits, self.your_types,
                 self.include_permanent,
@@ -194,6 +198,135 @@ class TradeSuggestorComponent(discord.ui.LayoutView):
                 )
             except:
                 print("Cannot send followup; interaction expired:", e)
+
+class FruitValueComponent(discord.ui.LayoutView):
+    def __init__(self, item_data: dict) -> None:
+
+        super().__init__(timeout=10)
+
+        value_contents: str = ""
+        demand_contents: str = ""
+        if item_data.get('physical_value'):
+            value_contents += f"**Physical Value**\n- {format_currency(item_data['physical_value'])}\n"
+        if item_data.get('permanent_value'):
+            value_contents += f"**Permanent Value**\n- {format_currency(item_data['permanent_value'])}"
+        if item_data.get('physical_demand'):
+            demand_contents += f"**Demand**\n- {item_data['physical_demand']}\n"
+        if item_data.get('demand_type'):
+            demand_contents += f"**Demand Type**\n- {item_data['demand_type']}"
+
+        
+        self.container = discord.ui.Container(
+            discord.ui.Section(
+                discord.ui.TextDisplay(content=f"# {item_data["name"]}"),
+                discord.ui.TextDisplay(content=value_contents),
+                discord.ui.TextDisplay(content=demand_contents),
+                accessory=discord.ui.Thumbnail(
+                    media=f"{item_data.get("icon_url", "")}",
+                ),
+            ),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small)
+        )
+
+        self.add_item(self.container)
+
+class WinLossComponent(discord.ui.LayoutView):
+    def __init__(self, 
+                result: dict, 
+                db,
+                your_fruits: List[str]=[], 
+                your_fruit_types: List[str]=[], 
+                their_fruits: List[str]=[], 
+                their_fruit_types: List[str]=[],
+        ) -> None:
+        super().__init__(timeout=10)
+
+        self.db = db
+
+        conclusion_icon: str = ""
+        fruit_suggestion_component: List = []
+        if result["conclusion"] == "W":
+            conclusion_icon = "https://media.discordapp.net/attachments/1510416807847133274/1511881573149052989/W.png?ex=6a2210f0&is=6a20bf70&hm=063bea7d1467b8cfc05897687dec9e4e56d8b55dbf5844151006e4c42415c942&=&format=webp&quality=lossless"
+        elif result["conclusion"] == "L":
+            conclusion_icon = "https://media.discordapp.net/attachments/1510416807847133274/1511881555448959096/L.png?ex=6a2210ec&is=6a20bf6c&hm=3514041a4782604f7a7f870af80507c6f2e4faa773861f2180d1f1d6afe47c62&=&format=webp&quality=lossless"
+
+            """ Generate an suggestion for that offer """
+            suggeseted_fruits, suggested_fruit_types, success = trade_suggestor(
+                self.db,
+                your_fruits, your_fruit_types,
+                False,
+                False,
+                True,
+                True,
+                [],
+                1
+            )
+
+            suggested_details = self.build_fruit_details(
+                suggeseted_fruits,
+                suggested_fruit_types
+            )
+
+            their_fruit_individual_values, total_value_of_their_fruit = calculate_fruit_values(
+                suggeseted_fruits, suggested_fruit_types, self.db
+            )
+
+            if success:
+                fruit_suggestion_component.append(
+                    discord.ui.Section(
+                        discord.ui.TextDisplay(content=f"## My Suggestion ({format_currency(total_value_of_their_fruit)})"),
+                        discord.ui.TextDisplay(content=f"# - {suggested_details}"),
+                        accessory=discord.ui.Thumbnail(
+                            media="https://cdn3.emoji.gg/emojis/507611-pixelsparkle.png",
+                        ),
+                    ),  
+                )
+
+        else:
+            conclusion_icon = "https://media.discordapp.net/attachments/1510416807847133274/1511881539279913143/F.png?ex=6a2210e8&is=6a20bf68&hm=4fc42adc6a9dc5fcd5337bd01a3d174edce969fad98ea808daac8032484cd321&=&format=webp&quality=lossless"
+
+
+        your_fruit_details = self.build_fruit_details(
+            your_fruits,
+            your_fruit_types,
+        )
+
+        their_fruit_details = self.build_fruit_details(
+            their_fruits,
+            their_fruit_types,
+        )
+
+        self.container = discord.ui.Container(
+            discord.ui.Section(
+                discord.ui.TextDisplay(content=f"# It's a {result['conclusion']} Trade"),
+                discord.ui.TextDisplay(content=f"- You {result['conclusion_expansion']} **{result['percentage']}%** value from this trade."),
+                discord.ui.TextDisplay(
+                    content=f"## Value Information\n### Your Offer ({format_currency(result['your_total_values'])})\n# - {your_fruit_details}\n### Their Offer ({format_currency(result['their_total_values'])})\n# - {their_fruit_details}"),
+                accessory=discord.ui.Thumbnail(
+                    media=conclusion_icon,
+                ),
+            ),
+            *fruit_suggestion_component,
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small)
+        )
+
+        self.add_item(self.container)
+
+    def build_fruit_details(self, fruits: List[str], fruit_types: List[str]) -> str:
+        details = ""
+
+        perm_emoji = config.emoji.get("perm", "🔒")
+
+        for fruit, ftype in zip(fruits, fruit_types):
+            fruit_name = fruit.replace(" ", "_").replace("-", "_").lower()
+            fruit_emoji = config.fruit_emojis.get(fruit_name, "🍎")
+
+            if ftype.lower() == "permanent":
+                details += f"{perm_emoji}{fruit_emoji} "
+            else:
+                details += f"{fruit_emoji} "
+
+        return details
 
 class InviteView(discord.ui.View):
     def __init__(self):

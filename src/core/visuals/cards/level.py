@@ -11,7 +11,6 @@ bg_image_path: Final = "public/assets/custom/Levels.png"
 TEXT_FONT_PATH: Final = "public/fonts/Berlin Sans FB Bold.ttf"
 
 async def CreateLevelCard(member: discord.Member, name="Lily", rank="35", xp="32", max_xp = "64", level='35'):
-    
     if not os.path.isfile(bg_image_path):
         raise FileNotFoundError(f"Background file not found: {bg_image_path}")
 

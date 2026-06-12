@@ -17,8 +17,8 @@ Compatibility with Python 3.5 should be possible if f-strings are removed.
 """
 import re
 
-from core.utils.embeds.sLilyEmbed import simple_embed
-import core.utils.components.sLilyComponentV2 as CV2
+from src.core.utils.embeds.sLilyEmbed import simple_embed
+import src.core.utils.components.sLilyComponentV2 as CV2
 
 import discord
 import lavalink
@@ -28,7 +28,7 @@ from lavalink.errors import ClientError
 from lavalink.filters import LowPass
 from lavalink.server import LoadType
 
-import core.configs.sBotDetails as Configs
+import src.core.configs.sBotDetails as Configs
 
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 Host = "lavalink.jirayu.net"

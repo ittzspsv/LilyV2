@@ -1,6 +1,6 @@
 from discord.ext import commands
 from typing import Optional
-from ..core.logging.lily_logging import LilyLoggingController
+from src.core.logging.lily_logging import LilyLoggingController
 
 
 class LilyLogging(commands.Cog):

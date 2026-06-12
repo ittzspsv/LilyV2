@@ -1,16 +1,18 @@
 from discord.ext import commands
-from core.utils.embeds.sLilyEmbed import simple_embed
-from core.features.blox_fruits.routes.blox_fruits_router import BloxFruitsController
-from core.database.integrations.blox_fruits import BloxFruitsDatabase
 
 import discord
 import json
-import core.utils.sFruitImageDownloader as FID
 import re
 
 from typing import Optional
 
-from core.features.permissions.lily_permissions import permission
+import src.core.utils.sFruitImageDownloader as FID
+from src.core.features.permissions.lily_permissions import permission
+from src.core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.features.blox_fruits.routes.blox_fruits_router import BloxFruitsController
+from src.core.database.integrations.blox_fruits import BloxFruitsDatabase
+from src.core.configs.path import VALUE_DB
+
 
 class LilyBloxFruits(commands.Cog):
     def __init__(self, bot):
@@ -19,7 +21,7 @@ class LilyBloxFruits(commands.Cog):
         self.controller: Optional[BloxFruitsController] = None
 
     async def on_load(self):
-        self.db = await BloxFruitsDatabase.connect("storage/configs/ValueData.db")
+        self.db = await BloxFruitsDatabase.connect(str(VALUE_DB))
         self.controller = BloxFruitsController(self.db)
 
     @commands.Cog.listener()

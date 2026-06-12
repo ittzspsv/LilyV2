@@ -1,8 +1,9 @@
 import discord
 
-from core.configs.sBotDetails import emoji, img
+from src.core.configs.sBotDetails import emoji, img
 from discord.ext import commands
 from typing import Optional
+from datetime import datetime
 
 def build_staff_embed(staff: discord.Member, data: dict) -> discord.Embed:
     name = data.get("name")
@@ -117,20 +118,33 @@ def build_strikes_list_embed(
     ) -> discord.Embed:
     embed = discord.Embed(
         color=0xFFFFFF,
-        title=f"{emoji['arrow']} {staff.display_name}'s Strike Information",
-        description=f"{emoji['bookmark']} Listing all strikes issued to {staff.mention}",
+        title=f"{emoji['arrow']} {staff.display_name}'s Infractions",
+        description=f"{emoji['bookmark']} Listing all infractions issued to {staff.mention}",
     )
 
     embed.set_thumbnail(url=staff.display_avatar.url)
     embed.set_image(url=img["border"])
 
     for strike in strikes:
+        issued_date = strike["date"]
+        dt = datetime.fromisoformat(issued_date)
+        issued_unix = int(dt.timestamp())
+
+        expiry_date = strike["expiry_date"]
+        expired_unix = 0
+        if expiry_date:
+            dt = datetime.fromisoformat(expiry_date)
+            expired_unix = int(dt.timestamp())
+
+        strike_type = strike.get("type") or "Strike"
         embed.add_field(
-            name=f"{emoji['pencil']} __Strike ID: {strike['strike_id']}__",
+            name=f"{emoji['pencil']} __Infraction ID: {strike['strike_id']}__ | {strike_type.title()}",
             value=(
                 f"> {emoji['bookmark']} **Reason** : {strike['reason']}\n"
                 f"> {emoji['shield']} **Manager** : <@{strike['manager']}>\n"
-                f"> {emoji['calender']} **Date** : {strike['date']}"
+                f"> {emoji['calender']} **Date** : <t:{issued_unix}:R>\n"
+                f"> {emoji['clock']} **Expires**: "
+                f"{f'<t:{expired_unix}:R>' if expiry_date else 'Never'}\n"
             ),
             inline=False,
         )
@@ -207,10 +221,10 @@ def build_staff_batch_update_embed(
 
     return embed
 
-def strike_embed(moderator: discord.Member, reason: Optional[str], guild_name: str) -> discord.Embed:
+def infraction_embed(moderator: discord.Member, reason: Optional[str], guild_name: str ,type: str) -> discord.Embed:
     embed = discord.Embed(
         color=16777215,
-        title=f"{emoji['arrow']} You Have Been Striked!",
+        title=f"{emoji['arrow']} A {type} has been issued to you",
     )
     embed.set_thumbnail(url=img['warn'])
     embed.add_field(
@@ -220,7 +234,7 @@ def strike_embed(moderator: discord.Member, reason: Optional[str], guild_name: s
     )
 
     embed.add_field(
-        name=f"{emoji["member"]} Striked by",
+        name=f"{emoji["member"]} Issued by",
         value=moderator.mention
     )
     embed.add_field(
@@ -298,7 +312,6 @@ def loa_reject_embed(rejected_by: int, guild_name: str, reason: str) -> discord.
     )
 
     return embed
-
 
 def staff_strike_remove_embed(
     removed_by: discord.Member,

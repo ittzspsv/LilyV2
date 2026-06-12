@@ -1,10 +1,10 @@
 import discord
 from discord.utils import MISSING
-import core.configs.sBotDetails as Config
+import src.core.configs.sBotDetails as Config
 
 from discord.ext import commands
-from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from src.core.utils.embeds.sLilyEmbed import simple_embed
 
 
 
@@ -39,6 +39,14 @@ class RoleCustomizationModal(discord.ui.Modal):
 
         self.db = db
         self.role_id = role_id
+
+    role_type = discord.ui.TextInput(
+        label='Role Type',
+        style=discord.TextStyle.short,
+        placeholder='What kind of role is this',
+        required=True,
+        max_length=100
+    )
 
     ban_limit = discord.ui.TextInput(
         label='Ban Limit',
@@ -95,7 +103,7 @@ class RoleCustomizationModal(discord.ui.Modal):
         component=discord.ui.RoleSelect(
             min_values=1,
             max_values=25,
-            required=True
+            required=False
         )
     )
 
@@ -109,6 +117,7 @@ class RoleCustomizationModal(discord.ui.Modal):
         assert isinstance(self.ban_queue_option.component, discord.ui.RadioGroup)
         assert isinstance(self.assignment_scope.component, discord.ui.RadioGroup)
         assert isinstance(self.assignment_roles.component, discord.ui.RoleSelect)
+        assert isinstance(self.role_type, discord.ui.TextInput)
 
 
 
@@ -118,12 +127,11 @@ class RoleCustomizationModal(discord.ui.Modal):
             int(self.ban_limit.value),
             int(self.ban_queue_option.component.value or "0"),
             self.assignment_scope.component.value or "none",
-            {role.id for role in (self.assignment_roles.component.values or [])}
+            {role.id for role in (self.assignment_roles.component.values or [])},
+            self.role_type.value
         )
 
         if response.get("success"):
             await interaction.followup.send(embed=simple_embed(str(response.get("message"))))
         else:
             await interaction.followup.send(embed=simple_embed(str(response.get("message")), 'cross'))
-
-

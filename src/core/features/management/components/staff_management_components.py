@@ -1,11 +1,11 @@
 import discord
-import core.configs.sBotDetails as Configs
+import src.core.configs.sBotDetails as Configs
 
 from typing import Dict, Optional
 from discord.ext import commands
-from core.utils.embeds.sLilyEmbed import simple_embed
-from ..embeds.staff_management_embed import loa_accept_embed, loa_reject_embed
-from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from src.core.utils.embeds.sLilyEmbed import simple_embed
+from ..embeds.staff_management_embed import loa_accept_embed, loa_reject_embed, infraction_embed
+from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 
 from typing import List, Any
 
@@ -522,8 +522,6 @@ class LOARejectModal(discord.ui.Modal):
         await interaction.followup.send(embed=simple_embed("Successfully rejected LOA!"), ephemeral=True)
         await self.request_view.disable_buttons(self.view_interaction, "reject")
 
-
-
 class LOARequestModal(discord.ui.Modal):
     dummy = discord.ui.TextDisplay("During your LOA All of your staff roles will be stripped of. You will recieve a DM if your LOA got accepted or rejected.")
 
@@ -593,4 +591,174 @@ class LOARequestModal(discord.ui.Modal):
         )
 
         await interaction.followup.send(embed=simple_embed("Successfully requested LOA for you!"), ephemeral=True)
+
+class InfractionModal(discord.ui.Modal):
+    reason = discord.ui.Label(
+        text="Reason",
+        description="Reason for their Infraction",
+        component=discord.ui.TextInput(
+            style=discord.TextStyle.paragraph,
+            max_length=4000,
+            required=True
+        )
+    )
+
+    infraction_type = discord.ui.Label(
+        text="Infraction Type",
+        description="What is the type of infraction issued",
+        component=discord.ui.Select(
+            required=True,
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label="Strike",
+                    description="Strike this staff member. They will be notified via DM and the staff-updates channel.",
+                    value="strike",
+                    emoji="⛔"
+                ),
+                discord.SelectOption(
+                    label="Warning",
+                    description="Warn this staff member. They will be notified via DM only and not in staff-updates.",
+                    value="warning",
+                    emoji="⚠️"
+                )
+            ]
+        )
+    )
+
+    notify = discord.ui.Label(
+        text="Notify Staff",
+        description="Should the staff member be notified of this infraction via DM?",
+        component=discord.ui.RadioGroup(
+            required=True,
+            options=[
+                discord.RadioGroupOption(
+                    label="Yes",
+                    value="yes",
+                    default=True
+                ),
+                discord.RadioGroupOption(
+                    label="No",
+                    value="no"
+                )
+            ]
+        )
+    )
+
+    expiry_date = discord.ui.Label(
+        text="Expire After",
+        description="When should this infraction expire? (e.g., 1d, 22d, none)",
+        component=discord.ui.TextInput(
+            style=discord.TextStyle.short,
+            max_length=5,
+            required=True
+        )
+    )
+
+    proofs = discord.ui.Label(
+        text="Proofs",
+        description="Upload supporting evidence for this infraction. (It's DUMMY AND IT WON'T WORK)",
+        component=discord.ui.FileUpload(
+            required=False,
+            min_values=1,
+            max_values=10
+        )
+    )
+
+
+    def __init__(self, bot_db: BotGlobalsDatabaseAccess, staff: discord.Member) -> None:
+        super().__init__(title="Infraction Details")
+        self.bot_db = bot_db
+        self.staff: discord.Member = staff
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        assert isinstance(self.reason.component, discord.ui.TextInput)
+        assert isinstance(self.expiry_date.component, discord.ui.TextInput)
+        assert isinstance(self.infraction_type.component, discord.ui.Select)
+        assert isinstance(interaction.guild, discord.Guild)
+        assert isinstance(self.notify.component, discord.ui.RadioGroup)
+        assert isinstance(self.proofs.component, discord.ui.FileUpload)
+
+        await interaction.response.defer()
+
+        payload = {
+            "staff_id": self.staff.id,
+            "guild_id": interaction.guild.id,
+            "issued_by": interaction.user.id,
+            "reason": self.reason.component.value,
+            "type": self.infraction_type.component.values[0],
+            "expiry_date": self.expiry_date.component.value.lower()
+        }
+
+        response = await self.bot_db.strike_staff(**payload)
+        if not response.get("success"):
+            await interaction.followup.send(embed=simple_embed(response.get("message") or "An unknown object has been returned and failed", "cross"))
+            return
+        
+        message = response.get("message")
+        issued_by = response.get("issued_by")
+        strike_reason = response.get("reason")
+
+
+        channel_id = self.bot_db.get_channel(interaction.guild.id, "staff_updates")
+        assert isinstance(interaction.user, discord.Member)
+
+        if self.notify.component.value == "yes":
+            await self.staff.send(embed=infraction_embed(interaction.user, self.reason.component.value, interaction.guild.name, self.infraction_type.component.values[0]))
+
+
+        await interaction.followup.send(embed=simple_embed(message or "An unknown object has been returned, but It's an success!"))
+
+        if not self.infraction_type.component.values[0] == "strike":
+            return
+        
+        """ Build an embed so that we can post it on the staff updates channel"""
+        
+        embed = discord.Embed(
+            color=16777215,
+            title="Infraction Information",
+            description=f"### {self.staff.mention} has been issued with a {self.infraction_type.component.values[0].title()}"
+        )
+        embed.set_thumbnail(url=self.staff.display_avatar.url)
+        embed.set_image(url=Configs.img['border'])
+
+        embed.add_field(
+            name="Issued By",
+            value=f"<@{issued_by}>",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="Reason",
+            value=f"- {strike_reason}",
+            inline=False,
+        )
+
+        """ Try fetching the staff updates channel """
+
+        
+        staff_updates_channel: discord.TextChannel | None = None
+
+        if channel_id is not None:
+            channel = interaction.guild.get_channel(channel_id)
+
+            if channel is None:
+                try:
+                    channel = await interaction.guild.fetch_channel(channel_id)
+                except Exception:
+                    channel = None
+
+            if isinstance(channel, discord.TextChannel):
+                staff_updates_channel = channel
+
+
+
+        """ Finally send the embed """
+        if staff_updates_channel:
+            await staff_updates_channel.send(
+                content=self.staff.mention,
+                embed=embed
+            )
+
 

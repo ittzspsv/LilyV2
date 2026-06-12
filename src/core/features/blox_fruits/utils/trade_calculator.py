@@ -67,7 +67,7 @@ def win_or_lose(
 
     else:
         conclusion = "L"
-        conclusion_expansion = "Loss"
+        conclusion_expansion = "Lose"
         color = 0x79817d
 
 

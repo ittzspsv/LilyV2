@@ -2,19 +2,16 @@ import os
 from typing import Optional
 import aiohttp
 import discord
-import core.configs.sBotDetails as Config
+import src.core.configs.sBotDetails as Config
 from discord.ext import commands, tasks
-from dotenv import load_dotenv
 
-from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.features.agents.controller.lily_agent_controller import LilyAgentController
-from core.logging.lily_logging import LilyLoggingController
-from core.utils.embeds.sLilyEmbed import simple_embed
-from api.app import LilyAPI
-
+from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from src.core.features.agents.controller.lily_agent_controller import LilyAgentController
+from src.core.logging.lily_logging import LilyLoggingController
+from src.core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.configs.path import CONFIG_DB
+from src.api.app import LilyAPI
 import uvicorn
-
-load_dotenv("token.env")
 
 class Lily(commands.Bot):
     def __init__(self):
@@ -37,18 +34,18 @@ class Lily(commands.Bot):
 
     async def setup_hook(self):
         """ Bot Globals Database """
-        self.db = await BotGlobalsDatabaseAccess.connect("storage/configs/Configs.db")
+        self.db = await BotGlobalsDatabaseAccess.connect(str(CONFIG_DB))
         self.logging_controller = LilyLoggingController(self.db)
 
-        #self.api = LilyAPI(self.db)
-        #self.loop.create_task(self.start_api())
+        self.api = LilyAPI(self.db)
+        self.loop.create_task(self.start_api())
 
         extensions = [
-            "commands.moderation",
-            "commands.utility",
-            "commands.blox_fruits",
-            "commands.management",
-            "commands.ticket_tool"
+            "src.commands.moderation",
+            "src.commands.utility",
+            "src.commands.blox_fruits",
+            "src.commands.management",
+            "src.commands.ticket_tool"
             #"LilyLeveling.sLilyLevelingCommands",
             #"LilyMusic.sLilyMusicCommands",
         ]
@@ -61,7 +58,7 @@ class Lily(commands.Bot):
                     print(e)
 
         self.lily_session = aiohttp.ClientSession()
-        await self.tree.sync()
+        #await self.tree.sync()
     
     def prefix(self, bot: commands.Bot ,message):
         if not message.guild:
@@ -83,10 +80,10 @@ class Lily(commands.Bot):
     @tasks.loop(minutes=60)
     async def modify_status(self):
         member_count = 0
-        for guild in bot.guilds:
+        for guild in self.guilds:
             member_count += guild.member_count or 0
         activity = discord.Activity(type=discord.ActivityType.watching, name=f"{member_count:,} members!")
-        await bot.change_presence(activity=activity)
+        await self.change_presence(activity=activity)
 
     async def on_message(self, message:discord.Message): 
         if message.author == self.user:
@@ -103,7 +100,3 @@ class Lily(commands.Bot):
             await ctx.reply(embed=simple_embed(f"So fast! Try again after {error.retry_after:.1f} seconds.", 'cross'))
         else:
             pass
-
-bot = Lily()
-
-bot.run(token=os.getenv("token") or "")

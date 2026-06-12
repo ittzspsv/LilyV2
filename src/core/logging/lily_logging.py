@@ -4,8 +4,8 @@ from .embeds.logging_embeds import write_log_embed, moderation_embed
 from discord.ext import commands
 from datetime import datetime
 from typing import Optional, Union, Sequence, List
-from core.utils.embeds.sLilyEmbed import simple_embed
-from core.utils.lily_utility import utcnow
+from src.core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.utils.lily_utility import utcnow
 from .components.logging_components import ProofComponentModal
 
 import discord

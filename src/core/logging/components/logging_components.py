@@ -1,5 +1,5 @@
 import discord
-from core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.utils.embeds.sLilyEmbed import simple_embed
 
 class ProofComponentModal(discord.ui.Modal):
     case_id = discord.ui.Label(

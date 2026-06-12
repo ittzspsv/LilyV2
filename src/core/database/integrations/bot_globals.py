@@ -12,59 +12,6 @@ import pytz
 class GlobalConfig:
     jail: int
 
-
-COMMANDS: Final[Set[str]] = {
-    "staff_data",
-    "staff_list",
-    "strike_add",
-    "strike_remove",
-    "strike_edit",
-    "staff_edit",
-    "staff_self_edit",
-    "strike_show",
-    "staff_add",
-    "staff_add_batch",
-    "staff_remove",
-    "staff_remove_raw",
-    "staff_roles",
-    "dev_staff_update",
-    "loa_add",
-    "loa_remove",
-    "rank_promote",
-    "rank_promote_batch",
-    "rank_demote",
-    "quota_add",
-    "quota_list",
-    "quota_remove",
-    "quota_check",
-    "quota_evaluate",
-    "staff_role_remove",
-    "staff_role_remove_raw",
-    "ban",
-    "unban",
-    "warn",
-    "unmute",
-    "ms",
-    "modlogs",
-    "moderation_insights",
-    "case_edit",
-    "case_edit_absolute",
-    "case_delete",
-    "queue",
-    "queue_remove",
-    "ticket_close",
-    "ticket_rename",
-    "ticket_add",
-}
-
-CHANNEL: Final[Set[str]] = {
-    "bf_win_loss",
-    "bf_fruit_values",
-    "logs_channel",
-    "staff_updates",
-}
-
-
 @dataclass
 class BanLimitStatus:
     exceeded: bool
@@ -101,7 +48,16 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         """
         self.cache.clear()
 
-        guilds = await self.fetch_all("SELECT guild_id, prefix FROM data")
+        guilds = await self.fetch_all("""
+            SELECT
+                d.guild_id,
+                d.prefix,
+                gc.secondary_guild_id
+            FROM data d
+            LEFT JOIN guild_connections gc
+                ON d.guild_id = gc.primary_guild_id
+        """)
+
         for g in guilds:
             gid = g["guild_id"]
             self.cache[gid] = {
@@ -109,6 +65,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 "permissions": {},
                 "roles": {},
                 "prefix": g["prefix"] or "",
+                "secondary_guild_id": g["secondary_guild_id"]
             }
 
         channel_rows = await self.fetch_all(
@@ -176,6 +133,14 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
     def global_config(self) -> Optional[GlobalConfig]:
         return self._gconfig
 
+    def get_secondary_guild_id(self, guild_id: int) -> int | None:
+        guild = self.cache.get(guild_id)
+
+        if guild is None:
+            return None
+
+        return guild.get("secondary_guild_id")
+
     def get_prefix(self, guild_id: int) -> str:
         return self.cache.get(guild_id, {}).get("prefix") or "."
 
@@ -199,14 +164,18 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             return False
         allowed_roles = guild_cache["permissions"].get(command, [])
         return any(role_id in allowed_roles for role_id in roles)
-
-    def get_permissions(self, guild_id: int, role: int) -> List[str]:
+    
+    def get_permission_roles(
+        self, guild_id: int, command: str | None
+    ) -> List[int]:
+        if command is None:
+            return []
         guild_cache = self.cache.get(guild_id)
         if not guild_cache:
             return []
-        return [
-            cmd for cmd, values in guild_cache["permissions"].items() if role in values
-        ]
+        
+        allowed_roles = guild_cache["permissions"].get(command, [])
+        return allowed_roles
 
     async def guild_initialize(self, guild_id: int) -> None:
         await self.execute(
@@ -325,20 +294,22 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         ban_queue: int,
         assignment_scope: str,
         roles: Set[int],
+        role_type: str
     ) -> Dict[str, str | bool]:
         try:
             await self.execute(
                 """
                 INSERT INTO roles (
-                    guild_id, role_id, ban_limit, ban_queue, assignment_scope
+                    guild_id, role_id, ban_limit, ban_queue, assignment_scope, role_type
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(guild_id, role_id) DO UPDATE SET
                     ban_limit        = excluded.ban_limit,
                     ban_queue        = excluded.ban_queue,
-                    assignment_scope = excluded.assignment_scope
+                    assignment_scope = excluded.assignment_scope,
+                    role_type = excluded.role_type
                 """,
-                (guild_id, role_id, ban_limit, ban_queue, assignment_scope),
+                (guild_id, role_id, ban_limit, ban_queue, assignment_scope, role_type),
             )
 
             await self.execute(
@@ -449,6 +420,20 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             """,
             (guild_id, role_id, command),
         )
+
+    def get_permissions(self, guild_id: int, role_id: int) -> list[str]:
+        guild = self.cache.get(guild_id)
+
+        if guild is None:
+            return []
+
+        permissions = guild.get("permissions", {})
+
+        return [
+            command
+            for command, role_ids in permissions.items()
+            if role_id in role_ids
+        ]
 
     async def remove_channel(
         self,
@@ -791,7 +776,10 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 COUNT(CASE WHEN timestamp >= ? THEN 1 END) AS week,
                 COUNT(CASE WHEN timestamp >= ? THEN 1 END) AS month
             FROM modlogs
-            WHERE guild_id = ? AND moderator_id = ?
+            WHERE 
+                guild_id = ? AND 
+                moderator_id = ? AND 
+                LOWER(mod_type) NOT IN ('unban', 'unmute', 'quarantine_release')
             GROUP BY mod_type
             """,
             (start_today, start_week, start_month, guild_id, moderator_id),
@@ -813,7 +801,10 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 reason,
                 CAST(strftime('%s', timestamp) AS INTEGER) AS timestamp
             FROM modlogs
-            WHERE guild_id = ? AND moderator_id = ?
+            WHERE 
+                guild_id = ? AND 
+                moderator_id = ? AND
+                LOWER(mod_type) NOT IN ('unban', 'unmute', 'quarantine_release')
             ORDER BY timestamp DESC
             LIMIT ? OFFSET ?
             """,
@@ -860,10 +851,15 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         page_start: int | None = None,
         page_end: int | None = None,
     ) -> Dict[str, Any]:
+
+        """ If there is a secondary guild id then we should fetch modlogs of that guild id than """
+        _guild_id = self.get_secondary_guild_id(guild_id) or guild_id
+
+
         DEFAULT_FETCH_LIMIT = 5
 
         base_condition = "WHERE guild_id = ? AND target_user_id = ?"
-        base_params: list = [guild_id, target_user_id]
+        base_params: list = [_guild_id, target_user_id]
 
         aliased_condition = "WHERE ml.guild_id = ? AND ml.target_user_id = ?"
 
@@ -949,36 +945,36 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         if lb_type not in valid_types:
             lb_type = "total"
 
-        staff_rows = await self.fetch_all(
-            "SELECT staff_id FROM staffs WHERE guild_id = ? AND retired = 0 AND on_loa = 0",
-            (guild_id,),
-        )
-        active_staff_ids = tuple(row["staff_id"] for row in staff_rows) or (-1,)
-
         rows = await self.fetch_all(
             f"""
             SELECT
-                moderator_id,
+                m.moderator_id,
                 COUNT(*) AS total,
                 COUNT(CASE
-                    WHEN datetime(replace(substr(timestamp,1,19),'T',' '))
+                    WHEN datetime(replace(substr(m.timestamp,1,19),'T',' '))
                         >= datetime('now','start of day')
                     THEN 1 END) AS daily,
                 COUNT(CASE
-                    WHEN datetime(replace(substr(timestamp,1,19),'T',' '))
+                    WHEN datetime(replace(substr(m.timestamp,1,19),'T',' '))
                         >= datetime('now','weekday 1','start of day','-7 days')
                     THEN 1 END) AS weekly,
                 COUNT(CASE
-                    WHEN datetime(replace(substr(timestamp,1,19),'T',' '))
+                    WHEN datetime(replace(substr(m.timestamp,1,19),'T',' '))
                         >= datetime('now','start of month')
                     THEN 1 END) AS monthly
-            FROM modlogs
-            WHERE moderator_id IN ({",".join(["?"] * len(active_staff_ids))})
-            AND guild_id = ?
-            GROUP BY moderator_id
-            ORDER BY {lb_type} DESC
+            FROM modlogs m
+            JOIN staffs s
+                ON s.staff_id = m.moderator_id
+            AND s.guild_id = m.guild_id
+            WHERE 
+                m.guild_id = ?
+                AND s.on_loa = 0
+                AND s.retired = 0
+                AND LOWER(m.mod_type) NOT IN ('unban', 'unmute', 'quarantine_release')
+            GROUP BY m.moderator_id
+            ORDER BY {lb_type} DESC;
             """,
-            (*active_staff_ids, guild_id),
+            (guild_id,),
         )
 
         leaderboard = []
@@ -1163,11 +1159,29 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             (ticket_id,),
         )
 
-    async def set_ticket_claimer(self, claimer: int, ticket_id: int) -> None:
-        await self.execute(
-            "UPDATE tickets SET claimer_user_id = ? WHERE ticket_id = ?",
+    async def set_ticket_claimer(
+        self,
+        claimer: int,
+        ticket_id: int,
+        guild_id: int
+    ) -> bool:
+        
+        """ Let's ensure the member """
+        await self.ensure_member(claimer, guild_id)
+
+
+        updated = await self.execute(
+            """
+            UPDATE tickets
+            SET claimer_user_id = ?
+            WHERE ticket_id = ?
+            AND claimer_user_id IS NULL
+            """,
             (claimer, ticket_id),
+            row_count=True
         )
+
+        return updated == 1
 
     async def create_ticket_log(
         self,
@@ -1178,9 +1192,14 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         ticket_type: str,
         transcripts_reference: int | None,
     ) -> int | None:
-        await self.ensure_member(opened_user_id, guild_id)
+        
+        """ Let's just prefer supplementary guild for now """
+        _guild_id = self.get_secondary_guild_id(guild_id) or guild_id
+
+
+        await self.ensure_member(opened_user_id, _guild_id)
         if staff_handled:
-            await self.ensure_staff(staff_handled, guild_id)
+            await self.ensure_staff(staff_handled, _guild_id)
 
         row_id = await self.execute(
             """
@@ -1191,7 +1210,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                guild_id,
+                _guild_id,
                 opened_user_id,
                 staff_handled,
                 reason,
@@ -1661,28 +1680,32 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         guild_id: int,
         issued_by: int,
         reason: str,
+        type: str,
+        expiry_date: str
     ) -> Dict[str, Any]:
         await self.ensure_staff(issued_by, guild_id)
         await self.ensure_staff(staff_id, guild_id)
 
-        exists = await self.fetch_one(
-            "SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?",
-            (staff_id, guild_id),
-        )
-        if not exists:
-            return {"success": False, "message": "Staff member not found"}
+        if expiry_date == "none":
+            iso_string = None
+        else:
+            days = int(expiry_date[:-1])
+            expires_on = datetime.now(UTC) + timedelta(days=days)
+            iso_string = expires_on.isoformat()
 
         await self.execute(
             """
-            INSERT INTO strikes (issued_by_id, issued_to_id, reason, date, guild_id)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO strikes (issued_by_id, issued_to_id, reason, date, guild_id, type, expiry_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 issued_by,
                 staff_id,
                 reason,
-                datetime.today().strftime("%d/%m/%Y"),
+                datetime.now(UTC).isoformat(),
                 guild_id,
+                type,
+                iso_string
             ),
         )
         return {
@@ -1690,7 +1713,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             "staff_id": staff_id,
             "issued_by": issued_by,
             "reason": reason,
-            "message": f"Successfully striked staff <@{staff_id}>",
+            "message": f"Successfully issued a {type} infraction to staff <@{staff_id}>",
         }
 
     async def remove_strike(
@@ -1760,7 +1783,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         try:
             rows = await self.fetch_all(
                 """
-                SELECT strike_id, reason, date, issued_by_id
+                SELECT strike_id, reason, date, issued_by_id, type, expiry_date
                 FROM strikes
                 WHERE issued_to_id = ? AND guild_id = ?
                 ORDER BY strike_id DESC
@@ -1776,6 +1799,8 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                     "reason": row["reason"],
                     "date": row["date"],
                     "manager": row["issued_by_id"],
+                    "type": row["type"],
+                    "expiry_date": row["expiry_date"]
                 }
                 for row in rows
             ]
@@ -1824,23 +1849,28 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             )
             roles_to_remove = [r["role_id"] for r in role_rows]
 
-            roles_to_add: tuple = ()
+            roles_to_add: List[int] = []
 
             try:
-                config = await self.fetch_one(
-                    "SELECT loa_role, staff_role_base FROM staff_configs WHERE guild_id = ?",
-                    (guild_id,),
+                rows = await self.fetch_all(
+                    """
+                    SELECT role_id, role_type
+                    FROM roles
+                    WHERE guild_id = ?
+                    AND role_type IN (?, ?)
+                    """,
+                    (guild_id, "staff_loa", "staff_base"),
                 )
-                if config:
-                    if config["loa_role"]:
-                        roles_to_add = (config["loa_role"],)
-                    if config["staff_role_base"]:
-                        roles_to_remove.extend(
-                            int(r)
-                            for r in config["staff_role_base"].split(",")
-                            if r.strip()
-                        )
-            except Exception:
+
+                roles = defaultdict(list)
+
+                for row in rows:
+                    roles[row["role_type"]].append(row["role_id"])
+
+                roles_to_add.extend(roles["staff_loa"])
+                roles_to_remove.extend(roles["staff_base"])
+
+            except Exception as e:
                 pass
 
             return {
@@ -1886,23 +1916,28 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             )
             roles_to_add = [r["role_id"] for r in role_rows]
 
-            roles_to_remove: tuple = ()
+            roles_to_remove: List[int] = []
 
             try:
-                config = await self.fetch_one(
-                    "SELECT loa_role, staff_role_base FROM staff_configs WHERE guild_id = ?",
-                    (guild_id,),
+                rows = await self.fetch_all(
+                    """
+                    SELECT role_id, role_type
+                    FROM roles
+                    WHERE guild_id = ?
+                    AND role_type IN (?, ?)
+                    """,
+                    (guild_id, "staff_loa", "staff_base"),
                 )
-                if config:
-                    if config["loa_role"]:
-                        roles_to_remove = (config["loa_role"],)
-                    if config["staff_role_base"]:
-                        roles_to_add.extend(
-                            int(r)
-                            for r in config["staff_role_base"].split(",")
-                            if r.strip()
-                        )
-            except Exception:
+
+                roles = defaultdict(list)
+
+                for row in rows:
+                    roles[row["role_type"]].append(row["role_id"])
+
+                roles_to_remove.extend(roles["staff_loa"])
+                roles_to_add.extend(roles["staff_base"])
+
+            except Exception as e:
                 pass
 
             return {
@@ -2331,18 +2366,19 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             },
         }
 
-    async def update_message(self, staff_id: int, guild_id: int, avatar_url: str | None = None) -> None:
+    async def update_message(self, staff_id: int, guild_id: int, avatar_url: str | None = None, name: str | None = None) -> None:
 
         """ Updating their profile each message to keep them upto date. """
         
         await self.execute(
                 """
-                INSERT INTO members (member_id, guild_id, avatar_url)
-                VALUES (?, ?, ?)
+                INSERT INTO members (member_id, guild_id, avatar_url, name)
+                VALUES (?, ?, ?, ?)
                 ON CONFLICT(member_id, guild_id)
                 DO UPDATE SET
-                    avatar_url = excluded.avatar_url;
-                """, (staff_id, guild_id, avatar_url)
+                    avatar_url = excluded.avatar_url,
+                    name = excluded.name
+                """, (staff_id, guild_id, avatar_url, name)
         )
         await self.execute(
             """
@@ -2646,41 +2682,66 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         )
 
         return row["quota_id"] if row else None
+    
+    async def get_quota_ids_from_checkby(
+        self,
+        guild_id: int,
+        check_by: str
+    ) -> list[int]:
+        rows = await self.fetch_all(
+            "SELECT quota_id FROM staff_quota WHERE guild_id = ? AND check_by = ?",
+            (guild_id, check_by)
+        )
+
+        return [row["quota_id"] for row in rows]
 
     async def reset_messages(self, type: str) -> None:
         await self.execute(f"UPDATE messages SET {type}_messages = 0")
-        
-    async def get_message_leaderboard(
-        self,
-        guild_id: int,
-        type: str,
-        top_k: int = 10,
-    ) -> List[Tuple[int, int]]:
-        valid_types = {
-            "daily": "daily_messages",
-            "weekly": "weekly_messages",
-            "monthly": "monthly_messages",
-            "total": "total_messages",
-        }
 
-        column = valid_types[type]
-
+    async def get_role_mapping(self, member_id: int, guild_id: int) -> List[int]:
         rows = await self.fetch_all(
-            f"""
-            SELECT member_id, {column}
-            FROM messages
-            WHERE guild_id = ?
-            ORDER BY {column} DESC
-            LIMIT ?
-            """,
-            (guild_id, top_k),
+            "SELECT role_id FROM roles_customize WHERE member_id = ? AND guild_id = ?",
+            (member_id, guild_id)
         )
 
-        return [
-            (row["member_id"], row[column])
-            for row in rows
-        ]
+        return [row["role_id"] for row in rows]
+    
+    async def add_role_mapping(
+        self,
+        member_id: int,
+        guild_id: int,
+        role_id: int
+    ) -> None:
+        await self.execute(
+            """
+            INSERT INTO roles_customize (
+                member_id,
+                guild_id,
+                role_id
+            )
+            VALUES (?, ?, ?)
+            ON CONFLICT(member_id, guild_id, role_id)
+            DO NOTHING
+            """,
+            (member_id, guild_id, role_id)
+        )
 
+    async def remove_role_mapping(
+        self,
+        member_id: int,
+        guild_id: int,
+        role_id: int
+    ) -> None:
+        await self.execute(
+            """
+            DELETE FROM roles_customize
+            WHERE member_id = ?
+            AND guild_id = ?
+            AND role_id = ?
+            """,
+            (member_id, guild_id, role_id)
+        )
+    
     async def ticket_stats(self, guild_id: int, staff_id: int) -> Dict[str, int]:
         rows = await self.fetch_all(
             """
@@ -2696,3 +2757,56 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             row["ticket_type"].replace("_", " ").title(): row["count"]
             for row in rows
         } 
+
+    async def leaderboard(self, guild_id: int, leaderboard_type: int) -> Dict[str, Any]:
+        types = {
+            0: "daily_messages",
+            1: "weekly_messages",
+            2: "monthly_messages",
+            3: "total_messages",
+        }
+
+        column = types.get(leaderboard_type)
+
+        if column is None:
+            return {
+                "success": False,
+                "error": "Invalid leaderboard type",
+                "leaderboard": []
+            }
+
+        query = f"""
+            SELECT
+                m.member_id,
+                m.name,
+                m.avatar_url,
+                msg.{column} AS messages
+            FROM messages msg
+            INNER JOIN members m
+                ON m.member_id = msg.member_id
+                AND m.guild_id = msg.guild_id
+            WHERE msg.guild_id = ?
+            ORDER BY msg.{column} DESC
+            LIMIT 100
+        """
+
+        rows= await self.fetch_all(query, (guild_id,))
+
+        leaderboard = []
+
+        for index, row in enumerate(rows, start=1):
+            leaderboard.append({
+                "rank": index,
+                "member_id": row["member_id"],
+                "name": row["name"],
+                "avatar_url": row["avatar_url"],
+                "messages": row["messages"]
+            })
+
+        return {
+            "success": True,
+            "guild_id": guild_id,
+            "type": column.replace("_messages", ""),
+            "count": len(leaderboard),
+            "leaderboard": leaderboard
+        }

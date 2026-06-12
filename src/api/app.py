@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from .routes.management import management_routes
 
 class LilyAPI:

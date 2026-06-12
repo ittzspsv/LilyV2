@@ -5,13 +5,13 @@ from discord.ext import commands, tasks
 from datetime import timedelta
 
 from typing import Optional
-from core.features.permissions.lily_permissions import permission
-from core.utils import lily_utility as LilyUtility
-from core.utils.embeds.sLilyEmbed import simple_embed
-from core.features.management.controller.lily_management_controller import LilyManagementController
-from core.features.management.types.staff_management_types import *
-from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.features.management.components.staff_management_components import LOARequestView
+from src.core.features.permissions.lily_permissions import permission
+from src.core.utils import lily_utility as LilyUtility
+from src.core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.features.management.controller.lily_management_controller import LilyManagementController
+from src.core.features.management.types.staff_management_types import *
+from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from src.core.features.management.components.staff_management_components import LOARequestView
 
 
 class LilyManagement(commands.Cog):
@@ -21,6 +21,7 @@ class LilyManagement(commands.Cog):
         self.db: Optional[BotGlobalsDatabaseAccess] = None
 
         self.message_reset_schedular.start()
+        self.quota_reset_schedular.start()
 
     async def on_load(self):
         self.controller = LilyManagementController(self.bot.db)
@@ -113,6 +114,103 @@ class LilyManagement(commands.Cog):
                 commit=True
             )
 
+    @tasks.loop(minutes=1)
+    async def quota_reset_schedular(self):
+        if self.bot.db is None:
+            return
+        
+        if self.controller is None:
+            return
+
+        now = LilyUtility.utcnow()
+
+        row = await self.bot.db.fetch_one(
+            "SELECT next_day_quota_update, next_week_quota_update, next_month_quota_update FROM updates"
+        )
+
+        if not row:
+            return
+        next_day, next_week, next_month = map(LilyUtility.parse_date, row)
+        """ Quota evaluator """
+        if next_day and now >= next_day:
+            new_day = now.replace(
+                hour=23,
+                minute=55,
+                second=0,
+                microsecond=0
+            )
+
+            if now >= new_day:
+                new_day += timedelta(days=1)
+
+            await self.bot.db.execute(
+                "UPDATE updates SET next_day_quota_update = ?",
+                (LilyUtility.iso(new_day),),
+                commit=True
+            )
+
+
+            """ Daily quota evaluator method here """
+            await self.controller.automatic_quota_evaluator("1d", self.bot)
+
+
+        """ Weekly quota evaluator """
+        if next_week and now >= next_week:
+            days_ahead = 7 - now.weekday()
+            if days_ahead == 0:
+                days_ahead = 7
+
+            new_week = (
+                (now + timedelta(days=days_ahead))
+                .replace(hour=0, minute=0, second=0, microsecond=0)
+                - timedelta(minutes=5)
+            )
+
+
+            await self.bot.db.execute(
+                "UPDATE updates SET next_week_quota_update = ?",
+                (LilyUtility.iso(new_week),),
+                commit=True
+            )
+            """ Weekly quota evaluator reset """
+            await self.controller.automatic_quota_evaluator("7d", self.bot)
+
+
+        """ Monthly quota evaluate """
+        if next_month and now >= next_month:
+            if now.month == 12:
+                new_month = now.replace(
+                    year=now.year + 1,
+                    month=1,
+                    day=1,
+                    hour=0,
+                    minute=0,
+                    second=0,
+                    microsecond=0
+                )
+            else:
+                new_month = now.replace(
+                    month=now.month + 1,
+                    day=1,
+                    hour=0,
+                    minute=0,
+                    second=0,
+                    microsecond=0
+                )
+
+            new_month -= timedelta(minutes=5)
+
+
+            await self.bot.db.execute(
+                "UPDATE updates SET next_month_quota_update = ?",
+                (LilyUtility.iso(new_month),),
+                commit=True
+            )
+
+
+            """ Monthly Quota evaluator """
+            await self.controller.automatic_quota_evaluator("30d", self.bot)
+
     async def daily_callback(self):
         if self.db is None:
             return
@@ -129,7 +227,6 @@ class LilyManagement(commands.Cog):
         if self.db is None:
             return
         
-
         await self.db.reset_messages("monthly")
 
     @commands.hybrid_group(name="staff", description="Staff management commands")
@@ -141,7 +238,7 @@ class LilyManagement(commands.Cog):
                 )
             )
 
-    @commands.hybrid_group(name="strike", description="Strike management commands")
+    @commands.hybrid_group(name="infraction", description="infraction management commands")
     async def strike(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await ctx.reply(
@@ -210,23 +307,23 @@ class LilyManagement(commands.Cog):
             await self.controller.fetch_all_staffs(ctx)
 
 
-    @strike.command(name='add', description='strikes a staff with a specified reason')
+    @strike.command(name='issue', description='Issue an infraction')
     @permission(command_name="strike_add")
-    async def staffstrike(self, ctx: commands.Context, staff: discord.Member, *, reason: str):
+    async def staffstrike(self, ctx: commands.Context, staff: discord.Member):
         if self.controller is not None:
-            await self.controller.strike_staff(ctx, staff, reason)
+            await self.controller.strike_staff(ctx, staff)
 
-    @strike.command(name='remove', description='strikes a staff with a specified reason')
+    @strike.command(name='remove', description='Remove an infraction')
     @permission(command_name="strike_remove")
-    async def removestrike(self, ctx: commands.Context, strike_id: str):
+    async def removestrike(self, ctx: commands.Context, infraction_id: str):
         if self.controller is not None:
-            await self.controller.remove_strike_staff(ctx, int(strike_id))
+            await self.controller.remove_strike_staff(ctx, int(infraction_id))
 
-    @strike.command(name="edit", description="Edit a reason of a strike")
+    @strike.command(name="edit", description="Edit a reason of a infraction")
     @permission(command_name="strike_edit")
-    async def strike_edit(self, ctx: commands.Context, strike_id: str, new_reason: str):
+    async def strike_edit(self, ctx: commands.Context, infraction_id: str, new_reason: str):
         if self.controller is not None:
-            await self.controller.edit_strike(ctx, int(strike_id), new_reason)
+            await self.controller.edit_strike(ctx, int(infraction_id), new_reason)
 
     @staff.command(name='edit', description='edits a staff data')
     @permission(command_name="staff_edit")
@@ -243,7 +340,7 @@ class LilyManagement(commands.Cog):
                 return 
             await self.controller.edit_staff(ctx, ctx.author.id, name, None, timezone, None)
 
-    @strike.command(name='show', description='shows strikes for a concurrent staff')
+    @strike.command(name='show', description='shows infractions for a concurrent staff')
     @permission(command_name="strike_show")
     async def strikes(self, ctx: commands.Context, staff: discord.Member):
         if self.controller is not None:

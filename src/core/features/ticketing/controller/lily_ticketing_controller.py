@@ -1,19 +1,30 @@
-from core.logging.lily_logging import LilyLoggingController
-from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.utils.embeds.sLilyEmbed import ParseAdvancedEmbed, simple_embed
-from core.configs.sBotDetails import img
-from typing import Any
-from ..components.LilyTicketToolComponents import TicketSelector, TicketComponentEmbed
-
-from discord.ext import commands
-
-import json
-import discord
 import asyncio
 import io
-import DiscordTranscript
+import json
 
-from ..classes.ticketing_classes import DatabaseAccess
+import discord
+import DiscordTranscript
+from discord.ext import commands
+
+from src.core.configs.sBotDetails import img
+from src.core.database.integrations.bot_globals import (
+    BotGlobalsDatabaseAccess,
+)
+from src.core.logging.lily_logging import (
+    LilyLoggingController,
+)
+from src.core.utils.embeds.sLilyEmbed import (
+    ParseAdvancedEmbed,
+    simple_embed,
+)
+
+from ..classes.ticketing_classes import (
+    DatabaseAccess,
+)
+from ..components.LilyTicketToolComponents import (
+    TicketComponentEmbed,
+    TicketSelector,
+)
 
 
 class LilyTicketingController:

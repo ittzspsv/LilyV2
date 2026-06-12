@@ -1,6 +1,5 @@
 import discord
-import core.configs.sValueConfig as VC
-import core.configs.sBotDetails as Configs
+import src.core.configs.sBotDetails as Configs
 import io
 from discord.ui import View, Button
 

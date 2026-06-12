@@ -5,17 +5,17 @@ import aiohttp
 import asyncio
 import time
 
-from discord.utils import MISSING
 
-import core.utils.components.sLilyComponentV2 as CV2
-from core.utils.embeds.sLilyEmbed import simple_embed
-from core.features.permissions.lily_permissions import permission
-from core.utils.components.sLIlyGlobalComponents import CommandInfo as CI
-from core.utils.embeds.sLilyEmbed import ParseAdvancedEmbed
-from core.utils.types.types import ChannelEnum, CommandEnum, NotifiersEnum
-from core.logging.lily_logging import LilyLoggingController
-from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.utils.components.sLIlyGlobalComponents import RoleCustomizationModal
+from io import BytesIO
+from src.core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.features.permissions.lily_permissions import permission
+from src.core.utils.components.sLIlyGlobalComponents import CommandInfo as CI
+from src.core.utils.embeds.sLilyEmbed import ParseAdvancedEmbed
+from src.core.utils.types.types import ChannelEnum, CommandEnum, NotifiersEnum
+from src.core.logging.lily_logging import LilyLoggingController
+from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from src.core.utils.components.sLIlyGlobalComponents import RoleCustomizationModal
+from src.core.visuals.cards.quote import make_quote_card
 from discord.ext import commands
 from discord import app_commands
 
@@ -23,12 +23,7 @@ from discord import app_commands
 class LilyUtility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.afk_cache: dict = {"automod_rule_id": None, "currently_afk": []}
 
-    def initialize_cache(self):
-        with open("storage/configs/AutomodConfig.json", "r") as file:
-            self.afk_cache = json.load(file)
-    
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot:
@@ -37,32 +32,56 @@ class LilyUtility(commands.Cog):
         if message.guild is None:
             return
 
-        if message.author.id in self.afk_cache.get("currently_afk", []):
-            self.afk_cache["currently_afk"].remove(message.author.id)
+        if not isinstance(message.author, discord.Member):
+            return
+        
+        """ This only works for peoples with staff roles.  Nothing else, so we need to make sure staffs won't abuse this """
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        allowed_roles = bot_db.get_permission_roles(message.guild.id, "mute")
 
-            automod_rule_id = self.afk_cache.get("automod_rule_id")
-            mention_keyword = f"<@{message.author.id}>"
+        author_role_ids = {role.id for role in message.author.roles}
 
-            if automod_rule_id:
-                try:
-                    lily_automod = await message.guild.fetch_automod_rule(automod_rule_id)
-                    automod_keywords = lily_automod.trigger.keyword_filter
-                    if mention_keyword in automod_keywords:
-                        updated_keywords = [kw for kw in automod_keywords if kw != mention_keyword]
-                        new_trigger = discord.AutoModTrigger(keyword_filter=updated_keywords)
-                        await lily_automod.edit(trigger=new_trigger)
-                except discord.NotFound:
-                    pass
+        if not any(role_id in author_role_ids for role_id in allowed_roles):
+            return
+         
+        if message.content.startswith(f"<@{self.bot.user.id}>") or message.content.startswith(f"<@!{self.bot.user.id}>"):
+            if message.reference is None:
+                return
+            content = message.content.lower()
+            if "quote" not in content:
+                return
+            
+            message_ref_id = message.reference.message_id
 
-            with open("storage/configs/AutomodConfig.json", "w") as file:
-                json.dump(self.afk_cache, file, indent=4)
+            if message_ref_id is None:
+                return
+            
+            replied_msg = await message.channel.fetch_message(message_ref_id)
+            author: discord.Member | discord.User = replied_msg.author
+            content = replied_msg.content
 
-            await message.reply(embed=simple_embed(f"{message.author.mention} is no longer AFK. Welcome back!"))
+            """ Delete the original message if possible """
+            try:
+                await message.delete()
+            except discord.Forbidden:
+                pass
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.initialize_cache()
+            avatar_bytes = await author.display_avatar.read()
+            
+            image = await asyncio.to_thread(
+                make_quote_card,
+                image=avatar_bytes,
+                quote=content,
+                author=author.display_name,
+                handle=f"@{author.name}"
+            )
 
+            buffer = BytesIO()
+            image.save(buffer, format="PNG")
+            buffer.seek(0)
+
+            await message.channel.send(file=discord.File(buffer, filename="quote.png"))
+    
     @commands.hybrid_group()
     async def set(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
@@ -72,6 +91,17 @@ class LilyUtility(commands.Cog):
     async def configure(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await ctx.reply(embed=simple_embed("Lily Utility Configurators"))
+
+    @commands.hybrid_group()
+    async def customize(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await ctx.reply(embed=simple_embed("Lily Utility Customizations"))
+
+    @commands.hybrid_group()
+    async def remove(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await ctx.reply(embed=simple_embed("Lily Utility Removers"))
+
 
     '''
     # MESSAGING UTILITY
@@ -265,26 +295,104 @@ class LilyUtility(commands.Cog):
             print(e)
 
 
-    @set.command(name='role_icon', description='Sets a role icon for a specific role')
-    @permission(command_name="set_role_icon", restrict=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def role_icon(self, ctx: commands.Context, role: discord.Role=None, icon: discord.Attachment=None):        
+    @customize.command(name="role", description="Customize your role")
+    async def customize_role(
+        self,
+        ctx: commands.Context,
+        role: discord.Role,
+        name: str = None,
+        primary_color: str = None,
+        secondary_color: str = None,
+        icon: discord.Attachment = None
+    ):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("You need to use this command inside a guild"))
+
+        if role >= ctx.guild.me.top_role:
+            return await ctx.reply(embed=simple_embed("I can't edit a role that is above me", 'cross'))
+
+        assert isinstance(ctx.author, discord.Member)
+
         await ctx.defer()
 
-        if icon.content_type not in ("image/png", "image/jpeg"):
-            return await ctx.reply("Role icons must be a **PNG or JPG** image.",ephemeral=True)
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        valid_roles = await bot_db.get_role_mapping(ctx.author.id, ctx.guild.id)
+
+        if role.id not in valid_roles:
+            return await ctx.reply(embed=simple_embed("You don't have any roles mapped that you can customize", 'cross'))
+
+        def parse_hex_color(hex_str: str) -> discord.Color:
+            hex_str = hex_str.strip().lstrip('#')
+            if len(hex_str) != 6:
+                raise ValueError(f"Invalid hex color: '{hex_str}'")
+            return discord.Color(int(hex_str, 16))
+
+        parameters = {}
+
+        if name is not None:
+            parameters["name"] = name
+
+        if icon is not None:
+            parameters["display_icon"] = await icon.read()
+
+        if primary_color is not None:
+            try:
+                parameters["color"] = parse_hex_color(primary_color)
+            except ValueError:
+                return await ctx.reply(embed=simple_embed("Invalid color format.", 'cross'))
+
+        if secondary_color is not None:
+            try:
+                parameters["secondary_color"] = parse_hex_color(secondary_color)
+            except ValueError:
+                return await ctx.reply(embed=simple_embed("Invalid color format.", 'cross'))
+
         try:
-            icon_bytes = await icon.read()
+            await role.edit(**parameters, reason=f"Role customized by {ctx.author}")
+            await ctx.reply("Successfully updated role!")
+        except discord.Forbidden:
+            await ctx.reply(embed=simple_embed("I don't have permission to edit roles", 'cross'))
+        except ValueError as e:
+            await ctx.reply(embed=simple_embed(f"Invalid parameter value: {e}", 'cross'))
+        except discord.HTTPException as e:
+            await ctx.reply(embed=simple_embed(f"An Unknown error occured while editing a role", 'cross'))
 
-            await role.edit(
-                display_icon=icon_bytes,
-                reason=f"Role icon updated by {ctx.author}"
-            )
 
-        except discord.HTTPException:
-            return await ctx.reply("That image format is not supported by Discord.")
 
-    @commands.hybrid_command(name='edit_profile', description='Sets the profile of the bot per server')
+    @permission(command_name="set_rolecustomize")
+    @set.command(name="rolecustomize", description="Allows a person to customize a role without manage roles")
+    async def set_role_customize(self, ctx: commands.Context, member: discord.Member, role: discord.Role):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("You need to use this command inside an guild"))
+
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        await bot_db.add_role_mapping(
+            member.id,
+            ctx.guild.id,
+            role.id
+        )
+        
+        await ctx.reply(embed=simple_embed(f"Successfully added customizable entry for {member.mention} with {role.mention}"))
+        await member.send(f"Hey, You can now customize {role.name} (dev_id: {role.id}) in {ctx.guild.name}.  Use `/customize role` to see what happens!")
+
+    @permission(command_name="remove_rolecustomize")
+    @remove.command(name="rolecustomize", description="Removes a person from customizing a role without manage roles")
+    async def remove_role_customize(self, ctx: commands.Context, member: discord.Member, role: discord.Role):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("You need to use this command inside an guild"))
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        await bot_db.remove_role_mapping(
+            member.id,
+            ctx.guild.id,
+            role.id
+        )
+
+        await ctx.reply(embed=simple_embed(f"Successfully removed customizable entry for {role.mention} assigned to {member.mention}"))
+        await member.send(f"Hey, You can no longer customize {role.name} (dev_id: {role.id}) in {ctx.guild.name}.")
+
+
+    @customize.command(name='bot', description='Customize the bot for this server (visually)')
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @permission(command_name="edit_profile", restrict=True)
     async def edit_profile(self, ctx: commands.Context, bio: str, avatar: discord.Attachment, banner: discord.Attachment):
@@ -296,37 +404,12 @@ class LilyUtility(commands.Cog):
             banner_bytes = await banner.read()
             await bot_member.edit(avatar=avatar_bytes,banner=banner_bytes,bio=bio)
 
-            await ctx.reply("Profile Edit Success, Will be updated within few mins.")
+            await ctx.reply("Profile Edit Success. Will be updated within few mins.")
         except Exception as e:
             print(f"Exception [edit_profile] {e}")
             await ctx.reply("An Unknown error Occured")
 
-    @commands.hybrid_command(name='check_reaction', description='Checks if an user has reacted to an message')
-    @permission(command_name="check_reaction")
-    async def check_reaction(self, ctx: commands.Context, member: discord.Member=None, message_id: int=None, emoji_str: str=None):
-        if member is None or message_id is None or emoji_str is None:
-            await ctx.reply(view=CI(ctx, "Check Reaction", ["check_reaction user message_id emoji", f"check_reaction {ctx.me.mention} 1488478394361446470 😊"]))
-            return
-        try:
-            message = await ctx.channel.fetch_message(message_id)
-        except discord.NotFound:
-            return await ctx.reply("Message not found!")
-
-        reacted = False
-        for reaction in message.reactions:
-            if str(reaction.emoji) == emoji_str:
-                async for user in reaction.users():
-                    if user.id == member.id:
-                        reacted = True
-                        break
-                if reacted:
-                    break
-
-        if reacted:
-            await ctx.reply(embed=simple_embed(f"{member.mention} has reacted"))
-        else:
-            await ctx.reply(embed=simple_embed(f"{member.mention} has not reacted", 'cross'))
-        
+    """
     @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     @commands.hybrid_command(name="afk", description="Puts the user to afk mode")
     @permission(command_name="afk")
@@ -369,7 +452,7 @@ class LilyUtility(commands.Cog):
             json.dump(self.afk_cache, file, indent=4)
 
         await ctx.reply(embed=simple_embed(f"{ctx.author.mention} is now AFK : {message}"))
-
+    """
     @commands.hybrid_command(name="about", description="Know something about the bot")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def about(self, ctx: commands.Context):
@@ -514,7 +597,54 @@ class LilyUtility(commands.Cog):
         db: BotGlobalsDatabaseAccess = self.bot.db
         await db.set_permission(ctx.guild.id, role.id, cmd_enum.value)
 
-        await ctx.reply(embed=simple_embed(f"Successfully assigned `{cmd_enum.value.title()}` permission to {role.mention}"))
+        await ctx.reply(embed=simple_embed(f"Successfully assigned `{cmd_enum.value.replace("_", " ").title()}` permission to {role.mention}"))
+
+    @permission(command_name="remove_permission")
+    @remove.command("permission", description="Removes a command permission from certain role for a command")
+    @app_commands.autocomplete(command=command_autocomplete)
+    async def remove_permission(self, ctx: commands.Context, command: str, role: discord.Role):
+        try:
+            cmd_enum = CommandEnum(command)
+        except ValueError:
+            await ctx.reply(embed=simple_embed(f"`{command}` is not a valid command", 'cross'))
+            return
+        
+        if ctx.guild is None:
+            await ctx.reply(embed=simple_embed("This command can only be used inside a guild", 'cross'))
+            return
+        
+        db: BotGlobalsDatabaseAccess = self.bot.db
+        await db.remove_permission(ctx.guild.id, role.id, cmd_enum.value)
+
+        await ctx.reply(embed=simple_embed(f"Successfully removed `{cmd_enum.value.replace("_", " ").title()}` permission from {role.mention}"))
+
+    @permission(command_name="permissions")
+    @commands.hybrid_command(name="permissions", description="List out permissions that a role has")
+    async def permissions(self, ctx: commands.Context, role: discord.Role):
+        if ctx.guild is None:
+            await ctx.reply(
+                embed=simple_embed(
+                    "This command can only be used inside a guild",
+                    "cross"
+                )
+            )
+            return
+
+        db: BotGlobalsDatabaseAccess = self.bot.db
+        permissions = db.get_permissions(ctx.guild.id, role.id)
+
+        if not permissions:
+            await ctx.reply(
+                embed=simple_embed(
+                    f"{role.mention} has no configured permissions.",
+                    "cross"
+                )
+            )
+            return
+
+        await ctx.reply(
+            embed=discord.Embed(title="Permissions", description=", ".join(permissions), color=16777215)
+        )
 
     @permission(command_name="set_prefix")
     @set.command(name="prefix", description="Change prefix of the bot")
@@ -575,6 +705,29 @@ class LilyUtility(commands.Cog):
                 )
             )
 
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name="quote", description="Create a quote")
+    @permission(command_name="quote", restrict=True)
+    async def quote(self, ctx: commands.Context, member: discord.Member, * ,quote: str) -> None:
+        await ctx.defer()
+        avatar_bytes = await member.display_avatar.read()
+            
+        image = await asyncio.to_thread(
+            make_quote_card,
+            image=avatar_bytes,
+            quote=quote,
+            author=member.display_name,
+            handle=f"@{member.name}"
+        )
+
+        buffer = BytesIO()
+        image.save(buffer, format="PNG")
+        buffer.seek(0)
+        await ctx.send(file=discord.File(buffer, filename="quote.png"))
+        try:
+            await ctx.message.delete()
+        except:
+            pass
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

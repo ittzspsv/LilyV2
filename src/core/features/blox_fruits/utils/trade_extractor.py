@@ -1,6 +1,6 @@
 import re
 from word2number.w2n import word_to_num
-from core.utils.lily_utility import proper_capatilize
+from src.core.utils.lily_utility import proper_capatilize
 from ....database.integrations.blox_fruits import BloxFruitsDatabase
 from .trade_matcher import match_fruit_set, is_permanent_match
 

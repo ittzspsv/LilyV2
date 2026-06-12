@@ -2,11 +2,10 @@ from typing import Union, Optional
 import os
 import json
 
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Any, Dict
+from datetime import datetime, timezone
+from typing import Optional
 
 import discord
-import aiohttp
 from discord.ext import commands
 from discord.ext.commands import MemberConverter
 

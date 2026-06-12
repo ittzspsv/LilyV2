@@ -117,7 +117,7 @@ def suggest_builder(
 
     return best_selection
 
-async def trade_suggestor(
+def trade_suggestor(
         db: BloxFruitsDatabase, 
         user_fruits, 
         fruit_types, 

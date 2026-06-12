@@ -1,7 +1,7 @@
 import discord
-import core.configs.sBotDetails as config
+import src.core.configs.sBotDetails as config
 
-from core.utils.lily_utility import format_currency
+from src.core.utils.lily_utility import format_currency
 from typing import List
 
 def build_fruit_value_embed(item_data: dict) -> discord.Embed:

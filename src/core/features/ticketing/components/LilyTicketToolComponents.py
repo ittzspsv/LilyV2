@@ -1,22 +1,41 @@
-import discord
-from discord.utils import MISSING
-from discord.ext.commands import MemberConverter
-from discord.ext import commands
-from core.configs.sBotDetails import emoji, img, appeal_server_link
-
-from core.utils.embeds.sLilyEmbed import simple_embed
-from core.features.moderation.components.sLilyModerationComponents import build_mod_logs_embed_absolute
-from typing import Dict, Optional, List, cast, Any
-
-import re
-import asyncio
-
 from datetime import datetime, timedelta, timezone
-from core.features.moderation.components.sLilyModerationComponents import warn_embed, ban_embed, mute_embed
-from ..classes.ticketing_classes import DatabaseAccess
+from typing import Dict, List, Optional, cast
+import re
 
-from core.features.moderation.utils.moderation_utils import mute_parser
-from core.utils.lily_utility import utcnow
+import discord
+from discord.ext import commands
+from discord.ext.commands import MemberConverter
+from discord.utils import MISSING
+
+from src.core.configs.sBotDetails import (
+    appeal_server_link,
+    emoji,
+    img,
+)
+
+from src.core.features.moderation.components.sLilyModerationComponents import (
+    ProofsView,
+    ban_embed,
+    build_mod_logs_embed_absolute,
+    mute_embed,
+    warn_embed,
+)
+
+from src.core.features.moderation.utils.moderation_utils import (
+    mute_parser,
+)
+
+from src.core.utils.embeds.sLilyEmbed import (
+    simple_embed,
+)
+
+from src.core.utils.lily_utility import (
+    utcnow,
+)
+
+from ..classes.ticketing_classes import (
+    DatabaseAccess,
+)
 
 
 
@@ -499,9 +518,30 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                 ]
             )
 
+        self.opener_actions: discord.ui.Select = discord.ui.Select(
+                custom_id=f"opener-actions{self.ticket_channel_id}",
+                min_values=1,
+                max_values=1,
+                options=[
+                    discord.SelectOption(
+                        label="Case List",
+                        value="case_list",
+                        description="View the cases of the user",
+                        emoji=emoji["logs"]
+                    ),
+                    discord.SelectOption(
+                        label="Dummy",
+                        value="dummy",
+                        description="This is a dummy and it does nothing",
+                        emoji=emoji["logs"]
+                    )
+                ]
+            )
+
         self.claim_ticket.callback = self.claim_ticket_callback
         self.revoke_claim.callback = self.revoke_claim_callback
         self.actions.callback = self.actions_callback
+        self.opener_actions.callback = self.opener_actions_callback
 
         opener_details = submission_json.get("opener", {})
 
@@ -538,6 +578,9 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                     media=avatar_url,
                 ),
             ),
+            discord.ui.ActionRow(
+                self.opener_actions
+            ),
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small)
         )
 
@@ -558,8 +601,6 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                         f"**{label}**\n```{value}```"
                     )
                 )
-
-                
 
             elif field_type == "member":
                 if value["flag"] == 0:
@@ -644,25 +685,23 @@ class TicketComponentEmbed(discord.ui.LayoutView):
         is_staff = any(role.id in self.allowed_roles for role in interaction.user.roles)
         is_opener = interaction.user.id == self.opener_id
 
-        claimer = await self.db.bot_db.get_ticket_claimer(interaction.channel.id)
-
         if not is_staff or is_opener:
             await interaction.followup.send(
                 embed=simple_embed("You are not allowed to claim this ticket!", 'cross'),
                 ephemeral=True
             )
             return
-        
-        if claimer is not None:
+
+        success = await self.db.bot_db.set_ticket_claimer(interaction.user.id, interaction.channel.id, interaction.guild.id)
+        if not success:
+            claimer = await self.db.bot_db.get_ticket_claimer(interaction.channel.id)
             await interaction.followup.send(
-                embed=simple_embed(f"<@{claimer}> has already claimed the ticket!", 'cross'),
+                embed=simple_embed(f"<@{claimer}> has already claimed this ticket!", 'cross'),
                 ephemeral=True
-            ) 
-
+            )
             return
-        
-        channel = interaction.channel
 
+        channel = interaction.channel
         if isinstance(channel, discord.TextChannel) and isinstance(interaction.user, discord.Member):
             await channel.set_permissions(
                 interaction.user,
@@ -674,14 +713,10 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                 read_message_history=True
             )
 
-        await self.db.bot_db.set_ticket_claimer(interaction.user.id, interaction.channel.id)
-
         self.claim_ticket.disabled = True
         self.claim_ticket.label = "Claimed"
         self.claim_ticket.style = discord.ButtonStyle.secondary
-
         self.ticket_message = interaction.message
-
         await interaction.message.edit(view=self)
         await interaction.followup.send(embed=simple_embed(f"{interaction.user.mention} has claimed the ticket!"))
 
@@ -758,9 +793,47 @@ class TicketComponentEmbed(discord.ui.LayoutView):
         
         """ Fetch modlogs of the reported member """
         reported_member_data = self.misc["reported_member"]
+        await self.case_list_handler(interaction, reported_member_data)
+
+    async def case_list_callback_opener(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        if interaction.guild is None:
+            return
+        
+        """ If member instance is an integer we need to fetch him """
+        if self.opener is None:
+            member = interaction.guild.get_member(self.opener_id)
+
+            if member is None:
+                try:
+                    member = await interaction.guild.fetch_member(self.opener_id)
+                except discord.NotFound:
+                    await interaction.followup.send(embed=simple_embed("Cannot fetch member.  He might have left the server", 'cross'))
+                    return
+        elif isinstance(self.opener, discord.Member):
+            member = self.opener
+        else:
+            raise ValueError("Invalid member type")
+        
+        member_data = {
+            "id": member.id,
+            "avatar": member.display_avatar.url,
+            "username": member.global_name
+        }
+
+        await self.case_list_handler(interaction, member_data)
+            
+    async def case_list_handler(self, interaction: discord.Interaction, member_data: dict) -> None:
+
+        assert isinstance(interaction.guild, discord.Guild)
+
+        _guild_id = self.db.bot_db.get_secondary_guild_id(interaction.guild.id) or interaction.guild.id
+        
+        """ Fetch modlogs of the given member """
         payload = {
-            "guild_id": interaction.guild.id,
-            "target_user_id": reported_member_data["id"],
+            "guild_id": _guild_id,
+            "target_user_id": member_data["id"],
             "moderator_id": None,
             "mod_type": "all",
             "page_start": 0,
@@ -770,18 +843,23 @@ class TicketComponentEmbed(discord.ui.LayoutView):
         result = await self.db.bot_db.fetch_mod_logs(**payload)
         if not result["success"]:
             await interaction.followup.send(embed=simple_embed("No cases found.", 'cross'), ephemeral=True)
-            return
+            return  
 
         embed =  build_mod_logs_embed_absolute(
-            username=reported_member_data["username"],
-            avatar=reported_member_data["avatar"],
+            username=member_data["username"],
+            avatar=member_data["avatar"],
             display_logs=result["logs"],
             mod_type_counts=result["counts"],
             total_count=result["total_logs"],
             page_start=0
         )
-
-        await interaction.followup.send(embeds=embed, ephemeral=True)
+        
+        logging_channel_id = self.db.bot_db.get_channel(_guild_id, "logs_channel")
+        if logging_channel_id is not None and result["proofs_exists"]:
+            view = ProofsView(result["logs"], logging_channel_id, _guild_id)
+            await interaction.followup.send(embeds=embed, view=view, ephemeral=True)
+        else:
+            await interaction.followup.send(embeds=embed, ephemeral=True)
 
     async def actions_callback(self, interaction: discord.Interaction):
         """ Only allow staff members"""
@@ -830,6 +908,28 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                     proofs=self.misc["proofs"]
                 )
             )
+
+    async def opener_actions_callback(self, interaction: discord.Interaction):
+        is_staff = any(role.id in self.allowed_roles for role in interaction.user.roles)
+        is_opener = interaction.user.id == self.opener_id
+
+        if not is_staff or is_opener:
+            await interaction.response.send_message(
+                embed=simple_embed("You are not allowed to use this!", 'cross'),
+                ephemeral=True
+            )
+            return
+        
+        if interaction.guild is None:
+            return
+
+        assert isinstance(self.actions, discord.ui.Select)
+        value = self.opener_actions.values[0]
+        
+        if value == "case_list":
+            await self.case_list_callback_opener(interaction)
+        elif value == "dummy":
+            await interaction.response.send_message("Oh!, The reason this dummy is here is due to how selectors in discord work.\n- You can only select the item inside a selector once, if that's only one Item.\n- Unless you reopen discord.", ephemeral=True)
 
 class TicketModal(discord.ui.Modal):
     def __init__(self, title: str, modal_data: dict, json_data, db: DatabaseAccess, message: discord.Message):
@@ -920,6 +1020,8 @@ class TicketModal(discord.ui.Modal):
         opener = interaction.user
         logging_channel_id = core_json.get("BasicConfigurations").get("TicketLoggingHandler")
         ticket_name_base = submission_json.get("ticket_name_base")
+        channel_emoji = submission_json.get("channel_emoji", "")
+        ticket_name = f"{channel_emoji}{ticket_name_base}"
     
         channel_category = interaction.guild.get_channel(channel_id)
 
@@ -979,13 +1081,13 @@ class TicketModal(discord.ui.Modal):
                 )
         if isinstance(channel_category, discord.CategoryChannel):
             text_channel: discord.TextChannel = await interaction.guild.create_text_channel(
-                name=f"{ticket_name_base}-{opener.name}",
+                name=f"{ticket_name}-{opener.name}",
                 category=channel_category,
                 overwrites=overwrites
             )
         else:
             text_channel: discord.TextChannel = await interaction.guild.create_text_channel(
-                name=f"{ticket_name_base}-{opener.name}",
+                name=f"{ticket_name}-{opener.name}",
                 overwrites=overwrites
             )
 
@@ -1037,6 +1139,7 @@ class TicketModal(discord.ui.Modal):
 
         channel_id = self.modal_data.get("channel_id")
         ticket_name_base = self.modal_data.get("ticket_base_name", "ticket")
+        channel_emoji = self.modal_data.get("channel_emoji", "")
         ping_roles = self.modal_data.get("ping_roles", [])
         logs_channel_id  = self.json_data["BasicConfigurations"]["TicketLoggingHandler"]
 
@@ -1108,6 +1211,7 @@ class TicketModal(discord.ui.Modal):
             "fields": self.fields,
             "field_data": field_data,
             "ticket_name_base": ticket_name_base,
+            "channel_emoji": channel_emoji,
             "logs_channel_id" : logs_channel_id,
             "ping_roles" : ping_roles
         }

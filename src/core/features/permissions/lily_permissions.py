@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from discord.ext import commands
 from ...database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, List
 
 if TYPE_CHECKING:
-    from main import Lily
+    from lily import Lily
 
 import discord
 
@@ -54,7 +54,16 @@ def permission(command_name: str, restrict: bool = False):
                 return True
             else:
                 if not has_perm:
-                    raise commands.CheckFailure("Required role missing.")
+                    roles: List[int] = db.get_permission_roles(ctx.guild.id, command_name)
+                    roles_string: str = (
+                        ", ".join(f"<@&{role_id}>" for role_id in roles)
+                        if roles
+                        else "No roles configured."
+                    )
+                    raise commands.CheckFailure(
+                        f"Missing Permission\n"
+                        f"Required role (any): {roles_string}"
+                    )
                 return True
 
         return commands.check(predicate)(func)

@@ -1,19 +1,28 @@
 from ....database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.configs.sBotDetails import emoji, img, bot_command_prefix
+from src.core.configs.sBotDetails import emoji, img, bot_command_prefix
 from discord.ext import commands
-from core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.utils.embeds.sLilyEmbed import simple_embed
 from ..types.staff_management_types import QuotaCheckBy
-from typing import Optional, cast
+from typing import Optional, cast, Final
 from ..embeds.staff_management_embed import *
 
 from ..components.staff_management_components import (
     StaffsView,
-    LOARequestModal
+    LOARequestModal,
+    InfractionModal
 )
 
 import discord
 import asyncio
 import re
+
+
+quota_conclusion_mapping: Final = {
+    "1d": "Daily",
+    "7d": "Weekly",
+    "30d": "Monthly"
+}
+
 
 class LilyManagementController:
     def __init__(self, bot_db: BotGlobalsDatabaseAccess) -> None:
@@ -354,83 +363,13 @@ class LilyManagementController:
         except Exception as e:
             print(f"Staff Edit Exception {e}")
 
-    async def strike_staff(self, ctx: commands.Context, staff: discord.Member, reason: str):
-        try:
-            if ctx.guild is None:
-                embed = discord.Embed(
-                    title=f"{emoji['cross']} Error",
-                    description="Cannot execute this command without an guild object",
-                    colour=0xf50000
-                )
+    async def strike_staff(self, ctx: commands.Context, staff: discord.Member):
+        interaction = ctx.interaction
+        if not isinstance(interaction, discord.Interaction):
+            return await ctx.reply(embed=simple_embed("Please run this command as a slash command", 'cross'))
 
-                await ctx.reply(embed=embed)
-                return
-            payload = {
-                "staff_id": staff.id,
-                "guild_id": ctx.guild.id,
-                "issued_by": ctx.author.id,
-                "reason": reason
-            }
+        await interaction.response.send_modal(InfractionModal(self.bot_db, staff))
 
-            response = await self.bot_db.strike_staff(**payload)
-
-            if not response.get("success"):
-                await ctx.reply(embed=simple_embed(response.get("message") or "An unknown object has been returned and failed", "cross"))
-                return
-
-            message = response.get("message")
-            issued_by = response.get("issued_by")
-            strike_reason = response.get("reason")
-
-
-            channel_id = self.bot_db.get_channel(ctx.guild.id, "staff_updates")
-            assert isinstance(ctx.author, discord.Member)
-            await staff.send(embed=strike_embed(ctx.author, reason, ctx.guild.name))
-
-            staff_updates_channel: discord.TextChannel | None = None
-
-            if channel_id is not None:
-                channel = ctx.guild.get_channel(channel_id)
-
-                if channel is None:
-                    try:
-                        channel = await ctx.guild.fetch_channel(channel_id)
-                    except Exception:
-                        channel = None
-
-                if isinstance(channel, discord.TextChannel):
-                    staff_updates_channel = channel
-
-            embed = discord.Embed(
-                color=16777215,
-                title="Strike Information",
-                description=f"### {staff.mention} has been Striked!"
-            )
-            embed.set_thumbnail(url=staff.display_avatar.url)
-            embed.set_image(url=img['border'])
-
-
-            embed.add_field(
-                name="Striked By",
-                value=f"<@{issued_by}>",
-                inline=False,
-            )
-
-            embed.add_field(
-                name="Reason",
-                value=f"- {strike_reason}",
-                inline=False,
-            )
-
-            await ctx.reply(embed=simple_embed(message or "An unknown object has been returned, but It's an success!"))
-
-            if staff_updates_channel:
-                await staff_updates_channel.send(
-                    content=staff.mention,
-                    embed=embed
-                )
-        except Exception as e:
-            print(e)
 
     async def remove_strike_staff(self, ctx: commands.Context, strike_id: int):
         if ctx.guild is None:
@@ -948,7 +887,8 @@ class LilyManagementController:
                 await self.bot_db.update_message(**{
                     "guild_id": message.guild.id,
                     "staff_id": message.author.id,
-                    "avatar_url": message.author.display_avatar.url
+                    "avatar_url": message.author.display_avatar.url,
+                    "name": message.author.name
                 })
         except Exception as e:
             pass
@@ -1076,6 +1016,12 @@ class LilyManagementController:
             remaining_msg = max(min_msg - weekly, 0)
             remaining_ms = max(min_ms - weekly_ms, 0)
 
+            overall_status = (
+                f"## {emoji["checked"]} Passed" 
+                if result.get("message_quota_passed") and result.get("ms_quota_passed")
+                else f"## {emoji["cross"]} Failed"
+            )
+
             msg_status = (
                 f"{emoji['checked']} Passed ({weekly}/{min_msg})"
                 if result.get("message_quota_passed")
@@ -1089,12 +1035,14 @@ class LilyManagementController:
             )
 
             embed = discord.Embed(
-                title=f"Displaying Quota State for {staff}",
+                title=f"Displaying Quota Status for {staff}",
+                description=overall_status,
                 color=16777215
             )
 
             embed.set_thumbnail(url=staff.display_avatar.url)
 
+            """
             embed.add_field(
                 name="Message Stats",
                 value=(
@@ -1120,9 +1068,10 @@ class LilyManagementController:
                 ),
                 inline=False
             )
+            """
 
             embed.add_field(
-                name="Conclusion",
+                name="Results",
                 value=(
                     f"- **Messages:** {msg_status}\n"
                     f"- **Moderation:** {ms_status}"
@@ -1234,3 +1183,92 @@ class LilyManagementController:
         embed.set_image(url=img['border'])
 
         await ctx.reply(embed=embed)
+
+    async def automatic_quota_evaluator(self, check_by: str, bot):
+        data = await self.bot_db.get_webhooks_of_type("quota_updates")
+
+        for guild_id, webhook_url in data.items():
+            if webhook_url is None:
+                continue
+
+            
+            try:
+                webhook = discord.Webhook.from_url(webhook_url, client=bot)
+            except ValueError: # Failed to fetch the webhook
+                continue
+
+            """ Else start evaluating """
+            quota_ids = await self.bot_db.get_quota_ids_from_checkby(guild_id, check_by)
+            if len(quota_ids) <= 0:
+                continue
+
+            for quota_id in quota_ids:
+                """ If we have an valid quota id then let's evaluate and post the result """
+                response = await self.bot_db.get_quota_status(
+                    guild_id,
+                    quota_id,
+                )
+
+                """ If any error occures let's silently skip the iterration """
+
+                if not response.get("success"):
+                    print(f"Failure {response.get("message")} {guild_id}")
+                    continue
+
+
+                quota = response["quota"]
+                summary = response["summary"]
+
+                passed_staff = response["passed_staff"]
+                failed_staff = response["failed_staff"]
+
+                passed_staff_str = "\n".join(
+                    f"<@{s['staff_id']}>"
+                    for s in passed_staff
+                ) or "None"
+
+                failed_staff_str = "\n".join(
+                    (
+                        f"<@{s['staff_id']}>"
+                    )
+                    for s in failed_staff
+                ) or "None"
+
+                embed = discord.Embed(
+                    color=0xFFFFFF,
+                    description=f"### Quota Evaluation for <@&{quota['role_id']}>"
+                )
+
+                embed.add_field(
+                    name="Quota Summary",
+                    value=(
+                        f"Total Staff: **{summary['total_staff']}**\n"
+                        f"Passed: **{summary['passed']}**\n"
+                        f"Failed: **{summary['failed']}**"
+                    ),
+                    inline=False,
+                )
+
+                embed.add_field(
+                    name="Passed Staff",
+                    value=passed_staff_str,
+                    inline=False,
+                )
+
+                embed.add_field(
+                    name="Failed Staff",
+                    value=failed_staff_str,
+                    inline=False,
+                )
+
+                embed.set_image(url=img['border'])
+
+                try:
+                    await webhook.send(
+                        username=f"Lily {quota_conclusion_mapping.get(check_by, "Unknown")} Quota Updates",
+                        avatar_url="https://media.discordapp.net/attachments/1510416807847133274/1510416862112907365/Kaede.png?ex=6a1cbcd2&is=6a1b6b52&hm=3e2ddf9283e9d6eaf15f031ae0c730f60accb4437e6e1bc6b0dedaff2ad690fe&=&format=webp&quality=lossless&width=954&height=954",
+                        embed=embed
+                    )
+                except Exception as e:
+                    print(f"Automatic Quota Evaluator Exception : {e}")
+                    continue

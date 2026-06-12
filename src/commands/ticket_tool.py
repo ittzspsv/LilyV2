@@ -1,8 +1,8 @@
 from discord.ext import commands
-from core.features.permissions.lily_permissions import permission
-from core.features.ticketing.controller.lily_ticketing_controller import LilyTicketingController
 from typing import Optional
-from core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.features.permissions.lily_permissions import permission
+from src.core.features.ticketing.controller.lily_ticketing_controller import LilyTicketingController
+from src.core.utils.embeds.sLilyEmbed import simple_embed
 import json
 import discord
 
@@ -74,6 +74,48 @@ class LilyTicketTool(commands.Cog):
             member = staff if staff is not None else ctx.author
             await self.controller.ticket_stats(ctx, member)
 
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @permission(command_name="ticket_update")
+    @ticket.command(name='update', description='Update the ticket config')
+    async def ticket_update(self, ctx: commands.Context, message_id: str):
+        if self.controller is None:
+            return
+
+        if ctx.guild is None:
+            return
+
+        json_attachment = None
+
+        for attachment in ctx.message.attachments:
+            if attachment.filename.endswith(".json"):
+                json_attachment = attachment
+                break
+
+        if json_attachment is None:
+            await ctx.send("Please attach a `.json` config file")
+            return
+
+        try:
+            content = await json_attachment.read()
+            json_data = json.loads(content.decode("utf-8"))
+
+        except json.JSONDecodeError:
+            await ctx.send("Invalid JSON file provided")
+            return
+
+        await self.bot.db.execute(
+            """
+            UPDATE ticket_views
+            SET config_json = ?
+            WHERE guild_id = ? AND message_id = ?
+            """,
+            (
+                json.dumps(json_data),
+                ctx.guild.id,
+                int(message_id)
+            )
+        )
+        await ctx.reply("Ticket panel config has been updated")
 
 
 async def setup(bot):

@@ -1,5 +1,5 @@
 import discord
-import core.configs.sBotDetails as Configs
+import src.core.configs.sBotDetails as Configs
 
 from datetime import datetime
 

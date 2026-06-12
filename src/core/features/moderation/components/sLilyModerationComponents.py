@@ -1,12 +1,12 @@
 import discord
 from discord.ext import commands
-from core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.utils.embeds.sLilyEmbed import simple_embed
 from typing import Optional, Callable
 from datetime import datetime, timezone
-from core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from core.logging.components.logging_components import ProofsComponentCommandModal
+from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+from src.core.logging.components.logging_components import ProofsComponentCommandModal
 
-import core.configs.sBotDetails as Config
+import src.core.configs.sBotDetails as Config
 import io
 
 class Leaderboard(discord.ui.LayoutView):
@@ -59,10 +59,10 @@ class ModerationInsights(discord.ui.LayoutView):
         self.ms_leaderboard_options = discord.ui.Select(
             custom_id="ms_leaderboard_options",
             options=[
-                discord.SelectOption(label="Daily", value="daily"),
-                discord.SelectOption(label="Weekly", value="weekly"),
-                discord.SelectOption(label="Monthly", value="monthly"),
-                discord.SelectOption(label="Total", value="total"),
+                discord.SelectOption(label="Daily", value="daily", description="Displays moderation stat leaderboard from the last 24 hours."),
+                discord.SelectOption(label="Weekly", value="weekly", description="Displays moderation stat leaderboard for the current week"),
+                discord.SelectOption(label="Monthly", value="monthly", description="Displays moderation stat leaderboard for the current month"),
+                discord.SelectOption(label="Total", value="total", description="Displays moderation stat leaderboard for the current month"),
             ]
         )
 
@@ -455,11 +455,13 @@ def build_mod_logs_embed_absolute(
     return [embed_summary, embed_logs]
 
 class ProofsView(discord.ui.View):
-    def __init__(self, logs, logging_channel_id: int):
+    def __init__(self, logs, logging_channel_id: int, guild_id: int):
         super().__init__(timeout=180)
 
         self.logs_channel_id = logging_channel_id
         self.channel = None
+        self.guild = None
+        self._guild_id: int = guild_id
 
         self.options = []
         self.proofs = {}
@@ -501,20 +503,54 @@ class ProofsView(discord.ui.View):
             return
         
         if self.channel is None:
-            self.channel = interaction.guild.get_channel(self.logs_channel_id)
+            if self._guild_id == interaction.guild.id:
 
-            if self.channel is None:
-                try:
-                    self.channel = await interaction.guild.fetch_channel(self.logs_channel_id)
-                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                    await interaction.followup.send(
-                        embed=simple_embed(
-                            "Proofs cannot be retrieved: logging channel is missing or inaccessible.",
-                            "cross"
-                        ),
-                        ephemeral=True
-                    )
-                    return
+                self.channel = interaction.guild.get_channel(self.logs_channel_id)
+
+                if self.channel is None:
+                    try:
+                        self.channel = await interaction.guild.fetch_channel(self.logs_channel_id)
+                    except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                        await interaction.followup.send(
+                            embed=simple_embed(
+                                "Proofs cannot be retrieved: logging channel is missing or inaccessible.",
+                                "cross"
+                            ),
+                            ephemeral=True
+                        )
+                        return
+            else:
+                if self.guild is None:
+                    self.guild =  interaction.client.get_guild(self._guild_id)
+
+                    if self.guild is None:
+                        try:
+                            self.guild = await interaction.client.fetch_guild(self._guild_id)
+                        except (discord.NotFound, discord.HTTPException):
+                             await interaction.followup.send(
+                            embed=simple_embed(
+                                "Proofs cannot be retrieved: supplementary guild is missing or inaccessible.",
+                                "cross"
+                            ),
+                            ephemeral=True
+                        )
+                        return
+                    
+                self.channel = self.guild.get_channel(self.logs_channel_id)
+
+                if self.channel is None:
+                    try:
+                        self.channel = await self.guild.fetch_channel(self.logs_channel_id)
+                    except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                        await interaction.followup.send(
+                            embed=simple_embed(
+                                "Proofs cannot be retrieved: logging channel is missing or inaccessible.",
+                                "cross"
+                            ),
+                            ephemeral=True
+                        )
+                        return
+
             
         if not isinstance(self.channel, discord.TextChannel):
             return

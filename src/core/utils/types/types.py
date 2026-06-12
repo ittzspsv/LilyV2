@@ -18,9 +18,7 @@ class NotifiersEnum(str, Enum):
     DAILY_MESSAGES_LEADERBOARD = "daily_messages_leaderboard"
     WEEKLY_MESSAGES_LEADERBOARD = "weekly_messages_leaderboard"
     MONTHLY_MESSAGES_LEADERBOARD = "monthly_messages_leaderboard"
-    DAILY_QUOTA = "daily_quota"
-    WEEKLY_QUOTA = "weekly_quota"
-    MONTHLY_QUOTA = "monthly_quota"
+    QUOTA_UPDATES = "quota_updates"
 
 @unique
 class CommandEnum(str, Enum):
@@ -62,6 +60,7 @@ class CommandEnum(str, Enum):
     BAN = "ban"
     UNBAN = "unban"
     WARN = "warn"
+    MUTE = "mute"
     UNMUTE = "unmute"
 
     MS = "ms"
@@ -90,4 +89,8 @@ class CommandEnum(str, Enum):
     TICKET_STATS = "ticket_stats"
     LOA_DELETE = "loa_delete"
     LOA_REQUEST = "loa_request"
-    
+    LOA_SHOW = "loa_show"
+    QUARANTINE = "quarantine"
+    PERMISSIONS = "permissions"
+    SET_ROLECUSTOMIZE = "set_rolecustomize"
+    REMOVE_ROLECUSTOMIZE = "remove_rolecustomize"

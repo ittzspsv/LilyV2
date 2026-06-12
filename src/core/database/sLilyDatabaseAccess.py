@@ -22,12 +22,24 @@ class LilyDatabaseAccess:
             raise RuntimeError("Database pool not connected")
         return self.pool
 
-    async def execute(self, query: str, params: tuple = (), commit: bool = True) -> Optional[int]:
+    async def execute(
+        self,
+        query: str,
+        params: tuple = (),
+        commit: bool = True,
+        row_count: bool = False
+    ) -> Optional[int]:
         pool = self._validate_pool()
+
         async with pool.acquire() as conn:
             cursor = await conn.execute(query, params)
+
             if commit:
                 await conn.commit()
+
+            if row_count:
+                return cursor.get_cursor().rowcount
+
             return cursor.get_cursor().lastrowid
 
     async def executemany(self, query: str, params: list[tuple], commit: bool = True) -> None:

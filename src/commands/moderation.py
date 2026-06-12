@@ -1,11 +1,11 @@
 import discord
 from discord.ext import commands
-
-from core.utils.components.sLIlyGlobalComponents import CommandInfo
-from core.utils.embeds.sLilyEmbed import simple_embed
 from typing import Optional
-from core.features.moderation.controller.lily_moderation_controller import LilyModerationController
-from core.features.permissions.lily_permissions import permission
+
+from src.core.utils.components.sLIlyGlobalComponents import CommandInfo
+from src.core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.features.moderation.controller.lily_moderation_controller import LilyModerationController
+from src.core.features.permissions.lily_permissions import permission
 
 
 
@@ -43,20 +43,23 @@ class LilyModeration(commands.Cog):
             await ctx.reply(embed=simple_embed("Lily case system Command Hierarchy!"))
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='ban', description='ban/quarantine a user from the server')
+    @commands.command(name='ban', description='Ban a user from the server', aliases=['b'])
     @permission(command_name="ban")
     async def ban(self, ctx: commands.Context, member: str = None, *, reason="No reason provided"):
         if self.controller is None:
             return
         if not member:
             return await ctx.reply(
-                view=CommandInfo(ctx, "Ban", ["ban user reason", f"ban {ctx.me.mention} Toxicity!"])
+                view=CommandInfo(ctx, "Ban", ["ban user reason", f"ban {ctx.me.mention} Toxicity!", f"b {ctx.me.mention} Not obeying rules!"])
             )
+        
+        return await ctx.reply(
+            embed=simple_embed("This command doesn't works, Try again later", 'cross')
+        )
 
         await ctx.defer()
 
-        attachments = (ctx.message.attachments if ctx.message else []) or \
-                    (ctx.interaction.attachments if ctx.interaction else [])
+        attachments = (ctx.message.attachments if ctx.message else [])
 
         proofs = [
             att for att in attachments
@@ -70,52 +73,58 @@ class LilyModeration(commands.Cog):
         await self.controller.ban_user(ctx, target_user, reason, proofs)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='unban', description='Unban a Particular User')
-    @permission(command_name="unban")
-    async def unban(self, ctx, user_id: str=None):
+    @commands.command(name='quarantine', description='Quarantines an user from this server', aliases=['jail', 'j', 'q'])
+    @permission(command_name="quarantine")
+    async def quarantine(self, ctx: commands.Context, member: str = None, *, reason="No reason provided"):
+        if self.controller is None:
+            return
+        if not member:
+            return await ctx.reply(
+                view=CommandInfo(ctx, "Quarantine", ["quarantine user reason", f"j {ctx.me.mention} Toxicity!", f"q {ctx.me.mention} Not obeying rules" , f"quarantine {ctx.me.mention} breaking server rules",f"jail {ctx.me.mention} Toxicity!"])
+            )
+
         await ctx.defer()
-        if user_id is None:
-            await ctx.reply(view=CommandInfo(ctx, "Unban", ["unban user", f"unban {ctx.me.mention} Appealed"]))
-            return
-        usr_id: int = int(user_id.replace("<@", "").replace(">", ""))
-        
-        try:
-            user = await self.bot.fetch_user(usr_id)
-        except discord.NotFound:
-            await ctx.reply(embed=simple_embed("User not found."))
-            return
-        except discord.HTTPException as e:
-            await ctx.reply(f"Exception Raised: {e}")
+
+        attachments = (ctx.message.attachments if ctx.message else [])
+
+        proofs = [
+            att for att in attachments
+            if att.content_type and att.content_type.startswith(("image/", "video/"))
+        ]
+
+        target_user = await self.resolve_user(ctx, member)
+        if not target_user:
             return
 
-        try:
-            await ctx.guild.unban(user)
-            await ctx.reply(embed=simple_embed(f"Unbanned {user.mention}"))
-        except discord.NotFound:
-            quarantine_role = discord.utils.get(ctx.guild.roles, name="Quarantine")
-            if quarantine_role:
-                member_obj = await ctx.guild.fetch_member(usr_id)
-                if member_obj and quarantine_role in member_obj.roles:
-                    try:
-                        await member_obj.remove_roles(quarantine_role, reason=f"Quarantine Removed by {ctx.author.mention}")
-
-                        await ctx.reply(embed=simple_embed(f"Removed Quarantine from {member_obj.mention}"))
-                        return
-                    except discord.Forbidden:
-                        await ctx.reply("I don't have permission to remove the Quarantine role.")
-                        return
-                    except discord.HTTPException as e:
-                        await ctx.reply(f"Failed to remove Quarantine role: {e}")
-                        return
-            await ctx.reply(embed=simple_embed("This user is not banned and not quarantined!"))
-        except discord.Forbidden:
-            await ctx.reply("I don't have permission to unban this user.")
-        except discord.HTTPException as e:
-            await ctx.reply(f"Exception Raised: {e}")
+        await self.controller.quarantine_user(ctx, target_user, reason, proofs)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='mute', description='Mute a user with desired input')
+    @commands.command(name='unban', description='Unban a Particular User', aliases=['ub'])
     @permission(command_name="unban")
+    async def unban(self, ctx, user_id: str=None, reason: str="No reason provided"):
+        if self.controller is None:
+            return
+        if user_id is None:
+            await ctx.reply(view=CommandInfo(ctx, "Unban", ["unban user", f"unban {ctx.me.mention} Appealed", f"ub {ctx.me.mention} Appealed"]))
+            return
+        
+        await self.controller.unban(ctx, user_id, self.bot, reason)
+
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.command(name='release', description='Release a member from quarantine', aliases=['qr', 'r'])
+    @permission(command_name="unban")
+    async def release(self, ctx, user: discord.Member=None, reason: str="No reason provided"):
+        if self.controller is None:
+            return
+        if user is None:
+            await ctx.reply(view=CommandInfo(ctx, "Release", ["release user reason", f"release {ctx.me.mention} Appealed", f"qr {ctx.me.mention} Appealed", f'r {ctx.me.mention} Appealed!']))
+            return
+        
+        await self.controller.release(ctx, user, reason)
+
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.command(name='mute', description='Mute a user with desired input', aliases=['m'])
+    @permission(command_name="mute")
     async def mute(self, ctx:commands.Context, member:discord.Member=None, duration:str="1",*, reason="No reason provided"):
         if self.controller is None:
             return
@@ -128,7 +137,7 @@ class LilyModeration(commands.Cog):
         await self.controller.mute_user(ctx, member, duration, reason, proofs)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name='warn', description='Warn a user with a specific reason')
+    @commands.command(name='warn', description='Warn a user with a specific reason')
     @permission(command_name="warn")
     async def warn(self, ctx:commands.Context, member:discord.Member=None,*, reason="No reason provided"):
         if self.controller is None:
@@ -143,16 +152,16 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unmute', description='unmutes a user with desired input')
     @permission(command_name="unmute")
-    async def unmute(self, ctx: commands.Context, member: discord.Member):
+    async def unmute(self, ctx: commands.Context, member: discord.Member=None, *, reason: str="No reason provided"):
         if self.controller is None:
             return
         if member is None:
             return await ctx.reply(
-                view=CommandInfo(ctx, "Unmute", ["unmute user reason", f"warn {ctx.me.mention} Appealed"])
+                view=CommandInfo(ctx, "Unmute", ["unmute user reason", f"unmute {ctx.me.mention} Appealed"])
             )
 
         await ctx.defer()
-        await self.controller.unmute(ctx, member)
+        await self.controller.unmute(ctx, member, reason)
 
     @mod.command(name='stats', description='checks stats for a particular moderator or yourself')
     @permission(command_name="ms")
