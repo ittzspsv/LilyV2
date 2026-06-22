@@ -162,15 +162,12 @@ class StaffsView(discord.ui.LayoutView):
         self.role_users_map = role_users_map
 
         role_select_options = [
-            discord.SelectOption(label=data["role_name"], value=str(role_id))
+            discord.SelectOption(
+                label=data["role_name"], 
+                value=str(role_id)
+            )
             for role_id, data in role_users_map.items()
             if role_id and data["role_name"] and data["role_type"] == "staff"
-        ]
-
-        responsibility_select_options = [
-            discord.SelectOption(label=data["role_name"], value=str(role_id))
-            for role_id, data in role_users_map.items()
-            if role_id and data["role_name"] and data["role_type"] == "responsibility"
         ]
 
         self.roles_selector = discord.ui.Select(
@@ -178,25 +175,16 @@ class StaffsView(discord.ui.LayoutView):
             options=role_select_options
         )
 
-        self.responsibility_selector = discord.ui.Select(
-            custom_id="responsibility_selector",
-            options=responsibility_select_options
-        )
-
         self.loa_staffs_btn = discord.ui.Button(
                 style=discord.ButtonStyle.secondary,
                 label="List LOA Staffs",
             )
-        
-        self.responsibility_loa_staff_btn = discord.ui.Button(
-                style=discord.ButtonStyle.secondary,
-                label="List LOA Staffs",
-        )
+
 
         self.roles_selector.callback = self.role_selector_callback
-        self.responsibility_selector.callback = self.responsibility_selector_callback
         self.loa_staffs_btn.callback = self.loa_staffs_callback
-        self.responsibility_loa_staff_btn.callback = self.responsibility_loa_staff_btn_callback
+
+        assert isinstance(ctx.guild, discord.Guild)
 
         self.container_1 = discord.ui.Container(
             discord.ui.Section(
@@ -218,21 +206,8 @@ class StaffsView(discord.ui.LayoutView):
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.Section(
                     discord.ui.TextDisplay(content="### LOA Staffs"),
-                    discord.ui.TextDisplay(content="- Displays All Engagement Staffs who are on leave"),
+                    discord.ui.TextDisplay(content="- Displays All Staffs who are on leave"),
                     accessory=self.loa_staffs_btn
-                ),
-            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
-            discord.ui.TextDisplay(content="### Server Community Engagement Team\n- List of Role Category who engages the Community"),
-            discord.ui.TextDisplay(content=f"### __Overall Details__\n"
-                        f"- **ON LOA** - `{overall_details.get("responsibility").get('loa')}`\n"
-                        f"- **Active Staffs** - `{overall_details.get("responsibility").get('active')}`\n"
-                        f"- **Total Staffs** - `{overall_details.get("responsibility").get('total')}`"),
-            discord.ui.ActionRow(self.responsibility_selector),
-            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
-            discord.ui.Section(
-                    discord.ui.TextDisplay(content="### LOA Staffs"),
-                    discord.ui.TextDisplay(content="- Displays All Engagement Staffs who are on leave"),
-                    accessory=self.responsibility_loa_staff_btn
                 ),
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             accent_colour=discord.Colour(16777215),
@@ -251,27 +226,9 @@ class StaffsView(discord.ui.LayoutView):
             ephemeral=True
         )
 
-    async def responsibility_selector_callback(self, interaction: discord.Interaction):
-        selected_role_id = int(self.responsibility_selector.values[0])
-        role_data = self.role_users_map[selected_role_id]
-
-        view = StaffListView(interaction, role_data, selected_role_id)
-
-        await interaction.response.send_message(
-            view=view,
-            ephemeral=True
-        )
-
     async def loa_staffs_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
         staff_datas: List[Dict[str, Any]] = await self.db.fetch_loa_staffs(interaction.guild.id, "staff")
-        view = LOAStaffsView(interaction, staff_datas)
-        await interaction.followup.send(view=view, ephemeral=True)
-
-    async def responsibility_loa_staff_btn_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-
-        staff_datas: List[Dict[str, Any]] = await self.db.fetch_loa_staffs(interaction.guild.id, "responsibility")
         view = LOAStaffsView(interaction, staff_datas)
         await interaction.followup.send(view=view, ephemeral=True)
 
@@ -286,75 +243,6 @@ class StaffsView(discord.ui.LayoutView):
             await self.message.edit(view=self)
         except discord.HTTPException:
             pass
-
-class RoleSelector(discord.ui.RoleSelect):
-    def __init__(self, interactor: discord.Member):
-        super().__init__(
-            placeholder="Select Staff Roles...",
-            min_values=1,
-            max_values=25
-        )
-
-        self.interactor: discord.Member = interactor
-
-    async def callback(self, interaction: discord.Interaction):
-        if interaction.user.id == self.interactor.id:
-            roles: list[discord.Role] = self.values
-            selected_roles: list = []
-
-            for role in roles:
-                selected_roles.append(
-                    {
-                        "role_name": role.name,
-                        "role_id": role.id,
-                        "role_icon": role.icon.url if role.icon else None
-                    }
-                )
-            payload: dict = {
-                "guild_id" : interaction.guild.id,
-                "roles" : selected_roles
-            }
-
-            response = await LSDA.add_role_entries(payload=payload)
-            if response.get("success"):
-                await interaction.response.send_message(
-                    embed=simple_embed(message=response.get("message"))
-                )
-            else:
-                await interaction.response.send_message(
-                    embed=simple_embed("An Error occured while adding roles", "cross")
-                )
-
-        else:
-            await interaction.response.send_message(
-                embed=simple_embed("You cannot interact with this", "cross"),
-                ephemeral=True
-            )
-
-class StaffRoleView(discord.ui.LayoutView):
-    def __init__(self, bot, interactor: discord.Member):
-        super().__init__(timeout=None)
-        self.bot = bot
-        self.original_interactor: discord.Member = interactor
-        self.interactor = interactor
-
-        self.container = discord.ui.Container(
-            discord.ui.Section(
-                discord.ui.TextDisplay(content="## Staff Hierarchy Construction."),
-                discord.ui.TextDisplay(content="- You can construct a staff hierarchy for your server and define it in Lily to give them various permissions."),
-                accessory=discord.ui.Thumbnail(
-                    media="https://tenor.com/view/undertale-asgore-nomercy-gif-4931669",
-                ),
-            ),
-            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
-            discord.ui.TextDisplay(content="## Roles Construction\n- Select Your Staff Hierarchy\n- ⚠️ Your previous staff hierarchy will be cleared by doing so."),
-            discord.ui.ActionRow(
-                RoleSelector(self.interactor)
-            ),
-            accent_colour=discord.Colour(16777215),
-        )
-
-        self.add_item(self.container)
 
 class LOARequestView(discord.ui.LayoutView):
     def __init__(self, bot_db: BotGlobalsDatabaseAccess, staff_id: int, guild_id: int ,staff_pfp: str ,reason: str, days: str) -> None:
@@ -761,4 +649,65 @@ class InfractionModal(discord.ui.Modal):
                 embed=embed
             )
 
+class RankConfigureModal(discord.ui.Modal):
 
+    def __init__(
+        self,
+        db: BotGlobalsDatabaseAccess,
+        roles: List[int]
+    ) -> None:
+        super().__init__(title="Rank Configuration")
+
+        self.bot_db = db
+        default_values = []
+
+        for role in roles:
+            default_values.append(
+                discord.SelectDefaultValue(
+                    id=role,
+                    type=discord.SelectDefaultValueType.role
+                )
+            )
+
+        self.text = discord.ui.TextDisplay(
+            "Select your ranks, Ranks are decided based on your role hierarchy!. "
+            "Also All of the previously configured ranks will be cleared"
+        )
+
+        self.rank_roles = discord.ui.Label(
+            text="Rank Roles",
+            description="Select your rank roles",
+            component=discord.ui.RoleSelect(
+                min_values=1,
+                max_values=25,
+                default_values=default_values
+            )
+        )
+
+        self.add_item(self.text)
+        self.add_item(self.rank_roles)
+
+    async def on_submit(
+        self,
+        interaction: discord.Interaction
+    ) -> None:
+        
+        if interaction.guild is None:
+            await interaction.response.send_message("This command can only be executed inside an guild", ephemeral=True)
+            return
+        
+        assert isinstance(self.rank_roles.component, discord.ui.RoleSelect)
+
+        ranks = {
+            role.id: role.position
+            for role in self.rank_roles.component.values
+        }
+
+        await self.bot_db.rank_setup(
+            guild_id=interaction.guild.id,
+            role_id=ranks
+        )
+
+        await interaction.response.send_message(
+            embed=simple_embed(f"Configured {len(ranks)} staff ranks.")
+        )

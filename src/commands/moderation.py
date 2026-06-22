@@ -17,21 +17,6 @@ class LilyModeration(commands.Cog):
     async def on_load(self):
         self.controller = LilyModerationController(self.bot.db, self.bot.logging_controller)
 
-    async def resolve_user(self, ctx, member: str):
-        try:
-            return await commands.MemberConverter().convert(ctx, member)
-        except commands.MemberNotFound:
-            try:
-                user_id = int(member)
-                return await ctx.bot.fetch_user(user_id)
-            except ValueError:
-                await ctx.reply(embed=simple_embed("Invalid user ID", 'cross'))
-            except discord.NotFound:
-                await ctx.reply(embed=simple_embed("User not found.", 'cross'))
-            except discord.HTTPException as e:
-                await ctx.reply(embed=simple_embed(f"Fetch failed: {e}", 'cross'))
-        return None
-
     @commands.hybrid_group()
     async def mod(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
@@ -75,7 +60,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='quarantine', description='Quarantines an user from this server', aliases=['jail', 'j', 'q'])
     @permission(command_name="quarantine")
-    async def quarantine(self, ctx: commands.Context, member: str = None, *, reason="No reason provided"):
+    async def quarantine(self, ctx: commands.Context, member: discord.Member | discord.User | None = None, *, reason="No reason provided"):
         if self.controller is None:
             return
         if not member:
@@ -92,16 +77,12 @@ class LilyModeration(commands.Cog):
             if att.content_type and att.content_type.startswith(("image/", "video/"))
         ]
 
-        target_user = await self.resolve_user(ctx, member)
-        if not target_user:
-            return
-
-        await self.controller.quarantine_user(ctx, target_user, reason, proofs)
+        await self.controller.quarantine_user(ctx, member, reason, proofs)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='unban', description='Unban a Particular User', aliases=['ub'])
     @permission(command_name="unban")
-    async def unban(self, ctx, user_id: str=None, reason: str="No reason provided"):
+    async def unban(self, ctx, user_id: str=None, * ,reason: str="No reason provided"):
         if self.controller is None:
             return
         if user_id is None:
@@ -113,7 +94,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='release', description='Release a member from quarantine', aliases=['qr', 'r'])
     @permission(command_name="unban")
-    async def release(self, ctx, user: discord.Member=None, reason: str="No reason provided"):
+    async def release(self, ctx, user: discord.Member=None, * ,reason: str="No reason provided"):
         if self.controller is None:
             return
         if user is None:
@@ -125,7 +106,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='mute', description='Mute a user with desired input', aliases=['m'])
     @permission(command_name="mute")
-    async def mute(self, ctx:commands.Context, member:discord.Member=None, duration:str="1",*, reason="No reason provided"):
+    async def mute(self, ctx:commands.Context, member:discord.Member | discord.User | None = None, duration:str="1",*, reason="No reason provided"):
         if self.controller is None:
             return
         await ctx.defer()
@@ -133,13 +114,14 @@ class LilyModeration(commands.Cog):
         if member is None:
             await ctx.reply(view=CommandInfo(ctx, "Mute", ["mute user time reason", f"mute {ctx.me.mention} 3d Not Obeying Rules", f"mute {ctx.me.mention} 22hr Toxicity!"]))
             return
+
         proofs = [att for att in ctx.message.attachments if att.content_type and any(att.content_type.startswith(t) for t in ["image/", "video/"])]
         await self.controller.mute_user(ctx, member, duration, reason, proofs)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='warn', description='Warn a user with a specific reason')
     @permission(command_name="warn")
-    async def warn(self, ctx:commands.Context, member:discord.Member=None,*, reason="No reason provided"):
+    async def warn(self, ctx:commands.Context, member:discord.Member | discord.User | None = None,*, reason="No reason provided"):
         if self.controller is None:
             return
         await ctx.defer()
@@ -152,7 +134,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name='unmute', description='unmutes a user with desired input')
     @permission(command_name="unmute")
-    async def unmute(self, ctx: commands.Context, member: discord.Member=None, *, reason: str="No reason provided"):
+    async def unmute(self, ctx: commands.Context, member: discord.Member | discord.User | None =None, *, reason: str="No reason provided"):
         if self.controller is None:
             return
         if member is None:
@@ -165,7 +147,7 @@ class LilyModeration(commands.Cog):
 
     @mod.command(name='stats', description='checks stats for a particular moderator or yourself')
     @permission(command_name="ms")
-    async def ms(self, ctx, member: discord.Member = None, page_start: int = 0, page_end: int = 0):
+    async def ms(self, ctx, member: discord.Member | discord.User | None = None, page_start: int = 0, page_end: int = 0):
         if self.controller is None:
             return
         await ctx.defer()
@@ -184,11 +166,11 @@ class LilyModeration(commands.Cog):
     async def modlogs(
         self,
         ctx,
-        member: discord.User = None,
+        member: discord.User | discord.Member | None = None,
         mod_type: str = "all",
         page_start: int = 0,
         page_end: int = 5,
-        moderator: discord.User = None
+        moderator: discord.User | discord.Member | None = None
     ):
         if self.controller is None:
             return

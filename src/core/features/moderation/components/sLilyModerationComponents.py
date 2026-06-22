@@ -246,7 +246,7 @@ def moderation_queue_embed(ctx: commands.Context, moderation_queue: list[dict]) 
     return embed
 
 def build_ms_embed(
-    moderator: discord.Member,
+    moderator: discord.Member | discord.User,
     logs: list[dict],
     stats: dict,
     total_logs: int,
@@ -324,7 +324,7 @@ def build_ms_embed(
     return embeds
 
 def build_mod_logs_embed(
-    user: discord.User,
+    user: discord.User | discord.Member,
     display_logs: list[dict],
     mod_type_counts: dict,
     total_count: int,
@@ -604,7 +604,7 @@ class ProofsView(discord.ui.View):
 
 class CaseProofsView(discord.ui.View):
     def __init__(self, case_id: int, controller, message: Optional[discord.Message]):
-        super().__init__(timeout=None)
+        super().__init__(timeout=300)
 
         self.case_id = case_id
         self.controller = controller

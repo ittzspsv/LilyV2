@@ -67,13 +67,13 @@ class LilyModerationController:
             # A;; checks based on hierarchy
             if member.top_role >= ctx.guild.me.top_role:
                 await ctx.reply(embed=simple_embed(
-                    "I cannot act on this user — their role is >= mine.", "cross"
+                    "I cannot act on this user their role is higher than or equal to mine.", "cross"
                 ))
                 return None
 
             if member.top_role >= ctx.author.top_role:
                 await ctx.reply(embed=simple_embed(
-                    "You cannot act on this user — their role is >= yours.", "cross"
+                    "You cannot act on this user their role is higher than or equal to yours.", "cross"
                 ))
                 return None
 
@@ -169,7 +169,6 @@ class LilyModerationController:
             return
 
         assert isinstance(ctx.guild, discord.Guild)
-        assert isinstance(ctx.author, discord.Member)
 
         result = await self._validate_moderation_target(ctx, user_input)
         if result is None:
@@ -322,13 +321,17 @@ class LilyModerationController:
         except Exception as e:
             return f"Error: {e}"
 
-    async def mute_user(self, ctx: commands.Context, user: discord.Member, duration: str, reason: str = "No reason provided", proofs: list = []):
+    async def mute_user(self, ctx: commands.Context, user: discord.Member | discord.User, duration: str, reason: str = "No reason provided", proofs: list = []):
         if ctx.guild is None:
             await ctx.reply(embed=simple_embed("Command requires guild object inorder to execute", 'cross'))
             return
         
         if isinstance(ctx.author, discord.User):
             await ctx.reply(embed=simple_embed("Command requires member object inorder to execute", 'cross'))
+            return
+        
+        if isinstance(user, discord.User):
+            await ctx.reply(embed=simple_embed("The user has left the server", 'cross'))
             return
 
         if user.timed_out_until and user.timed_out_until > discord.utils.utcnow():
@@ -343,8 +346,15 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed("I cannot mute a user with a role equal to or higher than yours.", 'cross'))
             return
 
-        if user.id in {ctx.guild.owner_id, ctx.bot.user.id, ctx.author.id}:
-            await ctx.reply(embed=simple_embed("Exception!. Stupid action detected errno 77777", 'cross'))
+        if user.id in {ctx.guild.owner_id}:
+            await ctx.reply(embed=simple_embed("You cannot mute the server owner", 'cross'))
+            return
+        
+        if user.id == ctx.author:
+            await ctx.reply(embed=simple_embed("You cannot mute yourself.", 'cross'))
+        
+        if user.id == ctx.bot.user.id:
+            await ctx.reply(embed=simple_embed("You cannot mute me baka~.", "cross"))
             return
 
         try:
@@ -386,7 +396,14 @@ class LilyModerationController:
             print(f"[MuteUser] {e}")
             await ctx.reply(embed=simple_embed("Failed to mute the user", 'cross'))
 
-    async def unmute(self, ctx: commands.Context, user: discord.Member, reason: str="No reason provided"):
+    async def unmute(self, ctx: commands.Context, user: discord.Member | discord.User, reason: str="No reason provided"):
+        if isinstance(ctx.author, discord.User):
+            await ctx.reply(embed=simple_embed("Command requires member object inorder to execute", 'cross'))
+            return
+        
+        if isinstance(user, discord.User):
+            await ctx.reply(embed=simple_embed("The user has left the server", 'cross'))
+            return
         if not user.timed_out_until or user.timed_out_until <= discord.utils.utcnow():
             await ctx.reply(embed=simple_embed("That user is not muted currently", 'cross'))
             return
@@ -474,7 +491,7 @@ class LilyModerationController:
         except discord.HTTPException as e:
             await ctx.reply(embed=simple_embed(f"Failed to remove Quarantine role: {e}", "cross"))
 
-    async def warn(self, ctx: commands.Context, member: discord.Member, reason: str, proofs=[]):
+    async def warn(self, ctx: commands.Context, member: discord.Member | discord.User, reason: str, proofs=[]):
         if ctx.guild is None:
             await ctx.reply(embed=simple_embed("Command requires guild object inorder to execute", 'cross'))
             return
@@ -483,6 +500,11 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed("Command requires member object inorder to execute", 'cross'))
             return
         
+        if isinstance(member, discord.User):
+            await ctx.reply(embed=simple_embed("The user has left the server", 'cross'))
+            return
+        
+
         if len(proofs) > 0:
             await ctx.reply(embed=simple_embed(f"{member.mention} has been warned"))
 
@@ -546,7 +568,7 @@ class LilyModerationController:
         except Exception as e:
             print(f"Exception [RemoveMemberFromQueue] {e}")
 
-    async def ms(self, ctx: commands.Context, moderator: discord.Member, page_start: int = 0, page_end: int = 5):
+    async def ms(self, ctx: commands.Context, moderator: discord.Member | discord.User, page_start: int = 0, page_end: int = 5):
         if ctx.guild is None:
             await ctx.reply(
                 embed=simple_embed(
@@ -581,8 +603,8 @@ class LilyModerationController:
         self,
         ctx: commands.Context,
         target_user_id: int,
-        user: discord.User,
-        moderator: Optional[discord.User] = None,
+        user: discord.Member | discord.User,
+        moderator: discord.User | discord.Member | None = None,
         mod_type: str = "all",
         page_start: int = 0,
         page_end: int = 5

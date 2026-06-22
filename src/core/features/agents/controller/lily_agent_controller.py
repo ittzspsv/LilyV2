@@ -13,24 +13,26 @@ from ..data.overload_data import OverloadData
 
 class LilyAgentController:
     def __init__(self) -> None:
-        '''
         adapter=GroqAdapter(
                 model="qwen/qwen3-32b",
                 api_key=os.getenv("GROK_TOKEN")
             )
-        '''
         
-        adapter = OllamaAdapter(model="qwen3.5:4b")
+        #adapter = OllamaAdapter(model="qwen3.5:4b")
 
         self.agent = LilyAgent(
             adapter=adapter,
             role="You are Lily, a cute, formal AI assistant",
-            prompt="You are friendly, respectful, and professional in tone, while gently expressing warmth and positive engagement toward the user. Respond concisely with minimal words. Avoid unnecessary explanation, emojis, repetition, or filler.",
+            prompt= (
+            "You are friendly, respectful, and professional in tone, "
+            "while gently expressing warmth and positive engagement toward the user. "
+            "Respond concisely with minimal words. "
+            "Avoid unnecessary explanation, emojis, repetition, or filler."
+        ),
             name="Lily"
-        )
+    )
 
     def reply(self, message: discord.Message, bot: discord.Client) -> bool:
-
         if bot.user is None:
             return False
 
@@ -41,6 +43,9 @@ class LilyAgentController:
             return False
 
         if bot.user in message.mentions:
+            """ This is to mainly prevent quote command interfearing with the agent """
+            if "quote" in message.content.split():
+                return False
             return True
 
         if message.reference and message.reference.message_id:
@@ -58,7 +63,6 @@ class LilyAgentController:
         return False
 
     async def on_message(self, bot: discord.Client ,message: discord.Message):
-        return
         if message.guild is None:
             return
         
@@ -92,8 +96,6 @@ class LilyAgentController:
                     if 'G' in flag:
                         self.agent.register_tool([get_prefix, set_prefix])
 
-                print(self.agent.tools)
-
                 """ Check if the message only contains the bot's ping """
                 async with message.channel.typing():
                     injection: dict = {
@@ -103,9 +105,14 @@ class LilyAgentController:
                     }
                     try:
                         response = await self.agent.run(f'{injection}\n{message_trimmed}', data=OverloadData(message, bot))
-                        response_safe = re.sub(r'@(?:everyone|here)|<@&\d+>|<@!?\d+>|<#\d+>', '', response)
+
+                        response_safe = re.sub(
+                            r'@(?:everyone|here)|<@&\d+>|<@!?\d+>|<#\d+>|[\U0001F300-\U0001FAFF]',
+                            '',
+                            response
+                        )
                     except Exception as e:
-                        print(e)
+                        return
 
                     await message.reply(content=f'{response_safe}')
             except Exception as e:

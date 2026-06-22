@@ -59,6 +59,14 @@ It is important to note that only the counts themselves are stored — the conte
 
 ---
 
+**Ticketing System**
+
+When a ticket is closed, all messages within it are compiled and converted into an HTML transcript, which is then posted directly to your **server's designated ticket transcripts channel**. We only store a **reference to that message** — not the **transcript content itself** — to allow it to be retrieved later if needed.
+
+You retain full control over your ticket transcripts and may delete them at any time.
+
+---
+
 ## How we use it
 
 All collected data is used strictly to make Lily work. That means:
@@ -103,7 +111,7 @@ You have real control over your data. You can:
 
 Server administrators can also disable individual features that store data if they'd prefer Lily not to retain certain information at all.
 
-To make any of these requests, reach out through our [support server](https://discord.com/invite/K7Ad5JssCg).
+To make any of these requests, reach out through our [Support Server](https://discord.com/invite/K7Ad5JssCg).
 
 ---
 

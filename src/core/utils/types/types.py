@@ -94,3 +94,5 @@ class CommandEnum(str, Enum):
     PERMISSIONS = "permissions"
     SET_ROLECUSTOMIZE = "set_rolecustomize"
     REMOVE_ROLECUSTOMIZE = "remove_rolecustomize"
+    STAFF_COVERAGE = "staff_coverage"
+    CREATE_EMBED = "create_embed"

@@ -14,7 +14,7 @@ from src.core.utils.embeds.sLilyEmbed import ParseAdvancedEmbed
 from src.core.utils.types.types import ChannelEnum, CommandEnum, NotifiersEnum
 from src.core.logging.lily_logging import LilyLoggingController
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from src.core.utils.components.sLIlyGlobalComponents import RoleCustomizationModal
+from src.core.utils.components.sLIlyGlobalComponents import RoleCustomizationModal, Avatar
 from src.core.visuals.cards.quote import make_quote_card
 from discord.ext import commands
 from discord import app_commands
@@ -658,6 +658,44 @@ class LilyUtility(commands.Cog):
 
         await ctx.reply(embed=simple_embed(f"Successfully assigned **{prefix}** as prefix"))
 
+    @set.command(name="myprefix", description="Change your prefix")
+    async def set_my_prefix(self, ctx: commands.Context, prefix: str):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("This command can only be used inside a guild"))
+
+        prefix = prefix.strip()
+
+        if prefix.isalnum() and len(prefix) > 1:
+            prefix = prefix + " "
+
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        await bot_db.set_prefix_member(
+            ctx.author.id,
+            ctx.guild.id,
+            prefix
+        )
+
+        await ctx.reply(
+            embed=simple_embed(
+                f"Successfully assigned **{prefix}** as prefix for you!"
+            )
+        )
+    @commands.command(name="myprefix", description="Get your prefix")
+    async def get_my_prefix(self, ctx: commands.Context, member: discord.Member=None):
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        user = member or ctx.author
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("This command can only be used inside an guild"))
+
+        prefix = bot_db.get_prefix_member(user.id, ctx.guild.id)
+        if prefix is not None:
+            await ctx.reply(
+                content=(
+                    f"Your prefix is {prefix}\n"
+                    f"Usage: ```{prefix}ping```"
+                )
+            )
+
     @permission(command_name="configure_role")
     @configure.command(name="role", description="Configure some attributes of the role")
     async def configure_role(self, ctx: commands.Context, role: discord.Role):
@@ -668,7 +706,7 @@ class LilyUtility(commands.Cog):
             return
         interaction = ctx.interaction
         try:
-            await interaction.response.send_modal(RoleCustomizationModal(role.id, self.bot.db))
+            await interaction.response.send_modal(RoleCustomizationModal(role.id, self.bot.db, role.name))
         except Exception as e:
             print(e)
 
@@ -728,6 +766,46 @@ class LilyUtility(commands.Cog):
             await ctx.message.delete()
         except:
             pass
+
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.hybrid_command(name="privacy_policy", description="Get a link to the bot's Privacy Policy")
+    async def privacy_policy(self, ctx: commands.Context, member: discord.Member=None):
+        embed = discord.Embed(
+            color=16777215,
+            title="Lily Privacy Policy Notice",
+            description="## __Introduction__\n- This Privacy Policy covers what data Lily collects and how it is handled. Lily only collects what is necessary to function — including Discord account identifiers, server configuration, moderation logs, and feature-specific data such as staff records, message activity counts, and ticket references. Message content is never stored, and transcript data remains within your own server. Your data is never sold or shared with third parties, and is retained only for as long as it is needed. Server owners and users have full rights to access, correct, or delete their data at any time, and any meaningful changes to this policy will be communicated in advance.\n### [VIEW OUR PRIVACY POLICY](https://ittzspsv.github.io/LilyV2/privacy)",
+        )
+        embed.set_footer(
+                text="By using Lily, you acknowledge and agree to the data collection and usage practices described in this Privacy Policy.",
+            )
+        
+        if ctx.guild is not None and ctx.guild.me is not None:
+            embed.set_thumbnail(url=ctx.guild.me.display_avatar.url)
+        
+        if member is None:
+            await ctx.reply(embed=embed)
+        else:
+            await member.send(embed=embed)
+
+    @permission(command_name="sync", restrict=True)
+    @commands.command(name="sync")
+    async def sync(self, ctx: commands.Context):
+        if ctx.guild is None:
+            return await ctx.send("Guild only command.")
+
+        guild = discord.Object(id=ctx.guild.id)
+
+        self.bot.tree.copy_global_to(guild=guild)
+
+        synced = await self.bot.tree.sync(guild=guild)
+
+        await ctx.send(
+            f"Synced {len(synced)} commands to {ctx.guild.name}"
+        )
+
+    @commands.hybrid_command(name='avatar', description='Get avatar of yourself or other member')
+    async def avatar(self, ctx: commands.Context, member: discord.Member=None):
+        await ctx.reply(view=Avatar(member or ctx.author))
 
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

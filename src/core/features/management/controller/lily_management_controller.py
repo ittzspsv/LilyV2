@@ -6,6 +6,8 @@ from ..types.staff_management_types import QuotaCheckBy
 from typing import Optional, cast, Final
 from ..embeds.staff_management_embed import *
 
+import matplotlib.pyplot as plt
+
 from ..components.staff_management_components import (
     StaffsView,
     LOARequestModal,
@@ -15,6 +17,8 @@ from ..components.staff_management_components import (
 import discord
 import asyncio
 import re
+
+from io import BytesIO
 
 
 quota_conclusion_mapping: Final = {
@@ -369,7 +373,6 @@ class LilyManagementController:
             return await ctx.reply(embed=simple_embed("Please run this command as a slash command", 'cross'))
 
         await interaction.response.send_modal(InfractionModal(self.bot_db, staff))
-
 
     async def remove_strike_staff(self, ctx: commands.Context, strike_id: int):
         if ctx.guild is None:
@@ -1183,6 +1186,51 @@ class LilyManagementController:
         embed.set_image(url=img['border'])
 
         await ctx.reply(embed=embed)
+
+    async def get_staffs_timezone_coverage(self, ctx: commands.Context):
+        if ctx.guild is None:
+            await ctx.reply(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
+            return
+        
+        await ctx.defer()
+
+        result = await self.bot_db.get_staffs_timezone_coverage(ctx.guild.id)
+        data = sorted(result.items(), key=lambda x: x[1])
+
+        zones = [x[0] for x in data]
+        counts = [x[1] for x in data]
+
+        plt.figure(figsize=(10, 5))
+        bars = plt.barh(zones, counts)
+
+        plt.xlabel("Number of Staff")
+        plt.ylabel("Timezone")
+        plt.title("Staff Timezone Coverage", fontsize=20, fontweight="bold")
+
+        plt.grid(axis="x", alpha=0.3)
+
+        plt.tight_layout()
+
+        for bar in bars:
+            width = bar.get_width()
+            plt.text(
+                width + 0.1,
+                bar.get_y() + bar.get_height() / 2,
+                str(int(width)),
+                va="center"
+            )
+
+        buffer = BytesIO()
+        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        plt.close()
+        buffer.seek(0)
+
+        file = discord.File(
+            buffer,
+            filename="staff_timezone_coverage.png"
+        )
+
+        await ctx.reply(file=file)
 
     async def automatic_quota_evaluator(self, check_by: str, bot):
         data = await self.bot_db.get_webhooks_of_type("quota_updates")

@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional ,List
 import aiohttp
 import discord
 import src.core.configs.sBotDetails as Config
@@ -12,6 +12,7 @@ from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.configs.path import CONFIG_DB
 from src.api.app import LilyAPI
 import uvicorn
+
 
 class Lily(commands.Bot):
     def __init__(self):
@@ -40,32 +41,42 @@ class Lily(commands.Bot):
         self.api = LilyAPI(self.db)
         self.loop.create_task(self.start_api())
 
+
         extensions = [
             "src.commands.moderation",
             "src.commands.utility",
             "src.commands.blox_fruits",
             "src.commands.management",
             "src.commands.ticket_tool"
-            #"LilyLeveling.sLilyLevelingCommands",
-            #"LilyMusic.sLilyMusicCommands",
         ]
 
-        for e, ext in enumerate(extensions):
-            if ext not in self.extensions:
-                try:
+        for ext in extensions:
+            try:
+                if ext not in self.extensions:
                     await self.load_extension(ext)
-                except Exception as e:
-                    print(e)
+                    print(f"Loaded {ext}")
+            except Exception as e:
+                print(f"Load failed {ext}: {e}")
 
-        self.lily_session = aiohttp.ClientSession()
+        #self.tree._global_commands.clear()
         #await self.tree.sync()
-    
-    def prefix(self, bot: commands.Bot ,message):
+        await self.tree.sync()
+        
+    def prefix(self, bot: commands.Bot, message: discord.Message):
         if not message.guild:
             return Config.bot_command_prefix
-        
+
         if self.db is None:
-            return "."
+            return Config.bot_command_prefix
+
+        member_prefix = self.db.get_prefix_member(
+            message.author.id,
+            message.guild.id
+        )
+
+        if member_prefix is not None:
+            return member_prefix
+
         return self.db.get_prefix(message.guild.id)
 
     async def on_ready(self):
@@ -85,12 +96,75 @@ class Lily(commands.Bot):
         activity = discord.Activity(type=discord.ActivityType.watching, name=f"{member_count:,} members!")
         await self.change_presence(activity=activity)
 
+    """ Miscellaneous DM message tracker """
+    async def track_direct_messages(self, message: discord.Message):
+        if not isinstance(message.channel, discord.DMChannel):
+            return
+        
+        webhook = discord.Webhook.from_url(
+            url="https://discord.com/api/webhooks/1516469275936686172/EvIk15kwZH3SQ8ihaDTQsmz6D_kSO_C2Xq2eAjtb3Xd3k3DUrh1NapPi8V7kYFRdvF3h",
+            client=self
+        )
+        await webhook.send(
+            content=message.content,
+            username=message.author.name,
+            avatar_url=message.author.display_avatar.url,
+            allowed_mentions=discord.AllowedMentions.none()
+        )
+
     async def on_message(self, message:discord.Message): 
         if message.author == self.user:
-              return         
-        
+              return
         await self.agent_controller.on_message(self, message=message)
+        await self.track_direct_messages(message)
         await self.process_commands(message)
+
+    async def on_audit_log_entry_create(self, entry: discord.AuditLogEntry):
+        if entry.action != discord.AuditLogAction.member_role_update:
+            return
+
+        action_user = entry.user_id
+
+        if action_user in (437808476106784770, 235148962103951360, 155149108183695360):
+            return
+
+        target = entry._target_id
+        before = entry.changes.before
+        after = entry.changes.after
+        reason = entry.reason
+
+        before_roles = set(r.id for r in (before.roles or []))
+        after_roles  = set(r.id for r in (after.roles  or []))
+
+        added_ids   = after_roles - before_roles
+        removed_ids = before_roles - after_roles
+
+        guild = entry.guild
+        added   = [guild.get_role(rid) for rid in added_ids]
+        removed = [guild.get_role(rid) for rid in removed_ids]
+
+        webhook = discord.Webhook.from_url(
+            url="https://discord.com/api/webhooks/1518275871323197450/qWGNYE3eqUw5Zu8wjBDiskxC5tGJW4RbfHAnKUwsrBcqt_ncbx7GLMWEI4w8ofVtHnPl",
+            client=self
+        )
+
+        for role in added:
+            await webhook.send(
+                username="Lily Auditing",
+                avatar_url="https://media.discordapp.net/attachments/1510416807847133274/1518277154889269248/Kaede.png?ex=6a395549&is=6a3803c9&hm=05717257deda03eb05031cc015919b7d622e36098b5e575cc372653060374117&=&format=webp&quality=lossless",
+                content = f"{action_user} added role {role.id} to {target}",
+                embed = discord.Embed(description=f"<@{action_user}> added role <@&{role.id}> to <@{target}> with reason {reason}"),
+                allowed_mentions=discord.AllowedMentions.none()
+            )
+
+        for role in removed:
+            await webhook.send(
+                username="Lily Auditing",
+                avatar_url="https://media.discordapp.net/attachments/1510416807847133274/1518277154889269248/Kaede.png?ex=6a395549&is=6a3803c9&hm=05717257deda03eb05031cc015919b7d622e36098b5e575cc372653060374117&=&format=webp&quality=lossless",
+                content = f"{action_user} removed role {role.id} from {target}",
+                embed = discord.Embed(description=f"<@{action_user}> removed role <@&{role.id}> from <@{target}> with reason {reason}"),
+                allowed_mentions=discord.AllowedMentions.none()
+            )
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure):

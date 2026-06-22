@@ -5,6 +5,9 @@ import logging
 from dotenv import load_dotenv
 from src.lily import Lily
 
+from discord.ext import commands
+import discord
+
 load_dotenv("token.env")
 
 logging.basicConfig(
@@ -13,8 +16,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("lily")
-
-
 async def lily_bot():
     bot = Lily()
 

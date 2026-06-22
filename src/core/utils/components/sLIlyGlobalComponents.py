@@ -32,13 +32,36 @@ class CommandInfo(discord.ui.LayoutView):
 
         self.add_item(self.container)
 
+class Avatar(discord.ui.LayoutView):
+    def __init__(self, member: discord.Member) -> None:
+        super().__init__(timeout=10)
+
+        self.member = member
+
+        media_gallery = discord.ui.MediaGallery(
+            discord.MediaGalleryItem(
+                media=member.display_avatar.url,
+            ),
+        )
+        
+        action_row = discord.ui.ActionRow(
+                discord.ui.Button(
+                    url=member.display_avatar.url,
+                    style=discord.ButtonStyle.link,
+                    label="Download",
+                ),
+        )
+
+        self.add_item(media_gallery)
+        self.add_item(action_row)
 
 class RoleCustomizationModal(discord.ui.Modal):
-    def __init__(self, role_id: int ,db: BotGlobalsDatabaseAccess) -> None:
+    def __init__(self, role_id: int ,db: BotGlobalsDatabaseAccess, role_name: str) -> None:
         super().__init__(title="Role Configuration")
 
         self.db = db
         self.role_id = role_id
+        self.role_name = role_name
 
     role_type = discord.ui.TextInput(
         label='Role Type',
@@ -128,7 +151,8 @@ class RoleCustomizationModal(discord.ui.Modal):
             int(self.ban_queue_option.component.value or "0"),
             self.assignment_scope.component.value or "none",
             {role.id for role in (self.assignment_roles.component.values or [])},
-            self.role_type.value
+            self.role_type.value,
+            self.role_name
         )
 
         if response.get("success"):

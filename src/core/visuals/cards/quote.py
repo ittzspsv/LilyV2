@@ -27,6 +27,7 @@ def make_quote_card(
     fade_start_pct: float = 0.25,
     fade_end_pct:   float = 0.46,
     text_col_start_pct: float = 0.46,
+    invert: bool = True
 ) -> Image.Image:
     card = Image.new("RGBA", (W, H), (0, 0, 0, 255))
 
@@ -51,7 +52,11 @@ def make_quote_card(
         subject    = subject.crop((0, crop_y, target_w, crop_y + H))
         target_h   = H
         crop_y     = 0
-    grey = subject.convert("LA").convert("RGBA")
+
+    if invert:
+        grey = subject.convert("LA").convert("RGBA")
+    else:
+        grey = subject.convert("RGBA")
     paste_x = 0
     paste_y = (H - target_h) // 2
     fade_start_x = int(W * fade_start_pct)

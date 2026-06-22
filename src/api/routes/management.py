@@ -27,7 +27,4 @@ def management_routes(db: BotGlobalsDatabaseAccess):
                 "data": response
             }
         )
-
- 
-
     return router

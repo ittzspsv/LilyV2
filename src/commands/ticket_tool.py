@@ -117,6 +117,14 @@ class LilyTicketTool(commands.Cog):
         )
         await ctx.reply("Ticket panel config has been updated")
 
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @permission(command_name="ticket_retrieve")
+    @ticket.command(name='retrive', description='Retrieve a ticket transcript')
+    async def ticket_retrieve(self, ctx: commands.Context, opened_by: discord.Member | discord.User):
+        ...
+
+
+
 
 async def setup(bot):
     cog = LilyTicketTool(bot)

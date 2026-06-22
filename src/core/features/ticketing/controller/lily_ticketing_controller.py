@@ -6,6 +6,8 @@ import discord
 import DiscordTranscript
 from discord.ext import commands
 
+from typing import List, Dict, Any
+
 from src.core.configs.sBotDetails import img
 from src.core.database.integrations.bot_globals import (
     BotGlobalsDatabaseAccess,
@@ -24,6 +26,8 @@ from ..classes.ticketing_classes import (
 from ..components.LilyTicketToolComponents import (
     TicketComponentEmbed,
     TicketSelector,
+    TicketLogComponent,
+    TicketLogDirectMessage
 )
 
 
@@ -174,51 +178,21 @@ class LilyTicketingController:
                 "Failed to spawn ticket panel due to an internal error."
             )
 
-    async def c_ticket_log_action(self, ctx: commands.Context,thread: discord.Thread,opened_user_id: int,ticket_type: str,accessed_staff_ids: set, logs_channel: discord.TextChannel, reason: str="No reason provided!"):
-        embed = discord.Embed(
-            title="Ticket Logs",
-            description=f"### __TICKET DETAILS__\n> - Ticket Opener : <@{opened_user_id}>\n> - Ticket Thread Reference :  {thread.mention}",
-            color=0xFFFFFF
+    async def c_ticket_log_action_channel(self, ctx: commands.Context,opened_user_id: int,ticket_type: str, logs_channel: discord.TextChannel, transcripts_file, transcript_file_name: str ,reason: str="No reason provided!") -> int:
+        view = TicketLogComponent(
+            opened_user_id,
+            ctx.author.id,
+            ticket_type,
+            reason,
+            transcript_file_name
         )
 
-        embed.add_field(
-            name="Ticket Thread ID",
-            value=f"- ```{thread.id}```",
-            inline=False
-        )
-
-        embed.add_field(
-            name="Staff Closed Ticket",
-            value=f"> - <@{ctx.author.id}>",
-            inline=False
-        )
-
-        embed.add_field(
-            name="Reason",
-            value=f"- {reason}",
-            inline=False
-        )
-
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=695fa4b2&is=695e5332&hm=4fc10e3e38fa5a3270fab5cd8fff0928472594db43955848c443dcddef447f5e&")
-
-        embed.set_footer(text=ticket_type)
         try:
-            await logs_channel.send(content=f'<@{opened_user_id}>', embed=embed)
-        except Exception as e:
-            print(f"Exception [TicketLogAction] {e}")
-
-    async def c_ticket_log_action_channel(self, ctx: commands.Context,opened_user_id: int,ticket_type: str, logs_channel: discord.TextChannel, transcripts_file, reason: str="No reason provided!") -> int:
-        embed = discord.Embed(
-            title="Ticket Logs",
-            description=f"### __TICKET DETAILS__\n> - Ticket Opener : <@{opened_user_id}>\n> - Ticket Closed by: {ctx.author.mention}\n> - Reason: {reason}",
-            color=0xFFFFFF
-        )
-
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=695fa4b2&is=695e5332&hm=4fc10e3e38fa5a3270fab5cd8fff0928472594db43955848c443dcddef447f5e&")
-
-        embed.set_footer(text=ticket_type)
-        try:
-            message: discord.Message = await logs_channel.send(content=f'<@{opened_user_id}>', embed=embed, file=transcripts_file)
+            message: discord.Message = await logs_channel.send(
+                view=view,
+                allowed_mentions=discord.AllowedMentions.none(),
+                file=transcripts_file
+            )
             return message.id
         except Exception as e:
             print(f"Exception [TicketLogAction] {e}")
@@ -333,17 +307,7 @@ class LilyTicketingController:
 
             opened_user_id, ticket_type, logs_channel_id, submission_json_raw, claimer_user_id = row
 
-            if claimer_user_id is None:
-                await message.edit(
-                    embed=simple_embed(
-                        f"No one has claimed this ticket! PLease claim this ticket before closing",
-                        "cross"
-                    )
-                )
-
-                return
-
-            if claimer_user_id != ctx.author.id:
+            if claimer_user_id != ctx.author.id and claimer_user_id is not None:
                 await message.edit(
                     embed=simple_embed(
                         f"You cannot close this ticket.  Only <@{claimer_user_id}> can close it.  Please revoke the ticket claim if you are permitted!",
@@ -369,24 +333,7 @@ class LilyTicketingController:
                 except discord.Forbidden:
                     logs_channel = None
 
-            if isinstance(channel, discord.Thread):
-                if logs_channel:
-                    await self.c_ticket_log_action(
-                        ctx=ctx,
-                        thread=channel,
-                        opened_user_id=opened_user_id,
-                        ticket_type=ticket_type,
-                        accessed_staff_ids=set(),
-                        logs_channel=logs_channel,
-                        reason=reason
-                    )
-
-                await channel.edit(archived=True, locked=True)
-
-                await self.bot_db.delete_ticket(ticket_id)
-                return
-
-            elif isinstance(channel, discord.TextChannel):
+            if isinstance(channel, discord.TextChannel):
                 transcript = await DiscordTranscript.export(
                     channel,
                     limit=None,
@@ -415,6 +362,7 @@ class LilyTicketingController:
                         ticket_type=ticket_type,
                         logs_channel=logs_channel,
                         transcripts_file=transcript_file,
+                        transcript_file_name = f"transcript-{channel.name}.html",
                         reason=reason
                     )
 
@@ -450,8 +398,16 @@ class LilyTicketingController:
                             inline=False,
                         )
 
+                        view = TicketLogDirectMessage(
+                            ticket_type,
+                            ctx.author.id,
+                            reason,
+                            ctx.guild.name,
+                            f"transcript-{channel.name}.html"
+                        )
+
                         await user.send(
-                            embed=embed, 
+                            view=view, 
                             file=discord.File(
                                 io.BytesIO(transcript_bytes),
                                 filename=f"transcript-{channel.name}.html",
@@ -502,13 +458,13 @@ class LilyTicketingController:
 
         await ctx.reply(embed=embed)
         
-    async def ticket_retrieve(self, ctx: commands.Context, id: int):
+    async def ticket_retrieve(self, ctx: commands.Context, member_id: int):
         if ctx.guild is None:
             return
 
-        result = await self.bot_db.get_ticket_log(id, ctx.guild.id)
+        result: List[Dict[str, Any]] = await self.bot_db.get_member_ticket_logs(ctx.guild.id, member_id)
 
-        if result is None:
+        if len(result) <= 0:
             await ctx.reply(
                 embed=simple_embed(
                     "No ticket logs found!", 'cross'
@@ -516,90 +472,3 @@ class LilyTicketingController:
             )
 
             return
-        
-        transcripts_reference = result["transcripts_reference"]
-        transcripts_channel_id = self.bot_db.get_channel(ctx.guild.id, "ticket_transcripts")
-
-        if transcripts_channel_id is None:
-            await ctx.reply(
-                embed=simple_embed(
-                    "Ticket transcripts channel cannot be found", 'cross'
-                )
-            )
-            return
-
-        transcripts_channel = ctx.guild.get_channel(transcripts_channel_id)
-        if not transcripts_channel:
-            transcripts_channel = await ctx.guild.fetch_channel(transcripts_channel_id)
-
-        if transcripts_channel and isinstance(transcripts_channel, discord.TextChannel):
-            transcript_message: discord.Message | None = None
-
-            try:
-                transcript_message = await transcripts_channel.fetch_message(transcripts_reference)
-            except Exception:
-                await ctx.reply(
-                    embed=simple_embed(
-                        "Failed to fetch transcript message", 'cross'
-                    )
-            )
-                
-            if transcript_message is None:
-                return
-
-            """ TODO, fetch all attachments from transcript_message to prepare an file """
-            files: list[discord.File] = []
-            for attachment in transcript_message.attachments:
-                data = await attachment.read()
-
-                files.append(
-                    discord.File(
-                        io.BytesIO(data),
-                        filename=attachment.filename,
-                        spoiler=attachment.is_spoiler(),
-                    )
-                )
-        
-            """ Building embed """
-            embed = discord.Embed(
-                title=f"Ticket Log #{id}",
-            )
-            embed.set_thumbnail(url=img["logs"])
-            embed.set_image(url=img["border"])
-            embed.add_field(
-                name="Opened by",
-                value=f"<@{result["opened_user_id"]}>",
-                inline=False,
-            )
-            embed.add_field(
-                name="Staff Handled",
-                value=f"<@{result["staff_handled"]}>",
-                inline=False,
-            )
-            embed.add_field(
-                name="Reason",
-                value=result["reason"],
-                inline=False,
-            )
-            embed.add_field(
-                name="Closed At",
-                value=result["timestamp"],
-                inline=False,
-            )
-            embed.add_field(
-                name="Ticket Type",
-                value=result["ticket_type"],
-                inline=False,
-            )
-
-            await ctx.reply(embed=embed, files=files)
-
-        else:
-            await ctx.reply(
-                embed=simple_embed(
-                    "Failed to fetch transcript channel", 'cross'
-                )
-            )
-        
-
-        

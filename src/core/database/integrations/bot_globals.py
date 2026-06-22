@@ -27,6 +27,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         super().__init__()
 
         self.cache: dict[int, dict] = {}
+        self.member_cache: dict[int, Any] = {}
         self._gconfig: Optional[GlobalConfig] = None
         self._cache_ready = False
 
@@ -47,6 +48,21 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
         """
         self.cache.clear()
+        self.member_cache.clear()
+
+        prefixes = await self.fetch_all(
+            """
+            SELECT member_id, guild_id , prefix FROM members WHERE prefix IS NOT NULL
+            """
+        )
+
+        self.member_cache = {
+            row["member_id"]: {}
+            for row in prefixes
+        }
+
+        for row in prefixes:
+            self.member_cache[row["member_id"]][row["guild_id"]] = row["prefix"]
 
         guilds = await self.fetch_all("""
             SELECT
@@ -143,6 +159,38 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
     def get_prefix(self, guild_id: int) -> str:
         return self.cache.get(guild_id, {}).get("prefix") or "."
+    
+    def get_prefix_member(
+        self,
+        member_id: int,
+        guild_id: int
+    ) -> str | None:
+        return self.member_cache.get(member_id, {}).get(guild_id)
+    
+    async def set_prefix_member(
+        self,
+        member_id: int,
+        guild_id: int,
+        prefix: str | None
+    ) -> None:
+        await self.execute(
+            """
+            INSERT INTO members (member_id, guild_id, prefix)
+            VALUES (?, ?, ?)
+            ON CONFLICT(member_id, guild_id)
+            DO UPDATE SET prefix = excluded.prefix
+            """,
+            (member_id, guild_id, prefix)
+        )
+
+        if prefix is None:
+            self.member_cache.get(member_id, {}).pop(guild_id, None)
+
+            if member_id in self.member_cache and not self.member_cache[member_id]:
+                del self.member_cache[member_id]
+
+        else:
+            self.member_cache.setdefault(member_id, {})[guild_id] = prefix
 
     def get_channels(self, guild_id: int, channel_name: str) -> list[int]:
         guild_data = self.cache.get(guild_id)
@@ -294,22 +342,24 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         ban_queue: int,
         assignment_scope: str,
         roles: Set[int],
-        role_type: str
+        role_type: str,
+        role_name: str
     ) -> Dict[str, str | bool]:
         try:
             await self.execute(
                 """
                 INSERT INTO roles (
-                    guild_id, role_id, ban_limit, ban_queue, assignment_scope, role_type
+                    guild_id, role_id, ban_limit, ban_queue, assignment_scope, role_type, role_name
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(guild_id, role_id) DO UPDATE SET
                     ban_limit        = excluded.ban_limit,
                     ban_queue        = excluded.ban_queue,
                     assignment_scope = excluded.assignment_scope,
-                    role_type = excluded.role_type
+                    role_type = excluded.role_type,
+                    role_name = excluded.role_name
                 """,
-                (guild_id, role_id, ban_limit, ban_queue, assignment_scope, role_type),
+                (guild_id, role_id, ban_limit, ban_queue, assignment_scope, role_type, role_name),
             )
 
             await self.execute(
@@ -630,11 +680,12 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             bans = await self.fetch_all(
                 """
                 SELECT timestamp
-                FROM   modlogs
-                WHERE  guild_id      = ?
-                AND    moderator_id  = ?
-                AND    mod_type      IN ('ban', 'quarantine')
-                AND    timestamp     >= ?
+                FROM  modlogs
+                WHERE  guild_id = ? 
+                AND deleted = 0
+                AND moderator_id  = ?
+                AND mod_type IN ('ban', 'quarantine')
+                AND timestamp     >= ?
                 ORDER BY timestamp ASC
                 """,
                 (guild_id, moderator_id, past_24h),
@@ -779,6 +830,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             WHERE 
                 guild_id = ? AND 
                 moderator_id = ? AND 
+                deleted = 0 AND
                 LOWER(mod_type) NOT IN ('unban', 'unmute', 'quarantine_release')
             GROUP BY mod_type
             """,
@@ -804,6 +856,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             WHERE 
                 guild_id = ? AND 
                 moderator_id = ? AND
+                deleted = 0 AND
                 LOWER(mod_type) NOT IN ('unban', 'unmute', 'quarantine_release')
             ORDER BY timestamp DESC
             LIMIT ? OFFSET ?
@@ -851,21 +904,16 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         page_start: int | None = None,
         page_end: int | None = None,
     ) -> Dict[str, Any]:
-
-        """ If there is a secondary guild id then we should fetch modlogs of that guild id than """
+        """If there is a secondary guild id then we should fetch modlogs of that guild id than"""
         _guild_id = self.get_secondary_guild_id(guild_id) or guild_id
-
-
         DEFAULT_FETCH_LIMIT = 5
 
-        base_condition = "WHERE guild_id = ? AND target_user_id = ?"
         base_params: list = [_guild_id, target_user_id]
+        base_params_no_mod = base_params.copy()  # snapshot before moderator_id is appended
 
-        aliased_condition = "WHERE ml.guild_id = ? AND ml.target_user_id = ?"
-
+        base_condition = "WHERE guild_id = ? AND target_user_id = ? AND deleted = 0"
         if moderator_id:
             base_condition += " AND moderator_id = ?"
-            aliased_condition += " AND ml.moderator_id = ?"
             base_params.append(moderator_id)
 
         normalized_type = mod_type.lower()
@@ -879,7 +927,6 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
         count_row = await self.fetch_one(count_query, tuple(count_params))
         total_count = count_row["cnt"] if count_row else 0
-
         if not total_count:
             return {"success": False, "message": "No logs found"}
 
@@ -896,24 +943,27 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         start = page_start or 0
         limit = (page_end - start) if page_end is not None else DEFAULT_FETCH_LIMIT
 
-        log_params = base_params.copy()
+        log_params: list = base_params_no_mod.copy() 
         log_query = (
-            f"SELECT ml.id, ml.moderator_id, ml.mod_type, ml.reason, ml.timestamp, "
-            f"GROUP_CONCAT(p.id) AS proof_ids, "
-            f"GROUP_CONCAT(p.proof_reference) AS proof_references "
-            f"FROM modlogs ml "
-            f"LEFT JOIN proofs p ON ml.id = p.case_id "
-            f"{aliased_condition} " 
-            f"GROUP BY ml.id"
+            "SELECT ml.id, ml.moderator_id, ml.mod_type, ml.reason, ml.timestamp, "
+            "GROUP_CONCAT(p.id) AS proof_ids, "
+            "GROUP_CONCAT(p.proof_reference) AS proof_references "
+            "FROM modlogs ml "
+            "LEFT JOIN proofs p ON ml.id = p.case_id "
+            "WHERE ml.guild_id = ? AND ml.target_user_id = ? AND ml.deleted = 0"
         )
+        if moderator_id:
+            log_query += " AND ml.moderator_id = ?"
+            log_params.append(moderator_id)
         if type_filter:
-            log_query += " AND lower(ml.mod_type) = ?" 
+            log_query += " AND lower(ml.mod_type) = ?"
             log_params.append(normalized_type)
 
-        log_query += " ORDER BY ml.timestamp DESC LIMIT ? OFFSET ?"
+        log_query += " GROUP BY ml.id ORDER BY ml.timestamp DESC LIMIT ? OFFSET ?"
         log_params.extend([limit, start])
 
         log_rows = await self.fetch_all(log_query, tuple(log_params))
+
         logs = [
             {
                 "case_id": row["id"],
@@ -968,6 +1018,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             AND s.guild_id = m.guild_id
             WHERE 
                 m.guild_id = ?
+                AND m.deleted = 0
                 AND s.on_loa = 0
                 AND s.retired = 0
                 AND LOWER(m.mod_type) NOT IN ('unban', 'unmute', 'quarantine_release')
@@ -986,7 +1037,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
     async def case_exists(self, case_id: int, guild_id: int) -> bool:
         row = await self.fetch_one(
-            "SELECT moderator_id FROM modlogs WHERE id = ? AND guild_id = ?",
+            "SELECT moderator_id FROM modlogs WHERE id = ? AND guild_id = ? AND deleted = 0",
             (case_id, guild_id),
         )
         return row is not None
@@ -1000,7 +1051,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
     ) -> Dict[str, Any]:
         try:
             row = await self.fetch_one(
-                "SELECT moderator_id FROM modlogs WHERE id = ?", (case_id,)
+                "SELECT moderator_id FROM modlogs WHERE id = ? AND deleted = 0", (case_id,)
             )
             if row is None:
                 return {"success": False, "message": "Case not found."}
@@ -1031,17 +1082,16 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 "case_id": case_id,
             }
         try:
-            await self.execute("DELETE FROM proofs WHERE case_id = ?", (case_id,))
-            await self.execute("DELETE FROM modlogs WHERE id = ?", (case_id,))
+            await self.execute("UPDATE modlogs SET deleted = 1 WHERE id = ?", (case_id,))
             return {
                 "success": True,
                 "message": "Case deleted successfully.",
                 "case_id": case_id,
             }
-        except Exception as exc:
+        except Exception as e:
             return {
                 "success": False,
-                "message": f"Failed to delete case: {exc}",
+                "message": f"Failed to delete case: {e}",
                 "case_id": case_id,
             }
 
@@ -1339,27 +1389,38 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             s.on_loa,
             COALESCE(sc.strikes_count, 0) AS strikes_count,
             s.joined_on,
-            s.timezone,
+            m.timezone,
             s.responsibility,
             s.retired,
             MAX(m.avatar_url) AS avatar_url
         FROM staffs s
         LEFT JOIN staff_roles sr
-            ON s.staff_id = sr.staff_id AND s.guild_id = sr.guild_id
+            ON s.staff_id = sr.staff_id 
+            AND s.guild_id = sr.guild_id
         LEFT JOIN roles r
-            ON sr.role_id = r.role_id AND sr.guild_id = r.guild_id
+            ON sr.role_id = r.role_id 
+            AND sr.guild_id = r.guild_id
         LEFT JOIN (
             SELECT guild_id, issued_to_id, COUNT(*) AS strikes_count
             FROM strikes
             GROUP BY guild_id, issued_to_id
         ) sc
-            ON sc.guild_id = s.guild_id AND sc.issued_to_id = s.staff_id
+            ON sc.guild_id = s.guild_id 
+            AND sc.issued_to_id = s.staff_id
         LEFT JOIN members m
-            ON m.member_id = s.staff_id AND m.guild_id = s.guild_id
-        WHERE s.staff_id = ? AND s.guild_id = ?
+            ON m.member_id = s.staff_id 
+            AND m.guild_id = s.guild_id
+        WHERE s.staff_id = ? 
+        AND s.guild_id = ?
         GROUP BY
-            s.staff_id, s.guild_id, s.name, s.on_loa,
-            s.joined_on, s.timezone, s.responsibility, s.retired,
+            s.staff_id,
+            s.guild_id,
+            s.name,
+            s.on_loa,
+            s.joined_on,
+            m.timezone,
+            s.responsibility,
+            s.retired,
             sc.strikes_count;
         """
         row = await self.fetch_one(query, (staff_id, guild_id))
@@ -1434,7 +1495,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 s.name AS name,
                 m.avatar_url AS avatar_url,
                 s.joined_on AS joined_on,
-                s.timezone AS timezone,
+                m.timezone AS timezone,
                 r.role_type AS role_type
             FROM roles r
             LEFT JOIN staff_ranks srk
@@ -1640,35 +1701,52 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         timezone: Optional[str],
         responsibility: Optional[str],
     ) -> Dict[str, Any]:
-        fields = {
-            "name": name,
-            "joined_on": joined_on,
-            "timezone": timezone,
-            "responsibility": responsibility,
-        }
-        update_columns = {k: v for k, v in fields.items() if v is not None}
 
-        if not update_columns:
-            return {"success": False, "message": "No fields provided to update"}
+        await self.ensure_member(staff_id, guild_id)
 
-        row = await self.fetch_one(
+        if not await self.fetch_one(
             "SELECT 1 FROM staffs WHERE staff_id = ? AND guild_id = ?",
             (staff_id, guild_id),
-        )
-        if not row:
+        ):
             return {
                 "success": False,
                 "message": f"No staff found with ID {staff_id}",
             }
 
-        set_clause = ", ".join(f"{col} = ?" for col in update_columns)
-        values: List[Any] = list(update_columns.values())
-        values.extend([staff_id, guild_id])
+        if any([name, joined_on, responsibility]):
+            fields = {
+                "name": name,
+                "joined_on": joined_on,
+                "responsibility": responsibility,
+            }
 
-        await self.execute(
-            f"UPDATE staffs SET {set_clause} WHERE staff_id = ? AND guild_id = ?",
-            tuple(values),
-        )
+            fields = {k: v for k, v in fields.items() if v is not None}
+
+            await self.execute(
+                f"""
+                UPDATE staffs
+                SET {", ".join(f"{k} = ?" for k in fields)}
+                WHERE staff_id = ? AND guild_id = ?
+                """,
+                (*fields.values(), staff_id, guild_id),
+            )
+
+        if timezone:
+            await self.execute(
+                """
+                UPDATE members
+                SET timezone = ?
+                WHERE member_id = ? AND guild_id = ?
+                """,
+                (timezone, staff_id, guild_id),
+            )
+
+        if not any([name, joined_on, responsibility, timezone]):
+            return {
+                "success": False,
+                "message": "No fields provided to update",
+            }
+
         return {
             "success": True,
             "message": f"Staff ID {staff_id} updated successfully",
@@ -2757,6 +2835,73 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             row["ticket_type"].replace("_", " ").title(): row["count"]
             for row in rows
         } 
+
+    async def rank_setup(self, guild_id: int, role_id: Dict[int, int]) -> None:
+        sorted_roles = sorted(
+            role_id.items(),
+            key=lambda item: item[1],
+            reverse=True
+        )
+
+        normalized = [
+            (guild_id, role, priority)
+            for priority, (role, _) in enumerate(sorted_roles)
+        ]
+
+        await self.execute(
+            """
+            DELETE FROM staff_ranks
+            WHERE guild_id = ?
+            """,
+            (guild_id,)
+        )
+
+        await self.executemany(
+            """
+            INSERT INTO staff_ranks
+                (guild_id, role_id, priority)
+            VALUES (?, ?, ?)
+            """,
+            normalized
+        )
+
+    async def get_staff_ranks(self, guild_id: int) -> List[int]:
+        rows = await self.fetch_all(
+            "SELECT role_id FROM staff_ranks WHERE guild_id = ? ORDER BY priority ASC",
+            (guild_id,)
+        )
+        return [row["role_id"] for row in rows]
+
+    async def get_role_assignments(self, guild_id: int ,role_id: int) -> List[int]:
+        rows = await self.fetch_all(
+            "SELECT target_role_id FROM role_assignmnets WHERE guild_id = ? AND role_id = ?",
+            (guild_id, role_id)
+        )
+
+        return [row["target_role_id"] for row in rows]
+
+    async def get_staffs_timezone_coverage(self, guild_id: int) -> Dict[str, int]:
+        rows = await self.fetch_all(
+            """
+            SELECT 
+                m.timezone,
+                COUNT(*) AS count
+            FROM members m
+            INNER JOIN staffs s
+                ON s.staff_id = m.member_id
+                AND s.guild_id = m.guild_id
+            WHERE m.timezone IS NOT NULL
+            AND m.guild_id = ?
+            AND s.retired = 0
+            GROUP BY m.timezone;
+            """,
+            (guild_id,)
+        )
+
+        return {
+            row["timezone"]: row["count"]
+            for row in rows
+        }
 
     async def leaderboard(self, guild_id: int, leaderboard_type: int) -> Dict[str, Any]:
         types = {

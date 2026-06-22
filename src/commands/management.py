@@ -2,7 +2,9 @@ import re
 import discord
 
 from discord.ext import commands, tasks
+from discord import app_commands
 from datetime import timedelta
+from zoneinfo import available_timezones
 
 from typing import Optional
 from src.core.features.permissions.lily_permissions import permission
@@ -11,7 +13,7 @@ from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.features.management.controller.lily_management_controller import LilyManagementController
 from src.core.features.management.types.staff_management_types import *
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from src.core.features.management.components.staff_management_components import LOARequestView
+from src.core.features.management.components.staff_management_components import LOARequestView, RankConfigureModal
 
 
 class LilyManagement(commands.Cog):
@@ -22,6 +24,16 @@ class LilyManagement(commands.Cog):
 
         self.message_reset_schedular.start()
         self.quota_reset_schedular.start()
+
+    async def timezone_autocomplete(self, interaction: discord.Interaction, current):
+        matches = [
+            tz for tz in sorted(available_timezones())
+            if current.lower() in tz.lower()
+        ]
+        return [
+            app_commands.Choice(name=tz, value=tz)
+            for tz in matches[:25]
+        ]
 
     async def on_load(self):
         self.controller = LilyManagementController(self.bot.db)
@@ -133,22 +145,14 @@ class LilyManagement(commands.Cog):
         next_day, next_week, next_month = map(LilyUtility.parse_date, row)
         """ Quota evaluator """
         if next_day and now >= next_day:
-            new_day = now.replace(
-                hour=23,
-                minute=55,
-                second=0,
-                microsecond=0
+            new_day = (now + timedelta(days=1)).replace(
+                hour=23, minute=55, second=0, microsecond=0
             )
-
-            if now >= new_day:
-                new_day += timedelta(days=1)
-
             await self.bot.db.execute(
                 "UPDATE updates SET next_day_quota_update = ?",
                 (LilyUtility.iso(new_day),),
                 commit=True
             )
-
 
             """ Daily quota evaluator method here """
             await self.controller.automatic_quota_evaluator("1d", self.bot)
@@ -156,59 +160,30 @@ class LilyManagement(commands.Cog):
 
         """ Weekly quota evaluator """
         if next_week and now >= next_week:
-            days_ahead = 7 - now.weekday()
-            if days_ahead == 0:
-                days_ahead = 7
-
-            new_week = (
-                (now + timedelta(days=days_ahead))
-                .replace(hour=0, minute=0, second=0, microsecond=0)
-                - timedelta(minutes=5)
+            days_ahead = (7 - now.weekday()) % 7 or 7 
+            new_week = (now + timedelta(days=days_ahead)).replace(
+                hour=0, minute=0, second=0, microsecond=0
             )
-
-
             await self.bot.db.execute(
                 "UPDATE updates SET next_week_quota_update = ?",
                 (LilyUtility.iso(new_week),),
                 commit=True
             )
-            """ Weekly quota evaluator reset """
             await self.controller.automatic_quota_evaluator("7d", self.bot)
-
 
         """ Monthly quota evaluate """
         if next_month and now >= next_month:
             if now.month == 12:
-                new_month = now.replace(
-                    year=now.year + 1,
-                    month=1,
-                    day=1,
-                    hour=0,
-                    minute=0,
-                    second=0,
-                    microsecond=0
-                )
+                new_month = now.replace(year=now.year + 1, month=1, day=1,
+                                        hour=0, minute=0, second=0, microsecond=0)
             else:
-                new_month = now.replace(
-                    month=now.month + 1,
-                    day=1,
-                    hour=0,
-                    minute=0,
-                    second=0,
-                    microsecond=0
-                )
-
-            new_month -= timedelta(minutes=5)
-
-
+                new_month = now.replace(month=now.month + 1, day=1,
+                                        hour=0, minute=0, second=0, microsecond=0)
             await self.bot.db.execute(
                 "UPDATE updates SET next_month_quota_update = ?",
                 (LilyUtility.iso(new_month),),
                 commit=True
             )
-
-
-            """ Monthly Quota evaluator """
             await self.controller.automatic_quota_evaluator("30d", self.bot)
 
     async def daily_callback(self):
@@ -262,6 +237,15 @@ class LilyManagement(commands.Cog):
             await ctx.reply(
                 embed=simple_embed(
                     "Lily Rank Management System (Promotion, Demotion)"
+                )
+            )
+
+    @commands.hybrid_command(name="application", description="Lily Application Utility")
+    async def application(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await ctx.reply(
+                embed=simple_embed(
+                    "Lily Application Management System"
                 )
             )
 
@@ -326,18 +310,17 @@ class LilyManagement(commands.Cog):
             await self.controller.edit_strike(ctx, int(infraction_id), new_reason)
 
     @staff.command(name='edit', description='edits a staff data')
+    @app_commands.autocomplete(timezone=timezone_autocomplete)
     @permission(command_name="staff_edit")
     async def EditStaff(self, ctx: commands.Context, staff_id: str,name: str = None, joined_on: str = None, timezone: str = None,responsibility: str = None):
         if self.controller is not None:
             await self.controller.edit_staff(ctx, int(staff_id), name, joined_on, timezone, responsibility)
 
     @staff.command(name="self_edit", description="edits your staff data")
+    @app_commands.autocomplete(timezone=timezone_autocomplete)
     @permission(command_name="staff_self_edit")
     async def self_edit_staff_data(self, ctx: commands.Context, name: str=None, timezone: str=None):
         if self.controller is not None:
-            if not bool(re.fullmatch(r'[+-](0?\d|1[0-4]):[0-5]\d', timezone)):
-                await ctx.reply(embed=simple_embed("Invalid Timezone Format! Timezone should be given by `+05:30` or Similar", 'cross'))
-                return 
             await self.controller.edit_staff(ctx, ctx.author.id, name, None, timezone, None)
 
     @strike.command(name='show', description='shows infractions for a concurrent staff')
@@ -488,13 +471,42 @@ class LilyManagement(commands.Cog):
         if self.controller is not None:
             await self.controller.remove_role(ctx, role.id)
 
-
     @staff_role.command(name="remove_raw", description="Removes a staff role from the database")
     @permission(command_name="staff_role_remove_raw")
     async def remove_role_raw(self, ctx: commands.Context, role: str):
         if self.controller is not None:
             await self.controller.remove_role(ctx, int(role))
 
+    @rank.command(name="configure", description="Configure staff ranks")
+    @permission(command_name="rank_configure")
+    async def rank_configure(self, ctx: commands.Context):
+        if ctx.interaction is None:
+            await ctx.reply(embed=simple_embed(
+                "This command can only be used as a slash command."
+            ,'cross'), delete_after=5)
+            return
+        interaction = ctx.interaction
+
+        if interaction.guild is None:
+            await ctx.reply(embed=simple_embed(
+                "This command can only be used inside an guild."
+            ,'cross'), delete_after=5)
+            return
+
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        try:
+            """ Get all rank role ids for autofilling """
+            staff_ranks: list[int] = await bot_db.get_staff_ranks(interaction.guild.id)
+            await interaction.response.send_modal(RankConfigureModal(bot_db, staff_ranks))
+        except Exception as e:
+            print(e)
+
+    
+    @staff.command(name="coverage", description="get the timezone coverage of all the staffs")
+    @permission(command_name="staff_coverage")
+    async def staff_coverage(self, ctx: commands.Context):
+        if self.controller is not None:
+            await self.controller.get_staffs_timezone_coverage(ctx)
 
 
 async def setup(bot):

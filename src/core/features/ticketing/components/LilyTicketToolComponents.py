@@ -113,9 +113,20 @@ class MuteModal(discord.ui.Modal):
             await interaction.followup.send(embed=simple_embed("I cannot mute a user with a role equal to or higher than yours.", 'cross'), ephemeral=True)
             return
 
-        if user.id in {interaction.guild.owner_id, interaction.guild.me.id, interaction.user.id}:
-            await interaction.followup.send(embed=simple_embed("Exception!. Stupid action detected errno 77777", 'cross'), ephemeral=True)
+        if user.id == interaction.guild.owner_id:
+            await interaction.followup.send(embed=simple_embed("You cannot mute the server owner", 'cross'), ephemeral=True)
             return
+        
+        if user.id == interaction.user.id:
+            await interaction.followup.send(embed=simple_embed("You cannot mute yourself", 'cross'), ephemeral=True)
+            return
+        
+        
+        
+        if user.id == interaction.guild.me.id:
+            await interaction.followup.send(embed=simple_embed("You cannot mute me baka~", 'cross'), ephemeral=True)
+            return
+
         
         seconds = mute_parser(self.duration.component.value)
         until = utcnow() + timedelta(seconds=seconds)
@@ -168,7 +179,6 @@ class BanModal(discord.ui.Modal):
             return
         
         
-        jail_value = self.db.bot_db.global_config.jail if self.db.bot_db.global_config else 1
         role_ids = [str(r.id) for r in interaction.user.roles]
         if not role_ids:
             await interaction.response.send_message(embed=simple_embed("No permission.", 'cross'), ephemeral=True)
@@ -176,11 +186,10 @@ class BanModal(discord.ui.Modal):
 
         member: Optional[discord.Member] = None
 
-
         try:
             member = await interaction.guild.fetch_member(self.member_id)
         except discord.NotFound:
-            await interaction.response.send_message(embed=simple_embed("User is not in the guild!", 'cross'), ephemeral=True)
+            await interaction.response.send_message(embed=simple_embed("User should be in the guild in-order to quarantine him", 'cross'), ephemeral=True)
             return
         except discord.HTTPException:
             await interaction.response.send_message(embed=simple_embed("Failed to fetch the member due to network error!", 'cross'), ephemeral=True)
@@ -207,7 +216,7 @@ class BanModal(discord.ui.Modal):
         if member.id == interaction.user.id:
             await interaction.followup.send(
                 embed=simple_embed(
-                    "You cannot moderate yourself.",
+                    "You cannot quarantine yourself",
                     "cross"
                 ),
                 ephemeral=True
@@ -218,7 +227,7 @@ class BanModal(discord.ui.Modal):
         if member.id == interaction.guild.me.id:
             await interaction.followup.send(
                 embed=simple_embed(
-                    "You cannot moderate the bot.",
+                    "You cannot quarantine me",
                     "cross"
                 ),
                 ephemeral=True
@@ -229,7 +238,7 @@ class BanModal(discord.ui.Modal):
         if member.id == interaction.guild.owner_id:
             await interaction.followup.send(
                 embed=simple_embed(
-                    "You cannot moderate the server owner.",
+                    "You cannot quarantine the server owner.",
                     "cross"
                 ),
                 ephemeral=True
@@ -273,7 +282,7 @@ class BanModal(discord.ui.Modal):
                 "guild_id"       : interaction.guild.id,
                 "moderator_id"   : interaction.user.id,
                 "target_user_id" : member.id,
-                "mod_type"       : "quarantine" if jail_value == 1 else "ban",
+                "mod_type"       : "quarantine",
                 "reason"         : self.reason.component.value,
                 "message_source" : interaction.message.jump_url if interaction.message else "No Messages Found",
             })
@@ -310,43 +319,30 @@ class BanModal(discord.ui.Modal):
 
             return case_id
         
-        if jail_value == 0:
-            await interaction.guild.ban(
-                discord.Object(id=member.id),
-                reason=f"By {interaction.user} | {self.reason.component.value}",
+        quarantine_role = (
+                discord.utils.get(interaction.guild.roles, name="Quarantine")
+                or discord.utils.get(interaction.guild.roles, name="Prisoner")
             )
 
-            await notify_and_log("ban")        
+        if not quarantine_role or quarantine_role >= interaction.guild.me.top_role:
+            await interaction.followup.send(embed=simple_embed("Quarantine role is higher than my role.", 'cross'), ephemeral=True)
+            return
 
-            await interaction.followup.send(embed=simple_embed(
-                f"Banned: <@{member.id}>\n**Remaining:** {max(0, status.remaining_count - 1)}"
-            ))
-        else:
-            quarantine_role = (
-                    discord.utils.get(interaction.guild.roles, name="Quarantine")
-                    or discord.utils.get(interaction.guild.roles, name="Prisoner")
-                )
+        if quarantine_role in member.roles:
+            await interaction.followup.send(embed=simple_embed("Already quarantined.", 'cross'), ephemeral=True)
+            return
+        
+        await member.add_roles(
+            quarantine_role,
+            reason=f"Quarantine by {interaction.user} | {self.reason.component.value}",
+        )
 
-            if not quarantine_role or quarantine_role >= interaction.guild.me.top_role:
-                await interaction.followup.send(embed=simple_embed("Quarantine role is higher than my role.", 'cross'), ephemeral=True)
-                return
+        await notify_and_log("quarantine")
 
-            if quarantine_role in member.roles:
-                await interaction.followup.send(embed=simple_embed("Already quarantined.", 'cross'), ephemeral=True)
-                return
-            
-            await member.add_roles(
-                quarantine_role,
-                reason=f"Quarantine by {interaction.user} | {self.reason.component.value}",
-            )
+        await interaction.followup.send(embed=simple_embed(
+            f"Quarantined: <@{member.id}>\n**Remaining:** {max(0, status.remaining_count - 1)}"
+        ))
 
-            await notify_and_log("quarantine")
-
-            """ If no proofs has been attached always send a button view to attach proofs """
-            await interaction.followup.send(embed=simple_embed(
-                f"Quarantined: <@{member.id}>\n**Remaining:** {max(0, status.remaining_count - 1)}"
-            ))
-            
 class WarnModal(discord.ui.Modal):
     reason = discord.ui.Label(
         text="Reason",
@@ -652,6 +648,13 @@ class TicketComponentEmbed(discord.ui.LayoutView):
 
                 ticket_details.append(
                     discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small)
+                )
+
+            elif field_type in ("role_select",):
+                ticket_details.append(
+                    discord.ui.TextDisplay(
+                        f"**{label}**\n {' , '.join(value)}"
+                    )
                 )
 
 
@@ -981,6 +984,13 @@ class TicketModal(discord.ui.Modal):
                     required=True
                 )
 
+            elif field_type == "role_select":
+                component = discord.ui.RoleSelect(
+                    min_values=1,
+                    max_values=1,
+                    required=True
+                )
+
             """ This wouldn't likely to occur """
             if component is None:
                 raise ValueError
@@ -1191,6 +1201,13 @@ class TicketModal(discord.ui.Modal):
                     })
 
                 ...
+            
+            elif field_type == "role_select":
+                field_data.append({
+                    "field": field,
+                    "value": [role.name for role in item.component.values]
+                })
+
             else:
                 field_data.append({
                     "field": field,
@@ -1288,55 +1305,39 @@ class TicketSelect(discord.ui.Select):
 
         await interaction.response.send_modal(modal)
 
-async def TicketLogAction(interaction: discord.Interaction,thread: discord.Thread,opened_user_id: int,ticket_type: str,accessed_staff_ids: set, logs_channel: discord.TextChannel):
-    embed = discord.Embed(
-        title="Ticket Logs",
-        description=f"### __TICKET DETAILS__\n> - Ticket Opener : <@{opened_user_id}>\n> - Ticket Thread Reference :  {thread.mention}",
-        color=0xFFFFFF
-    )
+class TicketLogComponent(discord.ui.LayoutView):
+    def __init__(self, ticket_opener: int, ticket_closed_by: int ,ticket_type: str, reason: str, transcript_file_name: str) -> None:
+        super().__init__(timeout=10)    
 
-    embed.add_field(
-        name="Ticket Thread ID",
-        value=f"- ```{thread.id}```",
-        inline=False
-    )
-
-    embed.add_field(
-        name="Staff Closed Ticket",
-        value=f"> - <@{interaction.user.id}>",
-        inline=False
-    )
-
-    embed.set_image(url="https://cdn.discordapp.com/attachments/1438505067341680690/1438507704275570869/Border.png?ex=695fa4b2&is=695e5332&hm=4fc10e3e38fa5a3270fab5cd8fff0928472594db43955848c443dcddef447f5e&")
-
-    embed.set_footer(text=ticket_type)
-    try:
-        await logs_channel.send(content=f'<@{opened_user_id}>', embed=embed)
-    except Exception as e:
-        print(f"Exception [TicketLogAction] {e}")
-
-def TicketEmbed(ticket_opener: discord.Member, submission_data) -> discord.Embed:
-    ticket_name = submission_data.get("ticket_name_base", "General Ticket").replace("_", " ").title()
-    ticket_values = submission_data.get("inputs", {})
-    embed = discord.Embed(
-        color=16777215,
-        title=f"<:arrow:1438045578721493062> {ticket_name} Ticket",
-        description=f"<:member:1438045591098753104> Ticket Opened By {ticket_opener.mention}",
-    )
-    embed.set_author(
-        name=ticket_opener.name,
-        icon_url=ticket_opener.display_avatar.url,
-    )
-    embed.set_thumbnail(url=ticket_opener.display_avatar.url)
-    embed.set_image(url=img['border'])
-    embed.set_footer(
-        text="Lily Ticketing",
-    )
-
-    for k, v in ticket_values.items():
-        embed.add_field(
-            name=k,
-            value=f" >  - ```{v}```",
-            inline=False,
+        container = discord.ui.Container(
+            discord.ui.TextDisplay(content=f"# Ticket Log | {ticket_type}"),
+            discord.ui.TextDisplay(content=f"### Ticket Opener\n- <@{ticket_opener}>"),
+            discord.ui.TextDisplay(content=f"### Ticket Closed by\n- <@{ticket_closed_by}>"),
+            discord.ui.TextDisplay(content=f"### Reason\n- {reason}"),
+            discord.ui.TextDisplay(content="### Ticket Transcripts"),
+            discord.ui.File(
+                media=f"attachment://{transcript_file_name}",
+            ),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
         )
-    return embed
+
+        self.add_item(container)
+
+class TicketLogDirectMessage(discord.ui.LayoutView):
+    def __init__(self, ticket_type: str, ticket_closed_by: int, reason: str, server_name: str, transcript_file_name: str):
+
+        super().__init__(timeout=10)
+
+        container = discord.ui.Container(
+            discord.ui.TextDisplay(content=f"## Ticket Closed | {ticket_type}"),
+            discord.ui.TextDisplay(content=f"### Handled by\n- <@{ticket_closed_by}>"),
+            discord.ui.TextDisplay(content=f"### Reason\n- {reason}"),
+            discord.ui.TextDisplay(content=f"### Server\n- {server_name}"),
+            discord.ui.TextDisplay(content="### Transcript"),
+            discord.ui.File(
+                media=f"attachment://{transcript_file_name}",
+            ),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
+        )
+
+        self.add_item(container)

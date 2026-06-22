@@ -1,6 +1,7 @@
 import discord
 import re
 from datetime import datetime
+from typing import Optional
 import src.core.configs.sBotDetails as Configs
 
 def ParseAdvancedEmbed(data: dict):
@@ -49,7 +50,8 @@ def ParseAdvancedEmbed(data: dict):
 
     return content, embeds
 
-def simple_embed(message: str, s_emoji: str='checked', bold: bool=True, expression: str = None) -> discord.Embed:
+
+def simple_embed(message: str, s_emoji: str='checked', bold: bool=True, expression: Optional[str] = None) -> discord.Embed:
     emoji = Configs.emoji.get(s_emoji.lower(), "")
     text_formatting = f"{emoji} {'**' + message + '**' if bold else message}"
     embed =  discord.Embed(
@@ -58,6 +60,6 @@ def simple_embed(message: str, s_emoji: str='checked', bold: bool=True, expressi
     )
 
     if expression:
-        embed.set_thumbnail(Configs.expression.get(expression) or 'neutral')
+        embed.set_thumbnail(url=Configs.expression.get(expression) or 'neutral')
     return embed
 

@@ -25,6 +25,9 @@ class BloxFruitsController:
             elif message.channel.id in bot.db.get_channels(message.guild.id, "bf_win_loss"):
                 await self.win_loss(message=message)
 
+            elif message.channel.id in bot.db.get_channels(message.guild.id, "bf_trading_channels"):
+                await self.bf_automoderation(message, bot.db)
+
 
     async def fruit_value(self, message: discord.Message):
         item_name = re.sub(r"^(perm|permanent|fruit value of|value of|value)\s+", "", message.content.lower()).strip()
@@ -109,6 +112,52 @@ class BloxFruitsController:
 
                 #await message.reply(embed=embed, view=InviteView())
                 await message.reply(view=view)
+
+    async def bf_automoderation(self, message: discord.Message, bot_db):
+        your_fruits, your_fruit_types, their_fruits, their_fruit_types = extract_trade_details(message.content, self.db)
+        if not any([your_fruits, your_fruit_types]) or not any([their_fruits, their_fruit_types]):
+            return
+        
+        
+        calculated_result = win_or_lose(
+                self.db,
+                your_fruits[:4],
+                your_fruit_types[:4],
+                their_fruits[:4],
+                their_fruit_types[:4]
+            )
+        
+        """ Check if the value difference on their side is less than 60% """
+        if calculated_result["percentage"] > 60 and calculated_result["conclusion"].lower() == 'l':
+            """ It might be phishing.  Why not we actually DM them to find that out """
+
+
+            """ If they actually respond and if that's a phishing link, we just quarantine them with appropriate reason"""
+            channel_id = bot_db.get_channel(message.guild.id, "logs_channel")
+            if channel_id is None:
+                return
+            try:
+                assert isinstance(message.guild, discord.Guild)
+                logs_channel = await message.guild.fetch_channel(channel_id)
+
+                if not isinstance(logs_channel, discord.TextChannel):
+                    return
+
+                await logs_channel.send(embed=discord.Embed(
+                    title="Trade Scam Detected",
+                    description=(
+                        f"This trade [Message]({message.jump_url}) sent by {message.author.mention} seems too good to be true.\n\n"
+                        f"**Trade Value Difference:** {calculated_result['percentage']}%\n\n"
+                        f"**Value Information**\n"
+                        f"**Your Offer:** {calculated_result['your_total_values']}\n"
+                        f"**Their Offer:** {calculated_result['their_total_values']}\n\n"
+                        f"Necessary actions have been taken against the user."
+                    )
+                ))
+
+            except Exception:
+                return
+
 
     async def trade_suggestor(self, message: discord.Message ,fruits, fruit_types):
         view = TradeSuggestorComponent(

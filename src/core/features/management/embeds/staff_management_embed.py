@@ -4,6 +4,7 @@ from src.core.configs.sBotDetails import emoji, img
 from discord.ext import commands
 from typing import Optional
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 def build_staff_embed(staff: discord.Member, data: dict) -> discord.Embed:
     name = data.get("name")
@@ -21,6 +22,12 @@ def build_staff_embed(staff: discord.Member, data: dict) -> discord.Embed:
         status_display = f"{emoji['invisible']} Retired"
     else:
         status_display = f"{emoji['online']} Active"
+
+    if timezone is not None:
+        local_dt = datetime.now(tz=ZoneInfo(timezone))
+        current_time = local_dt.strftime("%-d %A %Y at %-I.%M%p").replace("AM", "am").replace("PM", "pm")
+    else:
+        current_time = "N/A"
 
     embed = discord.Embed(
         color=0xFFFFFF,
@@ -40,10 +47,17 @@ def build_staff_embed(staff: discord.Member, data: dict) -> discord.Embed:
         value=(
             f"{emoji['shield']} **Role:** {','.join(role_name or []) or 'N/A'}\n"
             f"{emoji['bookmark']} **Responsibilities:** {responsibility or 'N/A'}\n"
-            f"{emoji['clock']} **Timezone:** {timezone or 'N/A'}\n"
             f"{emoji['calender']} **Join Date:** <t:{joined_on}:D>"
         ),
         inline=False,
+    )
+
+    embed.add_field(
+        name="__Timezone Information__",
+        value=(
+            f"{emoji['clock']} **Timezone:** {timezone or 'N/A'}\n"
+            f"{emoji['clock']} **Current Time:** {current_time}\n"
+        )
     )
 
     embed.add_field(
