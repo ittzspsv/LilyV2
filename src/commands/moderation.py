@@ -6,6 +6,7 @@ from src.core.utils.components.sLIlyGlobalComponents import CommandInfo
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.features.moderation.controller.lily_moderation_controller import LilyModerationController
 from src.core.features.permissions.lily_permissions import permission
+from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 
 
 
@@ -257,7 +258,6 @@ class LilyModeration(commands.Cog):
         
         await self.controller.logging_controller.retrieve_proofs(ctx, int(case_id))
 
-
     @mod.command(name='queue', description='Get moderation queue')
     @permission(command_name="queue")
     async def queue(self, ctx: commands.Context):
@@ -272,6 +272,75 @@ class LilyModeration(commands.Cog):
             return
         await self.controller.remove_member_from_queue(ctx, member)
     
+    @mod.command(name="acronym_add", description="Add an reason acronym")
+    @permission(command_name = "mod_acronym_add")
+    async def add_mod_acronym(self, ctx: commands.Context, key: str, * ,value: str):
+        
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
+        
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        await bot_db.add_moderation_acronym(ctx.author.id, ctx.guild.id, key, value)
+        await ctx.reply(embed=simple_embed(f"Successfully Added Moderation Acronym"))
+
+    @mod.command(name="acronym_remove", description="Removes an reason acronym")
+    @permission(command_name = "mod_acronym_remove")
+    async def remove_mod_acronym(self, ctx: commands.Context, * ,key: str):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
+        
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+
+        await bot_db.remove_moderation_acronym(ctx.author.id, ctx.guild.id, key)
+        await ctx.reply(embed=simple_embed(f"Successfully Removed Moderation Acronym"))
+
+    @mod.command(name="acronym_update", description="Updates an reason acronym")
+    @permission(command_name = "mod_acronym_update")
+    async def update_mod_acronym(self, ctx: commands.Context, key: str, * ,value: str):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
+        
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        await bot_db.update_moderation_acronym(ctx.author.id, ctx.guild.id, key, value)
+
+        await ctx.reply(embed=simple_embed(f"Successfully Updated Moderation Acronym"))
+
+    @mod.command(name="acronyms", description="Display all moderation acronyms")
+    @permission(command_name = "mod_acronyms")
+    async def get_mod_acronym(self, ctx: commands.Context):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
+        
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        result: dict[str, str] = await bot_db.get_moderation_acronyms(ctx.author.id, ctx.guild.id)
+
+        acronyms = ""
+        for key, value in result.items():
+            acronyms += f"- **{key}** : {value}\n"
+
+        embed = discord.Embed(
+            title=f"{ctx.author.display_name}'s Moderation Acronyms",
+            description=acronyms,
+            color=16777215
+        )
+        await ctx.reply(embed=embed)
+
+    @mod.command(name="acronym_transfer", description="Transfer an acronym to a members at a role")
+    @permission(command_name = "mod_acronym_transfer")
+    async def transfer_mod_acronym(self, ctx: commands.Context, target: discord.Member):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
+        
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        result: dict[str, str] = await bot_db.get_moderation_acronyms(ctx.author.id, ctx.guild.id)
+
+        for key, value in result.items():
+            await bot_db.add_moderation_acronym(target.id, ctx.guild.id, key, value)
+
+        await ctx.reply(embed=simple_embed(f"Successfully transferred moderation acronym to {target.mention}"))
+
+        
+
 async def setup(bot):
     cog = LilyModeration(bot)
     await bot.add_cog(cog)

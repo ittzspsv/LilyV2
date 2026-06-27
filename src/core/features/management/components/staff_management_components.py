@@ -28,13 +28,15 @@ class StaffListView(discord.ui.LayoutView):
         end = start + per_page
         staffs = staffs_complete[start:end]
 
+        assert isinstance(interaction.guild, discord.Guild)
+
         role = interaction.guild.get_role(role_id)
-        role_icon_url = role.icon.url if role and role.icon else interaction.client.user.avatar.url
+        role_icon_url = role.icon.url if role and role.icon else interaction.guild.me.display_avatar.url
 
         staff_sections = []
 
         for i, staff in enumerate(staffs):
-            avatar = staff.get('avatar_profile') or interaction.client.user.avatar.url
+            avatar = staff.get('avatar_profile') or interaction.guild.me.display_avatar.url
 
             staff_sections.append(
                 discord.ui.Section(
@@ -234,9 +236,7 @@ class StaffsView(discord.ui.LayoutView):
 
     async def on_timeout(self):
         self.roles_selector.disabled = True
-        self.responsibility_selector.disabled = True
         self.loa_staffs_btn.disabled = True
-        self.responsibility_loa_staff_btn.disabled = True
         if self.message is None:
             return
         try:

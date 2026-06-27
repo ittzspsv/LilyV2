@@ -4,6 +4,8 @@ from typing import Optional, List, Tuple
 
 import discord
 from discord.ext import commands
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 from src.core.configs.sBotDetails import appeal_server_link
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess, BanLimitStatus
@@ -330,6 +332,10 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed("Command requires member object inorder to execute", 'cross'))
             return
         
+        if user.id == ctx.bot.user.id:
+            await ctx.reply(embed=simple_embed("You cannot mute me baka~.", "cross"))
+            return
+        
         if isinstance(user, discord.User):
             await ctx.reply(embed=simple_embed("The user has left the server", 'cross'))
             return
@@ -352,10 +358,6 @@ class LilyModerationController:
         
         if user.id == ctx.author:
             await ctx.reply(embed=simple_embed("You cannot mute yourself.", 'cross'))
-        
-        if user.id == ctx.bot.user.id:
-            await ctx.reply(embed=simple_embed("You cannot mute me baka~.", "cross"))
-            return
 
         try:
             seconds = mute_parser(duration)
@@ -504,7 +506,18 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed("The user has left the server", 'cross'))
             return
         
+        if member.id == ctx.bot.user.id:
+            await ctx.reply(embed=simple_embed("You cannot warn me baka~.", "cross"))
+            return
+        
+        if member.top_role >= ctx.guild.me.top_role:
+            await ctx.reply(embed=simple_embed("I cannot warn this user", 'cross'))
+            return
 
+        if member.top_role >= ctx.author.top_role:
+            await ctx.reply(embed=simple_embed("I cannot warn a user with a role equal to or higher than yours.", 'cross'))
+            return
+        
         if len(proofs) > 0:
             await ctx.reply(embed=simple_embed(f"{member.mention} has been warned"))
 
@@ -661,6 +674,62 @@ class LilyModerationController:
             )
             return
         
+        await ctx.defer()
+        
+        """ Create an image of moderation last 30 days analytics using matplotlib """
+        data = await self.bot_db.get_moderation_monthly_analysis(ctx.guild.id)
+        days = [
+            datetime.strptime(item["day"], "%Y-%m-%d")
+            for item in data
+        ]
+
+        totals = [
+            item["total"]
+            for item in data
+        ]
+
+        x_date = mdates.date2num(days)
+
+        plt.figure(figsize=(12, 5))
+
+        plt.plot(
+            x_date,
+            totals,
+            marker="o",
+            linewidth=2
+        )
+
+        plt.title("Moderation Actions - Last 30 Days")
+        plt.xlabel("Date")
+        plt.ylabel("Actions")
+
+        plt.xticks(rotation=45)
+
+        plt.grid(True, alpha=0.3)
+
+        for x, y in zip(x_date, totals):
+            plt.text(
+                x,
+                y,
+                str(y),
+                ha="center",
+                va="bottom"
+            )
+
+        plt.tight_layout()
+
+        buffer = io.BytesIO()
+        plt.savefig(
+            buffer,
+            format="png",
+            dpi=300,
+            bbox_inches="tight"
+        )
+
+        buffer.seek(0)
+        plt.close()
+
+        
         """ Returns the total, monthly, weekly, daily modlogs in a server """
         view = ModerationInsights(ctx.guild.me, self.bot_db)
-        view.message = await ctx.reply(view=view)
+        view.message = await ctx.reply(view=view, file=discord.File(buffer, filename="moderation_analytics.png"))

@@ -96,3 +96,8 @@ class CommandEnum(str, Enum):
     REMOVE_ROLECUSTOMIZE = "remove_rolecustomize"
     STAFF_COVERAGE = "staff_coverage"
     CREATE_EMBED = "create_embed"
+
+    MOD_ACRONYM_ADD = "mod_acronym_add"
+    MOD_ACRONYM_REMOVE = "mod_acronym_remove"
+    MOD_ACRONYM_UPDATE = "mod_acronym_update"
+    MOD_ACRONYMS = "mod_acronyms"

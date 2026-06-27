@@ -79,6 +79,13 @@ class ModerationInsights(discord.ui.LayoutView):
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.TextDisplay(content="### Moderation Statistics Leaderboard"),
             discord.ui.ActionRow(self.ms_leaderboard_options),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
+            discord.ui.TextDisplay(content="### Moderation Analysis"),
+            discord.ui.MediaGallery(
+                discord.MediaGalleryItem(
+                    media="attachment://moderation_analytics.png",
+                ),
+            ),
             accent_colour=discord.Colour(16777215),
         )
 

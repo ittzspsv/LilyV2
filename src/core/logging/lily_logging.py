@@ -10,6 +10,7 @@ from .components.logging_components import ProofComponentModal
 
 import discord
 import io
+import re
 import aiohttp
 
 class LilyLoggingController:
@@ -134,7 +135,6 @@ class LilyLoggingController:
                     await self.bot_db.log_proof_action(ctx.guild.id, case_id, message.id, ctx.author.id)
                 elif isinstance(ctx, discord.Interaction):
                     await self.bot_db.log_proof_action(ctx.guild.id, case_id, message.id, ctx.user.id)
-
 
         return case_id
 

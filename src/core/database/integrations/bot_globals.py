@@ -6,6 +6,7 @@ from collections import defaultdict
 
 import json
 import pytz
+import re
 
 
 @dataclass
@@ -612,6 +613,14 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         timestamp = datetime.now(pytz.utc).isoformat()
         await self.ensure_staff(moderator_id, guild_id)
         await self.ensure_member(target_user_id, guild_id)
+
+        acronyms: dict[str, str] = await self.get_moderation_acronyms(moderator_id, guild_id)
+        reason = re.sub(
+                    r"\b\w+\b",
+                    lambda m: acronyms.get(m.group(0).lower(), m.group(0)),
+                    reason
+                )
+
 
         row_id = await self.execute(
             """
@@ -2902,6 +2911,160 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             row["timezone"]: row["count"]
             for row in rows
         }
+
+    async def get_moderation_monthly_analysis(self, guild_id: int) -> List[Dict[str, Any]]:
+        rows = await self.fetch_all(
+            """
+            SELECT
+                strftime('%Y-%m-%d', timestamp) AS day,
+                COUNT(*) AS total
+            FROM modlogs
+            WHERE guild_id = ?
+            AND timestamp >= DATE('now', '-30 days')
+            GROUP BY day
+            ORDER BY day;
+            """,
+            (guild_id,)
+        )
+
+        return [
+            {
+                "day": row["day"],
+                "total": row["total"]
+            }
+            for row in rows
+        ]
+
+    async def add_moderation_acronym(
+        self,
+        member_id: int,
+        guild_id: int,
+        key: str,
+        value: str
+    ) -> None:
+        key = key.lower().strip()
+
+        row = await self.fetch_one(
+            """
+            SELECT acronyms
+            FROM acronyms
+            WHERE member_id = ? AND guild_id = ?
+            """,
+            (member_id, guild_id)
+        )
+
+        if row:
+            data: dict[str, str] = {
+                k.lower().strip(): v
+                for k, v in json.loads(row[0] or "{}").items()
+            }
+        else:
+            data = {}
+
+        data[key] = value
+
+        await self.execute(
+            """
+            INSERT INTO acronyms (member_id, guild_id, acronyms)
+            VALUES (?, ?, ?)
+            ON CONFLICT(member_id, guild_id)
+            DO UPDATE SET acronyms = excluded.acronyms
+            """,
+            (
+                member_id,
+                guild_id,
+                json.dumps(data)
+            )
+        )
+
+    async def remove_moderation_acronym(
+        self,
+        member_id: int,
+        guild_id: int,
+        key: str
+    ) -> None:
+        row = await self.fetch_one(
+            """
+            SELECT acronyms
+            FROM acronyms
+            WHERE member_id = ? AND guild_id = ?
+            """,
+            (member_id, guild_id)
+        )
+
+        data: dict[str, str] = json.loads(row[0] or "{}")
+
+        key = key.lower()
+
+        del data[key]
+
+        await self.execute(
+            """
+            UPDATE acronyms
+            SET acronyms = ?
+            WHERE member_id = ? AND guild_id = ?
+            """,
+            (
+                json.dumps(data),
+                member_id,
+                guild_id
+            )
+        )
+
+    async def update_moderation_acronym(
+        self,
+        member_id: int,
+        guild_id: int,
+        key: str,
+        value: str
+    ) -> None:
+        row = await self.fetch_one(
+            """
+            SELECT acronyms
+            FROM acronyms
+            WHERE member_id = ? AND guild_id = ?
+            """,
+            (member_id, guild_id)
+        )
+
+        data: dict[str, str] = json.loads(row[0] or "{}")
+
+        key = key.lower()
+
+
+        data[key] = value
+
+        await self.execute(
+            """
+            UPDATE acronyms
+            SET acronyms = ?
+            WHERE member_id = ? AND guild_id = ?
+            """,
+            (
+                json.dumps(data),
+                member_id,
+                guild_id
+            )
+        )
+
+    async def get_moderation_acronyms(
+        self,
+        member_id: int,
+        guild_id: int
+    ) -> Dict[str, str]:
+        row = await self.fetch_one(
+            """
+            SELECT acronyms
+            FROM acronyms
+            WHERE member_id = ? AND guild_id = ?
+            """,
+            (member_id, guild_id)
+        )
+
+        if not row:
+            return {}
+
+        return json.loads(row[0] or "{}") 
 
     async def leaderboard(self, guild_id: int, leaderboard_type: int) -> Dict[str, Any]:
         types = {
