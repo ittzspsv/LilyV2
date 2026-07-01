@@ -1156,6 +1156,9 @@ class TicketModal(discord.ui.Modal):
         """ Extracting field details and values and then storing it on fields """
         field_data: List[Dict] = []
 
+        bot: commands.Bot = cast(commands.Bot, interaction.client)
+        ctx = await bot.get_context(self.message)
+
         for data in self.components:
             field = data["field"]
             item = data["item"]
@@ -1169,11 +1172,8 @@ class TicketModal(discord.ui.Modal):
                 })
             elif field_type == "member":
                 # Try fetching the member details.
-                bot: commands.Bot = cast(commands.Bot, interaction.client)
-                ctx = await bot.get_context(self.message)
-
                 try:
-                    user = re.sub(r"[^\w.]", "", str(item.component.value).lstrip("@"))
+                    user = re.sub(r"[^\w.]", "", str(item.component.value).lstrip("@")).lower()
 
                     member: discord.Member = await self.converter.convert(
                         ctx,
@@ -1225,6 +1225,8 @@ class TicketModal(discord.ui.Modal):
         submission = {
             "opener": opener_details,
             "channel_id": channel_id,
+            "message_id": ctx.message.id,
+            "higher_staff_role_ids": self.json_data.get("BasicConfigurations").get("higher_staffs_role_id"),
             "fields": self.fields,
             "field_data": field_data,
             "ticket_name_base": ticket_name_base,

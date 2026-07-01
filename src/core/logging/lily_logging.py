@@ -58,6 +58,14 @@ class LilyLoggingController:
                     await ctx.response.send_message(content)
 
             return
+        
+        acronyms: dict[str, str] = await self.bot_db.get_moderation_acronyms(moderator_id, ctx.guild.id)
+        reason = re.sub(
+                    r"\b\w+\b",
+                    lambda m: acronyms.get(m.group(0).lower(), m.group(0)),
+                    reason
+                )
+
 
         case_id = await self.bot_db.log_moderation_action(
             ctx.guild.id,

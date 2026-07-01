@@ -26,7 +26,7 @@ class Lily(commands.Bot):
         self.logging_controller: Optional[LilyLoggingController] = None
         self.agent_controller: LilyAgentController = LilyAgentController()
 
-        super().__init__(command_prefix=self.prefix,intents=intents,help_command=None)
+        super().__init__(command_prefix=self.prefix,intents=intents,help_command=None, owner_ids={1488556914605428988})
 
     async def start_api(self):
         config = uvicorn.Config(self.api.app, host="0.0.0.0", port=8000, loop="asyncio")
@@ -47,7 +47,8 @@ class Lily(commands.Bot):
             "src.commands.utility",
             "src.commands.blox_fruits",
             "src.commands.management",
-            "src.commands.ticket_tool"
+            "src.commands.ticket_tool",
+            "jishaku"
         ]
 
         for ext in extensions:

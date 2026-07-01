@@ -807,5 +807,6 @@ class LilyUtility(commands.Cog):
     async def avatar(self, ctx: commands.Context, member: discord.Member=None):
         await ctx.reply(view=Avatar(member or ctx.author))
 
+
 async def setup(bot):
     await bot.add_cog(LilyUtility(bot))

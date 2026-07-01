@@ -614,14 +614,6 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         await self.ensure_staff(moderator_id, guild_id)
         await self.ensure_member(target_user_id, guild_id)
 
-        acronyms: dict[str, str] = await self.get_moderation_acronyms(moderator_id, guild_id)
-        reason = re.sub(
-                    r"\b\w+\b",
-                    lambda m: acronyms.get(m.group(0).lower(), m.group(0)),
-                    reason
-                )
-
-
         row_id = await self.execute(
             """
             INSERT INTO modlogs
@@ -1570,6 +1562,59 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
         return {"overall": role_count_result, "roles": role_user_map}
 
+    async def assert_staff_role_permission(
+        self,
+        staff_id: int,
+        updated_by: int,
+        guild_id: int,
+    ) -> bool:
+        """Returns True if the updater's role hierarchy priority is higher than the target user's role hierarchy priority."""
+        current_role_row = await self.fetch_one(
+            """
+            SELECT sr.role_id, srk.priority
+            FROM staff_roles sr
+            JOIN roles r
+                ON sr.role_id = r.role_id
+                AND sr.guild_id = r.guild_id
+            LEFT JOIN staff_ranks srk
+                ON srk.role_id = r.role_id
+                AND srk.guild_id = r.guild_id
+            WHERE sr.staff_id = ?
+                AND sr.guild_id = ?
+                AND r.role_type = 'staff'
+            ORDER BY srk.priority ASC
+            LIMIT 1;
+            """,
+            (staff_id, guild_id),
+        )
+
+        if not current_role_row:
+            return False
+
+        updater_row = await self.fetch_one(
+            """
+            SELECT srk.priority
+            FROM staff_roles sr
+            JOIN roles r
+                ON sr.role_id = r.role_id
+                AND sr.guild_id = r.guild_id
+            JOIN staff_ranks srk
+                ON srk.role_id = r.role_id
+                AND srk.guild_id = r.guild_id
+            WHERE sr.staff_id = ?
+                AND sr.guild_id = ?
+                AND r.role_type = 'staff'
+            ORDER BY srk.priority ASC
+            LIMIT 1;
+            """,
+            (updated_by, guild_id),
+        )
+
+        if not updater_row:
+            return False
+
+        return current_role_row["priority"] >= updater_row["priority"]
+
     async def add_staff(
         self, staff_id: int, guild_id: int, name: str, avatar_url: str
     ) -> Dict[str, Any]:
@@ -1773,6 +1818,11 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         await self.ensure_staff(issued_by, guild_id)
         await self.ensure_staff(staff_id, guild_id)
 
+        has_permission: bool = await self.assert_staff_role_permission(staff_id, issued_by, guild_id)
+        if not has_permission:
+            return {"success": False, "message": f"Action has been denied due to <@{staff_id}> having higher rank than you"}
+
+
         if expiry_date == "none":
             iso_string = None
         else:
@@ -1906,12 +1956,19 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         if not staff_id:
             return {"success": False, "message": "Missing staff_id"}
 
+        if staff_id == loa_issued_by:
+            return {"success": False, "message": "You cannot assign LOA to yourself"}
+
         row = await self.fetch_one(
             "SELECT on_loa FROM staffs WHERE staff_id = ? AND guild_id = ?",
             (staff_id, guild_id),
         )
         if row and row["on_loa"] == 1:
             return {"success": False, "message": "Staff is already on LOA"}
+        
+        has_permission: bool = await self.assert_staff_role_permission(staff_id, loa_issued_by, guild_id)
+        if not has_permission:
+            return {"success": False, "message": f"Action has been denied due to <@{staff_id}> having higher rank than you"}
 
         try:
             await self.execute(
@@ -2225,7 +2282,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         if current_priority <= updater_priority:
             return {
                 "success": False,
-                "message": "You cannot update someone with equal or higher role.",
+                "message": f"Action has been denied due to <@{staff_id}> having higher rank than you"
             }
 
         if update_type == "promotion":

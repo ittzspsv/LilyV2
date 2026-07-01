@@ -282,6 +282,8 @@ class LilyTicketingController:
                 )
             )
             return
+        
+        assert isinstance(ctx.author, discord.Member)
 
         message = await ctx.reply(
             embed=simple_embed(
@@ -306,11 +308,19 @@ class LilyTicketingController:
                 raise RuntimeError("Ticket data not found")
 
             opened_user_id, ticket_type, logs_channel_id, submission_json_raw, claimer_user_id = row
+            submission_json = json.loads(submission_json_raw)
 
-            if claimer_user_id != ctx.author.id and claimer_user_id is not None:
+            higher_staffs_roles_id: List[int] = submission_json.get("higher_staff_role_ids", [])
+            is_higher_staff = any(role.id in higher_staffs_roles_id for role in ctx.author.roles)
+
+            if (
+                claimer_user_id is not None
+                and claimer_user_id != ctx.author.id
+                and not is_higher_staff
+            ):
                 await message.edit(
                     embed=simple_embed(
-                        f"You cannot close this ticket.  Only <@{claimer_user_id}> can close it.  Please revoke the ticket claim if you are permitted!",
+                        f"You cannot close this ticket.  Only <@{claimer_user_id}> can close it.",
                         "cross"
                     )
                 )
@@ -370,7 +380,7 @@ class LilyTicketingController:
                 await self.bot_db.create_ticket_log(
                     ctx.guild.id,
                     opened_user_id,
-                    ctx.author.id,
+                    claimer_user_id if claimer_user_id is not None else ctx.author.id,
                     reason,
                     ticket_type,
                     proofs_reference
