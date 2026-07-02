@@ -106,12 +106,16 @@ class Lily(commands.Bot):
             url="https://discord.com/api/webhooks/1516469275936686172/EvIk15kwZH3SQ8ihaDTQsmz6D_kSO_C2Xq2eAjtb3Xd3k3DUrh1NapPi8V7kYFRdvF3h",
             client=self
         )
-        await webhook.send(
-            content=message.content,
-            username=message.author.name,
-            avatar_url=message.author.display_avatar.url,
-            allowed_mentions=discord.AllowedMentions.none()
-        )
+
+        try:
+            await webhook.send(
+                content=message.content,
+                username=message.author.name,
+                avatar_url=message.author.display_avatar.url,
+                allowed_mentions=discord.AllowedMentions.none()
+            )
+        except:
+            pass
 
     async def on_message(self, message:discord.Message): 
         if message.author == self.user:

@@ -614,6 +614,9 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         await self.ensure_staff(moderator_id, guild_id)
         await self.ensure_member(target_user_id, guild_id)
 
+        _guild_id = self.get_secondary_guild_id(guild_id) or guild_id
+
+
         row_id = await self.execute(
             """
             INSERT INTO modlogs
@@ -621,7 +624,7 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
-                guild_id,
+                _guild_id,
                 moderator_id,
                 target_user_id,
                 mod_type.lower(),

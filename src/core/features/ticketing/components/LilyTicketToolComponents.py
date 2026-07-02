@@ -439,6 +439,187 @@ class TicketRatingModal(discord.ui.Modal):
     async def on_submit(self, interaction: discord.Interaction):
         ...
 
+class QuarantineRelease(discord.ui.Modal):
+    reason = discord.ui.Label(
+        text="Reason",
+        description="Enter the reason for the release",
+        component=discord.ui.TextInput(
+            style=discord.TextStyle.paragraph,
+            max_length=512,
+        )
+    )
+
+    def __init__(self, db: DatabaseAccess, member_id: int) -> None:
+        super().__init__(title="Quarantine Release")
+        self.db = db
+        self.member_id = member_id
+
+    async def on_submit(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(embed=simple_embed("Command requires guild object inorder to execute", 'cross'), ephemeral=True)
+            return
+        
+        if isinstance(interaction.user, discord.User):
+            await interaction.response.send_message(embed=simple_embed("Command requires member object inorder to execute", 'cross'), ephemeral=True)
+            return
+        
+        try:
+            await interaction.response.defer()
+            assert isinstance(self.reason.component, discord.ui.TextInput)
+
+            _guild_id = self.db.bot_db.get_secondary_guild_id(interaction.guild.id) or interaction.guild.id
+
+            if _guild_id == interaction.guild.id:
+                guild = interaction.guild
+            
+            else:
+                guild: Optional[discord.Guild] = interaction.client.get_guild(_guild_id)
+
+                if guild is None:
+                    try:
+                        guild = await interaction.client.fetch_guild(_guild_id)
+                    except discord.NotFound:
+                        guild = None
+                    except discord.Forbidden:
+                        guild = None
+                    except discord.HTTPException as exc:
+                        guild = None
+
+                if guild is None:
+                    await interaction.followup.send(
+                        embed=simple_embed("I couldn't find that server.", 'cross'),
+                        ephemeral=True,
+                    )
+                    return
+                
+            try:
+                member: Optional[discord.Member] = await guild.fetch_member(self.member_id)
+            except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+                member = None
+
+            if member is None:
+                await interaction.followup.send(
+                        embed=simple_embed("I couldn't find the member. Maybe they left?", 'cross'),
+                        ephemeral=True,
+                    )
+                return
+                
+            quarantine_role = (
+                discord.utils.get(guild.roles, name="Quarantine")
+                or discord.utils.get(guild.roles, name="Prisoner")
+            )
+
+            if not quarantine_role:
+                await interaction.followup.send(embed=simple_embed("No Quarantine role found.", "cross"))
+                return
+            
+            if quarantine_role not in member.roles:
+                await interaction.followup.send(embed=simple_embed(f"{member.mention} is not quarantined.", "cross"))
+                return
+
+            try:
+                await member.remove_roles(quarantine_role, reason=f"By {interaction.user} | {self.reason.component.value}")
+                await interaction.followup.send(embed=simple_embed(f"Released {member.mention} from quarantine."))
+                await self.db.logging_controller.log_moderation_action(
+                    interaction,
+                    interaction.user.id,
+                    member.id,
+                    "quarantine_release",
+                    self.reason.component.value
+                )
+            except discord.Forbidden:
+                await interaction.followup.send(embed=simple_embed("I don't have permission to remove the Quarantine role.", "cross"))
+            except discord.HTTPException as e:
+                await interaction.followup.send(embed=simple_embed(f"Failed to remove Quarantine role: {e}", "cross"))
+                
+
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            await interaction.followup.send(embed=simple_embed("Failed to release the user. Maybe they left?", 'cross'), ephemeral=True)
+
+class UnmuteModal(discord.ui.Modal):
+    reason = discord.ui.Label(
+        text="Reason",
+        description="Enter the reason for unmute",
+        component=discord.ui.TextInput(
+            style=discord.TextStyle.paragraph,
+            max_length=512,
+        )
+    )
+
+    def __init__(self, db: DatabaseAccess, member_id: int) -> None:
+        super().__init__(title="Unmute User")
+        self.db = db
+        self.member_id = member_id
+
+    async def on_submit(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(embed=simple_embed("Command requires guild object inorder to execute", 'cross'), ephemeral=True)
+            return
+        
+        if isinstance(interaction.user, discord.User):
+            await interaction.response.send_message(embed=simple_embed("Command requires member object inorder to execute", 'cross'), ephemeral=True)
+            return
+        
+        try:
+            await interaction.response.defer()
+            assert isinstance(self.reason.component, discord.ui.TextInput)
+
+            _guild_id = self.db.bot_db.get_secondary_guild_id(interaction.guild.id) or interaction.guild.id
+
+            if _guild_id == interaction.guild.id:
+                guild = interaction.guild
+            
+            else:
+                guild: Optional[discord.Guild] = interaction.client.get_guild(_guild_id)
+
+                if guild is None:
+                    try:
+                        guild = await interaction.client.fetch_guild(_guild_id)
+                    except discord.NotFound:
+                        guild = None
+                    except discord.Forbidden:
+                        guild = None
+                    except discord.HTTPException as exc:
+                        guild = None
+
+                if guild is None:
+                    await interaction.followup.send(
+                        embed=simple_embed("I couldn't find that server.", 'cross'),
+                        ephemeral=True,
+                    )
+                    return
+                
+            try:
+                member: Optional[discord.Member] = await guild.fetch_member(self.member_id)
+            except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+                member = None
+
+            if member is None:
+                await interaction.followup.send(
+                        embed=simple_embed("I couldn't find the member. Maybe they left?", 'cross'),
+                        ephemeral=True,
+                    )
+                return
+
+            try:
+                await member.edit(timed_out_until=None, reason=f"Manual unmute by moderator {interaction.user.mention}")
+                await interaction.followup.send(embed=simple_embed(f"Unmuted {member.mention}"))
+                await self.db.logging_controller.log_moderation_action(
+                    interaction,
+                    interaction.user.id,
+                    member.id,
+                    "unmute",
+                    self.reason.component.value
+                )
+            except discord.Forbidden:
+                await interaction.followup.send(embed=simple_embed("I don't have permission to unmute the user", "cross"))
+            except discord.HTTPException as e:
+                await interaction.followup.send(embed=simple_embed(f"Failed to unmute the user: {e}", "cross"))
+                
+
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            await interaction.followup.send(embed=simple_embed("Failed to release the user. Maybe they left?", 'cross'), ephemeral=True)
+
 class TicketComponentEmbed(discord.ui.LayoutView):
     def __init__(self, opener: discord.Member | int, ticket_channel_id: int, submission_json: dict, core_json: dict, db: DatabaseAccess):
         super().__init__(timeout=None)
@@ -526,11 +707,18 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                         emoji=emoji["logs"]
                     ),
                     discord.SelectOption(
-                        label="Dummy",
-                        value="dummy",
-                        description="This is a dummy and it does nothing",
-                        emoji=emoji["logs"]
-                    )
+                        label="Release Quarantine",
+                        value="quarantine_release",
+                        description="Release a member from quarantine",
+                        emoji=emoji["ban_hammer"]
+                    ),
+                    discord.SelectOption(
+                        label="Unmute User",
+                        value="unmute",
+                        description="Unmute the user",
+                        emoji=emoji["member"]
+                    ),
+
                 ]
             )
 
@@ -913,6 +1101,13 @@ class TicketComponentEmbed(discord.ui.LayoutView):
             )
 
     async def opener_actions_callback(self, interaction: discord.Interaction):
+
+        if interaction.guild is None:
+            await interaction.response.send_message("This command can only be invoked inside an guild", ephemeral=True)
+            return
+        
+        assert isinstance(interaction.user, discord.Member)
+
         is_staff = any(role.id in self.allowed_roles for role in interaction.user.roles)
         is_opener = interaction.user.id == self.opener_id
 
@@ -931,8 +1126,10 @@ class TicketComponentEmbed(discord.ui.LayoutView):
         
         if value == "case_list":
             await self.case_list_callback_opener(interaction)
-        elif value == "dummy":
-            await interaction.response.send_message("Oh!, The reason this dummy is here is due to how selectors in discord work.\n- You can only select the item inside a selector once, if that's only one Item.\n- Unless you reopen discord.", ephemeral=True)
+        elif value == "quarantine_release":
+            await interaction.response.send_modal(QuarantineRelease(self.db, self.opener_id))
+        elif value == "unmute":
+            await interaction.response.send_modal(UnmuteModal(self.db, self.opener_id))
 
 class TicketModal(discord.ui.Modal):
     def __init__(self, title: str, modal_data: dict, json_data, db: DatabaseAccess, message: discord.Message):

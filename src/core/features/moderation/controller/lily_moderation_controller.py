@@ -16,6 +16,7 @@ from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.utils.lily_utility import utcnow
 
 from ..components.sLilyModerationComponents import CaseProofsView, ProofsView
+from ....utils.components.sLIlyGlobalComponents import CommandInfo
 
 
 class LilyModerationController:
