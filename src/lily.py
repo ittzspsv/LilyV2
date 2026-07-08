@@ -103,7 +103,7 @@ class Lily(commands.Bot):
             return
         
         webhook = discord.Webhook.from_url(
-            url="https://discord.com/api/webhooks/1516469275936686172/EvIk15kwZH3SQ8ihaDTQsmz6D_kSO_C2Xq2eAjtb3Xd3k3DUrh1NapPi8V7kYFRdvF3h",
+            url="",
             client=self
         )
 
