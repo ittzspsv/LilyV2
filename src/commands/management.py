@@ -5,8 +5,10 @@ from discord.ext import commands, tasks
 from discord import app_commands
 from datetime import timedelta
 from zoneinfo import available_timezones
-
 from typing import Optional
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+
 from src.core.features.permissions.lily_permissions import permission
 from src.core.utils import lily_utility as LilyUtility
 from src.core.utils.embeds.sLilyEmbed import simple_embed
@@ -21,9 +23,9 @@ class LilyManagement(commands.Cog):
         self.bot = bot
         self.controller: Optional[LilyManagementController] = None
         self.db: Optional[BotGlobalsDatabaseAccess] = None
+        self.scheduler = AsyncIOScheduler(timezone="UTC")
 
         self.message_reset_schedular.start()
-        self.quota_reset_schedular.start()
 
     async def timezone_autocomplete(self, interaction: discord.Interaction, current):
         matches = [
@@ -58,6 +60,52 @@ class LilyManagement(commands.Cog):
                     print(f"Exception [LOARequestView] {e}")
                     continue
             print("LOA Views Initialized!")
+
+        """ Start the cron schedular """
+        self.scheduler.add_job(
+            self._run_daily,
+            CronTrigger(hour=23, minute=55),
+            id="quota_daily",
+            misfire_grace_time=3600,
+            coalesce=True,
+            replace_existing=True
+        )
+        self.scheduler.add_job(
+            self._run_weekly,
+            CronTrigger(day_of_week="sun", hour=23, minute=55),
+            id="quota_weekly",
+            misfire_grace_time=3600,
+            coalesce=True,
+            replace_existing=True
+        )
+        self.scheduler.add_job(
+            self._run_monthly,
+            CronTrigger(day="last", hour=23, minute=55),
+            id="quota_monthly",
+            misfire_grace_time=3600,
+            coalesce=True,
+            replace_existing=True
+        )
+        self.scheduler.start()
+
+    async def cog_unload(self):
+        if self.scheduler.running:
+            self.scheduler.shutdown(wait=False)
+
+    async def _run_daily(self):
+        if self.bot.db is None or self.controller is None:
+            return
+        await self.controller.automatic_quota_evaluator("1d", self.bot)
+
+    async def _run_weekly(self):
+        if self.bot.db is None or self.controller is None:
+            return
+        await self.controller.automatic_quota_evaluator("7d", self.bot)
+
+    async def _run_monthly(self):
+        if self.bot.db is None or self.controller is None:
+            return
+        await self.controller.automatic_quota_evaluator("30d", self.bot)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -126,65 +174,8 @@ class LilyManagement(commands.Cog):
                 commit=True
             )
 
-    @tasks.loop(minutes=1)
-    async def quota_reset_schedular(self):
-        if self.bot.db is None:
-            return
-        
-        if self.controller is None:
-            return
+    
 
-        now = LilyUtility.utcnow()
-
-        row = await self.bot.db.fetch_one(
-            "SELECT next_day_quota_update, next_week_quota_update, next_month_quota_update FROM updates"
-        )
-
-        if not row:
-            return
-        next_day, next_week, next_month = map(LilyUtility.parse_date, row)
-        """ Quota evaluator """
-        if next_day and now >= next_day:
-            new_day = (now + timedelta(days=1)).replace(
-                hour=23, minute=55, second=0, microsecond=0
-            )
-            await self.bot.db.execute(
-                "UPDATE updates SET next_day_quota_update = ?",
-                (LilyUtility.iso(new_day),),
-                commit=True
-            )
-
-            """ Daily quota evaluator method here """
-            await self.controller.automatic_quota_evaluator("1d", self.bot)
-
-
-        """ Weekly quota evaluator """
-        if next_week and now >= next_week:
-            days_ahead = (7 - now.weekday()) % 7 or 7 
-            new_week = (now + timedelta(days=days_ahead)).replace(
-                hour=0, minute=0, second=0, microsecond=0
-            )
-            await self.bot.db.execute(
-                "UPDATE updates SET next_week_quota_update = ?",
-                (LilyUtility.iso(new_week),),
-                commit=True
-            )
-            await self.controller.automatic_quota_evaluator("7d", self.bot)
-
-        """ Monthly quota evaluate """
-        if next_month and now >= next_month:
-            if now.month == 12:
-                new_month = now.replace(year=now.year + 1, month=1, day=1,
-                                        hour=0, minute=0, second=0, microsecond=0)
-            else:
-                new_month = now.replace(month=now.month + 1, day=1,
-                                        hour=0, minute=0, second=0, microsecond=0)
-            await self.bot.db.execute(
-                "UPDATE updates SET next_month_quota_update = ?",
-                (LilyUtility.iso(new_month),),
-                commit=True
-            )
-            await self.controller.automatic_quota_evaluator("30d", self.bot)
 
     async def daily_callback(self):
         if self.db is None:
@@ -240,15 +231,6 @@ class LilyManagement(commands.Cog):
                 )
             )
 
-    @commands.hybrid_command(name="application", description="Lily Application Utility")
-    async def application(self, ctx: commands.Context):
-        if ctx.invoked_subcommand is None:
-            await ctx.reply(
-                embed=simple_embed(
-                    "Lily Application Management System"
-                )
-            )
-
     @commands.hybrid_group(name="quota", description="Quota management commands")
     async def quota(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
@@ -278,7 +260,7 @@ class LilyManagement(commands.Cog):
 
     @staff.command(name='data', description='shows data for a particular staff')
     @permission(command_name="staff_data")
-    async def staff_data(self, ctx:commands.Context, user:discord.Member=None):
+    async def staff_data(self, ctx:commands.Context, user: discord.Member| discord.User | None = None):
         if not user:
             user = ctx.author
         if self.controller is not None:
@@ -312,14 +294,14 @@ class LilyManagement(commands.Cog):
     @staff.command(name='edit', description='edits a staff data')
     @app_commands.autocomplete(timezone=timezone_autocomplete)
     @permission(command_name="staff_edit")
-    async def EditStaff(self, ctx: commands.Context, staff_id: str,name: str = None, joined_on: str = None, timezone: str = None,responsibility: str = None):
+    async def EditStaff(self, ctx: commands.Context, staff_id: str, name: str , joined_on: str | None = None, timezone: str | None = None,responsibility: str | None = None):
         if self.controller is not None:
             await self.controller.edit_staff(ctx, int(staff_id), name, joined_on, timezone, responsibility)
 
     @staff.command(name="self_edit", description="edits your staff data")
     @app_commands.autocomplete(timezone=timezone_autocomplete)
     @permission(command_name="staff_self_edit")
-    async def self_edit_staff_data(self, ctx: commands.Context, name: str=None, timezone: str=None):
+    async def self_edit_staff_data(self, ctx: commands.Context, name: str, timezone: str | None =None):
         if self.controller is not None:
             await self.controller.edit_staff(ctx, ctx.author.id, name, None, timezone, None)
 
@@ -335,26 +317,11 @@ class LilyManagement(commands.Cog):
         if self.controller is not None:
             await self.controller.add_staff(ctx, staff)
 
-    @staff.command(name='add_batch', description='Adds a batch of staffs to staff_data')
-    @permission(command_name="staff_add_batch")
-    async def add_staffs_batch(self, ctx: commands.Context, staffs: str):
-        await ctx.defer()
-        if self.controller is not None:
-            await self.controller.add_staff_batch(ctx, staffs)
-
-
     @staff.command(name='remove', description='Removes a member from staff_data')
     @permission(command_name="staff_remove")
-    async def remove_staff(self, ctx: commands.Context, staff: discord.Member, reason: str):
+    async def remove_staff(self, ctx: commands.Context, staff: discord.Member | discord.User, reason: str):
         if self.controller is not None:
             await self.controller.remove_staff(ctx, staff, reason)
-
-
-    @staff.command(name='remove_raw', description='Removes a member from staff_data')
-    @permission(command_name="staff_remove_raw")
-    async def remove_staff_raw(self, ctx: commands.Context, staff: str, reason: str):
-        if self.controller is not None:
-            await self.controller.remove_staff(ctx, int(staff), reason)
 
 
     @staff.command(name='roles', description='Returns all staff roles')
@@ -382,8 +349,6 @@ class LilyManagement(commands.Cog):
         if self.controller is not None:
             await self.controller.loa_delete(ctx, leave_id)
 
-
-
     @loa.command(name='remove', description='Removes a staff leave')
     @permission(command_name="loa_remove")
     async def remove_loa(self, ctx: commands.Context, staff: discord.Member):
@@ -392,7 +357,7 @@ class LilyManagement(commands.Cog):
 
     @loa.command(name="show", description="List all LOA for a particular staff")
     @permission(command_name="loa_show")
-    async def show_loa(self, ctx: commands.Context, staff: discord.Member=None):
+    async def show_loa(self, ctx: commands.Context, staff: discord.Member | None =None):
         if staff is None:
             current_staff = ctx.author
         else:
@@ -407,23 +372,13 @@ class LilyManagement(commands.Cog):
         if self.controller is not None:
             await self.controller.request_loa(ctx)
 
-
     @rank.command(name='promote', description='Promotes a staff to upper rank')
     @permission(command_name="rank_promote")
     async def promote(self, ctx: commands.Context, staff: discord.Member, * ,reason: str):
         await ctx.defer()
         if self.controller is not None:
             await self.controller.update_staff(ctx, staff, reason, "promotion")
-
     
-    @rank.command(name='promote_batch', description='Promotes a batch of staffs to upper rank')
-    @permission(command_name="rank_promote_batch")
-    async def promote_batch(self, ctx: commands.Context, *, query: str):
-        await ctx.defer()
-        if self.controller is not None:
-            await self.controller.update_staff_batch(ctx, query, "promotion")
-
-
     @rank.command(name='demote', description='Demotes a staff to lower rank')
     @permission(command_name="rank_demote")
     async def demote(self, ctx: commands.Context, staff: discord.Member, *, reason: str):
@@ -433,10 +388,9 @@ class LilyManagement(commands.Cog):
 
     @quota.command(name="add", description="Adds a staff quota to check by")
     @permission(command_name="quota_add")
-    async def add_quota(self, ctx: commands.Context, quota_role: discord.Role, minimum_ms: int, minimum_msg: int, on_quota_pass: OnQuotaEvent, on_quota_fail: OnQuotaEvent, check_by: QuotaCheckBy):
+    async def add_quota(self, ctx: commands.Context, quota_role: discord.Role, minimum_ms: int, minimum_msg: int, check_by: QuotaCheckBy):
         if self.controller is not None:
-            await self.controller.add_staff_quota(ctx, quota_role, minimum_ms, minimum_msg, on_quota_pass, on_quota_fail, check_by)
-
+            await self.controller.add_staff_quota(ctx, quota_role, minimum_ms, minimum_msg, check_by)
 
     @quota.command(name="list", description="List all defined quotas for this server")
     @permission(command_name="quota_list")
@@ -453,7 +407,7 @@ class LilyManagement(commands.Cog):
 
     @quota.command(name="check", description="Check quota for a given staff")
     @permission(command_name="quota_check")
-    async def check_quota(self, ctx: commands.Context, staff: discord.Member = None):
+    async def check_quota(self, ctx: commands.Context, staff: discord.Member | None = None):
         staff_member = staff or ctx.author
         if self.controller is not None:
             await self.controller.check_staff_quota(ctx, staff_member)
@@ -501,7 +455,6 @@ class LilyManagement(commands.Cog):
         except Exception as e:
             print(e)
 
-    
     @staff.command(name="coverage", description="get the timezone coverage of all the staffs")
     @permission(command_name="staff_coverage")
     async def staff_coverage(self, ctx: commands.Context):

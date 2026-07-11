@@ -165,16 +165,20 @@ class StaffsView(discord.ui.LayoutView):
 
         role_select_options = [
             discord.SelectOption(
-                label=data["role_name"], 
-                value=str(role_id)
+                label=data["role_name"],
+                value=str(role_id),
             )
-            for role_id, data in role_users_map.items()
-            if role_id and data["role_name"] and data["role_type"] == "staff"
+            for role_id, data in sorted(
+                role_users_map.items(),
+                key=lambda item: item[1]["priority"],
+            )
+            if data["role_type"] == "staff"
         ]
 
         self.roles_selector = discord.ui.Select(
             custom_id="roles_selector",
-            options=role_select_options
+            options=role_select_options,
+            placeholder="Select a staff role..."
         )
 
         self.loa_staffs_btn = discord.ui.Button(
@@ -611,11 +615,13 @@ class InfractionModal(discord.ui.Modal):
         embed.set_thumbnail(url=self.staff.display_avatar.url)
         embed.set_image(url=Configs.img['border'])
 
+        """
         embed.add_field(
             name="Issued By",
             value=f"<@{issued_by}>",
             inline=False,
         )
+        """
 
         embed.add_field(
             name="Reason",

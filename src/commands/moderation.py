@@ -271,7 +271,7 @@ class LilyModeration(commands.Cog):
         if self.controller is None:
             return
         await self.controller.remove_member_from_queue(ctx, member)
-    
+            
     @mod.command(name="acronym_add", description="Add an reason acronym")
     @permission(command_name = "mod_acronym_add")
     async def add_mod_acronym(self, ctx: commands.Context, key: str, * ,value: str):

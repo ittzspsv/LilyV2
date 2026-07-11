@@ -6,7 +6,7 @@ from typing import Optional
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-def build_staff_embed(staff: discord.Member, data: dict) -> discord.Embed:
+def build_staff_embed(staff: discord.Member | discord.User, data: dict) -> discord.Embed:
     name = data.get("name")
     role_name = data.get("role_name")
     is_loa = data.get("is_loa")
@@ -81,7 +81,7 @@ def build_staff_embed(staff: discord.Member, data: dict) -> discord.Embed:
     return embed
 
 def build_staff_update_embed(
-    staff: discord.Member | int,
+    staff: discord.Member | discord.User,
     handled_staff: discord.Member | discord.User,
     reason: str,
     img: dict
@@ -155,10 +155,10 @@ def build_strikes_list_embed(
             name=f"{emoji['pencil']} __Infraction ID: {strike['strike_id']}__ | {strike_type.title()}",
             value=(
                 f"> {emoji['bookmark']} **Reason** : {strike['reason']}\n"
-                f"> {emoji['shield']} **Manager** : <@{strike['manager']}>\n"
+                #f"> {emoji['shield']} **Manager** : <@{strike['manager']}>\n"
                 f"> {emoji['calender']} **Date** : <t:{issued_unix}:R>\n"
-                f"> {emoji['clock']} **Expires**: "
-                f"{f'<t:{expired_unix}:R>' if expiry_date else 'Never'}\n"
+                #f"> {emoji['clock']} **Expires**: "
+                #f"{f'<t:{expired_unix}:R>' if expiry_date else 'Never'}\n"
             ),
             inline=False,
         )
@@ -247,10 +247,12 @@ def infraction_embed(moderator: discord.Member, reason: Optional[str], guild_nam
         inline=False,
     )
 
+    """
     embed.add_field(
         name=f"{emoji["member"]} Issued by",
         value=moderator.mention
     )
+    """
     embed.add_field(
         name=f"{emoji['bot']} Server",
         value=guild_name,
@@ -339,7 +341,7 @@ def staff_strike_remove_embed(
         title=f"{emoji['arrow']} A strike has been removed!",
         description=(
             f"- A strike which was issued to you previously "
-            f"by <@{moderator}> has been removed!"
+            f"has been removed!"
         )
     )
 

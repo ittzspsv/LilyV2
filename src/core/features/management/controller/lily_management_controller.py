@@ -32,7 +32,7 @@ class LilyManagementController:
     def __init__(self, bot_db: BotGlobalsDatabaseAccess) -> None:
         self.bot_db: BotGlobalsDatabaseAccess = bot_db
 
-    async def fetch_staff_detail(self, ctx: commands.Context ,staff: discord.Member) -> None:
+    async def fetch_staff_detail(self, ctx: commands.Context ,staff: discord.Member | discord.User) -> None:
         try:
             assert isinstance(ctx.guild, discord.Guild)
             data_dict = await self.bot_db.fetch_staff_detail(staff.id, ctx.guild.id)
@@ -204,7 +204,7 @@ class LilyManagementController:
 
         await ctx.reply(embed=simple_embed(response.get("message") or "Unknown object passed as an output, But it's a success!"))
     
-    async def add_staff_batch(self, ctx: commands.Context, staffs: str) -> None:
+    async def remove_staff(self, ctx: commands.Context,staff: discord.Member | discord.User ,reason: str) -> None:
         if ctx.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
@@ -215,58 +215,7 @@ class LilyManagementController:
             await ctx.reply(embed=embed)
             return
 
-        mention_ids = re.findall(r"<@!?(\d+)>", staffs)
-        raw_ids = re.findall(r"(?:^|\s)(\d{6,})(?:\s|$)", staffs)
-        ids = list({int(i) for i in mention_ids + raw_ids})
-
-        for staff_id in ids:
-            staff = ctx.guild.get_member(staff_id)
-            if staff is None:
-                try:
-                    staff = await ctx.guild.fetch_member(staff_id)
-                except:
-                    continue
-
-            response = await self.bot_db.add_staff(staff_id, ctx.guild.id, staff.display_name, staff.display_avatar.url)
-
-            if not response.get("success"):
-                continue
-
-            roles_to_add = set(response.get("roles_to_add", ()))
-
-            add_roles = {
-                ctx.guild.get_role(role_id)
-                for role_id in roles_to_add
-            }
-            add_roles = {r for r in add_roles if r}
-
-            if add_roles:
-                try:
-                    await staff.add_roles(*add_roles, reason=f"Staff added by {ctx.author.id}")
-                except:
-                    continue
-            
-            await asyncio.sleep(1.5)
-        await ctx.reply(embed=simple_embed("Batch of staffs has been added successfully!"))
-    
-    async def remove_staff(self, ctx: commands.Context,staff: discord.Member | int,reason: str) -> None:
-        if ctx.guild is None:
-            embed = discord.Embed(
-                title=f"{emoji['cross']} Error",
-                description="Cannot execute this command without an guild object",
-                colour=0xf50000
-            )
-
-            await ctx.reply(embed=embed)
-            return
-        if isinstance(staff, int):
-            staff_id = staff
-            member = None
-        else:
-            staff_id = staff.id
-            member = staff
-
-        response = await self.bot_db.remove_staff(staff_id, ctx.guild.id)
+        response = await self.bot_db.remove_staff(staff.id, ctx.guild.id)
 
         if not response.get("success"):
             await ctx.reply(embed=simple_embed(response.get("message") or "Unknown object has been passed and it failed!", "cross"))
@@ -274,12 +223,6 @@ class LilyManagementController:
         
         roles_to_remove = set(response.get("roles_to_remove", ()))
         channel_id = self.bot_db.get_channel(ctx.guild.id, "staff_updates")
-
-        if member is None:
-            try:
-                member = await ctx.guild.fetch_member(staff_id)
-            except Exception:
-                member = None
 
         staff_updates_channel: discord.TextChannel | None = None
 
@@ -295,15 +238,15 @@ class LilyManagementController:
             if isinstance(channel, discord.TextChannel):
                 staff_updates_channel = channel
 
-        if member:
+        if staff:
             remove_roles = {
                 ctx.guild.get_role(role_id)
                 for role_id in roles_to_remove
             }
             remove_roles = {r for r in remove_roles if r}
 
-            if remove_roles:
-                await member.remove_roles(
+            if remove_roles and isinstance(staff, discord.Member):
+                await staff.remove_roles(
                     *remove_roles,
                     reason=f"Staff removed by {ctx.author.id} | {reason}"
                 )
@@ -320,9 +263,9 @@ class LilyManagementController:
         await ctx.reply(embed=simple_embed(response.get("message") or "Unknown object has been passed, but it's an success!"))
         """ Send DM'S If Available """
 
-        if member is not None:
+        if staff is not None:
             assert isinstance(ctx.author, discord.Member)
-            await member.send(
+            await staff.send(
                 embed=staff_remove_embed(
                     ctx.author,
                     reason,
@@ -763,118 +706,6 @@ class LilyManagementController:
             embed=simple_embed(f"{staff.mention} has been {act}.")
         )
 
-    async def update_staff_batch(self, ctx: commands.Context, content: str, update_type: str):
-        mention_ids = re.findall(r"<@!?(\d+)>", content)
-        raw_ids = re.findall(r"(?:^|\s)(\d{6,})(?:\s|$)", content)
-
-        ids = list({int(i) for i in mention_ids + raw_ids})
-        reason = re.sub(r"<@!?(\d+)>|\b\d{6,}\b", "", content).strip()
-
-        if not ctx.guild:
-            return await ctx.send(embed=simple_embed("Guild context missing.", "cross"))
-
-        if not ids:
-            return await ctx.send(embed=simple_embed("No valid staff IDs found.", "cross"))
-
-        staff_updates_channel: discord.TextChannel | None = None
-
-        channel_id = self.bot_db.get_channel(ctx.guild.id, "staff_updates")
-
-        if channel_id:
-            channel = ctx.guild.get_channel(channel_id)
-
-            if channel is None:
-                try:
-                    channel = await ctx.guild.fetch_channel(channel_id)
-                except Exception:
-                    channel = None
-
-            if isinstance(channel, discord.TextChannel):
-                staff_updates_channel = channel
-
-        descriptions: list[str] = []
-
-        for staff_id in ids:
-
-            if ctx.author.id == staff_id:
-                continue
-
-            result = await self.bot_db.update_staff(
-                    guild_id=ctx.guild.id,
-                    staff_id=staff_id,
-                    update_type=update_type,
-                    reason=reason,
-                    updated_by=ctx.author.id
-                )
-
-            if not result.get("success"):
-                await ctx.send(embed=simple_embed(
-                    str(result.get("message")),
-                    "cross"
-                ))
-                continue
-
-            staff = ctx.guild.get_member(staff_id)
-
-            if staff is None:
-                try:
-                    staff = await ctx.guild.fetch_member(staff_id)
-                except Exception:
-                    continue
-
-            old_role_id = result.get("old_role_id")
-            new_role_id = result.get("new_role_id")
-
-            old_role = ctx.guild.get_role(old_role_id) if old_role_id else None
-            new_role = ctx.guild.get_role(new_role_id) if new_role_id else None
-
-            try:
-                current_roles = set(staff.roles)
-
-                if old_role:
-                    current_roles.discard(old_role)
-
-                if new_role:
-                    current_roles.add(new_role)
-
-                await staff.edit(
-                    roles=list(current_roles),
-                    reason=f"Staff {update_type.title()} | {reason}"
-                )
-
-                descriptions.append(
-                    f"### {staff.mention}: "
-                    f"<@&{old_role_id}> → <@&{new_role_id}>"
-                )
-
-                await asyncio.sleep(1.5)
-
-            except Exception as e:
-                await ctx.send(embed=simple_embed(
-                    f"DB updated but Discord update failed: {e}",
-                    "cross"
-                ))
-
-
-        embed = build_staff_batch_update_embed(
-            ctx=ctx,
-            descriptions=descriptions,
-            update_type=update_type,
-            reason=reason
-        )
-
-        if staff_updates_channel:
-            await staff_updates_channel.send(
-                content=" ".join(f"<@{i}>" for i in ids),
-                embed=embed
-            )
-
-        act = "promoted" if update_type == "promotion" else "demoted"
-
-        await ctx.send(
-            embed=simple_embed(f"Batch of staff has been {act}.")
-        )
-    
     # FIX THIS IN FUTURE
     async def on_message(self, message: discord.Message):
         if not message.guild:
@@ -987,7 +818,7 @@ class LilyManagementController:
 
         await ctx.reply(embed=embed)
 
-    async def check_staff_quota(self, ctx: commands.Context, staff: discord.Member):
+    async def check_staff_quota(self, ctx: commands.Context, staff: discord.Member | discord.User):
         if ctx.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",

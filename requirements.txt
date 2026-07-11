@@ -13,3 +13,4 @@ DiscordTranscript
 asqlite
 fastapi
 uvicorn
+apscheduler

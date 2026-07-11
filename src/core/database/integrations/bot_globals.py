@@ -1,4 +1,6 @@
 from ..sLilyDatabaseAccess import LilyDatabaseAccess
+from .applications import ApplicationManagement
+
 from typing import List, Optional, Final, Set, Dict, Any, Tuple
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone, UTC
@@ -6,8 +8,6 @@ from collections import defaultdict
 
 import json
 import pytz
-import re
-
 
 @dataclass
 class GlobalConfig:
@@ -31,6 +31,9 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         self.member_cache: dict[int, Any] = {}
         self._gconfig: Optional[GlobalConfig] = None
         self._cache_ready = False
+
+
+        self.app_management_db = ApplicationManagement(self)
 
     async def load_cache(self) -> None:
         """
@@ -1466,57 +1469,95 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             """
             SELECT
                 r.role_type,
-                COUNT(DISTINCT s.staff_id) AS total_staffs,
-                COUNT(DISTINCT CASE WHEN s.on_loa = 1 THEN s.staff_id END) AS loa_staffs,
-                COUNT(DISTINCT CASE WHEN s.on_loa = 0 AND s.retired = 0 THEN s.staff_id END) AS active_staffs
-            FROM staffs s
-            JOIN staff_roles sr
-                ON s.staff_id = sr.staff_id
-            AND s.guild_id = sr.guild_id
+                srk.role_id,
+                srk.priority,
+                COUNT(
+                    DISTINCT CASE
+                        WHEN s.retired = 0
+                        THEN s.staff_id
+                    END
+                ) AS total_staffs,
+                COUNT(
+                    DISTINCT CASE
+                        WHEN s.on_loa = 1
+                        AND s.retired = 0
+                        THEN s.staff_id
+                    END
+                ) AS loa_staffs,
+                COUNT(
+                    DISTINCT CASE
+                        WHEN s.on_loa = 0
+                        AND s.retired = 0
+                        THEN s.staff_id
+                    END
+                ) AS active_staffs
+            FROM staff_ranks srk
             JOIN roles r
-                ON sr.role_id = r.role_id
-            AND sr.guild_id = r.guild_id
-            WHERE s.guild_id = ?
-            GROUP BY r.role_type;
+                ON r.guild_id = srk.guild_id
+            AND r.role_id = srk.role_id
+            LEFT JOIN staff_roles sr
+                ON sr.guild_id = srk.guild_id
+            AND sr.role_id = srk.role_id
+            LEFT JOIN staffs s
+                ON s.guild_id = sr.guild_id
+            AND s.staff_id = sr.staff_id
+            WHERE srk.guild_id = ?
+            GROUP BY
+                srk.role_id,
+                srk.priority,
+                r.role_type
+            ORDER BY
+                srk.priority ASC;
             """,
             (guild_id,),
         )
 
         role_count_result: Dict[str, Any] = {}
         for row in count_rows:
-            role_count_result[row["role_type"]] = {
-                "total": row["total_staffs"],
-                "loa": row["loa_staffs"],
-                "active": row["active_staffs"],
-            }
+            role = role_count_result.setdefault(
+                row["role_type"],
+                {
+                    "total": 0,
+                    "loa": 0,
+                    "active": 0,
+                },
+            )
+
+            role["total"] += row["total_staffs"]
+            role["loa"] += row["loa_staffs"]
+            role["active"] += row["active_staffs"]
 
         rows = await self.fetch_all(
             """
             SELECT
-                r.role_id AS role_id,
-                r.role_name AS role_name,
-                s.staff_id AS staff_id,
-                s.name AS name,
-                m.avatar_url AS avatar_url,
-                s.joined_on AS joined_on,
-                m.timezone AS timezone,
-                r.role_type AS role_type
-            FROM roles r
-            LEFT JOIN staff_ranks srk
-                ON  srk.guild_id = r.guild_id
-                AND srk.role_id  = r.role_id
+                srk.priority,
+                r.role_id,
+                r.role_name,
+                r.role_type,
+                s.staff_id,
+                s.name,
+                s.joined_on,
+                s.on_loa,
+                m.avatar_url,
+                m.timezone
+            FROM staff_ranks srk
+            JOIN roles r
+                ON r.guild_id = srk.guild_id
+            AND r.role_id = srk.role_id
             LEFT JOIN staff_roles sr
-                ON  sr.guild_id = r.guild_id
-                AND sr.role_id  = r.role_id
+                ON sr.guild_id = srk.guild_id
+            AND sr.role_id = srk.role_id
             LEFT JOIN staffs s
-                ON  s.staff_id  = sr.staff_id
-                AND s.guild_id  = sr.guild_id
-                AND s.retired   = 0
+                ON s.guild_id = sr.guild_id
+            AND s.staff_id = sr.staff_id
+            AND s.retired = 0
             LEFT JOIN members m
-                ON  m.member_id = s.staff_id
-                AND m.guild_id  = s.guild_id
-            WHERE r.guild_id = ?
-            ORDER BY srk.priority, s.name;
+                ON m.guild_id = s.guild_id
+            AND m.member_id = s.staff_id
+            WHERE srk.guild_id = ?
+            ORDER BY
+                srk.priority,
+                s.name;
             """,
             (guild_id,),
         )
@@ -1549,7 +1590,12 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
 
             role = role_user_map.setdefault(
                 role_id,
-                {"role_name": role_name, "role_type": role_type, "staff": []},
+                {
+                    "role_name": role_name,
+                    "role_type": role_type,
+                    "priority": row["priority"],
+                    "staff": [],
+                },
             )
 
             if staff_id is not None:
@@ -1646,9 +1692,9 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 """
                 INSERT INTO staffs (
                     staff_id, name, guild_id, on_loa, retired,
-                    timezone, responsibility, avatar_url, joined_on
+                    responsibility, avatar_url, joined_on
                 )
-                VALUES (?, ?, ?, 0, 0, 'Default', 'None', ?, ?)
+                VALUES (?, ?, ?, 0, 0, 'None', ?, ?)
                 """,
                 (staff_id, name, guild_id, avatar_url, today),
                 commit=True,

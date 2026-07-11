@@ -1,4 +1,5 @@
 import asqlite
+from contextlib import asynccontextmanager
 from typing import Optional
 
 
@@ -21,6 +22,17 @@ class LilyDatabaseAccess:
         if self.pool is None:
             raise RuntimeError("Database pool not connected")
         return self.pool
+    
+    @asynccontextmanager
+    async def transaction(self):
+        pool = self._validate_pool()
+        async with pool.acquire() as conn:
+            try:
+                yield conn
+                await conn.commit()
+            except Exception:
+                await conn.rollback()
+                raise
 
     async def execute(
         self,

@@ -101,3 +101,6 @@ class CommandEnum(str, Enum):
     MOD_ACRONYM_REMOVE = "mod_acronym_remove"
     MOD_ACRONYM_UPDATE = "mod_acronym_update"
     MOD_ACRONYMS = "mod_acronyms"
+
+    APPLICATION_MANAGEMENT = "application_management"
+    APPLICATION_BLOCK_UNBLOCK = "applicant_block_unblock"
