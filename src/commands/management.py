@@ -294,9 +294,9 @@ class LilyManagement(commands.Cog):
     @staff.command(name='edit', description='edits a staff data')
     @app_commands.autocomplete(timezone=timezone_autocomplete)
     @permission(command_name="staff_edit")
-    async def EditStaff(self, ctx: commands.Context, staff_id: str, name: str , joined_on: str | None = None, timezone: str | None = None,responsibility: str | None = None):
+    async def EditStaff(self, ctx: commands.Context, staff: discord.Member | discord.User, name: str , joined_on: str | None = None, timezone: str | None = None,responsibility: str | None = None):
         if self.controller is not None:
-            await self.controller.edit_staff(ctx, int(staff_id), name, joined_on, timezone, responsibility)
+            await self.controller.edit_staff(ctx, staff.id, name, joined_on, timezone, responsibility)
 
     @staff.command(name="self_edit", description="edits your staff data")
     @app_commands.autocomplete(timezone=timezone_autocomplete)
@@ -398,7 +398,6 @@ class LilyManagement(commands.Cog):
         if self.controller is not None:
             await self.controller.fetch_staff_quota(ctx)
 
-
     @quota.command(name="remove", description="Remove a defined quota by its ID")
     @permission(command_name="quota_remove")
     async def remove_quota(self, ctx: commands.Context, quota_id: str):
@@ -460,7 +459,6 @@ class LilyManagement(commands.Cog):
     async def staff_coverage(self, ctx: commands.Context):
         if self.controller is not None:
             await self.controller.get_staffs_timezone_coverage(ctx)
-
 
 async def setup(bot):
     cog = LilyManagement(bot)

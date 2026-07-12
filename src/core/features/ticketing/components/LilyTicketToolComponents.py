@@ -752,11 +752,11 @@ class TicketComponentEmbed(discord.ui.LayoutView):
 
 
         base_container = discord.ui.Container(
-            discord.ui.TextDisplay(content=f"## {self.ticket_name}"),
+            discord.ui.TextDisplay(content=f"# {self.ticket_name}"),
             discord.ui.TextDisplay(content=f"{self.ticket_mentions}"),
-                
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.Section(
-                discord.ui.TextDisplay(content=f"**Ticket Opener Information | {mention}**"),
+                discord.ui.TextDisplay(content=f"### Ticket Opener Information | {mention}**"),
                 discord.ui.TextDisplay(content=content),
                 accessory=discord.ui.Thumbnail(
                     media=avatar_url,
@@ -782,7 +782,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                 
                 ticket_details.append(
                     discord.ui.TextDisplay(
-                        f"**{label}**\n```{value}```"
+                        f"### {label}\n> {value}"
                     )
                 )
 
@@ -796,7 +796,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
 
                     ticket_details.append(
                         discord.ui.Section(
-                            discord.ui.TextDisplay(content=f"**{label}** | <@{value["member_id"]}>"),
+                            discord.ui.TextDisplay(content=f"### {label} | <@{value["member_id"]}>"),
                             discord.ui.TextDisplay(content=f"- **ID**: **{value["member_id"]}**\n- **Created on**: {value["created_on"]}\n- **Joined on**: {value["joined_on"]}"),
                             accessory=discord.ui.Thumbnail(
                                 media=value["avatar"],
@@ -811,7 +811,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                 else:
                     ticket_details.append(
                     discord.ui.TextDisplay(
-                        f"**{label}**\n```{value["username"]}```"
+                        f"### {label}\n> {value["username"]}"
                     )
                 )
 
@@ -827,7 +827,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                 gallery.items = [discord.MediaGalleryItem(media=url) for url in value]
                 ticket_details.append(
                     discord.ui.TextDisplay(
-                        f"**{label}**"
+                        f"### {label}"
                     )
                 )
                 ticket_details.append(
@@ -841,7 +841,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
             elif field_type in ("role_select",):
                 ticket_details.append(
                     discord.ui.TextDisplay(
-                        f"**{label}**\n {' , '.join(value)}"
+                        f"### {label}\n> {' , '.join(value)}"
                     )
                 )
 
@@ -872,6 +872,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
             return
 
         await interaction.response.defer()
+        assert isinstance(interaction.user, discord.Member)
 
         is_staff = any(role.id in self.allowed_roles for role in interaction.user.roles)
         is_opener = interaction.user.id == self.opener_id
