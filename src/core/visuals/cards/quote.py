@@ -79,7 +79,7 @@ def make_quote_card(
 
     quote_font: Optional[FreeTypeFont] = None
     line_h: int = 0
-    for size in [56, 50, 44, 38, 32]:
+    for size in [56, 50, 44, 38, 32, 28, 24, 20, 16, 14, 12, 8, 4]:
         quote_font = ImageFont.truetype(FONT_REG, size)
         lines      = wrap_text(draw, quote, quote_font, text_w)
         line_h     = size + 14
