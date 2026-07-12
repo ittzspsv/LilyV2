@@ -24,6 +24,13 @@ class LilyUtility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+        self.ctx_menu = app_commands.ContextMenu(
+            name="Quote",
+            callback=self.quote,
+        )
+
+        self.bot.tree.add_command(self.ctx_menu)
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot:
@@ -357,8 +364,6 @@ class LilyUtility(commands.Cog):
             await ctx.reply(embed=simple_embed(f"Invalid parameter value: {e}", 'cross'))
         except discord.HTTPException as e:
             await ctx.reply(embed=simple_embed(f"An Unknown error occured while editing a role", 'cross'))
-
-
 
     @permission(command_name="set_rolecustomize")
     @set.command(name="rolecustomize", description="Allows a person to customize a role without manage roles")
@@ -743,29 +748,22 @@ class LilyUtility(commands.Cog):
                 )
             )
 
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.hybrid_command(name="quote", description="Create a quote")
-    @permission(command_name="quote", restrict=True)
-    async def quote(self, ctx: commands.Context, member: discord.Member, * ,quote: str) -> None:
-        await ctx.defer()
-        avatar_bytes = await member.display_avatar.read()
+    async def quote(self, interaction: discord.Interaction, message: discord.Message) -> None:
+        await interaction.response.defer()
+        avatar_bytes = await message.author.display_avatar.read()
             
         image = await asyncio.to_thread(
             make_quote_card,
             image=avatar_bytes,
-            quote=quote,
-            author=member.display_name,
-            handle=f"@{member.name}"
+            quote=message.content,
+            author=message.author.display_name,
+            handle=f"@{message.author.name}"
         )
 
         buffer = BytesIO()
         image.save(buffer, format="PNG")
         buffer.seek(0)
-        await ctx.send(file=discord.File(buffer, filename="quote.png"))
-        try:
-            await ctx.message.delete()
-        except:
-            pass
+        await interaction.followup.send(file=discord.File(buffer, filename="quote.png"))
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.hybrid_command(name="privacy_policy", description="Get a link to the bot's Privacy Policy")
