@@ -420,22 +420,53 @@ class ApplicationView(discord.ui.LayoutView):
 
         self.application_name: str = self.application["name"]
         self.submit_btn_label: str = self.application["submit_btn_label"] or "Apply Now"
-        self.application_description: str = self.application["description"]
         self.current_wave: int = self.application["current_wave"]
         self.active: int = self.application["active"]
 
+        self.application_description: str = self.application["description"]
+        self.description: List = []
+
+        try:
+            description_layout: List[Dict[str, Any]] = json.loads(self.application_description)
+            for item in description_layout:
+                match item["type"]:
+                    case "separator":
+                        self.description.append(
+                            discord.ui.Separator(
+                                visible=True,
+                                spacing=discord.SeparatorSpacing.small
+                            )
+                        )
+
+                    case "img":
+                        self.description.append(
+                            discord.ui.MediaGallery(
+                                discord.MediaGalleryItem(media=item["value"])
+                            )
+                        )
+
+                    case "text":
+                        self.description.append(
+                            discord.ui.TextDisplay(content=item["value"])
+                        )
+        except json.JSONDecodeError:
+            self.description.append(
+                discord.ui.TextDisplay(content=f"{self.application_description}")
+            )
+
         self.container = discord.ui.Container(
-            discord.ui.TextDisplay(content=f"## {self.application_name} {'(Closed)' if self.active == 0 else ''}"),
-            discord.ui.TextDisplay(content=f"{self.application_description}"),
+            discord.ui.TextDisplay(content=f"# {self.application_name} {'(Closed)' if self.active == 0 else ''}"),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
+            *self.description,
             discord.ui.TextDisplay(content=f"Wave: **{self.current_wave + 1}**"),
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
         )
 
         self.submit_button = discord.ui.Button(
-                                style=discord.ButtonStyle.secondary,
-                                label=self.submit_btn_label,
-                                custom_id=f'{application_channel_id}-new-application'               
-                            )
+                    style=discord.ButtonStyle.secondary,
+                    label=self.submit_btn_label,
+                    custom_id=f'{application_channel_id}-new-application'               
+                )
         
         self.submit_button.callback = self.submit_button_callback
 
@@ -447,8 +478,8 @@ class ApplicationView(discord.ui.LayoutView):
             self.submit_button
         )
 
+        self.container.add_item(self.action_row)
         self.add_item(self.container)
-        self.add_item(self.action_row)
 
     async def submit_button_callback(self, interaction: discord.Interaction):
         if interaction.guild is None:
