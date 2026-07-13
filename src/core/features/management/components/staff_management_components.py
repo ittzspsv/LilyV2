@@ -156,7 +156,7 @@ class LOAStaffsView(discord.ui.LayoutView):
         self.add_item(self.container)
 
 class StaffsView(discord.ui.LayoutView):
-    def __init__(self, ctx: commands.Context, db: BotGlobalsDatabaseAccess ,overall_details: Dict, role_users_map):
+    def __init__(self, interaction: discord.Interaction, db: BotGlobalsDatabaseAccess ,overall_details: Dict, role_users_map):
         super().__init__(timeout=500)
 
         self.message: Optional[discord.Message] = None
@@ -190,7 +190,7 @@ class StaffsView(discord.ui.LayoutView):
         self.roles_selector.callback = self.role_selector_callback
         self.loa_staffs_btn.callback = self.loa_staffs_callback
 
-        assert isinstance(ctx.guild, discord.Guild)
+        assert isinstance(interaction.guild, discord.Guild)
 
         self.container_1 = discord.ui.Container(
             discord.ui.Section(
@@ -200,7 +200,7 @@ class StaffsView(discord.ui.LayoutView):
                         "- Lily's Staff Management System.\n\n"
                     )
                 ),
-                accessory=discord.ui.Thumbnail(media=ctx.guild.icon.url)
+                accessory=discord.ui.Thumbnail(media=interaction.guild.icon.url)
             ),
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.TextDisplay(content="### Server Staff Team\n- List of Role Category who has **Moderation/Administration/Management** Authority"),
@@ -233,10 +233,10 @@ class StaffsView(discord.ui.LayoutView):
         )
 
     async def loa_staffs_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        assert isinstance(interaction.guild, discord.Guild)
         staff_datas: List[Dict[str, Any]] = await self.db.fetch_loa_staffs(interaction.guild.id, "staff")
         view = LOAStaffsView(interaction, staff_datas)
-        await interaction.followup.send(view=view, ephemeral=True)
+        await interaction.response.send_message(view=view, ephemeral=True)
 
     async def on_timeout(self):
         self.roles_selector.disabled = True
