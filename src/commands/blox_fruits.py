@@ -1,12 +1,11 @@
 from discord.ext import commands
 
-import discord
+import discord, discord.app_commands as app_commands
 import json
 import re
 
 from typing import Optional
 
-import src.core.utils.sFruitImageDownloader as FID
 from src.core.features.permissions.lily_permissions import permission
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.features.blox_fruits.routes.blox_fruits_router import BloxFruitsController
@@ -24,56 +23,41 @@ class LilyBloxFruits(commands.Cog):
         self.db = await BloxFruitsDatabase.connect(str(VALUE_DB))
         self.controller = BloxFruitsController(self.db)
 
+    async def fruits_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> list[app_commands.Choice[str]]:
+        if self.db is None:
+            return []
+
+        fruits = sorted(self.db.fruit_names)
+
+        return [
+            app_commands.Choice(name=fruit, value=fruit)
+            for fruit in fruits
+            if current.lower() in fruit.lower()
+        ][:25]
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author == self.bot.user:
               return
 
-        #await LBFC.MessageEvaluate(self.bot, message)
         if self.controller is not None:
             await self.controller.on_message(message, self.bot)
 
-    @commands.hybrid_group()
-    async def bloxfruits(self, ctx: commands.Context):
-        if ctx.invoked_subcommand is None:
-            await ctx.reply(embed=simple_embed("Lily Blox Fruits Command Hierarchy!"))
-
-    @bloxfruits.command(name='update_image', description='updates an image of blox fruits')
-    @permission(command_name="update_image", restrict=True)
-    async def UpdateImageBloxFruits(self, ctx: commands.Context, name: str = ""):
-        parser = [n.strip() for n in name.split(",") if n.strip()]
-
-        if not parser:
-            return await ctx.send("Please provide at least one fruit name.")
-
-        results = []
-
-        for fruit_name in parser:
-            cursor = await VC.vdb.execute(
-                "SELECT icon_url FROM BF_ItemValues WHERE name = ?",
-                (fruit_name,)
-            )
-            row = await cursor.fetchone()
-            await cursor.close()
-
-            if row:
-                url = row[0]
-                result = await FID.DownloadImage(fruit_name, "src/ui/fruit_icons", url)
-
-                if result:
-                    results.append(f"Image updated for **{fruit_name}**")
-                else:
-                    results.append(f"Failed downloading image for **{fruit_name}**")
-            else:
-                results.append(f"`{fruit_name}` not found in database.")
-
-        await ctx.send("\n".join(results))
+    bloxfruits = app_commands.Group(
+            name="bloxfruits",
+            description="Lily Blox Fruits Command Hierarchy!"
+        )
 
     @bloxfruits.command(name='update_value', description='updates an value of an item in blox fruits')
     @permission(command_name="update_value", restrict=True)
+    @app_commands.autocomplete(name=fruits_autocomplete)
     async def UpdateValue(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         name: str,
         physical_value: Optional[str] = None,
         permanent_value: Optional[str] = None,
@@ -89,16 +73,12 @@ class LilyBloxFruits(commands.Cog):
         if self.db is None:
             return
 
-        await ctx.defer()
-
-        def parse_number(value):
+        def parse_number(value: str | None) -> int | None:
             if value is None:
                 return None
-            if isinstance(value, int):
-                return value
 
             value = str(value).replace(",", "").strip().lower()
-            match = re.match(r"(\d+\.?\d*)([kmb]?)", value)
+            match = re.fullmatch(r"(\d+(?:\.\d+)?)([kmb]?)", value)
             if not match:
                 return None
 
@@ -113,7 +93,8 @@ class LilyBloxFruits(commands.Cog):
             )
 
             if not row:
-                await ctx.send(f"No item found with name `{name}`.")
+                await interaction.response.send_message(
+                    embed=simple_embed(f"No item found with name `{name}`.", 'cross'))
                 return
 
             (
@@ -130,8 +111,8 @@ class LilyBloxFruits(commands.Cog):
                 current_rarity,
             ) = row
 
-            physical_value = parse_number(physical_value)
-            permanent_value = parse_number(permanent_value)
+            parsed_physical_value = parse_number(physical_value)
+            parsed_permanent_value = parse_number(permanent_value)
 
             if aliases is not None:
                 alias_list = [a.strip() for a in aliases.split(",") if a.strip()]
@@ -140,8 +121,8 @@ class LilyBloxFruits(commands.Cog):
                 aliases = current_aliases
 
             update_fields = {
-                "physical_value": physical_value or current_physical_value,
-                "permanent_value": permanent_value or current_permanent_value,
+                "physical_value": current_physical_value if parsed_physical_value is None else parsed_physical_value,
+                "permanent_value": current_permanent_value if parsed_permanent_value is None else parsed_permanent_value,
                 "physical_demand": physical_demand or current_physical_demand,
                 "permanent_demand": permanent_demand or current_permanent_demand,
                 "demand_type": demand_type or current_demand_type,
@@ -162,11 +143,10 @@ class LilyBloxFruits(commands.Cog):
 
             await self.db.load_cache()
 
-            await ctx.send(f"Updated `{name}` successfully.")
+            await interaction.response.send_message(embed=simple_embed(f"Updated {name} successfully."))
 
         except Exception as e:
-            print(f"[UpdateValue] {e}")
-            await ctx.send("An error occurred while updating the item.")
+            await interaction.response.send_message(embed=simple_embed("An error occurred while updating the item."))
 
 async def setup(bot):
     cog = LilyBloxFruits(bot)
