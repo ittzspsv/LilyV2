@@ -971,6 +971,8 @@ class TicketComponentEmbed(discord.ui.LayoutView):
             ephemeral=True
         )
 
+        assert isinstance(channel, discord.TextChannel)
+
         await channel.send(
             embed=simple_embed(f"{interaction.user.mention} revoked the ticket claim.")
         )
