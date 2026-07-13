@@ -8,7 +8,6 @@ from ..components.blox_fruits_components import TradeSuggestorComponent, InviteV
 
 import re
 import discord
-import io
 
 class BloxFruitsController:
     def __init__(self, db: BloxFruitsDatabase):
@@ -17,20 +16,44 @@ class BloxFruitsController:
         self.db = db
         self.img_mode: int = 0
 
-    async def on_message(self, message: discord.Message, bot: Optional[Any]=None):
-        if bot and message.guild is not None:
-            if message.channel.id in bot.db.get_channels(message.guild.id, "bf_fruit_values"):
-                await self.fruit_value(message=message)
+    def strip_mention(self, content: str, bot_user_id: int) -> str:
+        return re.sub(rf"<@!?{bot_user_id}>", "", content).strip().lower()
 
-            elif message.channel.id in bot.db.get_channels(message.guild.id, "bf_win_loss"):
-                await self.win_loss(message=message)
+    async def _reply(self, message: discord.Message, bot: Any) -> bool:
+        ref = message.reference
+        if ref is None:
+            return False
 
-            elif message.channel.id in bot.db.get_channels(message.guild.id, "bf_trading_channels"):
-                await self.bf_automoderation(message, bot.db)
+        resolved = ref.resolved
+        if isinstance(resolved, discord.Message):
+            return resolved.author.id == bot.user.id
+
+        return False
+
+    async def on_message(self, message: discord.Message, bot: Optional[Any] = None):
+        if message.author.bot:
+            return
+        if not bot or message.guild is None:
+            return
+
+        is_mention = bot.user in message.mentions
+        is_reply_to_bot = await self._reply(message, bot)
+
+        if not (is_mention or is_reply_to_bot):
+            return
+
+        if message.channel.id in bot.db.get_channels(message.guild.id, "bf_fruit_values"):
+            await self.fruit_value(message=message, bot=bot)
+
+        elif message.channel.id in bot.db.get_channels(message.guild.id, "bf_win_loss"):
+            await self.win_loss(message=message, bot=bot)
+
+        elif message.channel.id in bot.db.get_channels(message.guild.id, "bf_trading_channels"):
+            await self.bf_automoderation(message, bot.db)
 
 
-    async def fruit_value(self, message: discord.Message):
-        item_name = re.sub(r"^(perm|permanent|fruit value of|value of|value)\s+", "", message.content.lower()).strip()
+    async def fruit_value(self, message: discord.Message, bot: Any):
+        item_name = re.sub(r"^(perm|permanent|fruit value of|value of|value)\s+", "", self.strip_mention(message.content, bot.user.id)).strip()
 
         alias_map = self.db.alias_map
         item_name = match_fruit_set(item_name, set(self.db.fruit_names_sorted), alias_map)
@@ -61,8 +84,8 @@ class BloxFruitsController:
                     #if len(embed.fields) > 0:
                     await message.reply(view=view)
 
-    async def win_loss(self, message: discord.Message):
-        your_fruits, your_fruit_types, their_fruits, their_fruit_types = extract_trade_details(message.content, self.db)
+    async def win_loss(self, message: discord.Message, bot: Any):
+        your_fruits, your_fruit_types, their_fruits, their_fruit_types = extract_trade_details(self.strip_mention(message.content, bot.user.id), self.db)
         if not any([
             your_fruits,
             your_fruit_types,
