@@ -724,6 +724,7 @@ class LilyManagementController:
                     "avatar_url": message.author.display_avatar.url,
                     "name": message.author.name
                 })
+
         except Exception as e:
             pass
 
@@ -931,7 +932,7 @@ class LilyManagementController:
         response = await self.bot_db.remove_role(ctx.guild.id, role)
 
         if response.get("success"):
-            await ctx.reply(embed=simple_embed(f"{response.get("message")}"))
+            await ctx.reply(embed=simple_embed(f"{response.get("message")}"),  allowed_mentions=discord.AllowedMentions.none())
         else:
             await ctx.reply(embed=simple_embed(f"{response.get("message")}", 'cross'))
 
