@@ -2488,12 +2488,15 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             (staff_id, guild_id),
         )
         if not msg_row:
-            return {"success": False, "message": "Staff messages not found"}
-
-        daily = msg_row["daily_messages"]
-        weekly = msg_row["weekly_messages"]
-        monthly = msg_row["monthly_messages"]
-        total = msg_row["total_messages"]
+            daily = 0
+            weekly = 0
+            monthly = 0
+            total = 0
+        else:
+            daily = msg_row["daily_messages"]
+            weekly = msg_row["weekly_messages"]
+            monthly = msg_row["monthly_messages"]
+            total = msg_row["total_messages"]
 
         role_row = await self.fetch_one(
             """
