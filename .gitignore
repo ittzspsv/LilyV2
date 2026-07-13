@@ -152,6 +152,12 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+storage/*
+storage/configs/Configs_schema.sql
+
+public/*
+backups/*
+.configs/*
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
