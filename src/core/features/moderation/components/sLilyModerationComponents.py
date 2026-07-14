@@ -128,10 +128,8 @@ import discord
 
 def action_log(
     action: str,
-    moderator: discord.Member,
     reason: Optional[str],
     guild_name: str,
-    appeal_link: Optional[str] = None,
 ) -> discord.Embed:
     action = action.lower()
 

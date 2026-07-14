@@ -101,7 +101,6 @@ class LilyModerationController:
         try:
             assert isinstance(ctx.author, discord.Member)
             assert isinstance(ctx.guild, discord.Guild)
-            await target.send(embed=action_log(action, ctx.author, reason, appeal_server_link, ctx.guild.name))
         except Exception:
             pass
 
@@ -268,12 +267,6 @@ class LilyModerationController:
             seconds = mute_parser(duration)
             until = utcnow() + timedelta(seconds=seconds)
 
-            try:
-                embed = action_log("mute", ctx.author, reason, ctx.guild.name)
-                await user.send(embed=embed)
-            except Exception as e:
-                print("DM failed:", e)
-
             await user.edit(timed_out_until=until, reason=reason)
 
             if len(proofs) > 0:
@@ -420,12 +413,6 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed(f"{member.mention} has been warned"))
 
         case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author, member, "warn", reason, proofs)
-
-        embed = action_log("warn", ctx.author, reason, ctx.guild.name)
-        try:
-            await member.send(embed=embed)
-        except Exception as e:
-            print(e)
 
         if case_id and len(proofs) <= 0:
             view = CaseProofsView(case_id, self.logging_controller, None)
