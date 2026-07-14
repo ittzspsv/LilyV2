@@ -31,7 +31,7 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='ban', description='Ban a user from the server', aliases=['b'])
     @permission(command_name="ban")
-    async def ban(self, ctx: commands.Context, member: str = None, *, reason="No reason provided"):
+    async def ban(self, ctx: commands.Context, member: discord.User | discord.Member | None = None, *, reason="No reason provided"):
         if self.controller is None:
             return
         if not member:
@@ -83,19 +83,19 @@ class LilyModeration(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='unban', description='Unban a Particular User', aliases=['ub'])
     @permission(command_name="unban")
-    async def unban(self, ctx, user_id: str=None, * ,reason: str="No reason provided"):
+    async def unban(self, ctx, user: discord.User | None = None, * ,reason: str="No reason provided"):
         if self.controller is None:
             return
-        if user_id is None:
+        if user is None:
             await ctx.reply(view=CommandInfo(ctx, "Unban", ["unban user", f"unban {ctx.me.mention} Appealed", f"ub {ctx.me.mention} Appealed"]))
             return
         
-        await self.controller.unban(ctx, user_id, self.bot, reason)
+        await self.controller.unban(ctx, user, self.bot, reason)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='release', description='Release a member from quarantine', aliases=['qr', 'r'])
     @permission(command_name="unban")
-    async def release(self, ctx, user: discord.Member=None, * ,reason: str="No reason provided"):
+    async def release(self, ctx, user: discord.Member | None =None, * ,reason: str="No reason provided"):
         if self.controller is None:
             return
         if user is None:
@@ -208,7 +208,7 @@ class LilyModeration(commands.Cog):
 
     @case.command(name='edit', description='Edit a case')
     @permission(command_name="case_edit")
-    async def case_edit(self, ctx: commands.Context, case_id: str=None, *, new_reason: str=None):
+    async def case_edit(self, ctx: commands.Context, case_id: str, *, new_reason: str):
         if self.controller is None:
             return
         if case_id is None or new_reason is None:
@@ -220,7 +220,7 @@ class LilyModeration(commands.Cog):
 
     @case.command(name='edit_absolute', description='Edit any case')
     @permission(command_name="case_edit_absolute")
-    async def case_edit_absolute(self, ctx: commands.Context, case_id: int = None, *, new_reason: str = None):
+    async def case_edit_absolute(self, ctx: commands.Context, case_id: int, *, new_reason: str):
         if self.controller is None:
             return
         if not new_reason:
@@ -232,7 +232,7 @@ class LilyModeration(commands.Cog):
 
     @case.command(name='delete', description='Delete a case')
     @permission(command_name="case_delete")
-    async def case_delete(self, ctx: commands.Context, case_id: str = None):
+    async def case_delete(self, ctx: commands.Context, case_id: str):
         if self.controller is None:
             return
         if not case_id:
@@ -257,21 +257,7 @@ class LilyModeration(commands.Cog):
             return
         
         await self.controller.logging_controller.retrieve_proofs(ctx, int(case_id))
-
-    @mod.command(name='queue', description='Get moderation queue')
-    @permission(command_name="queue")
-    async def queue(self, ctx: commands.Context):
-        if self.controller is None:
-            return
-        await self.controller.fetch_moderation_queue(ctx)
-
-    @mod.command(name='queue_remove', description='Remove member from queue')
-    @permission(command_name="queue_remove")
-    async def queue_remove(self, ctx: commands.Context, member: discord.Member):
-        if self.controller is None:
-            return
-        await self.controller.remove_member_from_queue(ctx, member)
-            
+  
     @mod.command(name="acronym_add", description="Add an reason acronym")
     @permission(command_name = "mod_acronym_add")
     async def add_mod_acronym(self, ctx: commands.Context, key: str, * ,value: str):
