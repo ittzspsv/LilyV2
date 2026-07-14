@@ -226,7 +226,6 @@ class LilyModerationController:
             else:
                 await ctx.reply(embed=simple_embed(quarantine_message))
 
-
     async def mute_user(self, ctx: commands.Context, user: discord.Member | discord.User, duration: str, reason: str = "No reason provided", proofs: list = []):
         if ctx.guild is None:
             await ctx.reply(embed=simple_embed("Command requires guild object inorder to execute", 'cross'))

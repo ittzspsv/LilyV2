@@ -1,5 +1,28 @@
 import discord
+import re
+from typing import Any
+from discord.ui import Item
+
 from src.core.utils.embeds.sLilyEmbed import simple_embed
+
+class AppealButton(discord.ui.DynamicItem[discord.ui.Button], template=r'button:case:(?P<id>[0-9]+)'):
+    def __init__(self, case_id: int | None) -> None:
+        super().__init__(
+            discord.ui.Button(
+                label='Appeal',
+                style=discord.ButtonStyle.danger,
+                custom_id=f'button:case:{case_id}',
+            )
+        )
+        self.case_id: int | None = case_id
+
+    @classmethod
+    async def from_custom_id(cls, interaction: discord.Interaction, item: discord.ui.Item[Any], match: re.Match[str], /):
+        case_id = int(match['id'])
+        return cls(case_id)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await interaction.response.send_message('Appeal Button Works!', ephemeral=True)
 
 class ProofComponentModal(discord.ui.Modal):
     case_id = discord.ui.Label(
