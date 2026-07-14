@@ -23,14 +23,15 @@ class LilyTicketTool(commands.Cog):
               self.bot.logging_controller
          )
 
-    @commands.hybrid_group()
-    async def ticket(self, ctx: commands.Context):
-        if ctx.invoked_subcommand is None:
-            await ctx.reply(embed=simple_embed("Lily Ticketing System Command Hierarchy!"))
+    ticket = discord.app_commands.Group(
+        name="ticket",
+        description="Lily Ticketing System Command Hierarchy!"
+    )
 
+    """
     @ticket.command(name='spawn', description='spawn in ticket processor')
     @permission(command_name="spawn_ticket", restrict=True)
-    async def spawnticket(self, ctx):
+    async def spawnticket(self, ctx: commands.Context):
         if self.controller is None:
             return
 
@@ -44,36 +45,38 @@ class LilyTicketTool(commands.Cog):
                     json_data = json.loads(content.decode('utf-8'))
                     await self.controller.spawn_ticket(ctx, json_data)
                     await ctx.reply("Ticket has been spawned successfully!")
-            
+    """       
     @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     @ticket.command(name='close', description='close a ticket thread')
     @permission(command_name="ticket_close")
-    async def CloseTicket(self, ctx: commands.Context, * ,reason: str="No reason provided"):
+    async def CloseTicket(self, interaction: discord.Interaction, * ,reason: str="No reason provided"):
          if self.controller is not None:
-            await self.controller.close_ticket_thread(ctx, reason)
+            await self.controller.close_ticket_thread(interaction, reason)
          
     @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     @ticket.command(name='rename', description='renames a ticket channel')
     @permission(command_name="ticket_rename")
-    async def rename_ticket(self, ctx: commands.Context, * ,name: str):
+    async def rename_ticket(self, interaction: discord.Interaction, * ,name: str):
          if self.controller is not None:
-            await self.controller.rename_ticket(ctx, name)
+            await self.controller.rename_ticket(interaction, name)
 
     @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     @ticket.command(name='add', description='adds a member to the ticket')
     @permission(command_name="ticket_add")
-    async def ticket_add(self, ctx: commands.Context, user: discord.Member):
+    async def ticket_add(self, interaction: discord.Interaction, user: discord.Member):
          if self.controller is not None:
-            await self.controller.ticket_add_user(ctx, user)
+            await self.controller.ticket_add_user(interaction, user)
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @permission(command_name="ticket_stats")
     @ticket.command(name='stats', description='Retrive your ticket stats')
-    async def ticket_stats(self, ctx: commands.Context, staff: discord.Member=None):
+    async def ticket_stats(self, interaction: discord.Interaction, staff: discord.Member | None=None):
         if self.controller is not None:
-            member = staff if staff is not None else ctx.author
-            await self.controller.ticket_stats(ctx, member)
+            member = staff if staff is not None else interaction.user
+            assert isinstance(member, discord.Member)
+            await self.controller.ticket_stats(interaction, member)
 
+    '''
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @permission(command_name="ticket_update")
     @ticket.command(name='update', description='Update the ticket config')
@@ -116,15 +119,7 @@ class LilyTicketTool(commands.Cog):
             )
         )
         await ctx.reply("Ticket panel config has been updated")
-
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @permission(command_name="ticket_retrieve")
-    @ticket.command(name='retrive', description='Retrieve a ticket transcript')
-    async def ticket_retrieve(self, ctx: commands.Context, opened_by: discord.Member | discord.User):
-        ...
-
-
-
+    '''
 
 async def setup(bot):
     cog = LilyTicketTool(bot)

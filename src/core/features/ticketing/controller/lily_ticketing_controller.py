@@ -178,10 +178,10 @@ class LilyTicketingController:
                 "Failed to spawn ticket panel due to an internal error."
             )
 
-    async def c_ticket_log_action_channel(self, ctx: commands.Context,opened_user_id: int,ticket_type: str, logs_channel: discord.TextChannel, transcripts_file, transcript_file_name: str ,reason: str="No reason provided!") -> int:
+    async def c_ticket_log_action_channel(self, interaction: discord.Interaction,opened_user_id: int,ticket_type: str, logs_channel: discord.TextChannel, transcripts_file, transcript_file_name: str ,reason: str="No reason provided!") -> int:
         view = TicketLogComponent(
             opened_user_id,
-            ctx.author.id,
+            interaction.user.id,
             ticket_type,
             reason,
             transcript_file_name
@@ -198,31 +198,31 @@ class LilyTicketingController:
             print(f"Exception [TicketLogAction] {e}")
             return 0
 
-    async def rename_ticket(self, ctx: commands.Context, name: str):
-        if not isinstance(ctx.channel, discord.TextChannel):
+    async def rename_ticket(self, interaction: discord.Interaction, name: str):
+        if not isinstance(interaction.channel, discord.TextChannel):
             return
 
-        owner = await self.bot_db.get_ticket_owner(ctx.channel.id)
+        owner = await self.bot_db.get_ticket_owner(interaction.channel.id)
         if owner:
-            await ctx.channel.edit(name=name.replace(" ", "_"), reason=f"Ticket renamed by {ctx.author}")
-            await ctx.reply(embed=simple_embed("Ticket renamed successfully!"))
+            await interaction.channel.edit(name=name.replace(" ", "_"), reason=f"Ticket renamed by {interaction.user}")
+            await interaction.response.send_message(embed=simple_embed("Ticket renamed successfully!"))
         else:
-            await ctx.reply(embed=simple_embed("Attempted to rename an invalid Instigator Ticket"))
+            await interaction.response.send_message(embed=simple_embed("Attempted to rename an invalid Instigator Ticket"))
 
     async def ticket_add_user(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         user: discord.Member
     ) -> None:
 
-        if not isinstance(ctx.channel, discord.TextChannel):
+        if not isinstance(interaction.channel, discord.TextChannel):
             return
 
         try:
-            owner = await self.bot_db.get_ticket_owner(ctx.channel.id)
+            owner = await self.bot_db.get_ticket_owner(interaction.channel.id)
 
             if not owner:
-                await ctx.reply(
+                await interaction.response.send_message(
                     embed=simple_embed(
                         "Attempted to add a member to an invalid instigator ticket.",
                         "cross"
@@ -230,7 +230,7 @@ class LilyTicketingController:
                 )
                 return
 
-            await ctx.channel.set_permissions(
+            await interaction.channel.set_permissions(
                 user,
                 view_channel=True,
                 send_messages=True,
@@ -242,14 +242,14 @@ class LilyTicketingController:
                 use_application_commands=True
             )
 
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     f"Successfully added {user.mention} to this ticket."
                 )
             )
 
         except discord.Forbidden:
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "Missing permissions to modify channel access.",
                     "cross"
@@ -257,7 +257,7 @@ class LilyTicketingController:
             )
 
         except discord.HTTPException as e:
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     f"Failed to add user: {e}",
                     "cross"
@@ -267,31 +267,33 @@ class LilyTicketingController:
         except Exception as e:
             print(f"[TICKET ADD USER ERROR] {e}")
 
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "An internal error occurred while adding the user.",
                     "cross"
                 )
             )
 
-    async def close_ticket_thread(self, ctx: commands.Context, reason: str="No reason provided"):
-        if ctx.guild is None:
-            await ctx.reply(
+    async def close_ticket_thread(self, interaction: discord.Interaction, reason: str="No reason provided"):
+        if interaction.guild is None:
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "This command requires guild object inorder to execute!"
                 )
             )
             return
         
-        assert isinstance(ctx.author, discord.Member)
+        assert isinstance(interaction.user, discord.Member)
 
-        message = await ctx.reply(
+        await interaction.response.send_message(
             embed=simple_embed(
                 "Ticket close scheduling has been initiated. The channel will be deleted shortly."
             )
         )
 
-        if not isinstance(ctx.channel, (discord.Thread, discord.TextChannel)):
+        message = await interaction.original_response()
+
+        if not isinstance(interaction.channel, (discord.Thread, discord.TextChannel)):
             return await message.edit(
                 embed=simple_embed(
                     "Attempted to Close an invalid Instigator Ticket",
@@ -299,7 +301,7 @@ class LilyTicketingController:
                 )
             )
 
-        channel = ctx.channel
+        channel = interaction.channel
         ticket_id: int = channel.id
 
         try:
@@ -311,11 +313,11 @@ class LilyTicketingController:
             submission_json = json.loads(submission_json_raw)
 
             higher_staffs_roles_id: List[int] = submission_json.get("higher_staff_role_ids", [])
-            is_higher_staff = any(role.id in higher_staffs_roles_id for role in ctx.author.roles)
+            is_higher_staff = any(role.id in higher_staffs_roles_id for role in interaction.user.roles)
 
             if (
                 claimer_user_id is not None
-                and claimer_user_id != ctx.author.id
+                and claimer_user_id != interaction.user.id
                 and not is_higher_staff
             ):
                 await message.edit(
@@ -327,11 +329,11 @@ class LilyTicketingController:
 
                 return
 
-            logs_channel = ctx.guild.get_channel(logs_channel_id)
+            logs_channel = interaction.guild.get_channel(logs_channel_id)
 
             if not isinstance(logs_channel, discord.TextChannel):
                 try:
-                    fetched_channel = await ctx.guild.fetch_channel(logs_channel_id)
+                    fetched_channel = await interaction.guild.fetch_channel(logs_channel_id)
 
                     if isinstance(fetched_channel, discord.TextChannel):
                         logs_channel = fetched_channel
@@ -349,11 +351,11 @@ class LilyTicketingController:
                     limit=None,
                     tz_info="America/New_York",
                     military_time=True,
-                    bot=ctx.bot,
+                    bot=interaction.client,
                 )
 
                 if transcript is None:
-                    return await ctx.send("Failed to generate transcript.")
+                    return await interaction.response.send_message("Failed to generate transcript.")
 
                 transcript_bytes = transcript.encode()
 
@@ -367,7 +369,7 @@ class LilyTicketingController:
 
                 if logs_channel:
                     proofs_reference = await self.c_ticket_log_action_channel(
-                        ctx=ctx,
+                        interaction=interaction,
                         opened_user_id=opened_user_id,
                         ticket_type=ticket_type,
                         logs_channel=logs_channel,
@@ -378,9 +380,9 @@ class LilyTicketingController:
 
                 """ Log the ticket """
                 await self.bot_db.create_ticket_log(
-                    ctx.guild.id,
+                    interaction.guild.id,
                     opened_user_id,
-                    claimer_user_id if claimer_user_id is not None else ctx.author.id,
+                    claimer_user_id if claimer_user_id is not None else interaction.user.id,
                     reason,
                     ticket_type,
                     proofs_reference
@@ -388,31 +390,31 @@ class LilyTicketingController:
 
                 """ Send DM'S to the ticket opener """
                 try:
-                    user: discord.Member | None = ctx.guild.get_member(opened_user_id)
+                    user: discord.Member | None = interaction.guild.get_member(opened_user_id)
                     if user is None:
-                        user = await ctx.guild.fetch_member(opened_user_id)
+                        user = await interaction.guild.fetch_member(opened_user_id)
                     
                     if user is not None:
                         embed = discord.Embed(
                             color=16777215,
                             title=f"Ticket Closed",
-                            description=f"- Your support ticket was handled by {ctx.author.mention} and closed with reason {reason}\n- An copy of the transcript is attached for future reference.",
+                            description=f"- Your support ticket was handled by {interaction.user.mention} and closed with reason {reason}\n- An copy of the transcript is attached for future reference.",
                         )
 
-                        if ctx.guild.icon is not None:
-                            embed.set_thumbnail(url=ctx.guild.icon.url)
+                        if interaction.guild.icon is not None:
+                            embed.set_thumbnail(url=interaction.guild.icon.url)
                         
                         embed.add_field(
                             name="Server",
-                            value=f"{ctx.guild.name}",
+                            value=f"{interaction.guild.name}",
                             inline=False,
                         )
 
                         view = TicketLogDirectMessage(
                             ticket_type,
-                            ctx.author.id,
+                            interaction.user.id,
                             reason,
-                            ctx.guild.name,
+                            interaction.guild.name,
                             f"transcript-{channel.name}.html"
                         )
 
@@ -430,11 +432,11 @@ class LilyTicketingController:
 
 
                 try:
-                    await channel.delete(reason=f"Ticket Closed by {ctx.author}")
+                    await channel.delete(reason=f"Ticket Closed by {interaction.user}")
                 except discord.Forbidden:
-                    return await ctx.send("Missing permissions to delete channel.")
+                    return await interaction.response.send_message("Missing permissions to delete channel.")
                 except discord.HTTPException as e:
-                    return await ctx.send(f"Failed to delete channel: {e}")
+                    return await interaction.response.send_message(f"Failed to delete channel: {e}")
 
                 await self.bot_db.delete_ticket(ticket_id)
 
@@ -448,12 +450,12 @@ class LilyTicketingController:
                 )
             )
 
-    async def ticket_stats(self, ctx: commands.Context, member: discord.Member):
-        if ctx.guild is None:
-            return await ctx.reply(embed=simple_embed("Please run this command inside an guild"))
-        results = await self.bot_db.ticket_stats(ctx.guild.id, member.id)
+    async def ticket_stats(self, interaction: discord.Interaction, member: discord.Member):
+        if interaction.guild is None:
+            return await interaction.response.send_message(embed=simple_embed("Please run this command inside an guild"))
+        results = await self.bot_db.ticket_stats(interaction.guild.id, member.id)
         if not results:
-            return await ctx.reply(embed=simple_embed("No ticket stats found!", 'cross'))
+            return await interaction.response.send_message(embed=simple_embed("No ticket stats found!", 'cross'))
 
         embed = discord.Embed(
             color=16777215,
@@ -466,16 +468,16 @@ class LilyTicketingController:
         embed.set_thumbnail(url=member.display_avatar.url)
         embed.set_image(url=img['border'])
 
-        await ctx.reply(embed=embed)
+        await interaction.response.send_message(embed=embed)
         
-    async def ticket_retrieve(self, ctx: commands.Context, member_id: int):
-        if ctx.guild is None:
+    async def ticket_retrieve(self, interaction: discord.Interaction, member_id: int):
+        if interaction.guild is None:
             return
 
-        result: List[Dict[str, Any]] = await self.bot_db.get_member_ticket_logs(ctx.guild.id, member_id)
+        result: List[Dict[str, Any]] = await self.bot_db.get_member_ticket_logs(interaction.guild.id, member_id)
 
         if len(result) <= 0:
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "No ticket logs found!", 'cross'
                 )
