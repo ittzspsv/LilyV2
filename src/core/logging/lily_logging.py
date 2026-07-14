@@ -41,8 +41,8 @@ class LilyLoggingController:
     async def log_moderation_action(
         self,
         ctx: commands.Context | discord.Interaction,
-        moderator_id: int,
-        target_user_id: int,
+        moderator: discord.Member,
+        target_user: discord.Member | discord.User,
         mod_type: str,
         reason: str = "No reason provided",
         proofs: Optional[Sequence[Union[discord.Attachment, str]]] = None
@@ -59,7 +59,7 @@ class LilyLoggingController:
 
             return
         
-        acronyms: dict[str, str] = await self.bot_db.get_moderation_acronyms(moderator_id, ctx.guild.id)
+        acronyms: dict[str, str] = await self.bot_db.get_moderation_acronyms(moderator.id, ctx.guild.id)
         reason = re.sub(
                     r"\b\w+\b",
                     lambda m: acronyms.get(m.group(0).lower(), m.group(0)),
@@ -69,15 +69,15 @@ class LilyLoggingController:
 
         case_id = await self.bot_db.log_moderation_action(
             ctx.guild.id,
-            moderator_id,
-            target_user_id,
+            moderator.id,
+            target_user.id,
             mod_type,
             reason
         )
                 
         embeds_to_send = moderation_embed(
-            moderator_id,
-            target_user_id,
+            moderator.id,
+            target_user.id,
             mod_type,
             reason,
             utcnow()
@@ -97,7 +97,7 @@ class LilyLoggingController:
 
         if isinstance(channel, discord.TextChannel):
             await channel.send(
-                content=f"<@{target_user_id}>",
+                content=f"{target_user.mention}",
                 embeds=embeds_to_send
             )
 
@@ -134,7 +134,7 @@ class LilyLoggingController:
                             continue
                 """ Send the proofs to the logging channel """
                 message = await channel.send(
-                    content=f"Proofs <@{target_user_id}>",
+                    content=f"Proofs {target_user.mention}",
                     files=files
                 )
 
