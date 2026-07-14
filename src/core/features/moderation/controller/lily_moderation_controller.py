@@ -92,8 +92,8 @@ class LilyModerationController:
     async def _notify_and_log(
         self,
         ctx: commands.Context,
-        target: discord.Member | discord.User,
-        user_id: int,
+        target: discord.Member,
+        user: discord.Member | discord.User,
         action: str,
         reason: str,
         proofs: list,
@@ -106,7 +106,7 @@ class LilyModerationController:
             pass
 
         return await self.logging_controller.log_moderation_action(
-            ctx, ctx.author.id, user_id, action, reason, proofs.copy()
+            ctx, ctx.author, user, action, reason, proofs.copy()
         )
 
     async def ban_user(self, ctx: commands.Context, user_input, reason="No reason provided", proofs: list = []):
@@ -152,9 +152,9 @@ class LilyModerationController:
 
         if proofs:
             await ctx.reply(embed=simple_embed(ban_message))
-            await self._notify_and_log(ctx, user_input, member.id, "ban", reason, proofs)
+            await self._notify_and_log(ctx, user_input, member, "ban", reason, proofs)
         else:
-            case_id = await self._notify_and_log(ctx, user_input, member.id, "ban", reason, proofs)
+            case_id = await self._notify_and_log(ctx, user_input, member, "ban", reason, proofs)
             if case_id:
                 view = CaseProofsView(case_id, self.logging_controller, None)
                 msg = await ctx.reply(embed=simple_embed(ban_message), view=view)
@@ -217,9 +217,9 @@ class LilyModerationController:
 
         if proofs:
             await ctx.reply(embed=simple_embed(quarantine_message))
-            await self._notify_and_log(ctx, user_input, member.id, "quarantine", reason, proofs)
+            await self._notify_and_log(ctx, user_input, member, "quarantine", reason, proofs)
         else:
-            case_id = await self._notify_and_log(ctx, user_input, member.id, "quarantine", reason, proofs)
+            case_id = await self._notify_and_log(ctx, user_input, member, "quarantine", reason, proofs)
             if case_id:
                 view = CaseProofsView(case_id, self.logging_controller, None)
                 msg = await ctx.reply(embed=simple_embed(quarantine_message), view=view)
@@ -227,98 +227,6 @@ class LilyModerationController:
             else:
                 await ctx.reply(embed=simple_embed(quarantine_message))
 
-    async def ban_queue_user(
-        self,
-        interaction: discord.Interaction,
-        moderation_queue: list[dict]
-    ) -> str:
-        if interaction.guild is None:
-            await interaction.response.send_message(embed=simple_embed("Command requires guild object inorder to execute", 'cross'), ephemeral=True)
-            return "Nothing Processed"
-        guild = interaction.guild
-        results = []
-
-        try:
-            jail_value = self.bot_db.global_config.jail if self.bot_db.global_config else 1
-
-            for item in moderation_queue:
-                user_id: int = 0
-                try:
-                    mod_type = item.get("mod_type")
-                    moderator_id: int = item.get("moderator_id") or 0
-                    user_id = item.get("target_user_id") or 0 
-                    reason = item.get("reason", "No reason provided")
-                    source = item.get("message_source")
-
-                    if not user_id:
-                        results.append("Invalid user in queue")
-                        continue
-
-                    if mod_type == "ban" and jail_value == 0:
-                        await guild.ban(
-                            discord.Object(id=user_id),
-                            reason=f"Queued | {reason}"
-                        )
-
-                        await self.logging_controller.log_moderation_action(
-                            interaction, moderator_id, user_id, "ban", f'{reason} | Verified by {interaction.user.id}', []
-                        )
-
-                        results.append(f"Banned <@{user_id}>")
-
-                    elif mod_type == "quarantine" or (mod_type == "ban" and jail_value == 1):
-                        try:
-                            member = guild.get_member(user_id) or await guild.fetch_member(user_id)
-                        except Exception:
-                            results.append(f"<@{user_id}> Not found!")
-                            continue
-
-                        quarantine_role = (
-                            discord.utils.get(guild.roles, name="Quarantine")
-                            or discord.utils.get(guild.roles, name="Prisoner")
-                        )
-
-                        if not quarantine_role:
-                            results.append("No quarantine role")
-                            continue
-
-                        if quarantine_role >= guild.me.top_role:
-                            results.append("Role hierarchy issue")
-                            continue
-
-                        if quarantine_role in member.roles:
-                            results.append(f"<@{user_id}> already quarantined")
-                            continue
-
-                        await member.add_roles(
-                            quarantine_role,
-                            reason=f"{reason} | Verified by {interaction.user}"
-                        )
-
-                        await self.logging_controller.log_moderation_action(
-                            interaction, moderator_id, user_id, "quarantine", f'{reason} | Verified by {interaction.user.id}', []
-                        )
-
-                        results.append(f"Quarantined <@{user_id}>")
-
-                    else:
-                        results.append(f"Unknown mod type for <@{user_id}>")
-                    await asyncio.sleep(2)
-                except discord.Forbidden:
-                    results.append(f"Missing permissions for <@{user_id}>")
-                    await asyncio.sleep(2)
-                except discord.HTTPException as e:
-                    results.append(f"HTTP error for <@{user_id}>: {e}")
-                    await asyncio.sleep(2)
-                except Exception as e:
-                    results.append(f"Error for <@{user_id}>: {e}")
-                    await asyncio.sleep(2)
-
-            await self.bot_db.clear_mod_queue(interaction.guild.id)
-            return "\n".join(results) if results else "Nothing processed."
-
-        except Exception as e:
-            return f"Error: {e}"
 
     async def mute_user(self, ctx: commands.Context, user: discord.Member | discord.User, duration: str, reason: str = "No reason provided", proofs: list = []):
         if ctx.guild is None:
@@ -373,7 +281,7 @@ class LilyModerationController:
                     f"Muted: <@{user.id}>"
                 ))
 
-            case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author.id, user.id, "mute", reason, proofs)
+            case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author, user, "mute", reason, proofs)
 
             if case_id and len(proofs) <= 0:
                 view = CaseProofsView(case_id, self.logging_controller, None)
@@ -413,8 +321,8 @@ class LilyModerationController:
 
             await self.logging_controller.log_moderation_action(
                 ctx,
-                ctx.author.id,
-                user.id,
+                ctx.author,
+                user,
                 "unmute",
                 reason
             )
@@ -424,29 +332,20 @@ class LilyModerationController:
         except Exception as e:
             await ctx.reply(embed=simple_embed(f"Exception: {e}", 'cross'))
 
-    async def unban(self, ctx, user_id: str, bot ,reason: str = "No reason provided"):
-        if user_id is None:
+    async def unban(self, ctx: commands.Context, user: discord.User, bot ,reason: str = "No reason provided"):
+        if user is None:
             await ctx.reply(view=CommandInfo(ctx, "Unban", ["unban user", f"unban {ctx.me.mention} Appealed"]))
             return
-
-        usr_id: int = int(user_id.replace("<@", "").replace(">", ""))
-
-        try:
-            user = await bot.fetch_user(usr_id)
-        except discord.NotFound:
-            await ctx.reply(embed=simple_embed("User not found."))
-            return
-        except discord.HTTPException as e:
-            await ctx.reply(embed=simple_embed(f"Exception: {e}", "cross"))
-            return
+        
+        assert ctx.guild is not None
 
         try:
             await ctx.guild.unban(user, reason=f"By {ctx.author} | {reason}")
             await ctx.reply(embed=simple_embed(f"Unbanned {user.mention}"))
             await self.logging_controller.log_moderation_action(
                 ctx,
-                ctx.author.id,
-                user.id,
+                ctx.author,
+                user,
                 "unban",
                 reason
             )
@@ -457,10 +356,12 @@ class LilyModerationController:
         except discord.HTTPException as e:
             await ctx.reply(embed=simple_embed(f"Exception Raised: {e}", "cross"))
 
-    async def release(self, ctx, member: discord.Member | None = None, reason: str = "No reason provided"):
+    async def release(self, ctx: commands.Context, member: discord.Member | None = None, reason: str = "No reason provided"):
         if member is None:
             await ctx.reply(view=CommandInfo(ctx, "Release", ["release @user", f"release @user Appealed"]))
             return
+        
+        assert ctx.guild is not None
 
         quarantine_role = (
             discord.utils.get(ctx.guild.roles, name="Quarantine")
@@ -480,8 +381,8 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed(f"Released {member.mention} from quarantine."))
             await self.logging_controller.log_moderation_action(
                 ctx,
-                ctx.author.id,
-                member.id,
+                ctx.author,
+                member,
                 "quarantine_release",
                 reason
             )
@@ -518,7 +419,7 @@ class LilyModerationController:
         if len(proofs) > 0:
             await ctx.reply(embed=simple_embed(f"{member.mention} has been warned"))
 
-        case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author.id, member.id, "warn", reason, proofs)
+        case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author, member, "warn", reason, proofs)
 
         embed = action_log("warn", ctx.author, reason, ctx.guild.name)
         try:
@@ -545,38 +446,6 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed(str(response.get("message"))))
         else:
             await ctx.reply(embed=simple_embed(str(response.get("message")), 'cross'))
-
-    async def fetch_moderation_queue(self, ctx: commands.Context):
-        if ctx.guild is None:
-            await ctx.reply(embed=simple_embed("Command requires guild object inorder to execute", 'cross'))
-            return
-        
-        if isinstance(ctx.author, discord.User):
-            await ctx.reply(embed=simple_embed("Command requires member object inorder to execute", 'cross'))
-            return
-        try:
-            response = await self.bot_db.fetch_mod_queue(ctx.guild.id)
-            if response.get("success"):
-                view = ModerationQueueClear(response.get("items", []), ctx.author, self.ban_queue_user)
-                message = await ctx.reply(view=view, embed=moderation_queue_embed(ctx, response.get("items", [])))
-                view.message = message
-            else:
-                await ctx.reply(embed=simple_embed(response.get("message", "Unknown Error!"), 'cross'))
-        except Exception as e:
-            print(f"Exception [FetchModerationQueue] {e}")
-
-    async def remove_member_from_queue(self, ctx: commands.Context, member: discord.Member):
-        if ctx.guild is None:
-            await ctx.reply(embed=simple_embed("Command requires guild object inorder to execute", 'cross'))
-            return
-        try:
-            response = await self.bot_db.clear_mod_queue_particular(**{"guild_id": ctx.guild.id, "user_id": member.id})
-            if response.get("success"):
-                await ctx.reply(embed=simple_embed(response.get("message", "Success!")))
-            else:
-                await ctx.reply(embed=simple_embed(response.get("message", "Success!"), 'cross'))
-        except Exception as e:
-            print(f"Exception [RemoveMemberFromQueue] {e}")
 
     async def ms(self, ctx: commands.Context, moderator: discord.Member | discord.User, page_start: int = 0, page_end: int = 5):
         if ctx.guild is None:
