@@ -122,61 +122,38 @@ class ModerationInsights(discord.ui.LayoutView):
             except discord.HTTPException:
                 pass
 
-def ban_embed(moderator: discord.Member, reason: Optional[str], appealLink: Optional[str], server_name: str) -> discord.Embed:
-    embed = (
-        discord.Embed(
-            color=0xFFFFFF,
-            title=f"{Config.emoji['arrow']} You Have Been Banned!",
-        )
-        .set_image(url=Config.img['border'])
-        .add_field(
-            name=f"{Config.emoji['bookmark']} Reason",
-            value=reason,
-            inline=False,
-        )
-        .add_field(
-            name=f"{Config.emoji['bot']} Server",
-            value=server_name,
-            inline=False,
-        )
-        .add_field(
-            name=f"{Config.emoji['ban_hammer']} Appeal Your Ban Here",
-            value=f"If you think your ban was wrongly done, please make an appeal here: {appealLink}",
-            inline=False,
-        )
-    )
-    return embed
+from typing import Optional
+import discord
 
-def mute_embed(moderator: discord.Member, reason: Optional[str], guild_name: str) -> discord.Embed:
+
+def action_log(
+    action: str,
+    moderator: discord.Member,
+    reason: Optional[str],
+    guild_name: str,
+    appeal_link: Optional[str] = None,
+) -> discord.Embed:
+    action = action.lower()
+
+    titles = {
+        "ban": f"{Config.emoji['arrow']} You Have Been Banned!",
+        "mute": f"{Config.emoji['arrow']} You Have Been Muted!",
+        "quarantine": f"{Config.emoji['arrow']} You Have Been Quarantined!",
+        "warn": f"{Config.emoji['arrow']} You Have Been Warned!",
+    }
+
+    if action not in titles:
+        raise ValueError(f"Unknown action '{action}'. Must be one of {list(titles)}.")
+
     embed = discord.Embed(
-                    color=0xFFFFFF,
-                    title=f"{Config.emoji['arrow']} YOU HAVE BEEN MUTED!",
-                )
-    embed.set_image(url=Config.img['border'])
-    embed.add_field(
-        name=f"{Config.emoji['bookmark']} Reason",
-        value=reason,
-        inline=False,
+        color=0xFFFFFF,
+        title=titles[action],
     )
+    if action == "warn":
+        embed.set_thumbnail(url=Config.img['warn'])
+    else:
+        embed.set_image(url=Config.img.get(action, Config.img['border']))
 
-    embed.add_field(
-        name=f"{Config.emoji['bot']} Server",
-        value=guild_name,
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{Config.emoji['ban_hammer']} Appeal Your Ban Here",
-        value=f"If you think your mute was wrongly done, please make an appeal here: {Config.appeal_server_link}",
-        inline=False,
-    )
-    return embed
-
-def warn_embed(moderator: discord.Member, reason: Optional[str], guild_name: str) -> discord.Embed:
-    embed = discord.Embed(
-        color=16777215,
-        title=f"{Config.emoji['arrow']} You Have Been Warned!",
-    )
-    embed.set_thumbnail(url=Config.img['warn'])
     embed.add_field(
         name=f"{Config.emoji['bookmark']} Reason",
         value=reason,

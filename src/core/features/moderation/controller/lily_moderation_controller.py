@@ -43,7 +43,6 @@ class LilyModerationController:
 
         member: discord.Member | discord.User = user_input
 
-        # Pending queue check
         response = await self.bot_db.get_mod_queue_entry(member.id, ctx.guild.id)
         if response.get("success"):
             await ctx.reply(embed=simple_embed(
@@ -54,7 +53,6 @@ class LilyModerationController:
             return None
         
         if isinstance(member, discord.Member):
-            # Identity checks
             if member.id == ctx.author.id:
                 await ctx.reply(embed=simple_embed("You cannot moderate yourself.", "cross"))
                 return None
@@ -67,7 +65,6 @@ class LilyModerationController:
                 await ctx.reply(embed=simple_embed("You cannot moderate the server owner.", "cross"))
                 return None
 
-            # A;; checks based on hierarchy
             if member.top_role >= ctx.guild.me.top_role:
                 await ctx.reply(embed=simple_embed(
                     "I cannot act on this user their role is higher than or equal to mine.", "cross"
@@ -80,7 +77,6 @@ class LilyModerationController:
                 ))
                 return None
 
-        # Limit Checks are all handled here.  (Hardcoded 24hr CD)
         author_roles = [role.id for role in ctx.author.roles if role.name != "@everyone"]
         status = await self.bot_db.get_ban_limit_status(ctx.guild.id, ctx.author.id, author_roles)
 
@@ -105,7 +101,7 @@ class LilyModerationController:
         try:
             assert isinstance(ctx.author, discord.Member)
             assert isinstance(ctx.guild, discord.Guild)
-            await target.send(embed=ban_embed(ctx.author, reason, appeal_server_link, ctx.guild.name))
+            await target.send(embed=action_log(action, ctx.author, reason, appeal_server_link, ctx.guild.name))
         except Exception:
             pass
 
@@ -365,7 +361,7 @@ class LilyModerationController:
             until = utcnow() + timedelta(seconds=seconds)
 
             try:
-                embed = mute_embed(ctx.author, reason, ctx.guild.name)
+                embed = action_log("mute", ctx.author, reason, ctx.guild.name)
                 await user.send(embed=embed)
             except Exception as e:
                 print("DM failed:", e)
@@ -461,7 +457,7 @@ class LilyModerationController:
         except discord.HTTPException as e:
             await ctx.reply(embed=simple_embed(f"Exception Raised: {e}", "cross"))
 
-    async def release(self, ctx, member: discord.Member = None, reason: str = "No reason provided"):
+    async def release(self, ctx, member: discord.Member | None = None, reason: str = "No reason provided"):
         if member is None:
             await ctx.reply(view=CommandInfo(ctx, "Release", ["release @user", f"release @user Appealed"]))
             return
@@ -524,7 +520,7 @@ class LilyModerationController:
 
         case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author.id, member.id, "warn", reason, proofs)
 
-        embed = warn_embed(ctx.author, reason, ctx.guild.name)
+        embed = action_log("warn", ctx.author, reason, ctx.guild.name)
         try:
             await member.send(embed=embed)
         except Exception as e:
