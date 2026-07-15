@@ -42,15 +42,6 @@ class LilyModerationController:
             return None
 
         member: discord.Member | discord.User = user_input
-
-        response = await self.bot_db.get_mod_queue_entry(member.id, ctx.guild.id)
-        if response.get("success"):
-            await ctx.reply(embed=simple_embed(
-                f"This user already has a pending action from <@{response.get('moderator_id')}>.\n"
-                f"Check `/moderation_queue` for details.",
-                "cross"
-            ))
-            return None
         
         if isinstance(member, discord.Member):
             if member.id == ctx.author.id:
@@ -121,28 +112,6 @@ class LilyModerationController:
             return
         member, status, author_roles = result
 
-        if self.bot_db.ban_queue(ctx.guild.id, author_roles):
-            response = await self.bot_db.add_mod_queue(
-                guild_id=ctx.guild.id,
-                moderator_id=ctx.author.id,
-                target_user_id=member.id,
-                mod_type="ban",
-                reason=reason,
-                message_source=ctx.message.jump_url,
-            )
-            try:
-                if isinstance(member, discord.Member):
-                    await member.edit(
-                        timed_out_until=datetime.now(timezone.utc) + timedelta(hours=6),
-                        reason=f"{reason} | In Ban Queue",
-                    )
-            except Exception:
-                pass
-
-            if response.get("success"):
-                await ctx.reply(embed=simple_embed(str(response.get("message"))))
-            return
-
         await ctx.guild.ban(
             discord.Object(id=member.id),
             reason=f"By {ctx.author} | {reason}",
@@ -175,28 +144,6 @@ class LilyModerationController:
 
         if not isinstance(member, discord.Member):
             await ctx.reply(embed=simple_embed("User should be in the guild inorder to quarantine them", 'cross'))
-            return
-
-        """ Moderation queue logic """
-        if self.bot_db.ban_queue(ctx.guild.id, author_roles):
-            response = await self.bot_db.add_mod_queue(
-                guild_id=ctx.guild.id,
-                moderator_id=ctx.author.id,
-                target_user_id=member.id,
-                mod_type="quarantine",
-                reason=reason,
-                message_source=ctx.message.jump_url,
-            )
-            try:
-                await member.edit(
-                    timed_out_until=datetime.now(timezone.utc) + timedelta(hours=6),
-                    reason=f"{reason} | In Quarantine Queue",
-                )
-            except Exception:
-                pass
-
-            if response.get("success"):
-                await ctx.reply(embed=simple_embed(str(response.get("message"))))
             return
 
         quarantine_role = (

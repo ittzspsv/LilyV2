@@ -1,12 +1,13 @@
 from ..database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from .embeds.logging_embeds import write_log_embed, moderation_embed
+from ..features.moderation.components.sLilyModerationComponents import action_log
 
 from discord.ext import commands
 from datetime import datetime
 from typing import Optional, Union, Sequence, List
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.utils.lily_utility import utcnow
-from .components.logging_components import ProofComponentModal
+from .components.logging_components import ProofComponentModal, AppealButton
 
 import discord
 import io
@@ -41,7 +42,7 @@ class LilyLoggingController:
     async def log_moderation_action(
         self,
         ctx: commands.Context | discord.Interaction,
-        moderator: discord.Member,
+        moderator: discord.Member | discord.User,
         target_user: discord.Member | discord.User,
         mod_type: str,
         reason: str = "No reason provided",
@@ -66,7 +67,6 @@ class LilyLoggingController:
                     reason
                 )
 
-
         case_id = await self.bot_db.log_moderation_action(
             ctx.guild.id,
             moderator.id,
@@ -74,6 +74,20 @@ class LilyLoggingController:
             mod_type,
             reason
         )
+
+        """ Send Action DM to the User"""
+        a_log = action_log(
+            mod_type,
+            reason,
+            ctx.guild.name,
+        )
+
+        try:
+            view = discord.ui.View(timeout=None)
+            view.add_item(AppealButton(case_id))
+            await target_user.send(embed=a_log, view=view)
+        except Exception:
+            pass
                 
         embeds_to_send = moderation_embed(
             moderator.id,

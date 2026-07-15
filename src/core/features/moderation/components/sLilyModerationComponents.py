@@ -1,7 +1,6 @@
 import discord
-from discord.ext import commands
 from src.core.utils.embeds.sLilyEmbed import simple_embed
-from typing import Optional, Callable
+from typing import Optional, cast
 from datetime import datetime, timezone
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from src.core.logging.components.logging_components import ProofsComponentCommandModal
@@ -165,68 +164,6 @@ def action_log(
 
     return embed
 
-class ModerationQueueClear(discord.ui.View):
-    def __init__(self, moderation_queue: list[dict], interactor: discord.Member, ban_callback: Callable):
-        super().__init__(timeout=300)
-        self.moderation_queue = moderation_queue
-        self.interactor: discord.Member = interactor
-        self.ban_callback = ban_callback
-        self.message: Optional[discord.Message] = None
-
-    @discord.ui.button(
-    label="Clear Moderation Queue",
-    style=discord.ButtonStyle.danger
-)
-    async def clear_queue(self, interaction: discord.Interaction, button: discord.ui.Button):
-
-        if interaction.user.id != self.interactor.id:
-            return await interaction.response.send_message(
-                embed=simple_embed("You cannot interact with this!", 'cross'),
-                ephemeral=True
-            )
-
-        await interaction.response.defer(thinking=True)
-
-        summary = await self.ban_callback(interaction, self.moderation_queue)
-
-        for child in self.children:
-            child.disabled = True
-
-        if self.message:
-            await self.message.delete()
-
-        await interaction.followup.send(
-            embed=simple_embed(f"Queue Processed:\n{summary}"),
-            view=self,
-        )
-
-def moderation_queue_embed(ctx: commands.Context, moderation_queue: list[dict]) -> discord.Embed:
-    embed = discord.Embed(
-        color=16777215,
-        title="Moderation Queue",
-        description="- If a staff member can’t perform an action, it will be added to this queue. Another staff member who has permission can then review and complete it.\n### Queue List",
-    )
-    embed.set_thumbnail(url=ctx.me.display_avatar.url)
-
-
-    items_example = {
-        "mod_type": "ban",
-        "moderator_id": 12232323,
-        "target_user_id": 987986978,
-        "reason": "Hello what the hell!",
-        "message_source": "url"
-    }
-
-
-    for i, items in enumerate(moderation_queue):
-        embed.add_field(
-                name=f"📌 Queue #{i} • {items.get("mod_type", "Not defined")}",
-                value=f"> - User: <@{items.get("target_user_id")}>\n> - Moderator: <@{items.get("moderator_id")}>\n> - Reason: {items.get("reason")}\n> - [Message]({items.get("message_source")})",
-                inline=True,
-            )
-    
-    return embed
-
 def build_ms_embed(
     moderator: discord.Member | discord.User,
     logs: list[dict],
@@ -348,7 +285,7 @@ def build_mod_logs_embed(
 
     for index, log in enumerate(display_logs, start=page_start + 1):
 
-        ts = log.get("timestamp")
+        ts: str = cast(str, log.get("timestamp"))
 
         try:
             dt = datetime.fromisoformat(ts)
@@ -414,7 +351,7 @@ def build_mod_logs_embed_absolute(
 
     for index, log in enumerate(display_logs, start=page_start + 1):
 
-        ts = log.get("timestamp")
+        ts = cast(str, log.get("timestamp"))
 
         try:
             dt = datetime.fromisoformat(ts)
