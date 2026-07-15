@@ -15,10 +15,8 @@ from src.core.configs.sBotDetails import (
 
 from src.core.features.moderation.components.sLilyModerationComponents import (
     ProofsView,
-    ban_embed,
+    action_log,
     build_mod_logs_embed_absolute,
-    mute_embed,
-    warn_embed,
 )
 
 from src.core.features.moderation.utils.moderation_utils import (
@@ -132,13 +130,13 @@ class MuteModal(discord.ui.Modal):
         until = utcnow() + timedelta(seconds=seconds)
 
         try:
-            embed = mute_embed(interaction.user, self.reason.component.value, interaction.guild.name)
+            embed = action_log("mute", self.reason.component.value, interaction.guild.name)
             await user.send(embed=embed)
         except Exception as e:
             print("DM failed:", e)
 
         await user.edit(timed_out_until=until, reason=self.reason.component.value)
-        await self.db.logging_controller.log_moderation_action(interaction, interaction.user.id, user.id, "mute", self.reason.component.value, self.proofs)
+        await self.db.logging_controller.log_moderation_action(interaction, interaction.user, user, "mute", self.reason.component.value, self.proofs)
 
         await interaction.followup.send(embed=simple_embed(
             f"Muted: <@{user.id}>"
@@ -199,19 +197,6 @@ class BanModal(discord.ui.Modal):
             return
         
         await interaction.response.defer()
-
-        response = await self.db.bot_db.get_mod_queue_entry(member.id, interaction.guild.id)
-        if response.get("success"):
-            await interaction.followup.send(
-                embed=simple_embed(
-                    f"This user already has a pending action request from <@{response.get('moderator_id')}>.\n"
-                    f"Check `/moderation_queue` for details.",
-                    "cross"
-                ),
-                ephemeral=True
-            )
-
-            return
 
         if member.id == interaction.user.id:
             await interaction.followup.send(
@@ -276,24 +261,6 @@ class BanModal(discord.ui.Modal):
             ), ephemeral=True)
 
             return
-        
-        if self.db.bot_db.ban_queue(interaction.guild.id, author_roles):
-            response = await self.db.bot_db.add_mod_queue(**{
-                "guild_id"       : interaction.guild.id,
-                "moderator_id"   : interaction.user.id,
-                "target_user_id" : member.id,
-                "mod_type"       : "quarantine",
-                "reason"         : self.reason.component.value,
-                "message_source" : interaction.message.jump_url if interaction.message else "No Messages Found",
-            })
-
-            try:
-                await member.edit(
-                    timed_out_until=datetime.now(timezone.utc) + timedelta(hours=6),
-                    reason=f"{self.reason.component.value} | In Ban Queue",
-                )
-            except Exception:
-                pass
 
             if response.get("success"):
                 return await interaction.followup.send(embed=simple_embed(str(response.get("message"))), ephemeral=True)
@@ -307,14 +274,14 @@ class BanModal(discord.ui.Modal):
                 return
             
             try:
-                await member.send(embed=ban_embed(
-                    interaction.user, self.reason.component.value, appeal_server_link, interaction.guild.name
+                await member.send(embed=action_log("quarantine",
+                   self.reason.component.value, interaction.guild.name
                 ))
             except Exception:
                 pass
 
             case_id = await self.db.logging_controller.log_moderation_action(
-                interaction, interaction.user.id, member.id, action, self.reason.component.value, self.proofs.copy()
+                interaction, interaction.user, member, action, self.reason.component.value, self.proofs.copy()
             )
 
             return case_id
@@ -383,9 +350,9 @@ class WarnModal(discord.ui.Modal):
 
             await interaction.followup.send(embed=simple_embed(f"{member.mention} has been warned"))
 
-            await self.db.logging_controller.log_moderation_action(interaction, interaction.user.id, member.id, "warn", self.reason.component.value, self.proofs)
+            await self.db.logging_controller.log_moderation_action(interaction, interaction.user, member, "warn", self.reason.component.value, self.proofs)
 
-            embed = warn_embed(interaction.user, self.reason.component.value, interaction.guild.name)
+            embed = action_log("warn" , self.reason.component.value, interaction.guild.name)
             try:
                 await member.send(embed=embed)
             except Exception as e:
@@ -522,8 +489,8 @@ class QuarantineRelease(discord.ui.Modal):
                 await interaction.followup.send(embed=simple_embed(f"Released {member.mention} from quarantine."))
                 await self.db.logging_controller.log_moderation_action(
                     interaction,
-                    interaction.user.id,
-                    member.id,
+                    interaction.user,
+                    member,
                     "quarantine_release",
                     self.reason.component.value
                 )
@@ -606,8 +573,8 @@ class UnmuteModal(discord.ui.Modal):
                 await interaction.followup.send(embed=simple_embed(f"Unmuted {member.mention}"))
                 await self.db.logging_controller.log_moderation_action(
                     interaction,
-                    interaction.user.id,
-                    member.id,
+                    interaction.user,
+                    member,
                     "unmute",
                     self.reason.component.value
                 )
