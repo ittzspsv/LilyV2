@@ -7,7 +7,8 @@ from datetime import datetime
 from typing import Optional, Union, Sequence, List
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.utils.lily_utility import utcnow
-from .components.logging_components import ProofComponentModal, AppealButton
+from .components.logging_components import ProofComponentModal
+from src.core.features.moderation.components.sLilyModerationComponents import AppealButton
 
 import discord
 import io
