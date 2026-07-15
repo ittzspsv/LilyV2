@@ -532,3 +532,169 @@ class LilyModerationController:
         """ Returns the total, monthly, weekly, daily modlogs in a server """
         view = ModerationInsights(ctx.guild.me, self.bot_db)
         view.message = await ctx.reply(view=view, file=discord.File(buffer, filename="moderation_analytics.png"))
+
+    async def setup_mod_appeal(self, ctx: commands.Context):
+        if ctx.guild is None:
+            return
+        
+        me = ctx.guild.me
+
+        overwrites = {
+            ctx.guild.default_role: discord.PermissionOverwrite(
+                view_channel=False,
+            ),
+
+            me: discord.PermissionOverwrite(
+                view_channel=True,
+                manage_channels=True,
+                manage_threads=True,
+                send_messages=True,
+                read_message_history=True,
+            ),
+
+            ctx.author: discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+                send_messages_in_threads=True,
+                attach_files=True,
+                embed_links=True,
+                add_reactions=True,
+                use_external_emojis=True,
+                use_external_stickers=True,
+            ),
+        }
+
+        try:
+            forum = await ctx.guild.create_forum(
+                name="moderation-appeal",
+                available_tags=[
+                    discord.ForumTag(name="Pending", emoji="⏳"),
+                    discord.ForumTag(name="Accepted", emoji="✅"),
+                    discord.ForumTag(name="Denied", emoji="❌"),
+                ],
+                overwrites=overwrites,
+                reason=f"Moderation appeal forum created by {ctx.author}",
+            )
+
+            await self.bot_db.set_channel(
+                ctx.guild.id,
+                forum.id,
+                "moderation_appeal"
+            )
+
+            await self.bot_db.upsert_appeal_forum(
+                ctx.guild.id,
+                """
+                [
+                    {
+                        "label": "Why should we remove the punishment?",
+                        "description": "Explain why the punishment should be removed and how you will follow the rules in future."
+                    },
+                    {
+                        "label": "Why did this happen?",
+                        "description": "Explain what caused the punishment and what you will do to prevent it from happening again."
+                    }
+                ]
+                """
+            )
+
+            await ctx.reply(
+                embed=simple_embed(
+                    f"Successfully created Appeal forums {forum.mention}.  Appeals will be posted on that forums\nPlease do not delete the `Pending` Tag from the forum"
+                )
+            )
+
+        except discord.Forbidden:
+            raise discord.app_commands.CheckFailure(
+                "I don't have permission to create forum channels."
+            )
+
+        except discord.HTTPException as e:
+            raise discord.app_commands.CheckFailure(
+                f"Failed to create the moderation appeal forum: {e}"
+            )
+        
+    async def accept_appeal(self, ctx: commands.Context):
+        if ctx.guild is None:
+            return
+
+        if not isinstance(ctx.channel, discord.Thread):
+            return await ctx.reply(
+                embed=simple_embed(
+                    "Unable to accept an invalid instigator appeal.",
+                    "cross",
+                ),
+                delete_after=5,
+            )
+
+        appeal = await self.bot_db.get_appeal(ctx.channel.id)
+        if appeal is None:
+            return await ctx.reply(
+                embed=simple_embed(
+                    "Unable to accept an invalid instigator appeal.",
+                    "cross",
+                ),
+                delete_after=5,
+            )
+        
+        case = await self.bot_db.get_case(appeal["case_id"])
+
+        if case is None:
+            await ctx.reply(embed=simple_embed("Unable to find the case", 'cross'))
+            return
+
+        member = await ctx.guild.fetch_member(case["target_user_id"])
+        if case["mod_type"] == "mute":
+            await member.edit(timed_out_until=None, reason=f"Appeal accepted by {ctx.author.mention}")
+
+        elif case["mod_type"] == "quarantine":
+            role = discord.utils.get(ctx.guild.roles, name="Quarantine")
+            if role:
+                await member.remove_roles(role, reason=f"Appeal accepted by {ctx.author.mention}")
+
+
+        assert isinstance(ctx.channel, discord.Thread)
+        assert isinstance(ctx.channel.parent, discord.ForumChannel)
+        accepted = discord.utils.get(ctx.channel.parent.available_tags, name="Accepted")
+
+        if accepted is None:
+            return
+        
+        await ctx.channel.edit(applied_tags=[accepted])
+
+        await self.bot_db.set_appeal_status(appeal["case_id"], "accepted")
+        await ctx.reply(embed=simple_embed(f"Successfully Accepted the appeal and their punishment has been lifted."))
+
+    async def reject_appeal(self, ctx: commands.Context):
+        if ctx.guild is None:
+            return
+
+        if not isinstance(ctx.channel, discord.Thread):
+            return await ctx.reply(
+                embed=simple_embed(
+                    "Unable to reject an invalid instigator appeal.",
+                    "cross",
+                ),
+                delete_after=5,
+            )
+
+        appeal = await self.bot_db.get_appeal(ctx.channel.id)
+        if appeal is None:
+            return await ctx.reply(
+                embed=simple_embed(
+                    "Unable to reject an invalid instigator appeal.",
+                    "cross",
+                ),
+                delete_after=5,
+            )
+        assert isinstance(ctx.channel, discord.Thread)
+        assert isinstance(ctx.channel.parent, discord.ForumChannel)
+        rejected = discord.utils.get(ctx.channel.parent.available_tags, name="Denied")
+
+        if rejected is None:
+            return
+        
+        await ctx.channel.edit(applied_tags=[rejected])
+        await self.bot_db.set_appeal_status(appeal["case_id"], "rejected")
+        await ctx.reply(embed=simple_embed(f"Successfully rejected the appeal."))

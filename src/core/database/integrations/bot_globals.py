@@ -1016,6 +1016,26 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         except Exception as exc:
             return {"success": False, "message": f"An error occurred: {exc}"}
 
+    async def get_case(
+        self,
+        case_id: int,
+    ) -> Optional[Dict[str, Any]]:
+        row = await self.fetch_one(
+            """
+            SELECT
+                *
+            FROM modlogs
+            WHERE id = ?
+            """,
+            (case_id,),
+        )
+
+        if row is None:
+            return None
+
+        return dict(row)
+
+
     async def delete_case(self, case_id: int) -> Dict[str, Any]:
         if not case_id:
             return {
@@ -3047,6 +3067,106 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             return {}
 
         return json.loads(row[0] or "{}") 
+    
+    async def upsert_appeal_forum(
+        self,
+        guild_id: int,
+        config: str,
+    ):
+        await self.execute(
+            """
+            INSERT INTO mod_appeal_forum (guild_id, config)
+            VALUES (?, ?)
+            ON CONFLICT(guild_id)
+            DO UPDATE SET
+                config = excluded.config
+            """,
+            (guild_id, config),
+        )
+
+
+    async def get_appeal_forum_config(
+        self,
+        guild_id: int,
+    ) -> List[Dict[str, str]]:
+        row = await self.fetch_one(
+            "SELECT config FROM mod_appeal_forum WHERE guild_id = ?",
+            (guild_id,),
+        )
+
+        if row is None:
+            return []
+
+        return json.loads(row["config"])
+    
+    async def appeal_exists(
+        self,
+        case_id: int,
+    ) -> bool:
+        row = await self.fetch_one(
+            "SELECT 1 FROM mod_appeal WHERE case_id = ?",
+            (case_id,),
+        )
+
+        return row is not None
+    
+    async def create_appeal(
+        self,
+        case_id: int,
+        thread_id: int
+    ):
+        await self.execute(
+            "INSERT INTO mod_appeal (case_id, status, thread_id) VALUES (?, ?, ?)", (case_id, "pending", thread_id)
+        )
+
+    async def get_appeal_status(
+        self,
+        case_id: int,
+    ) -> Optional[str]:
+        row = await self.fetch_one(
+            "SELECT status FROM mod_appeal WHERE case_id = ?",
+            (case_id,),
+        )
+
+        if row is None:
+            return None
+
+        return row["status"]
+    
+    async def set_appeal_status(
+        self,
+        case_id: int,
+        status: str,
+    ) -> None:
+        await self.execute(
+            """
+            UPDATE mod_appeal
+            SET status = ?
+            WHERE case_id = ?
+            """,
+            (status, case_id),
+        )
+
+    async def get_appeal(
+        self,
+        thread_id: int,
+    ) -> Optional[Dict[str, Any]]:
+        row = await self.fetch_one(
+            """
+            SELECT
+                case_id,
+                status,
+                appeal_thread
+            FROM mod_appeal
+            WHERE appeal_thread = ?
+            """,
+            (thread_id,),
+        )
+
+        if row is None:
+            return None
+
+        return dict(row)
 
     async def leaderboard(self, guild_id: int, leaderboard_type: int) -> Dict[str, Any]:
         types = {

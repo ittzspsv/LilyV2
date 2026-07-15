@@ -1,12 +1,19 @@
+from __future__ import annotations
+
 import discord
 from src.core.utils.embeds.sLilyEmbed import simple_embed
-from typing import Optional, cast
+from typing import Optional, cast, Any, TYPE_CHECKING, List, Dict
 from datetime import datetime, timezone
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from src.core.logging.components.logging_components import ProofsComponentCommandModal
 
 import src.core.configs.sBotDetails as Config
 import io
+from src.core.configs.sBotDetails import img
+import re
+
+if TYPE_CHECKING:
+    from .....lily import Lily
 
 class Leaderboard(discord.ui.LayoutView):
     def __init__(self, bot: discord.Member, leaderboard_type: str, ms_data: list):
@@ -519,6 +526,297 @@ class ProofsView(discord.ui.View):
             content=f"Proofs for case `{case_id}`",
             files=files,
             ephemeral=True
+        )
+
+class AppealForumCustomize(discord.ui.Modal):
+    name = discord.ui.Label(
+            text="Appeal Config",
+            description="Appeal config should be in json",
+            component=discord.ui.TextInput(
+                style = discord.TextStyle.paragraph,
+                required=True,
+                placeholder="Enter a json config",
+                default= """
+                    [
+                        {
+                            "label": "Why should we remove the punishment?",
+                            "description": "Explain why the punishment should be removed and how you will follow the rules in future."
+                        },
+                        {
+                            "label": "Why did this happen?",
+                            "description": "Explain what caused the punishment and what you will do to prevent it from happening again."
+                        }
+                    ]
+                """
+            )
+        )
+    
+    def __init__(self, bot_db: BotGlobalsDatabaseAccess) -> None:
+        super().__init__(title="Appeal Forum")
+
+        self.bot_db = bot_db
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        assert interaction.guild is not None
+        assert isinstance(self.name.component, discord.ui.TextInput)
+        await self.bot_db.upsert_appeal_forum(
+            interaction.guild.id,
+            self.name.component.value
+        )
+
+        await interaction.response.send_message(
+            embed=simple_embed("Successfully Updated Appeal Forum Config!")
+        )
+
+class AppealModal(discord.ui.Modal):
+    def __init__(
+        self,
+        db: BotGlobalsDatabaseAccess,
+        case_id: int,
+        guild_id: int,
+        config: List[Dict[str, Any]],
+        _case
+    ) -> None:
+        super().__init__(
+            title="Moderation Appeal",
+            timeout=None,
+        )
+
+        self.db = db
+        self.case_id = case_id
+        self.guild_id = guild_id
+        self.case = _case
+
+        self.fields: list[tuple[str, discord.ui.TextInput]] = []
+
+        for question in config[:5]:
+            text_input = discord.ui.TextInput(
+                style=discord.TextStyle.paragraph,
+                required=True,
+                placeholder="Enter your answer...",
+                max_length=2000,
+            )
+
+            label = discord.ui.Label(
+                text=question["label"],
+                description=question.get("description"),
+                component=text_input,
+            )
+
+            self.fields.append((question["label"], text_input))
+            self.add_item(label)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        answers = {
+            label: text_input.value
+            for label, text_input in self.fields
+        }
+
+        await interaction.response.defer()
+        guild = interaction.client.get_guild(self.guild_id)
+
+        if guild is None:
+            try:
+                guild = await interaction.client.fetch_guild(self.guild_id)
+            except discord.NotFound:
+                await interaction.followup.send(
+                    embed=simple_embed("Internal Error", 'cross')
+                )
+                return
+            except discord.Forbidden:
+                await interaction.followup.send(
+                    embed=simple_embed("Internal Error", 'cross')
+                )
+                return
+
+        appeal_channel_id: int | None = self.db.get_channel(
+            self.guild_id,
+            "moderation_appeal",
+        )
+
+        if appeal_channel_id is None:
+            await interaction.followup.send(
+                embed=simple_embed("The moderation appeal forum has not been configured.", "cross"),
+                ephemeral=True,
+            )
+            return
+
+        appeal_forum = guild.get_channel(appeal_channel_id)
+
+        if appeal_forum is None:
+            try:
+                appeal_forum = await guild.fetch_channel(appeal_channel_id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                await interaction.followup.send(
+                    embed=simple_embed(
+                        "The configured moderation appeal forum could not be found.",
+                        "cross",
+                    ),
+                    ephemeral=True,
+                )
+                return
+            
+        assert isinstance(appeal_forum, discord.ForumChannel)
+
+        """ Setup an embed """
+        appeal_embed = discord.Embed(
+            title="Case Appeal",
+            description=f"- User: {interaction.user.mention}\n- ID: {interaction.user.id}",
+            color=16777215,
+        )
+
+        for question, answer in answers.items():
+            appeal_embed.add_field(
+                name=question,
+                value=answer[:1024] or "*No response*",
+                inline=False,
+            )
+
+        appeal_embed.set_footer(text=f"Case ID: {self.case_id}")
+        appeal_embed.set_image(url=img["border"])
+
+
+        case_info_embed = discord.Embed(
+            title="Case Information",
+            color=16777215
+        )
+
+        case_info_embed.add_field(
+            name="Case Type",
+            value=self.case['mod_type'],
+            inline=False
+        )
+
+        case_info_embed.add_field(
+            name="Reason",
+            value=self.case["reason"] or "No reason Provided",
+            inline=False
+        )
+
+        case_info_embed.add_field(
+            name="Moderator",
+            value=f"<@{self.case['moderator_id']}>",
+            inline=False
+        )
+
+        case_info_embed.set_image(url=img["border"])
+
+        """ Create a thread inside that forum and post all of these"""
+        avatar = await interaction.user.display_avatar.to_file(
+            filename="avatar.png"
+        )
+
+        tag = discord.utils.get(
+            appeal_forum.available_tags,
+            name="Pending",
+        )
+
+        thread, message = await appeal_forum.create_thread(
+            name=f"Appeal • {interaction.user.display_name}",
+            file=avatar,
+            applied_tags=[tag] if tag else [],
+        )
+
+        await thread.send(
+            embeds=[appeal_embed, case_info_embed]
+        )
+
+        await self.db.create_appeal(
+            self.case_id,
+            thread.id
+        )
+
+        await interaction.followup.send(
+            embed=simple_embed(
+                "Your appeal has been submitted successfully. Our staff will review it as soon as possible. Thank you for your patience."
+            )
+        )
+
+class AppealButton(discord.ui.DynamicItem[discord.ui.Button], template=r'button:case:(?P<id>[0-9]+)'):
+    def __init__(self, case_id: int | None) -> None:
+        super().__init__(
+            discord.ui.Button(
+                label='Appeal',
+                style=discord.ButtonStyle.danger,
+                custom_id=f'button:case:{case_id}',
+            )
+        )
+        self.case_id: int | None = case_id
+
+    @classmethod
+    async def from_custom_id(cls, interaction: discord.Interaction, item: discord.ui.Item[Any], match: re.Match[str], /):
+        case_id = int(match['id'])
+        return cls(case_id)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        db: Optional[BotGlobalsDatabaseAccess] = cast("Lily", interaction.client).db
+        if db is None:
+            return
+        
+        assert self.case_id is not None
+
+        """ Check the validity of the case first """
+        _case = await db.get_case(self.case_id)
+        if _case is None:
+            await interaction.response.send_message(
+                embed=simple_embed(
+                    "Maybe This case has been already resolved???",
+                    "cross",
+                ),
+                ephemeral=True
+            )
+
+            return
+        
+        """ Check the status of the case """
+        appeal_exists = await db.appeal_exists(self.case_id)
+        print(appeal_exists)
+        if appeal_exists:
+            appeal_status = await db.get_appeal_status(self.case_id)
+            print(appeal_status)
+
+            if appeal_status == "pending":
+                await interaction.response.send_message(
+                    embed=simple_embed(
+                        "You have already created an appeal for this case.",
+                        "cross",
+                    ),
+                    ephemeral=True,
+                )
+
+                return
+
+            elif appeal_status == "accepted":
+                await interaction.response.send_message(
+                    embed=simple_embed(
+                        "This appeal has been accepted.",
+                        "cross",
+                    ),
+                    ephemeral=True,
+                )
+            
+                return
+
+            elif appeal_status in ("denied", "rejected"):
+                await interaction.response.send_message(
+                    embed=simple_embed(
+                        "This appeal has been denied.",
+                        "cross",
+                    ),
+                    ephemeral=True,
+                )
+
+                return
+
+        else:
+            _config = await db.get_appeal_forum_config(_case["guild_id"])
+            await interaction.response.send_modal(AppealModal(
+                db,
+                self.case_id,
+                _case["guild_id"],
+                _config,
+                _case
+            )
         )
 
 class CaseProofsView(discord.ui.View):

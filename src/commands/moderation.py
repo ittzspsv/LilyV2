@@ -5,6 +5,7 @@ from typing import Optional
 from src.core.utils.components.sLIlyGlobalComponents import CommandInfo
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.features.moderation.controller.lily_moderation_controller import LilyModerationController
+from src.core.features.moderation.components.sLilyModerationComponents import AppealForumCustomize
 from src.core.features.permissions.lily_permissions import permission
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 
@@ -27,6 +28,11 @@ class LilyModeration(commands.Cog):
     async def case(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await ctx.reply(embed=simple_embed("Lily case system Command Hierarchy!"))
+
+    @commands.hybrid_group()
+    async def appeal(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await ctx.reply(embed=simple_embed("Lily Moderation Appeal system Command Hierarchy!"))
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='ban', description='Ban a user from the server', aliases=['b'])
@@ -326,6 +332,60 @@ class LilyModeration(commands.Cog):
         await ctx.reply(embed=simple_embed(f"Successfully transferred moderation acronym to {target.mention}"))
 
         
+    @appeal.command(name="setup", description="Setup Moderation Appeal for this server")
+    @permission(command_name = "mod_appeal_management")
+    async def setup_appeal(self, ctx: commands.Context):
+        if ctx.guild is None:
+            return await ctx.reply(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
+        
+        if self.controller is not None:
+            await self.controller.setup_mod_appeal(
+                ctx
+            )
+
+    @appeal.command(
+        name="forum",
+        description="Configure the appeal forum that users can fill out."
+    )
+    @permission(command_name="mod_appeal_management")
+    async def configure_appeal_forum(
+        self,
+        ctx: commands.Context,
+    ):
+        if ctx.guild is None:
+            return await ctx.reply(
+                embed=simple_embed(
+                    "This command can only be used inside a guild.",
+                    "cross",
+                )
+            )
+        
+        if ctx.interaction is None:
+            return await ctx.reply(
+                embed=simple_embed(
+                    "Use this command as an Interaction based one.",
+                    "cross",
+                )
+            )
+
+        if self.controller is not None:
+            await ctx.interaction.response.send_modal(
+                AppealForumCustomize(self.bot.db)
+            )
+
+
+    @appeal.command(name="accept", description="Accept an appeal")
+    @permission(command_name = "mod_appeal_handlers")
+    async def accept_appeal(self, ctx: commands.Context):
+        if self.controller is not None:
+            await self.controller.accept_appeal(ctx)
+
+    @appeal.command(name="reject", description="Deny an appeal")
+    @permission(command_name = "mod_appeal_handlers")
+    async def reject_appeal(self, ctx: commands.Context):
+        if self.controller is not None:
+            await self.controller.reject_appeal(ctx)
+
 
 async def setup(bot):
     cog = LilyModeration(bot)

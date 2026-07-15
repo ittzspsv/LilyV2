@@ -8,7 +8,7 @@ from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from src.core.features.agents.controller.lily_agent_controller import LilyAgentController
 from src.core.logging.lily_logging import LilyLoggingController
 from src.core.utils.embeds.sLilyEmbed import simple_embed
-from src.core.logging.components.logging_components import AppealButton
+from src.core.features.moderation.components.sLilyModerationComponents import AppealButton
 from src.core.configs.path import CONFIG_DB
 from src.api.app import LilyAPI
 import uvicorn
