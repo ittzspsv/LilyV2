@@ -653,6 +653,23 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             (guild_id, case_id, proof_reference, author),
         )
 
+    async def get_proof_references(
+        self,
+        guild_id: int,
+        case_id: int,
+    ) -> List[int]:
+        rows = await self.fetch_all(
+            """
+            SELECT proof_reference
+            FROM proofs
+            WHERE guild_id = ? AND case_id = ?
+            ORDER BY id ASC
+            """,
+            (guild_id, case_id),
+        )
+
+        return [row["proof_reference"] for row in rows]
+
     async def retrieve_proofs(self, case_id: int) -> list[int]:
         rows = await self.fetch_all(
             "SELECT proof_reference FROM proofs WHERE case_id = ?", (case_id,)
@@ -3154,11 +3171,9 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         row = await self.fetch_one(
             """
             SELECT
-                case_id,
-                status,
-                appeal_thread
+                *
             FROM mod_appeal
-            WHERE appeal_thread = ?
+            WHERE thread_id = ?
             """,
             (thread_id,),
         )
