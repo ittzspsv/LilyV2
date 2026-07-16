@@ -712,19 +712,52 @@ class AppealModal(discord.ui.Modal):
         )
 
         thread, message = await appeal_forum.create_thread(
-            name=f"Appeal • {interaction.user.display_name}",
+            name=f"{interaction.user.display_name}'s {self.case['mod_type'].title()} Appeal",
             file=avatar,
             applied_tags=[tag] if tag else [],
         )
 
         await thread.send(
-            embeds=[appeal_embed, case_info_embed]
+            embeds=[appeal_embed, case_info_embed],
         )
 
         await self.db.create_appeal(
             self.case_id,
             thread.id
         )
+
+        """ Get Proofs """
+        case_proofs = await self.db.get_proof_references(self.guild_id, self.case_id)
+        attachments: list[discord.File] = []
+
+        if case_proofs:
+            _logging_channel = self.db.get_channel(self.guild_id, "logs_channel")
+
+            if _logging_channel is not None:
+                logging_channel = guild.get_channel(int(_logging_channel))
+
+                if logging_channel is None:
+                    try:
+                        logging_channel = await guild.fetch_channel(int(_logging_channel))
+                    except (discord.NotFound, discord.Forbidden):
+                        logging_channel = None
+
+                if logging_channel is not None:
+                    for message_id in case_proofs:
+                        try:
+                            assert isinstance(logging_channel, discord.TextChannel)
+                            message = await logging_channel.fetch_message(message_id)
+                        except (discord.NotFound, discord.Forbidden):
+                            continue
+
+                        for attachment in message.attachments:
+                            attachments.append(await attachment.to_file())
+
+        if len(case_proofs) > 0:
+            await thread.send(
+                content=f"### Case Proofs",
+                files=attachments
+            )
 
         await interaction.followup.send(
             embed=simple_embed(
