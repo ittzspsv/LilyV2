@@ -1,5 +1,6 @@
 from ..database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from .embeds.logging_embeds import write_log_embed, moderation_embed
+from ..features.moderation.components.sLilyModerationComponents import action_log
 
 from discord.ext import commands
 from datetime import datetime
@@ -7,6 +8,7 @@ from typing import Optional, Union, Sequence, List
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.utils.lily_utility import utcnow
 from .components.logging_components import ProofComponentModal
+from src.core.features.moderation.components.sLilyModerationComponents import AppealButton
 
 import discord
 import io
@@ -41,8 +43,8 @@ class LilyLoggingController:
     async def log_moderation_action(
         self,
         ctx: commands.Context | discord.Interaction,
-        moderator_id: int,
-        target_user_id: int,
+        moderator: discord.Member | discord.User,
+        target_user: discord.Member | discord.User,
         mod_type: str,
         reason: str = "No reason provided",
         proofs: Optional[Sequence[Union[discord.Attachment, str]]] = None
@@ -59,25 +61,41 @@ class LilyLoggingController:
 
             return
         
-        acronyms: dict[str, str] = await self.bot_db.get_moderation_acronyms(moderator_id, ctx.guild.id)
+        acronyms: dict[str, str] = await self.bot_db.get_moderation_acronyms(moderator.id, ctx.guild.id)
         reason = re.sub(
                     r"\b\w+\b",
                     lambda m: acronyms.get(m.group(0).lower(), m.group(0)),
                     reason
                 )
 
-
         case_id = await self.bot_db.log_moderation_action(
             ctx.guild.id,
-            moderator_id,
-            target_user_id,
+            moderator.id,
+            target_user.id,
             mod_type,
             reason
         )
+
+        """ Send Action DM to the User"""
+        a_log = None
+        if mod_type in ('ban', 'mute', 'quarantine', 'warn'):
+            a_log = action_log(
+                mod_type,
+                reason,
+                ctx.guild.name,
+            )
+
+        try:
+            view = discord.ui.View(timeout=None)
+            view.add_item(AppealButton(case_id))
+            if a_log:
+                await target_user.send(embed=a_log, view=view)
+        except Exception:
+            pass
                 
         embeds_to_send = moderation_embed(
-            moderator_id,
-            target_user_id,
+            moderator.id,
+            target_user.id,
             mod_type,
             reason,
             utcnow()
@@ -97,7 +115,7 @@ class LilyLoggingController:
 
         if isinstance(channel, discord.TextChannel):
             await channel.send(
-                content=f"<@{target_user_id}>",
+                content=f"{target_user.mention}",
                 embeds=embeds_to_send
             )
 
@@ -134,7 +152,7 @@ class LilyLoggingController:
                             continue
                 """ Send the proofs to the logging channel """
                 message = await channel.send(
-                    content=f"Proofs <@{target_user_id}>",
+                    content=f"Proofs {target_user.mention}",
                     files=files
                 )
 

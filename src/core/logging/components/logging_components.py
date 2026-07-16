@@ -1,5 +1,15 @@
+from __future__ import annotations
+
 import discord
+import re
+from typing import Any, cast, Optional, TYPE_CHECKING
+
 from src.core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
+
+if TYPE_CHECKING:
+    from ....lily import Lily
+
 
 class ProofComponentModal(discord.ui.Modal):
     case_id = discord.ui.Label(

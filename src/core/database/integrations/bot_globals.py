@@ -653,6 +653,23 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             (guild_id, case_id, proof_reference, author),
         )
 
+    async def get_proof_references(
+        self,
+        guild_id: int,
+        case_id: int,
+    ) -> List[int]:
+        rows = await self.fetch_all(
+            """
+            SELECT proof_reference
+            FROM proofs
+            WHERE guild_id = ? AND case_id = ?
+            ORDER BY id ASC
+            """,
+            (guild_id, case_id),
+        )
+
+        return [row["proof_reference"] for row in rows]
+
     async def retrieve_proofs(self, case_id: int) -> list[int]:
         rows = await self.fetch_all(
             "SELECT proof_reference FROM proofs WHERE case_id = ?", (case_id,)
@@ -741,71 +758,6 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         except Exception as exc:
             print("Error in get_ban_limit_status:", exc)
             return _default
-
-    async def get_mod_queue_entry(self, user_id: int, guild_id: int) -> dict:
-        try:
-            row = await self.fetch_one(
-                """
-                SELECT moderator_id FROM mod_logs_queue
-                WHERE target_user_id = ? AND guild_id = ?
-                """,
-                (user_id, guild_id),
-            )
-            if row:
-                return {
-                    "success": True,
-                    "moderator_id": row["moderator_id"],
-                    "message": "Entry found.",
-                }
-            return {
-                "success": False,
-                "moderator_id": None,
-                "message": "No entry found for this user.",
-            }
-        except Exception as exc:
-            return {
-                "success": False,
-                "moderator_id": None,
-                "message": f"Error: {exc}",
-            }
-
-    async def add_mod_queue(
-        self,
-        guild_id: int,
-        moderator_id: int,
-        target_user_id: int,
-        mod_type: str,
-        reason: str,
-        message_source: str,
-    ) -> Dict[str, Any]:
-        try:
-            await self.ensure_staff(moderator_id, guild_id)
-            await self.ensure_member(target_user_id, guild_id)
-
-            await self.execute(
-                """
-                INSERT INTO mod_logs_queue (
-                    guild_id, moderator_id, target_user_id,
-                    mod_type, reason, timestamp, message_source
-                ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?)
-                """,
-                (
-                    guild_id,
-                    moderator_id,
-                    target_user_id,
-                    mod_type,
-                    reason,
-                    message_source,
-                ),
-            )
-            return {"success": True, "message": "Moderation action added to queue."}
-
-        except Exception as exc:
-            return {
-                "success": False,
-                "message": f"Failed to add moderation action: {exc}",
-                "error": type(exc).__name__,
-            }
 
     async def fetch_mod_stats(
         self,
@@ -1081,6 +1033,26 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         except Exception as exc:
             return {"success": False, "message": f"An error occurred: {exc}"}
 
+    async def get_case(
+        self,
+        case_id: int,
+    ) -> Optional[Dict[str, Any]]:
+        row = await self.fetch_one(
+            """
+            SELECT
+                *
+            FROM modlogs
+            WHERE id = ?
+            """,
+            (case_id,),
+        )
+
+        if row is None:
+            return None
+
+        return dict(row)
+
+
     async def delete_case(self, case_id: int) -> Dict[str, Any]:
         if not case_id:
             return {
@@ -1101,68 +1073,6 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 "message": f"Failed to delete case: {e}",
                 "case_id": case_id,
             }
-
-    async def clear_mod_queue(self, guild_id: int) -> Dict[str, Any]:
-        try:
-            await self.execute(
-                "DELETE FROM mod_logs_queue WHERE guild_id = ?", (guild_id,)
-            )
-            return {"success": True, "message": "Successfully cleared queue"}
-        except Exception:
-            return {"success": False, "message": "Failed to clear the queue"}
-
-    async def clear_mod_queue_particular(
-        self, guild_id: int, user_id: int
-    ) -> Dict[str, Any]:
-        try:
-            await self.execute(
-                """
-                DELETE FROM mod_logs_queue
-                WHERE guild_id = ? AND target_user_id = ?
-                """,
-                (guild_id, user_id),
-            )
-            return {
-                "success": True,
-                "message": "Successfully removed member from the queue",
-            }
-        except Exception:
-            return {
-                "success": False,
-                "message": "Failed to remove the member from queue",
-            }
-
-    async def fetch_mod_queue(self, guild_id: int) -> dict:
-        rows = await self.fetch_all(
-            """
-            SELECT mod_type, moderator_id, target_user_id, reason, message_source
-            FROM mod_logs_queue
-            WHERE guild_id = ?
-            """,
-            (guild_id,),
-        )
-        if not rows:
-            return {
-                "success": False,
-                "message": "No moderation queue found for this guild.",
-                "items": [],
-            }
-
-        items = [
-            {
-                "mod_type": row["mod_type"],
-                "moderator_id": row["moderator_id"],
-                "target_user_id": row["target_user_id"],
-                "reason": row["reason"],
-                "message_source": row["message_source"],
-            }
-            for row in rows
-        ]
-        return {
-            "success": True,
-            "message": "Successfully fetched queue.",
-            "items": items,
-        }
 
     async def get_ticket_by_id(self, ticket_id: int) -> Optional[Tuple]:
         row = await self.fetch_one(
@@ -3174,6 +3084,104 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             return {}
 
         return json.loads(row[0] or "{}") 
+    
+    async def upsert_appeal_forum(
+        self,
+        guild_id: int,
+        config: str,
+    ):
+        await self.execute(
+            """
+            INSERT INTO mod_appeal_forum (guild_id, config)
+            VALUES (?, ?)
+            ON CONFLICT(guild_id)
+            DO UPDATE SET
+                config = excluded.config
+            """,
+            (guild_id, config),
+        )
+
+
+    async def get_appeal_forum_config(
+        self,
+        guild_id: int,
+    ) -> List[Dict[str, str]]:
+        row = await self.fetch_one(
+            "SELECT config FROM mod_appeal_forum WHERE guild_id = ?",
+            (guild_id,),
+        )
+
+        if row is None:
+            return []
+
+        return json.loads(row["config"])
+    
+    async def appeal_exists(
+        self,
+        case_id: int,
+    ) -> bool:
+        row = await self.fetch_one(
+            "SELECT 1 FROM mod_appeal WHERE case_id = ?",
+            (case_id,),
+        )
+
+        return row is not None
+    
+    async def create_appeal(
+        self,
+        case_id: int,
+        thread_id: int
+    ):
+        await self.execute(
+            "INSERT INTO mod_appeal (case_id, status, thread_id) VALUES (?, ?, ?)", (case_id, "pending", thread_id)
+        )
+
+    async def get_appeal_status(
+        self,
+        case_id: int,
+    ) -> Optional[str]:
+        row = await self.fetch_one(
+            "SELECT status FROM mod_appeal WHERE case_id = ?",
+            (case_id,),
+        )
+
+        if row is None:
+            return None
+
+        return row["status"]
+    
+    async def set_appeal_status(
+        self,
+        case_id: int,
+        status: str,
+    ) -> None:
+        await self.execute(
+            """
+            UPDATE mod_appeal
+            SET status = ?
+            WHERE case_id = ?
+            """,
+            (status, case_id),
+        )
+
+    async def get_appeal(
+        self,
+        thread_id: int,
+    ) -> Optional[Dict[str, Any]]:
+        row = await self.fetch_one(
+            """
+            SELECT
+                *
+            FROM mod_appeal
+            WHERE thread_id = ?
+            """,
+            (thread_id,),
+        )
+
+        if row is None:
+            return None
+
+        return dict(row)
 
     async def leaderboard(self, guild_id: int, leaderboard_type: int) -> Dict[str, Any]:
         types = {

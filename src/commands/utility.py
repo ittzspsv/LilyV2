@@ -717,36 +717,64 @@ class LilyUtility(commands.Cog):
 
     @commands.command(name="nick", description="Set a nickname for a member")
     @permission(command_name="nick")
-    async def set_nickname(self, ctx: commands.Context, member: discord.Member=None, *, name: str=None):
-        if member is None and name is None:
-            await ctx.reply(view=CI(ctx, "Nick", ["nick {user} {nickname}", f"nick {ctx.me.mention} Lilyy", f"nick lily Lilly"]))
+    async def set_nickname(
+        self,
+        ctx: commands.Context,
+        member: discord.Member | None = None,
+        *,
+        name: str | None = None
+    ):
+        if member is None:
+            await ctx.reply(view=CI(ctx, "Nick", [
+                "nick {user} {nickname}",
+                f"nick {ctx.me.mention} Lilyy",
+                f"nick lily Lilly"
+            ]))
             return
 
-        try:
-            await member.edit(
-                nick=name,
-                reason=f"Changed by {ctx.author}"
-            )
+        if ctx.guild is None:
+            return
+        
+        assert isinstance(member, discord.Member)
+        assert isinstance(ctx.author, discord.Member)
+        assert isinstance(ctx.me, discord.Member)
 
-            await ctx.reply(
-                embed=simple_embed(
+        if member != ctx.author and ctx.author.top_role <= member.top_role:
+            return await ctx.reply(embed=simple_embed(
+                "You cannot act on this user their role is higher than or equal to yours.", 'cross'
+            ))
+
+        if member.top_role >= ctx.me.top_role:
+            return await ctx.reply(embed=simple_embed(
+                "I can't change that member's nickname their top role is higher or equal to mine.", 'cross'
+            ))
+
+        if name is not None and len(name) > 32:
+            return await ctx.reply(embed=simple_embed(
+                "Nicknames cannot be longer than 32 characters.", 'cross'
+            ))
+
+        try:
+            await member.edit(nick=name, reason=f"Changed by {ctx.author}")
+
+            if name is None:
+                await ctx.reply(embed=simple_embed(
+                    f"Successfully reset {member.mention}'s nickname."
+                ))
+            else:
+                await ctx.reply(embed=simple_embed(
                     f"Successfully changed {member.mention}'s nickname to **{name}**."
-                )
-            )
+                ))
 
         except discord.Forbidden:
-            await ctx.reply(
-                embed=simple_embed(
-                    "I don't have permission to change that member's nickname.", 'cross'
-                )
-            )
+            await ctx.reply(embed=simple_embed(
+                "I don't have permission to change that member's nickname.", 'cross'
+            ))
 
         except discord.HTTPException as e:
-            await ctx.reply(
-                embed=simple_embed(
-                    f"Failed to change nickname: {e}", 'cross'
-                )
-            )
+            await ctx.reply(embed=simple_embed(
+                f"Failed to change nickname: {e}", 'cross'
+            ))
 
     async def quote(self, interaction: discord.Interaction, message: discord.Message) -> None:
         await interaction.response.defer()

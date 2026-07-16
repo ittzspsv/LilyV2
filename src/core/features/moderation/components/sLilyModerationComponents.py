@@ -1,13 +1,19 @@
+from __future__ import annotations
+
 import discord
-from discord.ext import commands
 from src.core.utils.embeds.sLilyEmbed import simple_embed
-from typing import Optional, Callable
+from typing import Optional, cast, Any, TYPE_CHECKING, List, Dict
 from datetime import datetime, timezone
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from src.core.logging.components.logging_components import ProofsComponentCommandModal
 
 import src.core.configs.sBotDetails as Config
 import io
+from src.core.configs.sBotDetails import img
+import re
+
+if TYPE_CHECKING:
+    from .....lily import Lily
 
 class Leaderboard(discord.ui.LayoutView):
     def __init__(self, bot: discord.Member, leaderboard_type: str, ms_data: list):
@@ -122,134 +128,47 @@ class ModerationInsights(discord.ui.LayoutView):
             except discord.HTTPException:
                 pass
 
-def ban_embed(moderator: discord.Member, reason: Optional[str], appealLink: Optional[str], server_name: str) -> discord.Embed:
-    embed = (
-        discord.Embed(
-            color=0xFFFFFF,
-            title=f"{Config.emoji['arrow']} You Have Been Banned!",
-        )
-        .set_image(url=Config.img['border'])
-        .add_field(
-            name=f"{Config.emoji['bookmark']} Reason",
-            value=reason,
-            inline=False,
-        )
-        .add_field(
-            name=f"{Config.emoji['bot']} Server",
-            value=server_name,
-            inline=False,
-        )
-        .add_field(
-            name=f"{Config.emoji['ban_hammer']} Appeal Your Ban Here",
-            value=f"If you think your ban was wrongly done, please make an appeal here: {appealLink}",
-            inline=False,
-        )
-    )
-    return embed
-
-def mute_embed(moderator: discord.Member, reason: Optional[str], guild_name: str) -> discord.Embed:
-    embed = discord.Embed(
-                    color=0xFFFFFF,
-                    title=f"{Config.emoji['arrow']} YOU HAVE BEEN MUTED!",
-                )
-    embed.set_image(url=Config.img['border'])
-    embed.add_field(
-        name=f"{Config.emoji['bookmark']} Reason",
-        value=reason,
-        inline=False,
-    )
-
-    embed.add_field(
-        name=f"{Config.emoji['bot']} Server",
-        value=guild_name,
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{Config.emoji['ban_hammer']} Appeal Your Ban Here",
-        value=f"If you think your mute was wrongly done, please make an appeal here: {Config.appeal_server_link}",
-        inline=False,
-    )
-    return embed
-
-def warn_embed(moderator: discord.Member, reason: Optional[str], guild_name: str) -> discord.Embed:
-    embed = discord.Embed(
-        color=16777215,
-        title=f"{Config.emoji['arrow']} You Have Been Warned!",
-    )
-    embed.set_thumbnail(url=Config.img['warn'])
-    embed.add_field(
-        name=f"{Config.emoji['bookmark']} Reason",
-        value=reason,
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{Config.emoji['bot']} Server",
-        value=guild_name,
-        inline=False,
-    )
-
-    return embed
-
-class ModerationQueueClear(discord.ui.View):
-    def __init__(self, moderation_queue: list[dict], interactor: discord.Member, ban_callback: Callable):
-        super().__init__(timeout=300)
-        self.moderation_queue = moderation_queue
-        self.interactor: discord.Member = interactor
-        self.ban_callback = ban_callback
-        self.message: Optional[discord.Message] = None
-
-    @discord.ui.button(
-    label="Clear Moderation Queue",
-    style=discord.ButtonStyle.danger
-)
-    async def clear_queue(self, interaction: discord.Interaction, button: discord.ui.Button):
-
-        if interaction.user.id != self.interactor.id:
-            return await interaction.response.send_message(
-                embed=simple_embed("You cannot interact with this!", 'cross'),
-                ephemeral=True
-            )
-
-        await interaction.response.defer(thinking=True)
-
-        summary = await self.ban_callback(interaction, self.moderation_queue)
-
-        for child in self.children:
-            child.disabled = True
-
-        if self.message:
-            await self.message.delete()
-
-        await interaction.followup.send(
-            embed=simple_embed(f"Queue Processed:\n{summary}"),
-            view=self,
-        )
-
-def moderation_queue_embed(ctx: commands.Context, moderation_queue: list[dict]) -> discord.Embed:
-    embed = discord.Embed(
-        color=16777215,
-        title="Moderation Queue",
-        description="- If a staff member can’t perform an action, it will be added to this queue. Another staff member who has permission can then review and complete it.\n### Queue List",
-    )
-    embed.set_thumbnail(url=ctx.me.display_avatar.url)
+from typing import Optional
+import discord
 
 
-    items_example = {
-        "mod_type": "ban",
-        "moderator_id": 12232323,
-        "target_user_id": 987986978,
-        "reason": "Hello what the hell!",
-        "message_source": "url"
+def action_log(
+    action: str,
+    reason: Optional[str],
+    guild_name: str,
+) -> discord.Embed:
+    action = action.lower()
+
+    titles = {
+        "ban": f"{Config.emoji['arrow']} You Have Been Banned!",
+        "mute": f"{Config.emoji['arrow']} You Have Been Muted!",
+        "quarantine": f"{Config.emoji['arrow']} You Have Been Quarantined!",
+        "warn": f"{Config.emoji['arrow']} You Have Been Warned!",
     }
 
+    if action not in titles:
+        raise ValueError(f"Unknown action '{action}'. Must be one of {list(titles)}.")
 
-    for i, items in enumerate(moderation_queue):
-        embed.add_field(
-                name=f"📌 Queue #{i} • {items.get("mod_type", "Not defined")}",
-                value=f"> - User: <@{items.get("target_user_id")}>\n> - Moderator: <@{items.get("moderator_id")}>\n> - Reason: {items.get("reason")}\n> - [Message]({items.get("message_source")})",
-                inline=True,
-            )
-    
+    embed = discord.Embed(
+        color=0xFFFFFF,
+        title=titles[action],
+    )
+    if action == "warn":
+        embed.set_thumbnail(url=Config.img['warn'])
+    else:
+        embed.set_image(url=Config.img.get(action, Config.img['border']))
+
+    embed.add_field(
+        name=f"{Config.emoji['bookmark']} Reason",
+        value=reason,
+        inline=False,
+    )
+    embed.add_field(
+        name=f"{Config.emoji['bot']} Server",
+        value=guild_name,
+        inline=False,
+    )
+
     return embed
 
 def build_ms_embed(
@@ -373,7 +292,7 @@ def build_mod_logs_embed(
 
     for index, log in enumerate(display_logs, start=page_start + 1):
 
-        ts = log.get("timestamp")
+        ts: str = cast(str, log.get("timestamp"))
 
         try:
             dt = datetime.fromisoformat(ts)
@@ -439,7 +358,7 @@ def build_mod_logs_embed_absolute(
 
     for index, log in enumerate(display_logs, start=page_start + 1):
 
-        ts = log.get("timestamp")
+        ts = cast(str, log.get("timestamp"))
 
         try:
             dt = datetime.fromisoformat(ts)
@@ -607,6 +526,330 @@ class ProofsView(discord.ui.View):
             content=f"Proofs for case `{case_id}`",
             files=files,
             ephemeral=True
+        )
+
+class AppealForumCustomize(discord.ui.Modal):
+    name = discord.ui.Label(
+            text="Appeal Config",
+            description="Appeal config should be in json",
+            component=discord.ui.TextInput(
+                style = discord.TextStyle.paragraph,
+                required=True,
+                placeholder="Enter a json config",
+                default= """
+                    [
+                        {
+                            "label": "Why should we remove the punishment?",
+                            "description": "Explain why the punishment should be removed and how you will follow the rules in future."
+                        },
+                        {
+                            "label": "Why did this happen?",
+                            "description": "Explain what caused the punishment and what you will do to prevent it from happening again."
+                        }
+                    ]
+                """
+            )
+        )
+    
+    def __init__(self, bot_db: BotGlobalsDatabaseAccess) -> None:
+        super().__init__(title="Appeal Forum")
+
+        self.bot_db = bot_db
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        assert interaction.guild is not None
+        assert isinstance(self.name.component, discord.ui.TextInput)
+        await self.bot_db.upsert_appeal_forum(
+            interaction.guild.id,
+            self.name.component.value
+        )
+
+        await interaction.response.send_message(
+            embed=simple_embed("Successfully Updated Appeal Forum Config!")
+        )
+
+class AppealModal(discord.ui.Modal):
+    def __init__(
+        self,
+        db: BotGlobalsDatabaseAccess,
+        case_id: int,
+        guild_id: int,
+        config: List[Dict[str, Any]],
+        _case
+    ) -> None:
+        super().__init__(
+            title="Moderation Appeal",
+            timeout=None,
+        )
+
+        self.db = db
+        self.case_id = case_id
+        self.guild_id = guild_id
+        self.case = _case
+
+        self.fields: list[tuple[str, discord.ui.TextInput]] = []
+
+        for question in config[:5]:
+            text_input = discord.ui.TextInput(
+                style=discord.TextStyle.paragraph,
+                required=True,
+                placeholder="Enter your answer...",
+                max_length=2000,
+            )
+
+            label = discord.ui.Label(
+                text=question["label"],
+                description=question.get("description"),
+                component=text_input,
+            )
+
+            self.fields.append((question["label"], text_input))
+            self.add_item(label)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        answers = {
+            label: text_input.value
+            for label, text_input in self.fields
+        }
+
+        await interaction.response.defer()
+        guild = interaction.client.get_guild(self.guild_id)
+
+        if guild is None:
+            try:
+                guild = await interaction.client.fetch_guild(self.guild_id)
+            except discord.NotFound:
+                await interaction.followup.send(
+                    embed=simple_embed("Internal Error", 'cross')
+                )
+                return
+            except discord.Forbidden:
+                await interaction.followup.send(
+                    embed=simple_embed("Internal Error", 'cross')
+                )
+                return
+
+        appeal_channel_id: int | None = self.db.get_channel(
+            self.guild_id,
+            "moderation_appeal",
+        )
+
+        if appeal_channel_id is None:
+            await interaction.followup.send(
+                embed=simple_embed("The moderation appeal forum has not been configured.", "cross"),
+                ephemeral=True,
+            )
+            return
+
+        appeal_forum = guild.get_channel(appeal_channel_id)
+
+        if appeal_forum is None:
+            try:
+                appeal_forum = await guild.fetch_channel(appeal_channel_id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                await interaction.followup.send(
+                    embed=simple_embed(
+                        "The configured moderation appeal forum could not be found.",
+                        "cross",
+                    ),
+                    ephemeral=True,
+                )
+                return
+            
+        assert isinstance(appeal_forum, discord.ForumChannel)
+
+        """ Setup an embed """
+        appeal_embed = discord.Embed(
+            title="Case Appeal",
+            description=f"- User: {interaction.user.mention}\n- ID: {interaction.user.id}",
+            color=16777215,
+        )
+
+        for question, answer in answers.items():
+            appeal_embed.add_field(
+                name=question,
+                value=answer[:1024] or "*No response*",
+                inline=False,
+            )
+
+        appeal_embed.set_footer(text=f"Case ID: {self.case_id}")
+        appeal_embed.set_image(url=img["border"])
+
+
+        case_info_embed = discord.Embed(
+            title="Case Information",
+            color=16777215
+        )
+
+        case_info_embed.add_field(
+            name="Case Type",
+            value=self.case['mod_type'],
+            inline=False
+        )
+
+        case_info_embed.add_field(
+            name="Reason",
+            value=self.case["reason"] or "No reason Provided",
+            inline=False
+        )
+
+        case_info_embed.add_field(
+            name="Moderator",
+            value=f"<@{self.case['moderator_id']}>",
+            inline=False
+        )
+
+        case_info_embed.set_image(url=img["border"])
+
+        """ Create a thread inside that forum and post all of these"""
+        avatar = await interaction.user.display_avatar.to_file(
+            filename="avatar.png"
+        )
+
+        tag = discord.utils.get(
+            appeal_forum.available_tags,
+            name="Pending",
+        )
+
+        thread, message = await appeal_forum.create_thread(
+            name=f"{interaction.user.display_name}'s {self.case['mod_type'].title()} Appeal",
+            file=avatar,
+            applied_tags=[tag] if tag else [],
+        )
+
+        await thread.send(
+            embeds=[appeal_embed, case_info_embed],
+        )
+
+        await self.db.create_appeal(
+            self.case_id,
+            thread.id
+        )
+
+        """ Get Proofs """
+        case_proofs = await self.db.get_proof_references(self.guild_id, self.case_id)
+        attachments: list[discord.File] = []
+
+        if case_proofs:
+            _logging_channel = self.db.get_channel(self.guild_id, "logs_channel")
+
+            if _logging_channel is not None:
+                logging_channel = guild.get_channel(int(_logging_channel))
+
+                if logging_channel is None:
+                    try:
+                        logging_channel = await guild.fetch_channel(int(_logging_channel))
+                    except (discord.NotFound, discord.Forbidden):
+                        logging_channel = None
+
+                if logging_channel is not None:
+                    for message_id in case_proofs:
+                        try:
+                            assert isinstance(logging_channel, discord.TextChannel)
+                            message = await logging_channel.fetch_message(message_id)
+                        except (discord.NotFound, discord.Forbidden):
+                            continue
+
+                        for attachment in message.attachments:
+                            attachments.append(await attachment.to_file())
+
+        if len(case_proofs) > 0:
+            await thread.send(
+                content=f"### Case Proofs",
+                files=attachments
+            )
+
+        await interaction.followup.send(
+            embed=simple_embed(
+                "Your appeal has been submitted successfully. Our staff will review it as soon as possible. Thank you for your patience."
+            )
+        )
+
+class AppealButton(discord.ui.DynamicItem[discord.ui.Button], template=r'button:case:(?P<id>[0-9]+)'):
+    def __init__(self, case_id: int | None) -> None:
+        super().__init__(
+            discord.ui.Button(
+                label='Appeal',
+                style=discord.ButtonStyle.danger,
+                custom_id=f'button:case:{case_id}',
+            )
+        )
+        self.case_id: int | None = case_id
+
+    @classmethod
+    async def from_custom_id(cls, interaction: discord.Interaction, item: discord.ui.Item[Any], match: re.Match[str], /):
+        case_id = int(match['id'])
+        return cls(case_id)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        db: Optional[BotGlobalsDatabaseAccess] = cast("Lily", interaction.client).db
+        if db is None:
+            return
+        
+        assert self.case_id is not None
+
+        """ Check the validity of the case first """
+        _case = await db.get_case(self.case_id)
+        if _case is None:
+            await interaction.response.send_message(
+                embed=simple_embed(
+                    "Maybe This case has been already resolved???",
+                    "cross",
+                ),
+                ephemeral=True
+            )
+
+            return
+        
+        """ Check the status of the case """
+        appeal_exists = await db.appeal_exists(self.case_id)
+        print(appeal_exists)
+        if appeal_exists:
+            appeal_status = await db.get_appeal_status(self.case_id)
+            print(appeal_status)
+
+            if appeal_status == "pending":
+                await interaction.response.send_message(
+                    embed=simple_embed(
+                        "You have already created an appeal for this case.",
+                        "cross",
+                    ),
+                    ephemeral=True,
+                )
+
+                return
+
+            elif appeal_status == "accepted":
+                await interaction.response.send_message(
+                    embed=simple_embed(
+                        "This appeal has been accepted.",
+                        "cross",
+                    ),
+                    ephemeral=True,
+                )
+            
+                return
+
+            elif appeal_status in ("denied", "rejected"):
+                await interaction.response.send_message(
+                    embed=simple_embed(
+                        "This appeal has been denied.",
+                        "cross",
+                    ),
+                    ephemeral=True,
+                )
+
+                return
+
+        else:
+            _config = await db.get_appeal_forum_config(_case["guild_id"])
+            await interaction.response.send_modal(AppealModal(
+                db,
+                self.case_id,
+                _case["guild_id"],
+                _config,
+                _case
+            )
         )
 
 class CaseProofsView(discord.ui.View):
