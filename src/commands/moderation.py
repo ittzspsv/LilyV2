@@ -382,9 +382,9 @@ class LilyModeration(commands.Cog):
 
     @appeal.command(name="reject", description="Deny an appeal")
     @permission(command_name = "mod_appeal_handlers")
-    async def reject_appeal(self, ctx: commands.Context):
+    async def reject_appeal(self, ctx: commands.Context, reason: str):
         if self.controller is not None:
-            await self.controller.reject_appeal(ctx)
+            await self.controller.reject_appeal(ctx, reason)
 
 
 async def setup(bot):
