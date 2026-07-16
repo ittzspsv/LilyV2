@@ -652,31 +652,33 @@ class LilyModerationController:
             await ctx.reply(embed=simple_embed("Unable to find the case", 'cross'))
             return
 
-        member = await ctx.guild.fetch_member(case["target_user_id"])
-        if case["mod_type"] == "mute":
-            await member.edit(timed_out_until=None, reason=f"Appeal accepted by {ctx.author.mention}")
-            await self.bot_db.log_moderation_action(
-                ctx.guild.id,
-                ctx.author.id,
-                member.id,
-                "unmute",
-                "Appealed"
-            )
-
-        elif case["mod_type"] == "quarantine":
-            role = discord.utils.get(ctx.guild.roles, name="Quarantine")
-            if role:
-                await member.remove_roles(role, reason=f"Appeal accepted by {ctx.author.mention}")
+        try:
+            member = await ctx.guild.fetch_member(case["target_user_id"])
+            if case["mod_type"] == "mute":
+                await member.edit(timed_out_until=None, reason=f"Appeal accepted by {ctx.author.mention}")
                 await self.bot_db.log_moderation_action(
                     ctx.guild.id,
                     ctx.author.id,
                     member.id,
-                    "quarantine_release",
+                    "unmute",
                     "Appealed"
                 )
 
-        await member.send(embed=simple_embed("Your appeal has been accepted and the action has been lifted"))
+            elif case["mod_type"] == "quarantine":
+                role = discord.utils.get(ctx.guild.roles, name="Quarantine")
+                if role:
+                    await member.remove_roles(role, reason=f"Appeal accepted by {ctx.author.mention}")
+                    await self.bot_db.log_moderation_action(
+                        ctx.guild.id,
+                        ctx.author.id,
+                        member.id,
+                        "quarantine_release",
+                        "Appealed"
+                    )
 
+            await member.send(embed=simple_embed("Your appeal has been accepted and the action has been lifted"))
+        except:
+            pass
 
         assert isinstance(ctx.channel, discord.Thread)
         assert isinstance(ctx.channel.parent, discord.ForumChannel)
@@ -727,15 +729,18 @@ class LilyModerationController:
         if case is None:
             await ctx.reply(embed=simple_embed("Unable to find the case", 'cross'))
             return
-
-        member = await ctx.guild.fetch_member(case["target_user_id"])
-        await member.send(embed=simple_embed(f"Your appeal has been denied. Sorry\n- Reason: {reason or "No reason Provided"}", 'cross'))
+        try:
+            member = await ctx.guild.fetch_member(case["target_user_id"])
+            await member.send(embed=simple_embed(f"Your appeal has been denied. Sorry\n- Reason: {reason or "No reason Provided"}", 'cross'))
+        except:
+            pass
 
         assert isinstance(ctx.channel, discord.Thread)
         assert isinstance(ctx.channel.parent, discord.ForumChannel)
         rejected = discord.utils.get(ctx.channel.parent.available_tags, name="Denied")
 
         if rejected is None:
+            print("Tag is not found")
             return
         
         await ctx.channel.edit(applied_tags=[rejected])
