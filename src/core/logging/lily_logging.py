@@ -77,16 +77,19 @@ class LilyLoggingController:
         )
 
         """ Send Action DM to the User"""
-        a_log = action_log(
-            mod_type,
-            reason,
-            ctx.guild.name,
-        )
+        a_log = None
+        if mod_type in ('ban', 'mute', 'quarantine', 'warn'):
+            a_log = action_log(
+                mod_type,
+                reason,
+                ctx.guild.name,
+            )
 
         try:
             view = discord.ui.View(timeout=None)
             view.add_item(AppealButton(case_id))
-            await target_user.send(embed=a_log, view=view)
+            if a_log:
+                await target_user.send(embed=a_log, view=view)
         except Exception:
             pass
                 
