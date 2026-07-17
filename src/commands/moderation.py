@@ -19,6 +19,52 @@ class LilyModeration(commands.Cog):
     async def on_load(self):
         self.controller = LilyModerationController(self.bot.db, self.bot.logging_controller)
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+
+        if message.guild is not None:
+            if not isinstance(message.channel, discord.Thread):
+                return
+            
+            ...
+            
+        else:
+            bot_db: BotGlobalsDatabaseAccess = self.bot.db
+
+            appeal = await bot_db.get_current_active_appeal(message.author.id)
+            if appeal is None:
+                return
+
+            webhook_url = await bot_db.get_webhook(
+                appeal["guild_id"],
+                "moderation_appeal_dm",
+            )
+            if webhook_url is None:
+                return
+
+            webhook = discord.Webhook.from_url(
+                webhook_url,
+                client=self.bot,
+            )
+
+            kwargs = {
+                "content": message.content,
+                "thread": discord.Object(id=appeal["thread_id"]),
+                "username": message.author.name,
+                "avatar_url": message.author.display_avatar.url,
+                "allowed_mentions": discord.AllowedMentions.none(),
+            }
+
+            if message.attachments:
+                kwargs["files"] = [
+                    await attachment.to_file()
+                    for attachment in message.attachments
+                ]
+
+            await webhook.send(**kwargs)
+
     @commands.hybrid_group()
     async def mod(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
