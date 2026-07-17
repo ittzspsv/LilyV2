@@ -715,10 +715,12 @@ class AppealModal(discord.ui.Modal):
             name=f"{interaction.user.display_name}'s {self.case['mod_type'].title()} Appeal",
             file=avatar,
             applied_tags=[tag] if tag else [],
+            embeds=[appeal_embed, case_info_embed]
         )
 
+        assert interaction.client.user is not None
         await thread.send(
-            embeds=[appeal_embed, case_info_embed],
+            content=f"- To reply to the appealer, mention me (<@{interaction.client.user.id}>) and type your message.",
         )
 
         await self.db.create_appeal(
@@ -762,7 +764,13 @@ class AppealModal(discord.ui.Modal):
         await interaction.followup.send(
             embed=simple_embed(
                 "Your appeal has been submitted successfully. Our staff will review it as soon as possible. Thank you for your patience."
-            )
+            ),
+            ephemeral=True
+        )
+
+        await interaction.followup.send(
+            content="### You may continue sending messages in this DM if you'd like to provide any additional information.",
+            ephemeral=True
         )
 
 class AppealButton(discord.ui.DynamicItem[discord.ui.Button], template=r'button:case:(?P<id>[0-9]+)'):
