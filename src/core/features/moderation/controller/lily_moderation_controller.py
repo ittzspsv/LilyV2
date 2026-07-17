@@ -599,6 +599,16 @@ class LilyModerationController:
                 """
             )
 
+            webhook = await forum.create_webhook(
+                name="Lily Webhook"
+            )
+
+            await self.bot_db.set_webhook(
+                ctx.guild.id,
+                "moderation_appeal_dm",
+                webhook.url
+            )
+
             await ctx.reply(
                 embed=simple_embed(
                     f"Successfully created Appeal forums {forum.mention}.  Appeals will be posted on that forums\nPlease do not delete the `Pending` Tag from the forum"
