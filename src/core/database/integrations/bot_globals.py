@@ -1,7 +1,7 @@
 from ..sLilyDatabaseAccess import LilyDatabaseAccess
 from .applications import ApplicationManagement
 
-from typing import List, Optional, Final, Set, Dict, Any, Tuple
+from typing import List, Optional, Final, Set, Dict, Any, Tuple, override
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone, UTC
 from collections import defaultdict
@@ -3196,6 +3196,26 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             return None
 
         return dict(row)
+    
+    async def get_appeal_complete(
+        self,
+        thread_id: int
+    ) -> Optional[Dict[str, Any]]:
+        row = await self.fetch_one(
+            """
+            SELECT ma.*,
+            m.*
+            FROM mod_appeal AS ma
+            JOIN modlogs AS m
+                ON ma.case_id = m.id
+            WHERE
+                ma.thread_id = ?
+                AND ma.status = 'pending'
+            """,
+            (thread_id,),
+        )
+
+        return dict(row) if row else None
 
     async def get_current_active_appeal(self, member_id: int):
         row = await self.fetch_one(
