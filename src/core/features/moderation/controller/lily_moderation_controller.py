@@ -599,6 +599,16 @@ class LilyModerationController:
                 """
             )
 
+            webhook = await forum.create_webhook(
+                name="Lily Webhook"
+            )
+
+            await self.bot_db.set_webhook(
+                ctx.guild.id,
+                "moderation_appeal_dm",
+                webhook.url
+            )
+
             await ctx.reply(
                 embed=simple_embed(
                     f"Successfully created Appeal forums {forum.mention}.  Appeals will be posted on that forums\nPlease do not delete the `Pending` Tag from the forum"
@@ -687,10 +697,11 @@ class LilyModerationController:
         if accepted is None:
             return
         
-        await ctx.channel.edit(applied_tags=[accepted])
-
         await self.bot_db.set_appeal_status(appeal["case_id"], "accepted")
-        await ctx.reply(embed=simple_embed(f"Successfully Accepted the appeal and their punishment has been lifted."))
+        await ctx.reply(embed=simple_embed(f"Successfully Accepted the appeal and their punishment has been lifted.\n This thread will be archived."))
+        await asyncio.sleep(2)
+        await ctx.channel.edit(applied_tags=[accepted], locked=True, archived=True)
+
 
     async def reject_appeal(self, ctx: commands.Context, reason: str | None = None):
         if ctx.guild is None:
@@ -743,6 +754,7 @@ class LilyModerationController:
             print("Tag is not found")
             return
         
-        await ctx.channel.edit(applied_tags=[rejected])
         await self.bot_db.set_appeal_status(appeal["case_id"], "rejected")
-        await ctx.reply(embed=simple_embed(f"Successfully rejected the appeal."))
+        await ctx.reply(embed=simple_embed(f"Successfully rejected the appeal, This thread will be archived!"))
+        await asyncio.sleep(2)
+        await ctx.channel.edit(applied_tags=[rejected], locked=True, archived=True)

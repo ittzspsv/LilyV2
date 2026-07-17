@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
-from typing import Optional
+from typing import Optional, Any, Dict
+import re
 
 from src.core.utils.components.sLIlyGlobalComponents import CommandInfo
 from src.core.utils.embeds.sLilyEmbed import simple_embed
@@ -15,9 +16,105 @@ class LilyModeration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.controller: Optional[LilyModerationController] = None
+        self.cached_members: Dict[int, discord.Member] = {}
 
     async def on_load(self):
         self.controller = LilyModerationController(self.bot.db, self.bot.logging_controller)
+
+    def strip_mention(self, content: str, bot_user_id: int) -> str:
+        return re.sub(rf"<@!?{bot_user_id}>", "", content).strip()
+
+    async def _reply(self, message: discord.Message, bot: Any) -> bool:
+        ref = message.reference
+        if ref is None:
+            return False
+
+        resolved = ref.resolved
+        if isinstance(resolved, discord.Message):
+            return resolved.author.id == bot.user.id
+
+        return False
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+        
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+
+        if message.guild is not None:
+            if not isinstance(message.channel, discord.Thread):
+                return
+            
+            is_mention = self.bot.user in message.mentions
+            is_reply_to_bot = await self._reply(message, self.bot)
+
+            if not (is_mention or is_reply_to_bot):
+                return
+
+            """ Send the message to the users DM """
+            appeal = await bot_db.get_appeal_complete(message.channel.id)
+            if appeal is None:
+                return
+            
+            member: discord.Member | None = self.cached_members.get(appeal["target_user_id"])
+            if member is None:
+                try:
+                    member = await message.guild.fetch_member(appeal["target_user_id"])
+                    self.cached_members[member.id] = member
+                except discord.NotFound:
+                    member = None 
+                except discord.Forbidden:
+                    member = None 
+                except discord.HTTPException:
+                    member = None
+
+            if member is None:
+                await message.add_reaction("❌")
+                return
+            
+            await member.send(
+                embed = discord.Embed(
+                    title=f"Message From {message.guild.name}'s Staff Team",
+                    color=16777215,
+                    description=f'### > {self.strip_mention(message.content, message.guild.me.id)}',
+                )
+            )
+
+            await message.add_reaction("✅")
+            
+        else:
+            appeal = await bot_db.get_current_active_appeal(message.author.id)
+            if appeal is None:
+                return
+
+            webhook_url = await bot_db.get_webhook(
+                appeal["guild_id"],
+                "moderation_appeal_dm",
+            )
+            if webhook_url is None:
+                return
+
+            webhook = discord.Webhook.from_url(
+                webhook_url,
+                client=self.bot,
+            )
+
+            kwargs = {
+                "content": message.content,
+                "thread": discord.Object(id=appeal["thread_id"]),
+                "username": message.author.name,
+                "avatar_url": message.author.display_avatar.url,
+                "allowed_mentions": discord.AllowedMentions.none(),
+            }
+
+            if message.attachments:
+                kwargs["files"] = [
+                    await attachment.to_file()
+                    for attachment in message.attachments
+                ]
+
+            await webhook.send(**kwargs)
 
     @commands.hybrid_group()
     async def mod(self, ctx: commands.Context):
