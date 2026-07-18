@@ -478,44 +478,65 @@ class LilyUtility(commands.Cog):
             await db.set_webhook(interaction.guild.id, type.value, webhook_url)
             await interaction.response.send_message(embed=simple_embed(f"Successfully assigned a webhook to listen `{type.value}`"))
 
+    @app_commands.guild_only()
     @permission(command_name="set_permission")
-    @set.command(name="permission", description="Allocates permission to certain role for a command")
-    async def set_permission(self, interaction: discord.Interaction, command: str, role: discord.Role):
-        try:
-            cmd_enum = CommandEnum(command)
-        except ValueError:
-            await interaction.response.send_message(embed=simple_embed(f"`{command}` is not a valid command", 'cross'))
-            return
-
-        if interaction.guild is None:
-            await interaction.response.send_message(embed=simple_embed("This command can only be used inside a guild", 'cross'))
-            return
+    @set.command(
+        name="permission",
+        description="Allocates permission to a role for a command"
+    )
+    async def set_permission(
+        self,
+        interaction: discord.Interaction,
+        command: CommandEnum,
+        role: discord.Role,
+    ):
+        assert interaction.guild is not None
 
         db: BotGlobalsDatabaseAccess = self.bot.db
-        await db.set_permission(interaction.guild.id, role.id, cmd_enum.value)
+        await db.set_permission(
+            interaction.guild.id,
+            role.id,
+            command.value,
+        )
 
-        formatted = cmd_enum.value.replace("_", " ").title()
-        await interaction.response.send_message(embed=simple_embed(f"Successfully assigned `{formatted}` permission to {role.mention}"))
+        formatted = command.value.replace("_", " ").title()
 
+        await interaction.response.send_message(
+            embed=simple_embed(
+                f"Successfully assigned `{formatted}` permission to {role.mention}"
+            )
+        )
+
+    @app_commands.guild_only()
     @permission(command_name="remove_permission")
-    @remove.command(name="permission", description="Removes a command permission from certain role for a command")
-    async def remove_permission(self, interaction: discord.Interaction, command: str, role: discord.Role):
-        try:
-            cmd_enum = CommandEnum(command)
-        except ValueError:
-            await interaction.response.send_message(embed=simple_embed(f"`{command}` is not a valid command", 'cross'))
-            return
-        
-        if interaction.guild is None:
-            await interaction.response.send_message(embed=simple_embed("This command can only be used inside a guild", 'cross'))
-            return
-        
+    @remove.command(
+        name="permission",
+        description="Removes a command permission from a role"
+    )
+    async def remove_permission(
+        self,
+        interaction: discord.Interaction,
+        command: CommandEnum,
+        role: discord.Role,
+    ):
+        assert interaction.guild is not None
+
         db: BotGlobalsDatabaseAccess = self.bot.db
-        await db.remove_permission(interaction.guild.id, role.id, cmd_enum.value)
 
-        formatted = cmd_enum.value.replace("_", " ").title()
-        await interaction.response.send_message(embed=simple_embed(f"Successfully removed `{formatted}` permission from {role.mention}"))
+        await db.remove_permission(
+            interaction.guild.id,
+            role.id,
+            command.value,
+        )
 
+        formatted = command.value.replace("_", " ").title()
+
+        await interaction.response.send_message(
+            embed=simple_embed(
+                f"Successfully removed `{formatted}` permission from {role.mention}"
+            )
+        )
+        
     @permission(command_name="permissions")
     @app_commands.command(name="permissions", description="List out permissions that a role has")
     async def permissions(self, interaction: discord.Interaction, role: discord.Role):
