@@ -33,7 +33,7 @@ class CommandInfo(discord.ui.LayoutView):
         self.add_item(self.container)
 
 class Avatar(discord.ui.LayoutView):
-    def __init__(self, member: discord.Member) -> None:
+    def __init__(self, member: discord.Member | discord.User) -> None:
         super().__init__(timeout=10)
 
         self.member = member
