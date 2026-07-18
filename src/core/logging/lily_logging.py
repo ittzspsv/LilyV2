@@ -17,26 +17,37 @@ class LilyLoggingController:
     def __init__(self, bot_db: BotGlobalsDatabaseAccess) -> None:
         self.bot_db = bot_db
 
-    async def write_log(self, ctx: commands.Context, user_id: int, log_txt: str) -> None:
-        if ctx.guild is None:
+    async def write_log(
+        self,
+        ctx: commands.Context | discord.Interaction,
+        user_id: int,
+        log_txt: str,
+    ) -> None:
+        guild = ctx.guild
+        if guild is None:
             return
 
-        await self.bot_db.write_log(ctx.guild.id, user_id, log_txt)
+        await self.bot_db.write_log(guild.id, user_id, log_txt)
+
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        
-        logs_channel: int | None = self.bot_db.get_channel(ctx.guild.id, "logs_channel")
-        if logs_channel:
-            channel = ctx.bot.get_channel(logs_channel)
-            if not channel:
-                try:
-                    channel = await ctx.guild.fetch_channel(logs_channel)
-                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                    return
+        logs_channel = self.bot_db.get_channel(guild.id, "logs_channel")
+        if logs_channel is None:
+            return
 
+        if isinstance(ctx, commands.Context):
+            channel = ctx.bot.get_channel(logs_channel)
+        elif isinstance(ctx, discord.Interaction):
+            channel = ctx.client.get_channel(logs_channel)
+        if channel is None:
+            try:
+                channel = await guild.fetch_channel(logs_channel)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                return
+
+        if isinstance(channel, discord.TextChannel):
             embed = write_log_embed(timestamp, user_id, log_txt)
-            if isinstance(channel, discord.TextChannel):
-                await channel.send(embed=embed)
+            await channel.send(embed=embed)
 
     async def log_moderation_action(
         self,
