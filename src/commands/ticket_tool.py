@@ -4,7 +4,7 @@ from src.core.features.permissions.lily_permissions import permission
 from src.core.features.ticketing.controller.lily_ticketing_controller import LilyTicketingController
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 import json
-import discord
+import discord, discord.app_commands as app_commands
 
 class LilyTicketTool(commands.Cog):
     def __init__(self, bot):
@@ -23,7 +23,7 @@ class LilyTicketTool(commands.Cog):
               self.bot.logging_controller
          )
 
-    ticket = discord.app_commands.Group(
+    ticket = app_commands.Group(
         name="ticket",
         description="Lily Ticketing System Command Hierarchy!"
     )
@@ -46,30 +46,34 @@ class LilyTicketTool(commands.Cog):
                     await self.controller.spawn_ticket(ctx, json_data)
                     await ctx.reply("Ticket has been spawned successfully!")
     """       
-    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
-    @ticket.command(name='close', description='close a ticket thread')
+    @app_commands.guild_only()
+    @ticket.command(name="close", description="Close a ticket thread")
     @permission(command_name="ticket_close")
+    @app_commands.checks.cooldown(1, 20)
     async def CloseTicket(self, interaction: discord.Interaction, * ,reason: str="No reason provided"):
          if self.controller is not None:
             await self.controller.close_ticket_thread(interaction, reason)
          
-    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @app_commands.guild_only()
     @ticket.command(name='rename', description='renames a ticket channel')
     @permission(command_name="ticket_rename")
+    @app_commands.checks.cooldown(1, 10)
     async def rename_ticket(self, interaction: discord.Interaction, * ,name: str):
          if self.controller is not None:
             await self.controller.rename_ticket(interaction, name)
 
-    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @app_commands.guild_only()
     @ticket.command(name='add', description='adds a member to the ticket')
     @permission(command_name="ticket_add")
+    @app_commands.checks.cooldown(1, 5)
     async def ticket_add(self, interaction: discord.Interaction, user: discord.Member):
          if self.controller is not None:
             await self.controller.ticket_add_user(interaction, user)
 
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @permission(command_name="ticket_stats")
+    @app_commands.guild_only()
     @ticket.command(name='stats', description='Retrive your ticket stats')
+    @permission(command_name="ticket_stats")
+    @app_commands.checks.cooldown(1, 5)
     async def ticket_stats(self, interaction: discord.Interaction, staff: discord.Member | None=None):
         if self.controller is not None:
             member = staff if staff is not None else interaction.user
