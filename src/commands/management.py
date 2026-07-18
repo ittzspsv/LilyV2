@@ -217,11 +217,6 @@ class LilyManagement(commands.Cog):
         description="Quota management commands"
     )
 
-    strike = app_commands.Group(
-        name="infraction",
-        description="Lily Infractions Management Utility"
-    )
-
     dev = app_commands.Group(
         name="dev",
         description="Developer utility commands"
@@ -250,21 +245,21 @@ class LilyManagement(commands.Cog):
             await self.controller.fetch_all_staffs(interaction)
 
 
-    @strike.command(name='issue', description='Issue an infraction')
+    @infraction.command(name='issue', description='Issue an infraction')
     @permission(command_name="strike_add")
     @app_commands.guild_only()
     async def staffstrike(self, interaction: discord.Interaction, staff: discord.Member):
         if self.controller is not None:
             await self.controller.strike_staff(interaction, staff)
 
-    @strike.command(name='remove', description='Remove an infraction')
+    @infraction.command(name='remove', description='Remove an infraction')
     @permission(command_name="strike_remove")
     @app_commands.guild_only()
     async def removestrike(self, interaction: discord.Interaction, infraction_id: str):
         if self.controller is not None:
             await self.controller.remove_strike_staff(interaction, int(infraction_id))
 
-    @strike.command(name="edit", description="Edit a reason of a infraction")
+    @infraction.command(name="edit", description="Edit a reason of a infraction")
     @permission(command_name="strike_edit")
     @app_commands.guild_only()
     async def strike_edit(self, interaction: discord.Interaction, infraction_id: str, new_reason: str):
@@ -287,7 +282,7 @@ class LilyManagement(commands.Cog):
         if self.controller is not None:
             await self.controller.edit_staff(interaction, interaction.user.id, name, None, timezone, None)
 
-    @strike.command(name='show', description='shows infractions for a concurrent staff')
+    @infraction.command(name='show', description='shows infractions for a concurrent staff')
     @permission(command_name="strike_show")
     @app_commands.guild_only()
     async def strikes(self, interaction: discord.Interaction, staff: discord.Member):
