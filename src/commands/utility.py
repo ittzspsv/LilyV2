@@ -571,6 +571,25 @@ class LilyUtility(commands.Cog):
             bot_mention = interaction.guild.me.mention if interaction.guild else "@Lily"
             await interaction.response.send_message(view=CI(interaction, "Nick", ["nick {user} {nickname}", f"nick {bot_mention} Lilyy", f"nick lily Lilly"]))
             return
+        
+        assert isinstance(member, discord.Member)
+        assert isinstance(ctx.author, discord.Member)
+        assert isinstance(ctx.me, discord.Member)
+
+        if member != ctx.author and ctx.author.top_role <= member.top_role:
+            return await ctx.reply(embed=simple_embed(
+                "You cannot act on this user their role is higher than or equal to yours.", 'cross'
+            ))
+
+        if member.top_role >= ctx.me.top_role:
+            return await ctx.reply(embed=simple_embed(
+                "I can't change that member's nickname their top role is higher or equal to mine.", 'cross'
+            ))
+
+        if name is not None and len(name) > 32:
+            return await ctx.reply(embed=simple_embed(
+                "Nicknames cannot be longer than 32 characters.", 'cross'
+            ))
 
         try:
             await member.edit(
@@ -581,8 +600,7 @@ class LilyUtility(commands.Cog):
             await interaction.response.send_message(
                 embed=simple_embed(
                     f"Successfully changed {member.mention}'s nickname to **{name}**."
-                )
-            )
+                ))
 
         except discord.Forbidden:
             await interaction.response.send_message(

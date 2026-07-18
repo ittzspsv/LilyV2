@@ -8,6 +8,7 @@ from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from src.core.features.agents.controller.lily_agent_controller import LilyAgentController
 from src.core.logging.lily_logging import LilyLoggingController
 from src.core.utils.embeds.sLilyEmbed import simple_embed
+from src.core.features.moderation.components.sLilyModerationComponents import AppealButton
 from src.core.configs.path import CONFIG_DB
 from src.api.app import LilyAPI
 import uvicorn
@@ -39,6 +40,8 @@ class Lily(commands.Bot):
 
         self.api = LilyAPI(self.db)
         self.loop.create_task(self.start_api())
+
+        self.add_dynamic_items(AppealButton)
 
 
         extensions = [

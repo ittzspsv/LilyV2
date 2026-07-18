@@ -104,3 +104,6 @@ class CommandEnum(str, Enum):
 
     APPLICATION_MANAGEMENT = "application_management"
     APPLICATION_BLOCK_UNBLOCK = "applicant_block_unblock"
+
+    APPEAL_MANAGEMENT = "mod_appeal_management",
+    APPEAL_HANDLERS = "mod_appeal_handlers"

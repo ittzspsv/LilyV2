@@ -174,9 +174,6 @@ class LilyManagement(commands.Cog):
                 commit=True
             )
 
-    
-
-
     async def daily_callback(self):
         if self.db is None:
             return
