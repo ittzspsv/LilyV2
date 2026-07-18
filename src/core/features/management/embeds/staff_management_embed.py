@@ -169,7 +169,7 @@ def build_strikes_list_embed(
 
 def build_staff_update_result_embed(
     staff: discord.Member,
-    ctx: commands.Context,
+    interaction: discord.Interaction,
     old_role_id: int | None,
     new_role_id: int | None,
     reason: str,
@@ -192,7 +192,7 @@ def build_staff_update_result_embed(
 
     embed.add_field(
         name=f"{act.title()} By",
-        value=ctx.author.mention,
+        value=interaction.user.mention,
         inline=False,
     )
 

@@ -32,16 +32,16 @@ class LilyManagementController:
     def __init__(self, bot_db: BotGlobalsDatabaseAccess) -> None:
         self.bot_db: BotGlobalsDatabaseAccess = bot_db
 
-    async def fetch_staff_detail(self, ctx: commands.Context ,staff: discord.Member | discord.User) -> None:
+    async def fetch_staff_detail(self, interaction: discord.Interaction ,staff: discord.Member | discord.User) -> None:
         try:
-            assert isinstance(ctx.guild, discord.Guild)
-            data_dict = await self.bot_db.fetch_staff_detail(staff.id, ctx.guild.id)
+            assert isinstance(interaction.guild, discord.Guild)
+            data_dict = await self.bot_db.fetch_staff_detail(staff.id, interaction.guild.id)
 
             if not data_dict:
                 raise ValueError("Staff data not found in database.")
 
             embed = build_staff_embed(staff, data_dict)
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
 
         except Exception as e:
             embed = discord.Embed(
@@ -49,26 +49,27 @@ class LilyManagementController:
                 description=f"{emoji['cross']} failed to fetch staff data. please check the database.",
             )
 
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
         
-    async def fetch_all_staffs(self, ctx: commands.Context) -> None:
-        if ctx.guild is None:
+    async def fetch_all_staffs(self, interaction: discord.Interaction) -> None:
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without an guild object",
                 colour=0xf50000
             )
 
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
         try:
-            data = await self.bot_db.fetch_all_staffs(ctx.guild.id)
+            data = await self.bot_db.fetch_all_staffs(interaction.guild.id)
 
             overall_details = data["overall"]
             role_user_map = data["roles"]
 
-            view = StaffsView(ctx, self.bot_db ,overall_details, role_user_map)
-            view.message = await ctx.reply(view=view)
+            view = StaffsView(interaction, self.bot_db ,overall_details, role_user_map)
+            await interaction.response.send_message(view=view)
+            view.message = await interaction.original_response()
 
         except Exception as e:
             print(f"Error fetching staff list: {e}")
@@ -79,19 +80,19 @@ class LilyManagementController:
                 colour=0xf50000
             )
 
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
     
-    async def update_all_staffs(self, ctx: commands.Context) -> None:
-        if ctx.guild is None:
+    async def update_all_staffs(self, interaction: discord.Interaction) -> None:
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
-        guild_id = ctx.guild.id
+        guild_id = interaction.guild.id
 
         rows = await self.bot_db.fetch_all(
             "SELECT staff_id FROM staffs WHERE retired = 0 AND on_loa = 0 AND guild_id = ?",
@@ -108,10 +109,10 @@ class LilyManagementController:
 
         for staff_id in staff_ids:
             try:
-                staff_member = ctx.guild.get_member(staff_id)
+                staff_member = interaction.guild.get_member(staff_id)
                 if not staff_member:
                     try:
-                        staff_member = await ctx.guild.fetch_member(staff_id)
+                        staff_member = await interaction.guild.fetch_member(staff_id)
                     except discord.NotFound:
                         continue
 
@@ -173,65 +174,65 @@ class LilyManagementController:
 
             await asyncio.sleep(1)
 
-        await ctx.reply(embed=simple_embed("Updated every staff role in the database!"))
+        await interaction.response.send_message(embed=simple_embed("Updated every staff role in the database!"))
     
-    async def add_staff(self, ctx: commands.Context, staff: discord.Member) -> None:
-        if ctx.guild is None:
+    async def add_staff(self, interaction: discord.Interaction, staff: discord.Member) -> None:
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without an guild object",
                 colour=0xf50000
             )
 
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
-        response = await self.bot_db.add_staff(staff.id, ctx.guild.id, staff.display_name, staff.display_avatar.url)
+        response = await self.bot_db.add_staff(staff.id, interaction.guild.id, staff.display_name, staff.display_avatar.url)
 
         if not response.get("success"):
-            await ctx.reply(embed=simple_embed(response.get("message") or "Unknown Object Passed and Failed", "cross"))
+            await interaction.response.send_message(embed=simple_embed(response.get("message") or "Unknown Object Passed and Failed", "cross"))
             return
 
         roles_to_add = set(response.get("roles_to_add", ()))
 
         add_roles = {
-            ctx.guild.get_role(role_id)
+            interaction.guild.get_role(role_id)
             for role_id in roles_to_add
         }
         add_roles = {r for r in add_roles if r}
 
         if add_roles:
-            await staff.add_roles(*add_roles, reason=f"Staff added by {ctx.author.id}")
+            await staff.add_roles(*add_roles, reason=f"Staff added by {interaction.user.id}")
 
-        await ctx.reply(embed=simple_embed(response.get("message") or "Unknown object passed as an output, But it's a success!"))
+        await interaction.response.send_message(embed=simple_embed(response.get("message") or "Unknown object passed as an output, But it's a success!"))
     
-    async def remove_staff(self, ctx: commands.Context,staff: discord.Member | discord.User ,reason: str) -> None:
-        if ctx.guild is None:
+    async def remove_staff(self, interaction: discord.Interaction,staff: discord.Member | discord.User ,reason: str) -> None:
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without an guild object",
                 colour=0xf50000
             )
 
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
-        response = await self.bot_db.remove_staff(staff.id, ctx.guild.id)
+        response = await self.bot_db.remove_staff(staff.id, interaction.guild.id)
 
         if not response.get("success"):
-            await ctx.reply(embed=simple_embed(response.get("message") or "Unknown object has been passed and it failed!", "cross"))
+            await interaction.response.send_message(embed=simple_embed(response.get("message") or "Unknown object has been passed and it failed!", "cross"))
             return
         
         roles_to_remove = set(response.get("roles_to_remove", ()))
-        channel_id = self.bot_db.get_channel(ctx.guild.id, "staff_updates")
+        channel_id = self.bot_db.get_channel(interaction.guild.id, "staff_updates")
 
         staff_updates_channel: discord.TextChannel | None = None
 
         if channel_id is not None:
-            channel = ctx.guild.get_channel(channel_id)
+            channel = interaction.guild.get_channel(channel_id)
 
             if channel is None:
                 try:
-                    channel = await ctx.guild.fetch_channel(channel_id)
+                    channel = await interaction.guild.fetch_channel(channel_id)
                 except Exception:
                     channel = None
 
@@ -240,7 +241,7 @@ class LilyManagementController:
 
         if staff:
             remove_roles = {
-                ctx.guild.get_role(role_id)
+                interaction.guild.get_role(role_id)
                 for role_id in roles_to_remove
             }
             remove_roles = {r for r in remove_roles if r}
@@ -248,45 +249,45 @@ class LilyManagementController:
             if remove_roles and isinstance(staff, discord.Member):
                 await staff.remove_roles(
                     *remove_roles,
-                    reason=f"Staff removed by {ctx.author.id} | {reason}"
+                    reason=f"Staff removed by {interaction.user.id} | {reason}"
                 )
             if staff_updates_channel:
                 embed = build_staff_update_embed(
                     staff=staff,
-                    handled_staff=ctx.author,
+                    handled_staff=interaction.user,
                     reason=reason,
                     img=img
                 )
                 await staff_updates_channel.send(
                     embed=embed
                 )
-        await ctx.reply(embed=simple_embed(response.get("message") or "Unknown object has been passed, but it's an success!"))
+        await interaction.response.send_message(embed=simple_embed(response.get("message") or "Unknown object has been passed, but it's an success!"))
         """ Send DM'S If Available """
 
         if staff is not None:
-            assert isinstance(ctx.author, discord.Member)
+            assert isinstance(interaction.user, discord.Member)
             await staff.send(
                 embed=staff_remove_embed(
-                    ctx.author,
+                    interaction.user,
                     reason,
-                    ctx.guild.name
+                    interaction.guild.name
                 )
             )
 
-    async def edit_staff(self, ctx: commands.Context,staff_id: int,name: str ,joined_on: Optional[str] = None,timezone: Optional[str] = None, responsibility: Optional[str] = None):
+    async def edit_staff(self, interaction: discord.Interaction,staff_id: int,name: str ,joined_on: Optional[str] = None,timezone: Optional[str] = None, responsibility: Optional[str] = None):
         try:
-            if ctx.guild is None:
+            if interaction.guild is None:
                 embed = discord.Embed(
                     title=f"{emoji['cross']} Error",
                     description="Cannot execute this command without an guild object",
                     colour=0xf50000
                 )
 
-                await ctx.reply(embed=embed)
+                await interaction.response.send_message(embed=embed)
                 return
             payload = {
                 "staff_id": staff_id,
-                "guild_id": ctx.guild.id,
+                "guild_id": interaction.guild.id,
                 "name": name,
                 "joined_on": joined_on,
                 "timezone": timezone,
@@ -296,13 +297,13 @@ class LilyManagementController:
             result = await self.bot_db.edit_staff(**payload)
 
             if result.get("success"):
-                await ctx.reply(
+                await interaction.response.send_message(
                     embed=simple_embed(
                         result["message"]
                     )
                 )
             else:
-                await ctx.reply(
+                await interaction.response.send_message(
                     embed=simple_embed(
                         result["message"],'cross'
                     )
@@ -310,26 +311,22 @@ class LilyManagementController:
         except Exception as e:
             print(f"Staff Edit Exception {e}")
 
-    async def strike_staff(self, ctx: commands.Context, staff: discord.Member):
-        interaction = ctx.interaction
-        if not isinstance(interaction, discord.Interaction):
-            return await ctx.reply(embed=simple_embed("Please run this command as a slash command", 'cross'))
-
+    async def strike_staff(self, interaction: discord.Interaction, staff: discord.Member):
         await interaction.response.send_modal(InfractionModal(self.bot_db, staff))
 
-    async def remove_strike_staff(self, ctx: commands.Context, strike_id: int):
-        if ctx.guild is None:
+    async def remove_strike_staff(self, interaction: discord.Interaction, strike_id: int):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without an guild object",
                 colour=0xf50000
             )
 
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
         payload = {
             "strike_id": strike_id,
-            "guild_id": ctx.guild.id
+            "guild_id": interaction.guild.id
         }
 
         result = await self.bot_db.remove_strike(**payload)
@@ -338,43 +335,43 @@ class LilyManagementController:
         message: str = str(result.get("message") or "An unknown error occurred")
 
         if status:
-            await ctx.reply(embed=simple_embed(message))
+            await interaction.response.send_message(embed=simple_embed(message))
 
             """ Notify the staff that his strike has been removed """
             staff_id: int = cast(int, result.get("issued_to"))
             issued_by: int = cast(int, result.get("issued_by"))
             reason: str = cast(str, result.get("reason"))
 
-            staff_member = ctx.guild.get_member(staff_id)
+            staff_member = interaction.guild.get_member(staff_id)
             if staff_member is None:
                 try:
-                    staff_member = await ctx.guild.fetch_member(staff_id)
+                    staff_member = await interaction.guild.fetch_member(staff_id)
                 except Exception:
                     return
-            assert isinstance(ctx.author, discord.Member)
-            await staff_member.send(embed=staff_strike_remove_embed(ctx.author, issued_by, reason, ctx.guild.name))
+            assert isinstance(interaction.user, discord.Member)
+            await staff_member.send(embed=staff_strike_remove_embed(interaction.user, issued_by, reason, interaction.guild.name))
 
         else:
-            await ctx.reply(embed=simple_embed(message, "cross"))
+            await interaction.response.send_message(embed=simple_embed(message, "cross"))
 
-    async def list_strikes(self, ctx: commands.Context, staff: discord.Member):
-        if ctx.guild is None:
+    async def list_strikes(self, interaction: discord.Interaction, staff: discord.Member):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
         result = await self.bot_db.fetch_staff_strikes(
             staff_id=staff.id,
-            guild_id=ctx.guild.id
+            guild_id=interaction.guild.id
         )
 
         if not result["success"] and not result["data"]:
             embed = build_no_strikes_embed(staff)
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
         
         strikes = result.get("data")
@@ -382,49 +379,49 @@ class LilyManagementController:
             strikes = []
 
         embed = build_strikes_list_embed(staff, strikes)
-        await ctx.reply(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
-    async def edit_strike(self, ctx: commands.Context, strike_id: int ,new_reason: str):
-        if ctx.guild is None:
+    async def edit_strike(self, interaction: discord.Interaction, strike_id: int ,new_reason: str):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
         response = await self.bot_db.edit_strike(**{
-            "guild_id" : ctx.guild.id, 
+            "guild_id" : interaction.guild.id, 
             "strike_id": strike_id,
-            "staff_id": ctx.author.id,
+            "staff_id": interaction.user.id,
             "new_reason":  new_reason
         })
 
         if not response.get("success"):
-            await ctx.reply(embed=simple_embed(str(response.get("message")), 'cross'))
+            await interaction.response.send_message(embed=simple_embed(str(response.get("message")), 'cross'))
             return
         
-        await ctx.reply(embed=simple_embed(str(response.get("message"))))
+        await interaction.response.send_message(embed=simple_embed(str(response.get("message"))))
 
-    async def add_loa(self, ctx: commands.Context, staff: discord.Member, reason: str):
-        if ctx.guild is None:
+    async def add_loa(self, interaction: discord.Interaction, staff: discord.Member, reason: str):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
         try:
             response = await self.bot_db.add_loa(**{
                 "staff_id": staff.id,
                 "reason": reason,
-                "loa_issued_by": ctx.author.id,
-                "guild_id": ctx.guild.id
+                "loa_issued_by": interaction.user.id,
+                "guild_id": interaction.guild.id
             })
 
             if not response.get("success"):
-                await ctx.reply(embed=simple_embed(str(response.get("message")), 'cross'))
+                await interaction.response.send_message(embed=simple_embed(str(response.get("message")), 'cross'))
                 return
 
             roles_to_remove = set(response.get("roles_to_remove", ()))
@@ -433,13 +430,13 @@ class LilyManagementController:
             current_roles = set(staff.roles)
 
             remove_roles = {
-                ctx.guild.get_role(rid)
+                interaction.guild.get_role(rid)
                 for rid in roles_to_remove
             }
             remove_roles = {r for r in remove_roles if r}
 
             add_roles = {
-                ctx.guild.get_role(rid)
+                interaction.guild.get_role(rid)
                 for rid in roles_to_add
             }
             add_roles = {r for r in add_roles if r}
@@ -451,23 +448,23 @@ class LilyManagementController:
                 reason="LOA assigned"
             )
 
-            await ctx.reply(embed=simple_embed(str(response.get("message"))))
+            await interaction.response.send_message(embed=simple_embed(str(response.get("message"))))
         except Exception as e:
             print(f"Exception [AddLOA] {e}")
 
-    async def remove_loa(self, ctx: commands.Context, staff: discord.Member):
-        if ctx.guild is None:
+    async def remove_loa(self, interaction: discord.Interaction, staff: discord.Member):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
-        response = await self.bot_db.remove_loa(**{"staff_id": staff.id, "guild_id" : ctx.guild.id})
+        response = await self.bot_db.remove_loa(**{"staff_id": staff.id, "guild_id" : interaction.guild.id})
 
         if not response.get("success"):
-            await ctx.reply(embed=simple_embed(str(response.get("message"))))
+            await interaction.response.send_message(embed=simple_embed(str(response.get("message"))))
             return
 
         roles_to_remove = set(response.get("roles_to_remove", ()))
@@ -476,13 +473,13 @@ class LilyManagementController:
         current_roles = set(staff.roles)
 
         remove_roles = {
-            ctx.guild.get_role(rid)
+            interaction.guild.get_role(rid)
             for rid in roles_to_remove
         }
         remove_roles = {r for r in remove_roles if r}
 
         add_roles = {
-            ctx.guild.get_role(rid)
+            interaction.guild.get_role(rid)
             for rid in roles_to_add
         }
         add_roles = {r for r in add_roles if r}
@@ -494,17 +491,17 @@ class LilyManagementController:
             reason="LOA removed"
         )
 
-        await ctx.reply(embed=simple_embed(str(response.get("message"))))
+        await interaction.response.send_message(embed=simple_embed(str(response.get("message"))))
 
-    async def list_loa(self, ctx: commands.Context, staff: discord.Member):
-        if ctx.guild is None:
-            return await ctx.reply(embed=simple_embed("Run this command only inside a guild", 'cross'))
+    async def list_loa(self, interaction: discord.Interaction, staff: discord.Member):
+        if interaction.guild is None:
+            return await interaction.response.send_message(embed=simple_embed("Run this command only inside a guild", 'cross'))
         
-        results = await self.bot_db.loa_list(staff.id, ctx.guild.id)
+        results = await self.bot_db.loa_list(staff.id, interaction.guild.id)
         
 
         if len(results) <= 0:
-            return await ctx.reply(embed=simple_embed("No LOA found for this user", 'cross'))
+            return await interaction.response.send_message(embed=simple_embed("No LOA found for this user", 'cross'))
 
         embed = discord.Embed(
             color=16777215,
@@ -523,27 +520,23 @@ class LilyManagementController:
                 inline=False
             )
 
-        await ctx.reply(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
-    async def request_loa(self, ctx: commands.Context):
-        interaction = ctx.interaction
-        if interaction is None:
-            return await ctx.reply(embed=simple_embed("Please use the slash version of this command", 'cross'))
-
+    async def request_loa(self, interaction: discord.Interaction):
         await interaction.response.send_modal(LOARequestModal(self.bot_db))
 
-    async def loa_delete(self, ctx: commands.Context, leave_id: int):
+    async def loa_delete(self, interaction: discord.Interaction, leave_id: int):
         await self.bot_db.delete_loa(leave_id=leave_id)
-        await ctx.reply(embed=simple_embed("Successfully deleted LOA"))
+        await interaction.response.send_message(embed=simple_embed("Successfully deleted LOA"))
 
-    async def get_all_staff_roles(self, ctx: commands.Context):
-        if ctx.guild is None:
+    async def get_all_staff_roles(self, interaction: discord.Interaction):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
         try:
@@ -554,11 +547,11 @@ class LilyManagementController:
                 WHERE guild_id = ?
                 ORDER BY priority ASC
                 """,
-                (ctx.guild.id,)
+                (interaction.guild.id,)
             )
 
             if not rows:
-                await ctx.reply(embed=simple_embed("No staff roles found in this guild.", 'cross'))
+                await interaction.response.send_message(embed=simple_embed("No staff roles found in this guild.", 'cross'))
                 return
 
             role_names = []
@@ -566,7 +559,7 @@ class LilyManagementController:
             priorities = []
 
             for role_id, priority in rows:
-                role = ctx.guild.get_role(role_id)
+                role = interaction.guild.get_role(role_id)
 
                 priorities.append(str(priority))
 
@@ -600,57 +593,57 @@ class LilyManagementController:
                 inline=True
             )
 
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
 
         except Exception as e:
             print(f"Exception [GetAllStaffRoles] {e}")
-            await ctx.reply(embed=simple_embed("Error fetching staff roles", 'cross'))
+            await interaction.response.send_message(embed=simple_embed("Error fetching staff roles", 'cross'))
 
-    async def update_staff(self, ctx: commands.Context, staff: discord.Member, reason: str, update_type: str):
-        if ctx.guild is None:
+    async def update_staff(self, interaction: discord.Interaction, staff: discord.Member, reason: str, update_type: str):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
-        if ctx.author.id == staff.id:
-            await ctx.reply(embed=simple_embed(
+        if interaction.user.id == staff.id:
+            await interaction.response.send_message(embed=simple_embed(
                 "You cannot update yourself",
                 "cross"
             ))
             return
 
         result = await self.bot_db.update_staff(
-            guild_id=ctx.guild.id,
+            guild_id=interaction.guild.id,
             staff_id=staff.id,
             update_type=update_type,
             reason=reason,
-            updated_by=ctx.author.id
+            updated_by=interaction.user.id
         )
 
         if not result.get("success"):
-            await ctx.send(embed=simple_embed(
+            await interaction.response.send_message(embed=simple_embed(
                 str(result.get("message")),
                 "cross"
             ))
             return
 
         channel_id = self.bot_db.get_channel(
-            ctx.guild.id,
+            interaction.guild.id,
             "staff_updates"
         )
 
         staff_updates_channel: discord.TextChannel | None = None
 
         if channel_id is not None:
-            channel = ctx.guild.get_channel(channel_id)
+            channel = interaction.guild.get_channel(channel_id)
 
             if channel is None:
                 try:
-                    channel = await ctx.guild.fetch_channel(channel_id)
+                    channel = await interaction.guild.fetch_channel(channel_id)
                 except Exception:
                     channel = None
 
@@ -660,8 +653,8 @@ class LilyManagementController:
         old_role_id = result.get("old_role_id")
         new_role_id = result.get("new_role_id")
 
-        old_role = ctx.guild.get_role(old_role_id) if old_role_id else None
-        new_role = ctx.guild.get_role(new_role_id) if new_role_id else None
+        old_role = interaction.guild.get_role(old_role_id) if old_role_id else None
+        new_role = interaction.guild.get_role(new_role_id) if new_role_id else None
 
         try:
             current_roles = set(staff.roles)
@@ -678,7 +671,7 @@ class LilyManagementController:
             )
 
         except Exception as e:
-            await ctx.send(embed=simple_embed(
+            await interaction.response.send_message(embed=simple_embed(
                 f"Database updated, but Discord role update failed: {e}",
                 "cross"
             ))
@@ -686,7 +679,7 @@ class LilyManagementController:
 
         embed = build_staff_update_result_embed(
             staff=staff,
-            ctx=ctx,
+            interaction=interaction,
             old_role_id=old_role_id,
             new_role_id=new_role_id,
             reason=reason,
@@ -702,7 +695,7 @@ class LilyManagementController:
 
         act = "promoted" if update_type == "promotion" else "demoted"
 
-        await ctx.send(
+        await interaction.response.send_message(
             embed=simple_embed(f"{staff.mention} has been {act}.")
         )
 
@@ -728,18 +721,18 @@ class LilyManagementController:
         except Exception as e:
             pass
 
-    async def add_staff_quota(self, ctx: commands.Context,quota_role: discord.Role,minimum_ms: int,minimum_msg: int, check_by: QuotaCheckBy):
-        if ctx.guild is None:
+    async def add_staff_quota(self, interaction: discord.Interaction,quota_role: discord.Role,minimum_ms: int,minimum_msg: int, check_by: QuotaCheckBy):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
         payload = {
-            "guild_id": ctx.guild.id,
+            "guild_id": interaction.guild.id,
             "role_id": quota_role.id,
             "min_msg": minimum_msg,
             "min_ms": minimum_ms,
@@ -749,48 +742,48 @@ class LilyManagementController:
         result = await self.bot_db.add_staff_quota(**payload)
 
         if not result.get("success"):
-            await ctx.reply(embed=simple_embed(str(result.get("message")), 'cross'))
+            await interaction.response.send_message(embed=simple_embed(str(result.get("message")), 'cross'))
             return
 
-        await ctx.reply(embed=simple_embed(str(result.get("message"))))
+        await interaction.response.send_message(embed=simple_embed(str(result.get("message"))))
 
-    async def remove_staff_quota(self, ctx: commands.Context, quota_id: str):
-        if ctx.guild is None:
+    async def remove_staff_quota(self, interaction: discord.Interaction, quota_id: str):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
         payload = {
-            "guild_id": ctx.guild.id,
+            "guild_id": interaction.guild.id,
             "quota_id": int(quota_id)
         }
 
         result = await self.bot_db.remove_staff_quota(**payload)
 
         if not result.get("success"):
-            await ctx.reply(embed=simple_embed(str(result.get("message")), 'cross'))
+            await interaction.response.send_message(embed=simple_embed(str(result.get("message")), 'cross'))
             return
 
 
-        await ctx.reply(embed=simple_embed(str(result.get("message"))))
+        await interaction.response.send_message(embed=simple_embed(str(result.get("message"))))
 
-    async def fetch_staff_quota(self, ctx: commands.Context):
-        if ctx.guild is None:
+    async def fetch_staff_quota(self, interaction: discord.Interaction):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
-        quotas = await self.bot_db.fetch_staff_quota(ctx.guild.id)
+        quotas = await self.bot_db.fetch_staff_quota(interaction.guild.id)
 
         if not quotas:
-            return await ctx.reply(embed=simple_embed("No staff quotas configured.", 'cross'))
+            return await interaction.response.send_message(embed=simple_embed("No staff quotas configured.", 'cross'))
 
         embed = discord.Embed(
             title="Staff Quota",
@@ -798,12 +791,12 @@ class LilyManagementController:
             color=16777215
         )
 
-        if ctx.guild.icon:
-            embed.set_thumbnail(url=ctx.guild.icon.url)
+        if interaction.guild.icon:
+            embed.set_thumbnail(url=interaction.guild.icon.url)
         embed.set_image(url=img['border'])
 
         for quota in quotas:
-            role = ctx.guild.get_role(quota["role_id"])
+            role = interaction.guild.get_role(quota["role_id"])
             role_mention = role.mention if role else f"`{quota['role_id']}`"
 
             embed.add_field(
@@ -817,25 +810,25 @@ class LilyManagementController:
                 inline=False
             )
 
-        await ctx.reply(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
-    async def check_staff_quota(self, ctx: commands.Context, staff: discord.Member | discord.User):
-        if ctx.guild is None:
+    async def check_staff_quota(self, interaction: discord.Interaction, staff: discord.Member | discord.User):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
         try:
             response = await self.bot_db.get_staff_current_quota(**{
-                "guild_id": ctx.guild.id,
+                "guild_id": interaction.guild.id,
                 "staff_id": staff.id
             })
 
             if not response.get("success"):
-                return await ctx.send(embed=simple_embed(f"{response.get("message")}", 'cross'))
+                return await interaction.response.send_message(embed=simple_embed(f"{response.get("message")}", 'cross'))
 
             msgs = response["messages"]
             quota = response["quota"]
@@ -916,50 +909,49 @@ class LilyManagementController:
 
             embed.set_footer(text=f"Staff ID: {response['staff_id']}")
 
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
         except Exception as e:
             print("CheckStaffQuota", e)
 
-    async def remove_role(self, ctx: commands.Context, role: int):
-        if ctx.guild is None:
+    async def remove_role(self, interaction: discord.Interaction, role: int):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
-        response = await self.bot_db.remove_role(ctx.guild.id, role)
+        response = await self.bot_db.remove_role(interaction.guild.id, role)
 
         if response.get("success"):
-            await ctx.reply(embed=simple_embed(f"{response.get("message")}"),  allowed_mentions=discord.AllowedMentions.none())
+            await interaction.response.send_message(embed=simple_embed(f"{response.get("message")}"),  allowed_mentions=discord.AllowedMentions.none())
         else:
-            await ctx.reply(embed=simple_embed(f"{response.get("message")}", 'cross'))
+            await interaction.response.send_message(embed=simple_embed(f"{response.get("message")}", 'cross'))
 
-    async def evaluate_staff_quota(self, ctx: commands.Context, role: discord.Role):
-        if ctx.guild is None:
+    async def evaluate_staff_quota(self, interaction: discord.Interaction, role: discord.Role):
+        if interaction.guild is None:
             embed = discord.Embed(
                 title=f"{emoji['cross']} Error",
                 description="Cannot execute this command without a guild object",
                 colour=0xf50000
             )
-            await ctx.reply(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
-        await ctx.defer()
 
-        quota_id = await self.bot_db.get_quota_id_from_role(ctx.guild.id, role.id)
+        quota_id = await self.bot_db.get_quota_id_from_role(interaction.guild.id, role.id)
         if quota_id is None:
-            return await ctx.reply(
+            return await interaction.response.send_message(
                 embed=simple_embed("No quota has been defined for this role", 'cross')
             )
 
         response = await self.bot_db.get_quota_status(
-            ctx.guild.id,
+            interaction.guild.id,
             quota_id,
         )
 
         if not response.get("success"):
-            return await ctx.reply(
+            return await interaction.response.send_message(
                 embed=simple_embed(
                     response.get("message", "Error occurred"),
                     'cross'
@@ -1012,21 +1004,21 @@ class LilyManagementController:
             inline=False,
         )
 
-        if ctx.guild.icon:
-            embed.set_thumbnail(url=ctx.guild.icon.url)
+        if interaction.guild.icon:
+            embed.set_thumbnail(url=interaction.guild.icon.url)
 
         embed.set_image(url=img['border'])
 
-        await ctx.reply(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
-    async def get_staffs_timezone_coverage(self, ctx: commands.Context):
-        if ctx.guild is None:
-            await ctx.reply(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
+    async def get_staffs_timezone_coverage(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
             return
         
-        await ctx.defer()
+        await interaction.response.defer()
 
-        result = await self.bot_db.get_staffs_timezone_coverage(ctx.guild.id)
+        result = await self.bot_db.get_staffs_timezone_coverage(interaction.guild.id)
         data = sorted(result.items(), key=lambda x: x[1])
 
         zones = [x[0] for x in data]
@@ -1062,7 +1054,7 @@ class LilyManagementController:
             filename="staff_timezone_coverage.png"
         )
 
-        await ctx.reply(file=file)
+        await interaction.followup.send(file=file)
 
     async def automatic_quota_evaluator(self, check_by: str, bot):
         data = await self.bot_db.get_webhooks_of_type("quota_updates")
