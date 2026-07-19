@@ -418,7 +418,6 @@ class TicketComponentEmbed(discord.ui.LayoutView):
         else:
             raise ValueError("Invalid Opener Type")
         
-
         self.ticket_channel_id: int = ticket_channel_id
         self.misc: Dict = {}
 
@@ -436,53 +435,54 @@ class TicketComponentEmbed(discord.ui.LayoutView):
 
 
         self.claim_ticket: discord.ui.Button = discord.ui.Button(
-            style=discord.ButtonStyle.green,
+            style=discord.ButtonStyle.secondary,
+            emoji=emoji["user_claim"],
             label="Claim Ticket",
             custom_id=f"claim-ticket{self.ticket_channel_id}",
         )
 
         self.revoke_claim: discord.ui.Button = discord.ui.Button(
-                style=discord.ButtonStyle.danger,
+                style=discord.ButtonStyle.secondary,
+                emoji=emoji["user_unclaim"],
                 label="Revoke Claim",
                 custom_id=f"revoke-claim{self.ticket_channel_id}",
             )
 
         
-        self.actions: discord.ui.Select = discord.ui.Select(
-                custom_id=f"actions{self.ticket_channel_id}",
-                min_values=1,
-                max_values=1,
-                options=[
-                    discord.SelectOption(
-                        label="Case List",
-                        value="case_list",
-                        description="View the cases of the user",
-                        emoji=emoji["logs"]
-                    ),
-                    discord.SelectOption(
-                        label="Ban",
-                        value="ban",
-                        description="Ban the reported user",
-                        emoji=emoji["ban_hammer"]
-                    ),
-                    discord.SelectOption(
-                        label="Mute",
-                        value="mute",
-                        description="Mute the reported user",
-                        emoji=emoji["member"]
-                    ),
-                    discord.SelectOption(
-                        label="Warn",
-                        value="warn",
-                        description="Warn the reported user",
-                        emoji=emoji["warn"]
-                    )
-                ]
-            )
+        self.case_list_button: discord.ui.Button = discord.ui.Button(
+            style=discord.ButtonStyle.secondary,
+            emoji=emoji["logs"],
+            custom_id=f"case-list{self.ticket_channel_id}",
+        )
+
+        self.case_list_button.callback = self.case_list_callback
+
+        self.ban_button: discord.ui.Button = discord.ui.Button(
+            style=discord.ButtonStyle.secondary,
+            emoji=emoji["ban_hammer"],
+            custom_id=f"ban{self.ticket_channel_id}",
+        )
+
+        self.ban_button.callback = self.ban_callback
+
+        self.mute_button: discord.ui.Button = discord.ui.Button(
+            style=discord.ButtonStyle.secondary,
+            emoji=emoji["member"],
+            custom_id=f"mute{self.ticket_channel_id}",
+        )
+
+        self.mute_button.callback = self.mute_callback
+
+        self.warn_button: discord.ui.Button = discord.ui.Button(
+            style=discord.ButtonStyle.secondary,
+            emoji=emoji["warn"],
+            custom_id=f"warn{self.ticket_channel_id}",
+        )
+
+        self.warn_button.callback = self.warn_callback
 
         self.claim_ticket.callback = self.claim_ticket_callback
         self.revoke_claim.callback = self.revoke_claim_callback
-        self.actions.callback = self.actions_callback
 
         opener_details = submission_json.get("opener", {})
 
@@ -510,16 +510,16 @@ class TicketComponentEmbed(discord.ui.LayoutView):
 
         base_container = discord.ui.Container(
             discord.ui.TextDisplay(content=f"# {self.ticket_name}"),
-            discord.ui.TextDisplay(content=f"{self.ticket_mentions}"),
             discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
             discord.ui.Section(
-                discord.ui.TextDisplay(content=f"### Ticket Opener Information | {mention}**"),
+                discord.ui.TextDisplay(content=f"### Ticket Opener Information | {mention}"),
                 discord.ui.TextDisplay(content=content),
                 accessory=discord.ui.Thumbnail(
                     media=avatar_url,
                 ),
             ),
-            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small)
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
+            discord.ui.TextDisplay(content=f"-# {self.ticket_mentions}"),
         )
 
         ticket_details = []
@@ -559,7 +559,10 @@ class TicketComponentEmbed(discord.ui.LayoutView):
                     )
                     ticket_details.append(
                         discord.ui.ActionRow(
-                            self.actions
+                            self.case_list_button,
+                            self.ban_button,
+                            self.mute_button,
+                            self.warn_button
                         )
                     )
                 else:
@@ -607,19 +610,26 @@ class TicketComponentEmbed(discord.ui.LayoutView):
             *ticket_details
         )
 
-        actions_container = discord.ui.Container(
-            discord.ui.TextDisplay(
-                "## Ticket Actions"
-            ),
-            discord.ui.ActionRow(
-                self.claim_ticket,
-                self.revoke_claim
-            )
-        )
-
         self.add_item(base_container)
         self.add_item(ticket_details_container)
-        self.add_item(actions_container)
+        self.add_item(discord.ui.ActionRow(self.claim_ticket, self.revoke_claim))
+
+    async def _check_permissions(self, interaction: discord.Interaction) -> bool:
+        assert isinstance(interaction.user, discord.Member)
+        is_staff = any(role.id in self.allowed_roles for role in interaction.user.roles)
+        is_opener = interaction.user.id == self.opener_id
+
+        if not is_staff or is_opener:
+            await interaction.response.send_message(
+                embed=simple_embed("You are not allowed to use this!", 'cross'),
+                ephemeral=True
+            )
+            return False
+
+        if interaction.guild is None:
+            return False
+
+        return True
 
     async def claim_ticket_callback(self, interaction: discord.Interaction) -> None:
         if interaction.channel is None or interaction.guild is None:
@@ -713,7 +723,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
 
         self.claim_ticket.disabled = False
         self.claim_ticket.label = "Claim"
-        self.claim_ticket.style = discord.ButtonStyle.green
+        self.claim_ticket.style = discord.ButtonStyle.secondary
 
         await self.db.bot_db.reset_ticket_claimer(interaction.channel.id)
 
@@ -732,8 +742,8 @@ class TicketComponentEmbed(discord.ui.LayoutView):
         )
 
     async def case_list_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-
+        if not await self._check_permissions(interaction):
+            return
         if interaction.guild is None:
             return
         
@@ -761,7 +771,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
 
         result = await self.db.bot_db.fetch_mod_logs(**payload)
         if not result["success"]:
-            await interaction.followup.send(embed=simple_embed("No cases found.", 'cross'), ephemeral=True)
+            await interaction.response.send_message(embed=simple_embed("No cases found.", 'cross'), ephemeral=True)
             return  
 
         embed =  build_mod_logs_embed_absolute(
@@ -776,57 +786,45 @@ class TicketComponentEmbed(discord.ui.LayoutView):
         logging_channel_id = self.db.bot_db.get_channel(_guild_id, "logs_channel")
         if logging_channel_id is not None and result["proofs_exists"]:
             view = ProofsView(result["logs"], logging_channel_id, _guild_id)
-            await interaction.followup.send(embeds=embed, view=view, ephemeral=True)
+            await interaction.response.send_message(embeds=embed, view=view, ephemeral=True)
         else:
-            await interaction.followup.send(embeds=embed, ephemeral=True)
+            await interaction.response.send_message(embeds=embed, ephemeral=True)
 
-    async def actions_callback(self, interaction: discord.Interaction):
-        assert isinstance(interaction.user, discord.Member)
-        is_staff = any(role.id in self.allowed_roles for role in interaction.user.roles)
-        is_opener = interaction.user.id == self.opener_id
-
-        if not is_staff or is_opener:
-            await interaction.response.send_message(
-                embed=simple_embed("You are not allowed to use this!", 'cross'),
-                ephemeral=True
-            )
-            return
-        
-        if interaction.guild is None:
+    async def ban_callback(self, interaction: discord.Interaction):
+        if not await self._check_permissions(interaction):
             return
 
-        assert isinstance(self.actions, discord.ui.Select)
-        value = self.actions.values[0]
-        
-        if value == "case_list":
-            await self.case_list_callback(interaction)
-
-        elif value == "ban":
-            await interaction.response.send_modal(
-                BanModal(
-                    db=self.db,
-                    member_id=self.misc["reported_member"]["id"],
-                    proofs=self.misc["proofs"]
-                )
+        await interaction.response.send_modal(
+            BanModal(
+                db=self.db,
+                member_id=self.misc["reported_member"]["id"],
+                proofs=self.misc["proofs"]
             )
+        )
 
-        elif value == "warn":
-            await interaction.response.send_modal(
-                WarnModal(
-                    db=self.db, 
-                    member_id=self.misc["reported_member"]["id"],
-                    proofs=self.misc["proofs"]
-                )
-            )
+    async def mute_callback(self, interaction: discord.Interaction):
+        if not await self._check_permissions(interaction):
+            return
 
-        elif value == "mute":
-            await interaction.response.send_modal(
-                MuteModal(
-                    db=self.db, 
-                    member_id=self.misc["reported_member"]["id"],
-                    proofs=self.misc["proofs"]
-                )
+        await interaction.response.send_modal(
+            MuteModal(
+                db=self.db,
+                member_id=self.misc["reported_member"]["id"],
+                proofs=self.misc["proofs"]
             )
+        )
+
+    async def warn_callback(self, interaction: discord.Interaction):
+        if not await self._check_permissions(interaction):
+            return
+
+        await interaction.response.send_modal(
+            WarnModal(
+                db=self.db,
+                member_id=self.misc["reported_member"]["id"],
+                proofs=self.misc["proofs"]
+            )
+        )
         
 class TicketModal(discord.ui.Modal):
     def __init__(self, title: str, modal_data: dict, json_data, db: DatabaseAccess, message: discord.Message):
