@@ -9,7 +9,7 @@ from src.core.logging.components.logging_components import ProofsComponentComman
 
 import src.core.configs.sBotDetails as Config
 import io
-from src.core.configs.sBotDetails import img
+from src.core.configs.sBotDetails import img, emoji
 import re
 
 if TYPE_CHECKING:
@@ -606,7 +606,7 @@ class AppealModal(discord.ui.Modal):
             self.fields.append((question["label"], text_input))
             self.add_item(label)
 
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: discord.Interaction) -> None:
         answers = {
             label: text_input.value
             for label, text_input in self.fields
@@ -682,19 +682,19 @@ class AppealModal(discord.ui.Modal):
         )
 
         case_info_embed.add_field(
-            name="Case Type",
-            value=self.case['mod_type'],
+            name=f"{emoji["bookmark"]} Case Type",
+            value=self.case['mod_type'].title(),
             inline=False
         )
 
         case_info_embed.add_field(
-            name="Reason",
+            name=f"{emoji["pencil"]} Reason",
             value=self.case["reason"] or "No reason Provided",
             inline=False
         )
 
         case_info_embed.add_field(
-            name="Moderator",
+            name=f"{emoji["shield"]} Moderator",
             value=f"<@{self.case['moderator_id']}>",
             inline=False
         )
