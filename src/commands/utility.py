@@ -478,44 +478,65 @@ class LilyUtility(commands.Cog):
             await db.set_webhook(interaction.guild.id, type.value, webhook_url)
             await interaction.response.send_message(embed=simple_embed(f"Successfully assigned a webhook to listen `{type.value}`"))
 
+    @app_commands.guild_only()
     @permission(command_name="set_permission")
-    @set.command(name="permission", description="Allocates permission to certain role for a command")
-    async def set_permission(self, interaction: discord.Interaction, command: str, role: discord.Role):
-        try:
-            cmd_enum = CommandEnum(command)
-        except ValueError:
-            await interaction.response.send_message(embed=simple_embed(f"`{command}` is not a valid command", 'cross'))
-            return
-
-        if interaction.guild is None:
-            await interaction.response.send_message(embed=simple_embed("This command can only be used inside a guild", 'cross'))
-            return
+    @set.command(
+        name="permission",
+        description="Allocates permission to a role for a command"
+    )
+    async def set_permission(
+        self,
+        interaction: discord.Interaction,
+        command: CommandEnum,
+        role: discord.Role,
+    ):
+        assert interaction.guild is not None
 
         db: BotGlobalsDatabaseAccess = self.bot.db
-        await db.set_permission(interaction.guild.id, role.id, cmd_enum.value)
+        await db.set_permission(
+            interaction.guild.id,
+            role.id,
+            command.value,
+        )
 
-        formatted = cmd_enum.value.replace("_", " ").title()
-        await interaction.response.send_message(embed=simple_embed(f"Successfully assigned `{formatted}` permission to {role.mention}"))
+        formatted = command.value.replace("_", " ").title()
 
+        await interaction.response.send_message(
+            embed=simple_embed(
+                f"Successfully assigned `{formatted}` permission to {role.mention}"
+            )
+        )
+
+    @app_commands.guild_only()
     @permission(command_name="remove_permission")
-    @remove.command(name="permission", description="Removes a command permission from certain role for a command")
-    async def remove_permission(self, interaction: discord.Interaction, command: str, role: discord.Role):
-        try:
-            cmd_enum = CommandEnum(command)
-        except ValueError:
-            await interaction.response.send_message(embed=simple_embed(f"`{command}` is not a valid command", 'cross'))
-            return
-        
-        if interaction.guild is None:
-            await interaction.response.send_message(embed=simple_embed("This command can only be used inside a guild", 'cross'))
-            return
-        
+    @remove.command(
+        name="permission",
+        description="Removes a command permission from a role"
+    )
+    async def remove_permission(
+        self,
+        interaction: discord.Interaction,
+        command: CommandEnum,
+        role: discord.Role,
+    ):
+        assert interaction.guild is not None
+
         db: BotGlobalsDatabaseAccess = self.bot.db
-        await db.remove_permission(interaction.guild.id, role.id, cmd_enum.value)
 
-        formatted = cmd_enum.value.replace("_", " ").title()
-        await interaction.response.send_message(embed=simple_embed(f"Successfully removed `{formatted}` permission from {role.mention}"))
+        await db.remove_permission(
+            interaction.guild.id,
+            role.id,
+            command.value,
+        )
 
+        formatted = command.value.replace("_", " ").title()
+
+        await interaction.response.send_message(
+            embed=simple_embed(
+                f"Successfully removed `{formatted}` permission from {role.mention}"
+            )
+        )
+        
     @permission(command_name="permissions")
     @app_commands.command(name="permissions", description="List out permissions that a role has")
     async def permissions(self, interaction: discord.Interaction, role: discord.Role):
@@ -572,22 +593,24 @@ class LilyUtility(commands.Cog):
             await interaction.response.send_message(view=CI(interaction, "Nick", ["nick {user} {nickname}", f"nick {bot_mention} Lilyy", f"nick lily Lilly"]))
             return
         
-        assert isinstance(member, discord.Member)
-        assert isinstance(ctx.author, discord.Member)
-        assert isinstance(ctx.me, discord.Member)
 
-        if member != ctx.author and ctx.author.top_role <= member.top_role:
-            return await ctx.reply(embed=simple_embed(
+        assert interaction.guild is not None
+        assert isinstance(member, discord.Member)
+        assert isinstance(interaction.user, discord.Member)
+        assert isinstance(interaction.guild.me, discord.Member)
+
+        if member != interaction.user and interaction.user.top_role <= member.top_role:
+            return await interaction.response.send_message(embed=simple_embed(
                 "You cannot act on this user their role is higher than or equal to yours.", 'cross'
             ))
 
-        if member.top_role >= ctx.me.top_role:
-            return await ctx.reply(embed=simple_embed(
+        if member.top_role >= interaction.guild.me.top_role:
+            return await interaction.response.send_message(embed=simple_embed(
                 "I can't change that member's nickname their top role is higher or equal to mine.", 'cross'
             ))
 
         if name is not None and len(name) > 32:
-            return await ctx.reply(embed=simple_embed(
+            return await interaction.response.send_message(embed=simple_embed(
                 "Nicknames cannot be longer than 32 characters.", 'cross'
             ))
 
@@ -651,21 +674,19 @@ class LilyUtility(commands.Cog):
         await interaction.response.send_message(embed=embed)
         
     @permission(command_name="sync", restrict=True)
-    @app_commands.command(name="sync")
-    async def sync(self, interaction: discord.Interaction):
-        if interaction.guild is None:
-            return await interaction.response.send_message("Guild only command.")
+    @commands.command(name="sync")
+    async def sync(self, ctx: commands.Context):
+        if ctx.guild is None:
+            return await ctx.send("This command can only be executed inside an guild")
 
-        await interaction.response.defer()
-
-        guild = discord.Object(id=interaction.guild.id)
+        guild = discord.Object(id=ctx.guild.id)
 
         self.bot.tree.copy_global_to(guild=guild)
 
         synced = await self.bot.tree.sync(guild=guild)
 
-        await interaction.followup.send(
-            f"Synced {len(synced)} commands to {interaction.guild.name}"
+        await ctx.send(
+            f"Synced {len(synced)} commands to {ctx.guild.name}"
         )
 
     @app_commands.command(name='avatar', description='Get avatar of yourself or other member')
