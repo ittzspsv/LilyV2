@@ -380,9 +380,9 @@ class LilyModerationController:
         else:
             await interaction.response.send_message(embed=simple_embed(str(response.get("message")), 'cross'))
 
-    async def ms(self, ctx: commands.Context, moderator: discord.Member | discord.User, page_start: int = 0, page_end: int = 5):
-        if ctx.guild is None:
-            await ctx.reply(
+    async def ms(self, interaction: discord.Interaction, moderator: discord.Member | discord.User, page_start: int = 0, page_end: int = 5):
+        if interaction.guild is None:
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "Command requires guild object in order to execute",
                     "cross"
@@ -391,14 +391,14 @@ class LilyModerationController:
             return
 
         result = await self.bot_db.fetch_mod_stats(
-            guild_id=ctx.guild.id,
+            guild_id=interaction.guild.id,
             moderator_id=moderator.id,
             page_start=page_start,
             page_end=page_end
         )
 
         if not result["success"]:
-            await ctx.reply(embed=simple_embed("No stats found For the given moderator ID"))
+            await interaction.response.send_message(embed=simple_embed("No stats found For the given moderator ID"))
             return
 
         embeds = build_ms_embed(
@@ -409,11 +409,11 @@ class LilyModerationController:
             page_start=page_start
         )
 
-        await ctx.reply(embeds=embeds)
+        await interaction.response.send_message(embeds=embeds)
     
     async def mod_logs(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         target_user_id: int,
         user: discord.Member | discord.User,
         moderator: discord.User | discord.Member | None = None,
@@ -422,8 +422,8 @@ class LilyModerationController:
         page_end: int = 5
     ):
 
-        if ctx.guild is None:
-            await ctx.reply(
+        if interaction.guild is None:
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "Command requires guild object in order to execute",
                     "cross"
@@ -432,7 +432,7 @@ class LilyModerationController:
             return
         
         payload = {
-            "guild_id": ctx.guild.id,
+            "guild_id": interaction.guild.id,
             "target_user_id": target_user_id,
             "moderator_id": moderator.id if moderator else None,
             "mod_type": mod_type,
@@ -443,7 +443,7 @@ class LilyModerationController:
         result = await self.bot_db.fetch_mod_logs(**payload)
 
         if not result["success"]:
-            await ctx.reply(embed=simple_embed("No cases found.", 'cross'))
+            await interaction.response.send_message(embed=simple_embed("No cases found.", 'cross'))
             return
 
         embed =  build_mod_logs_embed(
@@ -455,17 +455,17 @@ class LilyModerationController:
         )
         """ This is basically to handle secondary guild.  IN cases where you guys need to have an appeal server and you wanna fetch the modlogs from an secondary server only """
 
-        _guild_id = self.bot_db.get_secondary_guild_id(ctx.guild.id) or ctx.guild.id
+        _guild_id = self.bot_db.get_secondary_guild_id(interaction.guild.id) or interaction.guild.id
         logging_channel_id = self.bot_db.get_channel(_guild_id, "logs_channel")
         if logging_channel_id is not None and result["proofs_exists"]:
             view = ProofsView(result["logs"], logging_channel_id, _guild_id)
-            await ctx.reply(embeds=embed, view=view)
+            await interaction.response.send_message(embeds=embed, view=view)
         else:
-            await ctx.reply(embeds=embed)
+            await interaction.response.send_message(embeds=embed)
 
-    async def moderation_insights(self, ctx: commands.Context):
-        if ctx.guild is None:
-            await ctx.reply(
+    async def moderation_insights(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "Command requires guild object in order to execute",
                     "cross"
@@ -473,10 +473,10 @@ class LilyModerationController:
             )
             return
         
-        await ctx.defer()
+        await interaction.response.defer()
         
         """ Create an image of moderation last 30 days analytics using matplotlib """
-        data = await self.bot_db.get_moderation_monthly_analysis(ctx.guild.id)
+        data = await self.bot_db.get_moderation_monthly_analysis(interaction.guild.id)
         days = [
             datetime.strptime(item["day"], "%Y-%m-%d")
             for item in data
@@ -530,8 +530,8 @@ class LilyModerationController:
 
         
         """ Returns the total, monthly, weekly, daily modlogs in a server """
-        view = ModerationInsights(ctx.guild.me, self.bot_db)
-        view.message = await ctx.reply(view=view, file=discord.File(buffer, filename="moderation_analytics.png"))
+        view = ModerationInsights(interaction.guild.me, self.bot_db)
+        view.message = await interaction.followup.send(view=view, file=discord.File(buffer, filename="moderation_analytics.png"))
 
     async def setup_mod_appeal(self, interaction: discord.Interaction):
         if interaction.guild is None:
