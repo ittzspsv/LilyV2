@@ -2,6 +2,7 @@ import discord, discord.app_commands as app_commands
 from discord.ext import commands
 from typing import Optional, Any, Dict
 import re
+from enum import Enum
 
 from src.core.utils.components.sLIlyGlobalComponents import CommandInfo
 from src.core.utils.embeds.sLilyEmbed import simple_embed
@@ -11,6 +12,15 @@ from src.core.features.permissions.lily_permissions import permission
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 
 
+class ModType(str, Enum):
+        All = "all"
+        Ban = "ban"
+        Warn = "warn"
+        Mute = "mute"
+        Quarantine = "quarantine"
+        Unmute = "unmute"
+        QuarantineRelease = "quarantine_release"
+        Unban = "unban"
 
 class LilyModeration(commands.Cog):
     def __init__(self, bot):
@@ -264,13 +274,14 @@ class LilyModeration(commands.Cog):
             page_end=page_end
         )
 
+
     @case.command(name='list', description='Checks case logs for a particular user')
     @permission(command_name="modlogs")
     async def modlogs(
         self,
         interaction: discord.Interaction,
         member: discord.User | discord.Member | None = None,
-        mod_type: str = "all",
+        mod_type: ModType = ModType.All,
         page_start: int = 0,
         page_end: int = 5,
         moderator: discord.User | discord.Member | None = None
@@ -291,7 +302,7 @@ class LilyModeration(commands.Cog):
                 target_user_id=target_id,
                 user=user,
                 moderator=moderator,
-                mod_type=mod_type,
+                mod_type=mod_type.value,
                 page_start=page_start,
                 page_end=page_end
             )
