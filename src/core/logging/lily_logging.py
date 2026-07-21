@@ -263,24 +263,22 @@ class LilyLoggingController:
         
     async def retrieve_proofs(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         case_id: int
     ) -> None:
-        if ctx.guild is None:
-            await ctx.reply(
+        if interaction.guild is None:
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "This command can only be executed inside a server.",
                     "cross"
                 )
             )
             return
-        
-        await ctx.defer()
 
         """ Check the validity of the case """
-        validity = await self.bot_db.case_exists(case_id, ctx.guild.id)
+        validity = await self.bot_db.case_exists(case_id, interaction.guild.id)
         if not validity:
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "Case doesn't exists!",
                     "cross"
@@ -291,7 +289,7 @@ class LilyLoggingController:
         message_ids = await self.bot_db.retrieve_proofs(case_id)
 
         if not message_ids:
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "No proofs found for the given case ID.",
                     "cross"
@@ -299,10 +297,10 @@ class LilyLoggingController:
             )
             return
 
-        logs_channel_id = self.bot_db.get_channel(ctx.guild.id, "logs_channel")
+        logs_channel_id = self.bot_db.get_channel(interaction.guild.id, "logs_channel")
 
         if not logs_channel_id:
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "Proofs cannot be retrieved: logging channel is not configured.",
                     "cross"
@@ -310,13 +308,13 @@ class LilyLoggingController:
             )
             return
 
-        channel = ctx.guild.get_channel(logs_channel_id)
+        channel = interaction.guild.get_channel(logs_channel_id)
 
         if channel is None:
             try:
-                channel = await ctx.guild.fetch_channel(logs_channel_id)
+                channel = await interaction.guild.fetch_channel(logs_channel_id)
             except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                await ctx.reply(
+                await interaction.response.send_message(
                     embed=simple_embed(
                         "Proofs cannot be retrieved: logging channel is missing or inaccessible.",
                         "cross"
@@ -335,7 +333,7 @@ class LilyLoggingController:
             except discord.NotFound:
                 continue
             except discord.Forbidden:
-                await ctx.reply(
+                await interaction.response.send_message(
                     embed=simple_embed(
                         "Missing permission to read messages in the logging channel.",
                         "cross"
@@ -358,7 +356,7 @@ class LilyLoggingController:
                     continue
 
         if not files:
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "No valid proof attachments were found for this case.",
                     "cross"
@@ -366,22 +364,13 @@ class LilyLoggingController:
             )
             return
 
-        await ctx.reply(
+        await interaction.response.send_message(
             content=f"Proofs for case `{case_id}`",
             files=files
         )
 
-    async def log_proofs(self, ctx: commands.Context):
-        try:
-            if ctx.guild is None:
-                return
-
-            if ctx.interaction is None:
-                await ctx.reply(embed=simple_embed("Please run this command as a slash command.", 'cross'))  
-                return
-
-            interaction = ctx.interaction
-            modal = ProofComponentModal(self)
-            await interaction.response.send_modal(modal)
-        except Exception as e:
-            print(e)
+    async def log_proofs(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            return
+        modal = ProofComponentModal(self)
+        await interaction.response.send_modal(modal)

@@ -1,4 +1,4 @@
-import discord
+import discord, discord.app_commands as app_commands
 from discord.ext import commands
 from typing import Optional, Any, Dict
 import re
@@ -121,15 +121,15 @@ class LilyModeration(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.reply(embed=simple_embed("Lily Moderation System Command Hierarchy!"))
 
-    @commands.hybrid_group()
-    async def case(self, ctx: commands.Context):
-        if ctx.invoked_subcommand is None:
-            await ctx.reply(embed=simple_embed("Lily case system Command Hierarchy!"))
+    case = app_commands.Group(
+        name="case",
+        description="Case management commands"
+    )
 
-    @commands.hybrid_group()
-    async def appeal(self, ctx: commands.Context):
-        if ctx.invoked_subcommand is None:
-            await ctx.reply(embed=simple_embed("Lily Moderation Appeal system Command Hierarchy!"))
+    appeal = app_commands.Group(
+        name="appeal",
+        description="Moderation appeal commands"
+    )
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.command(name='ban', description='Ban a user from the server', aliases=['b'])
@@ -311,7 +311,7 @@ class LilyModeration(commands.Cog):
 
     @case.command(name='edit', description='Edit a case')
     @permission(command_name="case_edit")
-    async def case_edit(self, ctx: commands.Context, case_id: str, *, new_reason: str):
+    async def case_edit(self, interaction: discord.Interaction, case_id: str, *, new_reason: str):
         if self.controller is None:
             return
         if case_id is None or new_reason is None:
@@ -319,47 +319,37 @@ class LilyModeration(commands.Cog):
                 view=CommandInfo(ctx, "Case Edit", ["edit_case case_id new_reason"])
             )
 
-        await self.controller.case_edit(ctx, int(case_id), new_reason, False)
+        await self.controller.case_edit(interaction, int(case_id), new_reason, False)
 
     @case.command(name='edit_absolute', description='Edit any case')
     @permission(command_name="case_edit_absolute")
-    async def case_edit_absolute(self, ctx: commands.Context, case_id: int, *, new_reason: str):
+    async def case_edit_absolute(self, interaction: discord.Interaction, case_id: int, *, new_reason: str):
         if self.controller is None:
             return
-        if not new_reason:
-            return await ctx.reply(
-                view=CommandInfo(ctx, "Case Edit Absolute", ["edit_case_absolute case_id new_reason"])
-            )
-
-        await self.controller.case_edit(ctx, case_id, new_reason, True)
+        await self.controller.case_edit(interaction, case_id, new_reason, True)
 
     @case.command(name='delete', description='Delete a case')
     @permission(command_name="case_delete")
-    async def case_delete(self, ctx: commands.Context, case_id: str):
+    async def case_delete(self, interaction: discord.Interaction, case_id: str):
         if self.controller is None:
             return
-        if not case_id:
-            return await ctx.reply(
-                view=CommandInfo(ctx, "Case Delete", ["case_delete case_id"])
-            )
-
-        await self.controller.case_delete(ctx, int(case_id))
+        await self.controller.case_delete(interaction, int(case_id))
 
     @case.command(name='attach', description='Attach proofs for a case')
     @permission(command_name="case_attach")
-    async def case_attach(self, ctx: commands.Context):
+    async def case_attach(self, interaction: discord.Interaction):
         if self.controller is None:
             return
         
-        await self.controller.logging_controller.log_proofs(ctx)
+        await self.controller.logging_controller.log_proofs(interaction)
 
     @case.command(name='proofs', description='Retrieve all proofs of an case')
     @permission(command_name="case_proofs")
-    async def case_retrieve(self, ctx: commands.Context, case_id: str):
+    async def case_retrieve(self, interaction: discord.Interaction, case_id: str):
         if self.controller is None:
             return
         
-        await self.controller.logging_controller.retrieve_proofs(ctx, int(case_id))
+        await self.controller.logging_controller.retrieve_proofs(interaction, int(case_id))
   
     @mod.command(name="acronym_add", description="Add an reason acronym")
     @permission(command_name = "mod_acronym_add")
@@ -427,17 +417,16 @@ class LilyModeration(commands.Cog):
             await bot_db.add_moderation_acronym(target.id, ctx.guild.id, key, value)
 
         await ctx.reply(embed=simple_embed(f"Successfully transferred moderation acronym to {target.mention}"))
-
-        
+     
     @appeal.command(name="setup", description="Setup Moderation Appeal for this server")
     @permission(command_name = "mod_appeal_management")
-    async def setup_appeal(self, ctx: commands.Context):
-        if ctx.guild is None:
-            return await ctx.reply(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
+    async def setup_appeal(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            return await interaction.response.send_message(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
         
         if self.controller is not None:
             await self.controller.setup_mod_appeal(
-                ctx
+                interaction
             )
 
     @appeal.command(
@@ -447,41 +436,32 @@ class LilyModeration(commands.Cog):
     @permission(command_name="mod_appeal_management")
     async def configure_appeal_forum(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
     ):
-        if ctx.guild is None:
-            return await ctx.reply(
+        if interaction.guild is None:
+            return await interaction.response.send_message(
                 embed=simple_embed(
                     "This command can only be used inside a guild.",
                     "cross",
                 )
             )
-        
-        if ctx.interaction is None:
-            return await ctx.reply(
-                embed=simple_embed(
-                    "Use this command as an Interaction based one.",
-                    "cross",
-                )
-            )
 
         if self.controller is not None:
-            await ctx.interaction.response.send_modal(
+            await interaction.response.send_modal(
                 AppealForumCustomize(self.bot.db)
             )
 
-
     @appeal.command(name="accept", description="Accept an appeal")
     @permission(command_name = "mod_appeal_handlers")
-    async def accept_appeal(self, ctx: commands.Context):
+    async def accept_appeal(self, interaction: discord.Interaction):
         if self.controller is not None:
-            await self.controller.accept_appeal(ctx)
+            await self.controller.accept_appeal(interaction)
 
     @appeal.command(name="reject", description="Deny an appeal")
     @permission(command_name = "mod_appeal_handlers")
-    async def reject_appeal(self, ctx: commands.Context, reason: str):
+    async def reject_appeal(self, interaction: discord.Interaction, reason: str):
         if self.controller is not None:
-            await self.controller.reject_appeal(ctx, reason)
+            await self.controller.reject_appeal(interaction, reason)
 
 
 async def setup(bot):
