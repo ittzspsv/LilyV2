@@ -365,24 +365,24 @@ class LilyModerationController:
             msg = await ctx.reply(embed=simple_embed(f"{member.mention} has been warned"), view=view)
             view.message = msg
 
-    async def case_edit(self, ctx: commands.Context, case_id: int, case_statement: str, absolute: bool=False):
-        response = await self.bot_db.edit_case(**{"staff_id": ctx.author.id, "case_id": case_id, "case_statement": case_statement, "absolute": absolute})
+    async def case_edit(self, interaction: discord.Interaction, case_id: int, case_statement: str, absolute: bool=False):
+        response = await self.bot_db.edit_case(**{"staff_id": interaction.user.id, "case_id": case_id, "case_statement": case_statement, "absolute": absolute})
 
         if response.get("success"):
-            await ctx.reply(embed=simple_embed(str(response.get("message"))))
+            await interaction.response.send_message(embed=simple_embed(str(response.get("message"))))
         else:
-            await ctx.reply(embed=simple_embed(str(response.get("message")), 'cross'))
+            await interaction.response.send_message(embed=simple_embed(str(response.get("message")), 'cross'))
 
-    async def case_delete(self, ctx: commands.Context, case_id: int):
+    async def case_delete(self, interaction: discord.Interaction, case_id: int):
         response = await self.bot_db.delete_case(case_id)
         if response.get("success"):
-            await ctx.reply(embed=simple_embed(str(response.get("message"))))
+            await interaction.response.send_message(embed=simple_embed(str(response.get("message"))))
         else:
-            await ctx.reply(embed=simple_embed(str(response.get("message")), 'cross'))
+            await interaction.response.send_message(embed=simple_embed(str(response.get("message")), 'cross'))
 
-    async def ms(self, ctx: commands.Context, moderator: discord.Member | discord.User, page_start: int = 0, page_end: int = 5):
-        if ctx.guild is None:
-            await ctx.reply(
+    async def ms(self, interaction: discord.Interaction, moderator: discord.Member | discord.User, page_start: int = 0, page_end: int = 5):
+        if interaction.guild is None:
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "Command requires guild object in order to execute",
                     "cross"
@@ -391,14 +391,14 @@ class LilyModerationController:
             return
 
         result = await self.bot_db.fetch_mod_stats(
-            guild_id=ctx.guild.id,
+            guild_id=interaction.guild.id,
             moderator_id=moderator.id,
             page_start=page_start,
             page_end=page_end
         )
 
         if not result["success"]:
-            await ctx.reply(embed=simple_embed("No stats found For the given moderator ID"))
+            await interaction.response.send_message(embed=simple_embed("No stats found For the given moderator ID"))
             return
 
         embeds = build_ms_embed(
@@ -409,11 +409,11 @@ class LilyModerationController:
             page_start=page_start
         )
 
-        await ctx.reply(embeds=embeds)
+        await interaction.response.send_message(embeds=embeds)
     
     async def mod_logs(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         target_user_id: int,
         user: discord.Member | discord.User,
         moderator: discord.User | discord.Member | None = None,
@@ -422,8 +422,8 @@ class LilyModerationController:
         page_end: int = 5
     ):
 
-        if ctx.guild is None:
-            await ctx.reply(
+        if interaction.guild is None:
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "Command requires guild object in order to execute",
                     "cross"
@@ -432,7 +432,7 @@ class LilyModerationController:
             return
         
         payload = {
-            "guild_id": ctx.guild.id,
+            "guild_id": interaction.guild.id,
             "target_user_id": target_user_id,
             "moderator_id": moderator.id if moderator else None,
             "mod_type": mod_type,
@@ -443,7 +443,7 @@ class LilyModerationController:
         result = await self.bot_db.fetch_mod_logs(**payload)
 
         if not result["success"]:
-            await ctx.reply(embed=simple_embed("No cases found.", 'cross'))
+            await interaction.response.send_message(embed=simple_embed("No cases found.", 'cross'))
             return
 
         embed =  build_mod_logs_embed(
@@ -455,17 +455,17 @@ class LilyModerationController:
         )
         """ This is basically to handle secondary guild.  IN cases where you guys need to have an appeal server and you wanna fetch the modlogs from an secondary server only """
 
-        _guild_id = self.bot_db.get_secondary_guild_id(ctx.guild.id) or ctx.guild.id
+        _guild_id = self.bot_db.get_secondary_guild_id(interaction.guild.id) or interaction.guild.id
         logging_channel_id = self.bot_db.get_channel(_guild_id, "logs_channel")
         if logging_channel_id is not None and result["proofs_exists"]:
             view = ProofsView(result["logs"], logging_channel_id, _guild_id)
-            await ctx.reply(embeds=embed, view=view)
+            await interaction.response.send_message(embeds=embed, view=view)
         else:
-            await ctx.reply(embeds=embed)
+            await interaction.response.send_message(embeds=embed)
 
-    async def moderation_insights(self, ctx: commands.Context):
-        if ctx.guild is None:
-            await ctx.reply(
+    async def moderation_insights(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(
                 embed=simple_embed(
                     "Command requires guild object in order to execute",
                     "cross"
@@ -473,10 +473,10 @@ class LilyModerationController:
             )
             return
         
-        await ctx.defer()
+        await interaction.response.defer()
         
         """ Create an image of moderation last 30 days analytics using matplotlib """
-        data = await self.bot_db.get_moderation_monthly_analysis(ctx.guild.id)
+        data = await self.bot_db.get_moderation_monthly_analysis(interaction.guild.id)
         days = [
             datetime.strptime(item["day"], "%Y-%m-%d")
             for item in data
@@ -530,17 +530,17 @@ class LilyModerationController:
 
         
         """ Returns the total, monthly, weekly, daily modlogs in a server """
-        view = ModerationInsights(ctx.guild.me, self.bot_db)
-        view.message = await ctx.reply(view=view, file=discord.File(buffer, filename="moderation_analytics.png"))
+        view = ModerationInsights(interaction.guild.me, self.bot_db)
+        view.message = await interaction.followup.send(view=view, file=discord.File(buffer, filename="moderation_analytics.png"))
 
-    async def setup_mod_appeal(self, ctx: commands.Context):
-        if ctx.guild is None:
+    async def setup_mod_appeal(self, interaction: discord.Interaction):
+        if interaction.guild is None:
             return
         
-        me = ctx.guild.me
+        me = interaction.guild.me
 
         overwrites = {
-            ctx.guild.default_role: discord.PermissionOverwrite(
+            interaction.guild.default_role: discord.PermissionOverwrite(
                 view_channel=False,
             ),
 
@@ -552,7 +552,7 @@ class LilyModerationController:
                 read_message_history=True,
             ),
 
-            ctx.author: discord.PermissionOverwrite(
+            interaction.user: discord.PermissionOverwrite(
                 view_channel=True,
                 send_messages=True,
                 read_message_history=True,
@@ -566,7 +566,7 @@ class LilyModerationController:
         }
 
         try:
-            forum = await ctx.guild.create_forum(
+            forum = await interaction.guild.create_forum(
                 name="moderation-appeal",
                 available_tags=[
                     discord.ForumTag(name="Pending", emoji="⏳"),
@@ -574,17 +574,17 @@ class LilyModerationController:
                     discord.ForumTag(name="Denied", emoji="❌"),
                 ],
                 overwrites=overwrites,
-                reason=f"Moderation appeal forum created by {ctx.author}",
+                reason=f"Moderation appeal forum created by {interaction.user}",
             )
 
             await self.bot_db.set_channel(
-                ctx.guild.id,
+                interaction.guild.id,
                 forum.id,
                 "moderation_appeal"
             )
 
             await self.bot_db.upsert_appeal_forum(
-                ctx.guild.id,
+                interaction.guild.id,
                 """
                 [
                     {
@@ -604,12 +604,12 @@ class LilyModerationController:
             )
 
             await self.bot_db.set_webhook(
-                ctx.guild.id,
+                interaction.guild.id,
                 "moderation_appeal_dm",
                 webhook.url
             )
 
-            await ctx.reply(
+            await interaction.response.send_message(
                 embed=simple_embed(
                     f"Successfully created Appeal forums {forum.mention}.  Appeals will be posted on that forums\nPlease do not delete the `Pending` Tag from the forum"
                 )
@@ -625,12 +625,12 @@ class LilyModerationController:
                 f"Failed to create the moderation appeal forum: {e}"
             )
         
-    async def accept_appeal(self, ctx: commands.Context):
-        if ctx.guild is None:
+    async def accept_appeal(self, interaction: discord.Interaction):
+        if interaction.guild is None:
             return
 
-        if not isinstance(ctx.channel, discord.Thread):
-            return await ctx.reply(
+        if not isinstance(interaction.channel, discord.Thread):
+            return await interaction.response.send_message(
                 embed=simple_embed(
                     "Unable to accept an invalid instigator appeal.",
                     "cross",
@@ -638,9 +638,9 @@ class LilyModerationController:
                 delete_after=5,
             )
 
-        appeal = await self.bot_db.get_appeal(ctx.channel.id)
+        appeal = await self.bot_db.get_appeal(interaction.channel.id)
         if appeal is None:
-            return await ctx.reply(
+            return await interaction.response.send_message(
                 embed=simple_embed(
                     "Unable to accept an invalid instigator appeal.",
                     "cross",
@@ -648,7 +648,7 @@ class LilyModerationController:
                 delete_after=5,
             )
         if appeal["status"] != "pending":
-            return await ctx.reply(
+            return await interaction.response.send_message(
                 embed=simple_embed(
                     "This appeal is no longer in a valid state for this action.",
                     "cross",
@@ -659,28 +659,28 @@ class LilyModerationController:
         case = await self.bot_db.get_case(appeal["case_id"])
 
         if case is None:
-            await ctx.reply(embed=simple_embed("Unable to find the case", 'cross'))
+            await interaction.response.send_message(embed=simple_embed("Unable to find the case", 'cross'))
             return
 
         try:
-            member = await ctx.guild.fetch_member(case["target_user_id"])
+            member = await interaction.guild.fetch_member(case["target_user_id"])
             if case["mod_type"] == "mute":
-                await member.edit(timed_out_until=None, reason=f"Appeal accepted by {ctx.author.mention}")
+                await member.edit(timed_out_until=None, reason=f"Appeal accepted by {interaction.user.mention}")
                 await self.bot_db.log_moderation_action(
-                    ctx.guild.id,
-                    ctx.author.id,
+                    interaction.user.id,
+                    interaction.user.id,
                     member.id,
                     "unmute",
                     "Appealed"
                 )
 
             elif case["mod_type"] == "quarantine":
-                role = discord.utils.get(ctx.guild.roles, name="Quarantine")
+                role = discord.utils.get(interaction.guild.roles, name="Quarantine")
                 if role:
-                    await member.remove_roles(role, reason=f"Appeal accepted by {ctx.author.mention}")
+                    await member.remove_roles(role, reason=f"Appeal accepted by {interaction.user.mention}")
                     await self.bot_db.log_moderation_action(
-                        ctx.guild.id,
-                        ctx.author.id,
+                        interaction.guild.id,
+                        interaction.user.id,
                         member.id,
                         "quarantine_release",
                         "Appealed"
@@ -690,25 +690,24 @@ class LilyModerationController:
         except:
             pass
 
-        assert isinstance(ctx.channel, discord.Thread)
-        assert isinstance(ctx.channel.parent, discord.ForumChannel)
-        accepted = discord.utils.get(ctx.channel.parent.available_tags, name="Accepted")
+        assert isinstance(interaction.channel, discord.Thread)
+        assert isinstance(interaction.channel.parent, discord.ForumChannel)
+        accepted = discord.utils.get(interaction.channel.parent.available_tags, name="Accepted")
 
         if accepted is None:
             return
         
         await self.bot_db.set_appeal_status(appeal["case_id"], "accepted")
-        await ctx.reply(embed=simple_embed(f"Successfully Accepted the appeal and their punishment has been lifted.\n This thread will be archived."))
+        await interaction.response.send_message(embed=simple_embed(f"Successfully Accepted the appeal and their punishment has been lifted.\n This thread will be archived."))
         await asyncio.sleep(2)
-        await ctx.channel.edit(applied_tags=[accepted], locked=True, archived=True)
+        await interaction.channel.edit(applied_tags=[accepted], locked=True, archived=True)
 
-
-    async def reject_appeal(self, ctx: commands.Context, reason: str | None = None):
-        if ctx.guild is None:
+    async def reject_appeal(self, interaction: discord.Interaction, reason: str | None = None):
+        if interaction.guild is None:
             return
 
-        if not isinstance(ctx.channel, discord.Thread):
-            return await ctx.reply(
+        if not isinstance(interaction.channel, discord.Thread):
+            return await interaction.response.send_message(
                 embed=simple_embed(
                     "Unable to reject an invalid instigator appeal.",
                     "cross",
@@ -716,9 +715,9 @@ class LilyModerationController:
                 delete_after=5,
             )
 
-        appeal = await self.bot_db.get_appeal(ctx.channel.id)
+        appeal = await self.bot_db.get_appeal(interaction.channel.id)
         if appeal is None:
-            return await ctx.reply(
+            return await interaction.response.send_message(
                 embed=simple_embed(
                     "Unable to reject an invalid instigator appeal.",
                     "cross",
@@ -727,7 +726,7 @@ class LilyModerationController:
             )
         
         if appeal["status"] != "pending":
-            return await ctx.reply(
+            return await interaction.response.send_message(
                 embed=simple_embed(
                     "This appeal is no longer in a valid state for this action.",
                     "cross",
@@ -738,23 +737,23 @@ class LilyModerationController:
         case = await self.bot_db.get_case(appeal["case_id"])
 
         if case is None:
-            await ctx.reply(embed=simple_embed("Unable to find the case", 'cross'))
+            await interaction.response.send_message(embed=simple_embed("Unable to find the case", 'cross'))
             return
         try:
-            member = await ctx.guild.fetch_member(case["target_user_id"])
+            member = await interaction.guild.fetch_member(case["target_user_id"])
             await member.send(embed=simple_embed(f"Your appeal has been denied. Sorry\n- Reason: {reason or "No reason Provided"}", 'cross'))
         except:
             pass
 
-        assert isinstance(ctx.channel, discord.Thread)
-        assert isinstance(ctx.channel.parent, discord.ForumChannel)
-        rejected = discord.utils.get(ctx.channel.parent.available_tags, name="Denied")
+        assert isinstance(interaction.channel, discord.Thread)
+        assert isinstance(interaction.channel.parent, discord.ForumChannel)
+        rejected = discord.utils.get(interaction.channel.parent.available_tags, name="Denied")
 
         if rejected is None:
             print("Tag is not found")
             return
         
         await self.bot_db.set_appeal_status(appeal["case_id"], "rejected")
-        await ctx.reply(embed=simple_embed(f"Successfully rejected the appeal, This thread will be archived!"))
+        await interaction.response.send_message(embed=simple_embed(f"Successfully rejected the appeal, This thread will be archived!"))
         await asyncio.sleep(2)
-        await ctx.channel.edit(applied_tags=[rejected], locked=True, archived=True)
+        await interaction.channel.edit(applied_tags=[rejected], locked=True, archived=True)

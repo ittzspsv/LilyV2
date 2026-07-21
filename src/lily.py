@@ -102,7 +102,7 @@ class Lily(commands.Bot):
     async def on_message(self, message:discord.Message): 
         if message.author == self.user:
               return
-        await self.agent_controller.on_message(self, message=message)
+        #await self.agent_controller.on_message(self, message=message)
         await self.process_commands(message)
 
 

@@ -89,6 +89,19 @@ class LilyUtility(commands.Cog):
 
             await message.channel.send(file=discord.File(buffer, filename="quote.png"))
     
+    async def command_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> list[app_commands.Choice[str]]:
+        current = current.lower()
+
+        return [
+            app_commands.Choice(name=command.name, value=command.value)
+            for command in CommandEnum
+            if current in command.value.lower()
+        ][:25]
+
     set = app_commands.Group(
         name="set",
         description="Utility setter commands"
@@ -484,10 +497,11 @@ class LilyUtility(commands.Cog):
         name="permission",
         description="Allocates permission to a role for a command"
     )
+    @app_commands.autocomplete(command=command_autocomplete)
     async def set_permission(
         self,
         interaction: discord.Interaction,
-        command: CommandEnum,
+        command: str,
         role: discord.Role,
     ):
         assert interaction.guild is not None
@@ -496,10 +510,10 @@ class LilyUtility(commands.Cog):
         await db.set_permission(
             interaction.guild.id,
             role.id,
-            command.value,
+            command,
         )
 
-        formatted = command.value.replace("_", " ").title()
+        formatted = command.replace("_", " ").title()
 
         await interaction.response.send_message(
             embed=simple_embed(
@@ -513,10 +527,11 @@ class LilyUtility(commands.Cog):
         name="permission",
         description="Removes a command permission from a role"
     )
+    @app_commands.autocomplete(command=command_autocomplete)
     async def remove_permission(
         self,
         interaction: discord.Interaction,
-        command: CommandEnum,
+        command: str,
         role: discord.Role,
     ):
         assert interaction.guild is not None
@@ -526,10 +541,10 @@ class LilyUtility(commands.Cog):
         await db.remove_permission(
             interaction.guild.id,
             role.id,
-            command.value,
+            command,
         )
 
-        formatted = command.value.replace("_", " ").title()
+        formatted = command.replace("_", " ").title()
 
         await interaction.response.send_message(
             embed=simple_embed(

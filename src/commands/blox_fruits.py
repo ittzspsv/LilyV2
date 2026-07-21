@@ -31,7 +31,7 @@ class LilyBloxFruits(commands.Cog):
         if self.db is None:
             return []
 
-        fruits = sorted(self.db.fruit_names)
+        fruits = sorted(self.db.fruit_names_sorted)
 
         return [
             app_commands.Choice(name=fruit, value=fruit)
@@ -55,6 +55,34 @@ class LilyBloxFruits(commands.Cog):
     @bloxfruits.command(name='update_value', description='updates an value of an item in blox fruits')
     @permission(command_name="update_value", restrict=True)
     @app_commands.autocomplete(name=fruits_autocomplete)
+    @app_commands.choices(
+        rarity=[
+            app_commands.Choice(name="Common", value="Common"),
+            app_commands.Choice(name="Uncommon", value="Uncommon"),
+            app_commands.Choice(name="Rare", value="Rare"),
+            app_commands.Choice(name="Legendary", value="Legendary"),
+            app_commands.Choice(name="Mythical", value="Mythical"),
+            app_commands.Choice(name="Gamepass", value="Gamepass"),
+            app_commands.Choice(name="Limited", value="Limited"),
+            app_commands.Choice(name="Skins", value="Skins"),
+        ],
+        category=[
+            app_commands.Choice(name="Common", value="Common"),
+            app_commands.Choice(name="Uncommon", value="Uncommon"),
+            app_commands.Choice(name="Rare", value="Rare"),
+            app_commands.Choice(name="Legendary", value="Legendary"),
+            app_commands.Choice(name="Mythical", value="Mythical"),
+            app_commands.Choice(name="Gamepass", value="Gamepass"),
+            app_commands.Choice(name="Limited", value="Limited"),
+            app_commands.Choice(name="Skins", value="Skins"),
+        ],
+        demand_type = [
+            app_commands.Choice(name="Stable", value="Stable"),
+            app_commands.Choice(name="Overpaid", value="Overpaid"),
+            app_commands.Choice(name="Underpaid", value="Underpaid"),
+            app_commands.Choice(name="Overhyped", value="Overhyped"),
+        ]
+    )
     async def UpdateValue(
         self,
         interaction: discord.Interaction,
