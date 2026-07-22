@@ -220,7 +220,7 @@ class LilyModerationController:
                     f"Muted: <@{user.id}>"
                 ))
 
-            case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author, user, "mute", reason, proofs)
+            case_id: int | None = await self.logging_controller.log_moderation_action(ctx, ctx.author, user, "mute", reason, proofs, {"duration": seconds})
 
             if case_id and len(proofs) <= 0:
                 view = CaseProofsView(case_id, self.logging_controller, None)

@@ -4,7 +4,7 @@ from ..features.moderation.components.sLilyModerationComponents import action_lo
 
 from discord.ext import commands
 from datetime import datetime
-from typing import Optional, Union, Sequence, List
+from typing import Optional, Union, Sequence, List, Dict, Any
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.utils.lily_utility import utcnow
 from .components.logging_components import ProofComponentModal
@@ -58,7 +58,8 @@ class LilyLoggingController:
         target_user: discord.Member | discord.User,
         mod_type: str,
         reason: str = "No reason provided",
-        proofs: Optional[Sequence[Union[discord.Attachment, str]]] = None
+        proofs: Optional[Sequence[Union[discord.Attachment, str]]] = None,
+        metadata: Dict[str, Any] = {}
     ) -> int | None:
         if ctx.guild is None:
             content = "Guild object is required for this command to be executed"
@@ -84,7 +85,8 @@ class LilyLoggingController:
             moderator.id,
             target_user.id,
             mod_type,
-            reason
+            reason,
+            metadata
         )
 
         """ Send Action DM to the User"""

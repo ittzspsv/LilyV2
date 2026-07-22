@@ -626,19 +626,30 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         target_user_id: int,
         mod_type: str,
         reason: str = "No reason provided",
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Optional[int]:
+        metadata = metadata or {}
+
         timestamp = datetime.now(pytz.utc).isoformat()
+
         await self.ensure_staff(moderator_id, guild_id)
         await self.ensure_member(target_user_id, guild_id)
 
         _guild_id = self.get_secondary_guild_id(guild_id) or guild_id
 
-
         row_id = await self.execute(
             """
             INSERT INTO modlogs
-                (guild_id, moderator_id, target_user_id, mod_type, reason, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (
+                    guild_id,
+                    moderator_id,
+                    target_user_id,
+                    mod_type,
+                    reason,
+                    timestamp,
+                    metadata
+                )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 _guild_id,
@@ -647,8 +658,10 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
                 mod_type.lower(),
                 reason,
                 timestamp,
+                json.dumps(metadata),
             ),
         )
+
         return row_id
 
     async def log_proof_action(
