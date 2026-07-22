@@ -25,7 +25,7 @@ from ..classes.ticketing_classes import (
 )
 from ..components.LilyTicketToolComponents import (
     TicketComponentEmbed,
-    TicketSelector,
+    TicketSelectComponent,
     TicketLogComponent,
     TicketLogDirectMessage
 )
@@ -53,13 +53,6 @@ class LilyTicketingController:
                     if not config:
                         continue
 
-                    content, embeds = ParseAdvancedEmbed(
-                        config["EmbedConfigs"]["TicketPanelEmbed"]
-                    )
-
-                    if not isinstance(embeds, list):
-                        embeds = [embeds]
-
                     channel = bot.get_channel(channel_id)
 
                     if not channel:
@@ -69,7 +62,7 @@ class LilyTicketingController:
                             print(f"[InitializeTicketView] Missing channel {channel_id}")
                             continue
 
-                    selector_view = TicketSelector(config, DatabaseAccess(self.bot_db, self.logging_controller))
+                    selector_view = TicketSelectComponent(config, DatabaseAccess(self.bot_db, self.logging_controller))
                     bot.add_view(selector_view)
 
                     try:
@@ -77,15 +70,13 @@ class LilyTicketingController:
                             message = await channel.fetch_message(message_id)
 
                             await message.edit(
-                                content=content,
-                                embeds=embeds,
+                                content=None,
+                                embeds=[],
                                 view=selector_view
                             )
 
                         else:
                             message = await channel.send(
-                                content=content,
-                                embeds=embeds,
                                 view=selector_view
                             )
 
@@ -152,14 +143,12 @@ class LilyTicketingController:
                 raise RuntimeError("Invalid ticket panel channel.")
 
 
-            selector_view = TicketSelector(json_data, DatabaseAccess(self.bot_db, self.logging_controller))
+            selector_view = TicketSelectComponent(json_data, DatabaseAccess(self.bot_db, self.logging_controller))
 
             ctx.bot.add_view(selector_view)
 
 
             message_obj = await channel_obj.send(
-                content=content,
-                embeds=embeds,
                 view=selector_view
             )
 

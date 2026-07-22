@@ -673,6 +673,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
         self.claim_ticket.label = "Claimed"
         self.claim_ticket.style = discord.ButtonStyle.secondary
         self.ticket_message = interaction.message
+        assert interaction.message is not None
         await interaction.message.edit(view=self)
         await interaction.followup.send(embed=simple_embed(f"{interaction.user.mention} has claimed the ticket!"))
 
@@ -1140,53 +1141,48 @@ class TicketModal(discord.ui.Modal):
                 ephemeral=True
             )
 
-class TicketSelector(discord.ui.View):
-    def __init__(self, json_data: dict, db: DatabaseAccess):
+class TicketSelectComponent(discord.ui.LayoutView):
+    def __init__(self, json_data: dict, db: DatabaseAccess) -> None:
         super().__init__(timeout=None)
 
         self.json_data = json_data
         self.db = db
         self.tickets = json_data.get("Tickets", [])
+        panel_config = json_data.get("PanelConfig", {})
 
-        options = [
-            discord.SelectOption(
-                label=ticket["label"],
-                emoji=ticket.get("emoji", None),
-                description=ticket.get("description", None),
-                value=str(index)
-            )
-            for index, ticket in enumerate(self.tickets)
-        ]
+        self.ticket_options = discord.ui.Select(
+                            placeholder="Choose a ticket type...",
+                            custom_id="ticket_selector_main",
+                            options=[
+                                discord.SelectOption(
+                                    label=ticket["label"],
+                                    emoji=ticket.get("emoji", None),
+                                    description=ticket.get("description", None),
+                                    value=str(index)
+                                )
+                                for index, ticket in enumerate(self.tickets)
+                            ]
+                        )
 
-        self.add_item(
-            TicketSelect(
-                options=options,
-                tickets=self.tickets,
-                json_data=self.json_data,
-                db=self.db
-            )
+        self.ticket_options.callback = self.ticket_selector_callback
+
+        container = discord.ui.Container(
+            discord.ui.Section(
+                discord.ui.TextDisplay(content=f"## {panel_config["title"]}"),
+                discord.ui.TextDisplay(content=panel_config["description"]),
+                accessory=discord.ui.Thumbnail(
+                    media=panel_config["thumbnail"]["url"],
+                ),
+            ),
+            discord.ui.ActionRow(
+                self.ticket_options
+            )       
         )
 
-class TicketSelect(discord.ui.Select):
-    def __init__(
-        self,
-        options: list[discord.SelectOption],
-        tickets: list[dict],
-        json_data: dict,
-        db: DatabaseAccess
-    ):
-        super().__init__(
-            placeholder="Choose a ticket type...",
-            options=options,
-            custom_id="ticket_selector_main"
-        )
+        self.add_item(container)
 
-        self.tickets = tickets
-        self.json_data = json_data
-        self.db = db
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_index = int(self.values[0])
+    async def ticket_selector_callback(self, interaction: discord.Interaction):
+        selected_index = int(self.ticket_options.values[0])
         selected_ticket = self.tickets[selected_index]
 
         assert interaction.message is not None

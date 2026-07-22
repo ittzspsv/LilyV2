@@ -80,34 +80,51 @@ class LilyTicketTool(commands.Cog):
             assert isinstance(member, discord.Member)
             await self.controller.ticket_stats(interaction, member)
 
-    '''
+
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @permission(command_name="ticket_update")
     @ticket.command(name='update', description='Update the ticket config')
-    async def ticket_update(self, ctx: commands.Context, message_id: str):
+    async def ticket_update(
+        self,
+        interaction: discord.Interaction,
+        message_id: str,
+        attachment: discord.Attachment,
+    ):
         if self.controller is None:
+            await interaction.response.send_message(
+                "Ticket controller is unavailable.",
+                ephemeral=True,
+            )
             return
 
-        if ctx.guild is None:
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                embed=simple_embed("This command can only be used in a server.", 'cross'),
+                ephemeral=True,
+            )
             return
 
-        json_attachment = None
-
-        for attachment in ctx.message.attachments:
-            if attachment.filename.endswith(".json"):
-                json_attachment = attachment
-                break
-
-        if json_attachment is None:
-            await ctx.send("Please attach a `.json` config file")
+        if not attachment.filename.endswith(".json"):
+            await interaction.response.send_message(
+                embed=simple_embed("Please upload a `.json` configuration file.", 'cross'),
+                ephemeral=True,
+            )
             return
 
         try:
-            content = await json_attachment.read()
+            content = await attachment.read()
             json_data = json.loads(content.decode("utf-8"))
-
         except json.JSONDecodeError:
-            await ctx.send("Invalid JSON file provided")
+            await interaction.response.send_message(
+                embed=simple_embed("The uploaded file is not valid JSON.", 'cross'),
+                ephemeral=True,
+            )
+            return
+        except UnicodeDecodeError:
+            await interaction.response.send_message(
+                embed=simple_embed("The file must be UTF-8 encoded.", 'cross'),
+                ephemeral=True,
+            )
             return
 
         await self.bot.db.execute(
@@ -118,12 +135,16 @@ class LilyTicketTool(commands.Cog):
             """,
             (
                 json.dumps(json_data),
-                ctx.guild.id,
-                int(message_id)
-            )
+                interaction.guild.id,
+                int(message_id),
+            ),
         )
-        await ctx.reply("Ticket panel config has been updated")
-    '''
+
+        await interaction.response.send_message(
+            embed=simple_embed("Ticket panel configuration has been updated."),
+            ephemeral=True,
+        )
+
 
 async def setup(bot):
     cog = LilyTicketTool(bot)
