@@ -79,7 +79,11 @@ emoji = {
     'perm' : '<:PermanentIcon:1467159355119108116>',
     'beli' : '<:beli:1467159970842939443>',
     "user_claim": '<:userroundcheck:1528470542238224548>',
-    "user_unclaim": '<:userroundminus:1528470540300583073>'
+    "user_unclaim": '<:userroundminus:1528470540300583073>',
+    "pin": "<:pin:1528474571391631514>",
+    "right": "<:chevronright:1529917528929992845>",
+    "left": "<:chevronleft:1529917525901578331>",
+    "paper_clip": "<:paperclip:1529917520847310988>"
 }
 
 img = {
