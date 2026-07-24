@@ -282,8 +282,6 @@ class LilyModeration(commands.Cog):
         interaction: discord.Interaction,
         member: discord.User | discord.Member | None = None,
         mod_type: ModType = ModType.All,
-        page_start: int = 0,
-        page_end: int = 5,
         moderator: discord.User | discord.Member | None = None
     ):
         if self.controller is None:
@@ -302,9 +300,7 @@ class LilyModeration(commands.Cog):
                 target_user_id=target_id,
                 user=user,
                 moderator=moderator,
-                mod_type=mod_type.value,
-                page_start=page_start,
-                page_end=page_end
+                mod_type=mod_type.value
             )
 
         except Exception as e:

@@ -131,4 +131,3 @@ class Lily(commands.Bot):
                     embed=simple_embed(str(error), "cross"),
                     ephemeral=True,
                 )
-            
