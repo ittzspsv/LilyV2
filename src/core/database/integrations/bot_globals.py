@@ -887,15 +887,11 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         target_user_id: int,
         moderator_id: int,
         mod_type: str = "all",
-        page_start: int | None = None,
-        page_end: int | None = None,
     ) -> Dict[str, Any]:
         """If there is a secondary guild id then we should fetch modlogs of that guild id than"""
         _guild_id = self.get_secondary_guild_id(guild_id) or guild_id
-        DEFAULT_FETCH_LIMIT = 5
 
         base_params: list = [_guild_id, target_user_id]
-        base_params_no_mod = base_params.copy()  # snapshot before moderator_id is appended
 
         base_condition = "WHERE guild_id = ? AND target_user_id = ? AND deleted = 0"
         if moderator_id:
@@ -926,45 +922,26 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         )
         mod_type_counts = {r["mod_type"]: r["cnt"] for r in type_rows}
 
-        start = page_start or 0
-        limit = (page_end - start) if page_end is not None else DEFAULT_FETCH_LIMIT
-
-        log_params: list = base_params_no_mod.copy() 
-        log_query = (
-            "SELECT ml.id, ml.moderator_id, ml.mod_type, ml.reason, ml.timestamp, "
-            "GROUP_CONCAT(p.id) AS proof_ids, "
-            "GROUP_CONCAT(p.proof_reference) AS proof_references "
-            "FROM modlogs ml "
-            "LEFT JOIN proofs p ON ml.id = p.case_id "
-            "WHERE ml.guild_id = ? AND ml.target_user_id = ? AND ml.deleted = 0"
-        )
-        if moderator_id:
-            log_query += " AND ml.moderator_id = ?"
-            log_params.append(moderator_id)
+        log_query = f"SELECT id, moderator_id, mod_type, reason, timestamp FROM modlogs {base_condition}"
+        log_params = base_params.copy()
         if type_filter:
-            log_query += " AND lower(ml.mod_type) = ?"
+            log_query += " AND lower(mod_type) = ?"
             log_params.append(normalized_type)
-
-        log_query += " GROUP BY ml.id ORDER BY ml.timestamp DESC LIMIT ? OFFSET ?"
-        log_params.extend([limit, start])
+        log_query += " ORDER BY id DESC"
 
         log_rows = await self.fetch_all(log_query, tuple(log_params))
 
-        logs = [
-            {
+        logs = []
+        for row in log_rows:
+            proofs_reference = await self.get_proof_references(_guild_id, case_id=row["id"])
+            logs.append({
                 "case_id": row["id"],
                 "moderator_id": row["moderator_id"],
                 "mod_type": row["mod_type"].lower(),
                 "reason": row["reason"],
-                "proofs_reference": (
-                    [int(x.strip()) for x in row["proof_references"].split(",")]
-                    if row["proof_references"]
-                    else []
-                ),
+                "proofs_reference": proofs_reference,
                 "timestamp": row["timestamp"],
-            }
-            for row in log_rows
-        ]
+            })
 
         return {
             "success": True,
