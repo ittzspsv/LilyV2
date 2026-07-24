@@ -294,49 +294,48 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
             result.update(role_data.get("assignment_roles", set()))
         return result
 
-    async def set_role_assignment_scope(
-        self, guild_id: int, role_id: int, scope: str
-    ) -> None:
-        await self.execute(
-            """
-            UPDATE roles
-            SET assignment_scope = ?
-            WHERE guild_id = ? AND role_id = ?
-            """,
-            (scope, guild_id, role_id),
-        )
+    def get_role_assignment_rules(self, guild_id: int, author_role_ids: List[int]) -> tuple:
         guild_cache = self.cache.get(guild_id)
         if not guild_cache:
-            return
-        role_cache = guild_cache.get("roles", {}).get(role_id)
-        if role_cache:
-            role_cache["assignment_scope"] = scope
+            return False, False, set(), set()
+        roles_cache = guild_cache.get("roles", {})
 
-    async def set_role_assignment_roles(
-        self, guild_id: int, role_id: int, roles: Set[int]
-    ) -> None:
-        await self.execute(
-            """
-            DELETE FROM role_assignments
-            WHERE guild_id = ? AND role_id = ?
-            """,
-            (guild_id, role_id),
-        )
-        for target_role_id in roles:
-            await self.execute(
-                """
-                INSERT OR IGNORE INTO role_assignments
-                    (guild_id, role_id, target_role_id)
-                VALUES (?, ?, ?)
-                """,
-                (guild_id, role_id, target_role_id),
-            )
-        guild_cache = self.cache.get(guild_id)
-        if not guild_cache:
-            return
-        role_cache = guild_cache.get("roles", {}).get(role_id)
-        if role_cache:
-            role_cache["assignment_roles"] = set(roles)
+        has_all = False
+        has_except_scope = False
+        except_ids: Set[int] = set()
+        specific_ids: Set[int] = set()
+
+        for rid in author_role_ids:
+            role_data = roles_cache.get(rid)
+            if not role_data:
+                continue
+            scope = role_data.get("assignment_scope", "none")
+            assignment_roles = role_data.get("assignment_roles", set())
+
+            if scope == "all":
+                has_all = True
+            elif scope == "specific":
+                specific_ids.update(assignment_roles)
+            elif scope == "except":
+                has_except_scope = True
+                except_ids.update(assignment_roles)
+
+        effective_except = except_ids - specific_ids
+        return has_all, has_except_scope, effective_except, specific_ids
+
+
+    def can_assign_role(self, guild_id: int, author_role_ids: List[int], target_role_id: int) -> bool:
+        has_all, has_except_scope, effective_except, specific_ids = self.get_role_assignment_rules(guild_id, author_role_ids)
+
+        if has_all:
+            return True
+        if target_role_id in specific_ids:
+            return True
+        if target_role_id in effective_except:
+            return False
+        if has_except_scope:
+            return True
+        return False
 
     async def configure_role(
         self,

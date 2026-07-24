@@ -220,46 +220,21 @@ class LilyUtility(commands.Cog):
 
         if interaction.guild.me.top_role <= role:
             return await interaction.response.send_message(embed=simple_embed("I cannot manage that role because it is above my top role.", 'cross'))
-        
+
         bot_db: BotGlobalsDatabaseAccess = self.bot.db
         author_role_ids = [r.id for r in author.roles]
         try:
-            mode = bot_db.get_role_assignment_scope(interaction.guild.id, author_role_ids)
-            role_ids = bot_db.get_role_assignment_roles(interaction.guild.id, author_role_ids)
+            allowed = bot_db.can_assign_role(interaction.guild.id, author_role_ids, role.id)
 
-            if mode:
-                if mode == 'none':
-                    return await interaction.response.send_message(embed=simple_embed(f'You are not allowed for role assignment', 'cross'))
+            if not allowed:
+                return await interaction.response.send_message(embed=simple_embed("You are not allowed to assign this role.", 'cross'))
 
-                if mode == 'all':
-                    if role in user.roles:
-                        await user.remove_roles(role, reason=f"Role removed by {author}")
-                        return await interaction.response.send_message(embed=simple_embed(f"Removed role **{role.name}** from **{user.name}**."))
-                    else:
-                        await user.add_roles(role, reason=f"Role given by {author}")
-                        return await interaction.response.send_message(embed=simple_embed(f"Added role **{role.name}** to **{user.name}**."))
-                elif mode == 'specific':
-                    if role.id in role_ids:
-                        if role in user.roles:
-                            await user.remove_roles(role, reason=f"Role removed by {author}")
-                            return await interaction.response.send_message(embed=simple_embed(f"Removed role **{role.name}** from **{user.name}**."))
-                        else:
-                            await user.add_roles(role, reason=f"Role given by {author}")
-                            return await interaction.response.send_message(embed=simple_embed(f"Added role **{role.name}** to **{user.name}**."))
-                    else:
-                        return await interaction.response.send_message(embed=simple_embed(f"You are not allowed for role assignment", 'cross'))
-                elif mode == 'except':
-                    if role.id not in role_ids:
-                        if role in user.roles:
-                            await user.remove_roles(role, reason=f"Role removed by {author}")
-                            return await interaction.response.send_message(embed=simple_embed(f"Removed role **{role.name}** from **{user.name}**."))
-                        else:
-                            await user.add_roles(role, reason=f"Role given by {author}")
-                            return await interaction.response.send_message(embed=simple_embed(f"Added role **{role.name}** to **{user.name}**."))
-                    else:
-                        return await interaction.response.send_message(embed=simple_embed(f"You are not allowed to assign this role.", 'cross'))
+            if role in user.roles:
+                await user.remove_roles(role, reason=f"Role removed by {author}")
+                return await interaction.response.send_message(embed=simple_embed(f"Removed role **{role.name}** from **{user.name}**."))
             else:
-                return await interaction.response.send_message(embed=simple_embed(f"Column encountered a NULL parameter which is not expected", 'cross'))
+                await user.add_roles(role, reason=f"Role given by {author}")
+                return await interaction.response.send_message(embed=simple_embed(f"Added role **{role.name}** to **{user.name}**."))
         except Exception as e:
             print(e)
 
