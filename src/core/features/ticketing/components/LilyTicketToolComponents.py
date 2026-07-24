@@ -5,7 +5,6 @@ import re
 import discord
 from discord.ext import commands
 from discord.ext.commands import MemberConverter
-from discord.utils import MISSING
 
 from src.core.configs.sBotDetails import (
     emoji,
@@ -13,9 +12,8 @@ from src.core.configs.sBotDetails import (
 )
 
 from src.core.features.moderation.components.sLilyModerationComponents import (
-    ProofsView,
     action_log,
-    build_mod_logs_embed_absolute,
+    CaseListView
 )
 
 from src.core.features.moderation.utils.moderation_utils import (
@@ -765,9 +763,7 @@ class TicketComponentEmbed(discord.ui.LayoutView):
             "guild_id": _guild_id,
             "target_user_id": member_data["id"],
             "moderator_id": None,
-            "mod_type": "all",
-            "page_start": 0,
-            "page_end": 5
+            "mod_type": "all"
         }
 
         result = await self.db.bot_db.fetch_mod_logs(**payload)
@@ -775,22 +771,13 @@ class TicketComponentEmbed(discord.ui.LayoutView):
             await interaction.response.send_message(embed=simple_embed("No cases found.", 'cross'), ephemeral=True)
             return  
 
-        embed =  build_mod_logs_embed_absolute(
-            username=member_data["username"],
-            avatar=member_data["avatar"],
-            display_logs=result["logs"],
-            mod_type_counts=result["counts"],
-            total_count=result["total_logs"],
-            page_start=0
-        )
-        
-        logging_channel_id = self.db.bot_db.get_channel(_guild_id, "logs_channel")
-        if logging_channel_id is not None and result["proofs_exists"]:
-            view = ProofsView(result["logs"], logging_channel_id, _guild_id)
-            await interaction.response.send_message(embeds=embed, view=view, ephemeral=True)
-        else:
-            await interaction.response.send_message(embeds=embed, ephemeral=True)
+        view = CaseListView((member_data["username"], member_data["avatar"]), result, self.db.bot_db)
 
+        await interaction.response.send_message(
+            view=view,
+            allowed_mentions=discord.AllowedMentions.none(),
+            ephemeral=True
+        )
     async def ban_callback(self, interaction: discord.Interaction):
         if not await self._check_permissions(interaction):
             return

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import discord
 from src.core.utils.embeds.sLilyEmbed import simple_embed
-from typing import Optional, cast, Any, TYPE_CHECKING, List, Dict
+from typing import Optional, cast, Any, TYPE_CHECKING, List, Dict, Tuple
 from datetime import datetime, timezone
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
 from src.core.logging.components.logging_components import ProofsComponentCommandModal
 
 import src.core.configs.sBotDetails as Config
 import io
+from math import ceil
 from src.core.configs.sBotDetails import img, emoji
 import re
 
@@ -249,176 +250,165 @@ def build_ms_embed(
 
     return embeds
 
-def build_mod_logs_embed(
-    user: discord.User | discord.Member,
-    display_logs: list[dict],
-    mod_type_counts: dict,
-    total_count: int,
-    page_start: int = 0
-) -> list[discord.Embed]:
+class CaseListView(discord.ui.LayoutView):
+    PAGE_SIZE = 3
 
-    now = datetime.now(timezone.utc)
+    def __init__(
+        self,
+        user: Tuple[str, str],
+        case_list_data: Dict[str, Any],
+        db: BotGlobalsDatabaseAccess,
+        page: int = 0,
+    ) -> None:
+        super().__init__(timeout=300)
 
-    embed_summary = (
-        discord.Embed(
-            color=16777215,
-            title=f"{Config.emoji['arrow']} {user.display_name}'s Moderation Logs",
-        )
-        .set_thumbnail(url=user.avatar.url if user.avatar else Config.img['member'])
-        .set_image(url=Config.img['border'])
-        .add_field(name="Total Logs", value=str(total_count), inline=True)
-        .add_field(name="Date", value=now.strftime("%Y-%m-%d"), inline=True)
-    )
+        self.user = user
+        self.case_list_data = case_list_data
+        self.db = db
 
-    summary_text = "\n".join(
-        f"- {action.title()}s: `{count}`"
-        for action, count in mod_type_counts.items()
-    )
-
-    embed_summary.add_field(
-        name="Logs Summary",
-        value=summary_text or "No actions recorded",
-        inline=False
-    )
-
-    embed_logs = (
-        discord.Embed(
-            color=16777215,
-            title=f"{Config.emoji['arrow']} Log's Overview",
-        )
-        .set_thumbnail(url=Config.img['logs'])
-        .set_image(url=Config.img['border'])
-    )
-
-    for index, log in enumerate(display_logs, start=page_start + 1):
-
-        ts: str = cast(str, log.get("timestamp"))
-
-        try:
-            dt = datetime.fromisoformat(ts)
-        except Exception:
-            dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-
-        ts_unix = int(dt.timestamp())
-        reason_text = log.get("reason") or "No reason provided"
-
-        embed_logs.add_field(
-            name=f"📌 Log #{log.get('case_id')} • {log['mod_type'].title()}",
-            value=(
-                f"> {Config.emoji['shield']} Moderator : <@{log['moderator_id']}>\n"
-                f"> {Config.emoji['pencil']} Reason : **{reason_text}**\n"
-                f"> {Config.emoji['clock']} Time : <t:{ts_unix}:R>"
-            ),
-            inline=False
-        )
-
-    return [embed_summary, embed_logs]
-
-def build_mod_logs_embed_absolute(
-    username: str,
-    avatar: str,
-    display_logs: list[dict],
-    mod_type_counts: dict,
-    total_count: int,
-    page_start: int = 0
-) -> list[discord.Embed]:
-
-    now = datetime.now(timezone.utc)
-
-    embed_summary = (
-        discord.Embed(
-            color=16777215,
-            title=f"{Config.emoji['arrow']} {username}'s Moderation Logs",
-        )
-        .set_thumbnail(url=avatar if avatar else Config.img['member'])
-        .set_image(url=Config.img['border'])
-        .add_field(name="Total Logs", value=str(total_count), inline=True)
-        .add_field(name="Date", value=now.strftime("%Y-%m-%d"), inline=True)
-    )
-
-    summary_text = "\n".join(
-        f"- {action.title()}s: `{count}`"
-        for action, count in mod_type_counts.items()
-    )
-
-    embed_summary.add_field(
-        name="Logs Summary",
-        value=summary_text or "No actions recorded",
-        inline=False
-    )
-
-    embed_logs = (
-        discord.Embed(
-            color=16777215,
-            title=f"{Config.emoji['arrow']} Log's Overview",
-        )
-        .set_thumbnail(url=Config.img['logs'])
-        .set_image(url=Config.img['border'])
-    )
-
-    for index, log in enumerate(display_logs, start=page_start + 1):
-
-        ts = cast(str, log.get("timestamp"))
-
-        try:
-            dt = datetime.fromisoformat(ts)
-        except Exception:
-            dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-
-        ts_unix = int(dt.timestamp())
-        reason_text = log.get("reason") or "No reason provided"
-
-        embed_logs.add_field(
-            name=f"📌 Log #{log.get('case_id')} • {log['mod_type'].title()}",
-            value=(
-                f"> {Config.emoji['shield']} Moderator : <@{log['moderator_id']}>\n"
-                f"> {Config.emoji['pencil']} Reason : **{reason_text}**\n"
-                f"> {Config.emoji['clock']} Time : <t:{ts_unix}:R>"
-            ),
-            inline=False
-        )
-
-    return [embed_summary, embed_logs]
-
-class ProofsView(discord.ui.View):
-    def __init__(self, logs, logging_channel_id: int, guild_id: int):
-        super().__init__(timeout=180)
-
-        self.logs_channel_id = logging_channel_id
         self.channel = None
-        self.guild = None
-        self._guild_id: int = guild_id
 
-        self.options = []
-        self.proofs = {}
-        for log in logs:
-            if log["proofs_reference"]:
-                self.options.append(
-                    discord.SelectOption(label=f"Proofs #{log['case_id']}", description="All proofs associated with that case", value=log["case_id"])
+        all_logs = self.case_list_data["logs"]
+        self.total_pages = max(1, ceil(len(all_logs) / self.PAGE_SIZE))
+        self.page = max(0, min(page, self.total_pages - 1))
+
+        start = self.page * self.PAGE_SIZE
+        end = start + self.PAGE_SIZE
+        page_logs = all_logs[start:end]
+
+        case_summary = "\n".join(
+            f"> - {action.title()}s: **{count}**"
+            for action, count in case_list_data["counts"].items()
+        )
+
+        total_logs = self.case_list_data["total_logs"]
+
+        case_info = discord.ui.Container(
+            discord.ui.Section(
+                discord.ui.TextDisplay(content=f"# {user[0]}'s Case List"),
+                discord.ui.TextDisplay(content=f"### Logs Summary\n{case_summary}"),
+                discord.ui.TextDisplay(content=f"### Total Logs\n- {total_logs}"),
+                accessory=discord.ui.Thumbnail(
+                    media=user[1],
+                ),
+            ),
+        )
+
+        cases: List[discord.ui.Item] = []
+
+        for log in page_logs:
+            ts: str = cast(str, log.get("timestamp"))
+
+            try:
+                dt = datetime.fromisoformat(ts)
+            except Exception:
+                dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+
+            ts_unix = int(dt.timestamp())
+            case_id = log.get("case_id")
+
+            if len(log["proofs_reference"]) > 0:
+                proof_button: discord.ui.Button = discord.ui.Button(
+                    style=discord.ButtonStyle.secondary,
+                    emoji=emoji["paper_clip"],
+                    custom_id=f"case_proof:{case_id}",
+                )
+                proof_button.callback = self.proofs_button_callback
+
+                cases.append(
+                    discord.ui.Section(
+                        discord.ui.TextDisplay(
+                            content=(
+                                f"### {emoji["pin"]} Log #{case_id} • {log['mod_type'].title()}\n"
+                                f"> {Config.emoji['shield']} Moderator: <@{log['moderator_id']}>\n"
+                                f"> {Config.emoji['pencil']} Reason: {log['reason']}\n"
+                                f"> {Config.emoji['clock']} Time: <t:{ts_unix}:R>"
+                            )
+                        ),
+                        accessory=proof_button,
+                    )
                 )
 
-                self.proofs[log['case_id']] = log["proofs_reference"]
+            else:
+                cases.append(
+                    discord.ui.TextDisplay(
+                    content=(
+                        f"### {emoji["pin"]} Log #{case_id} • {log['mod_type'].title()}\n"
+                        f"> {Config.emoji['shield']} Moderator: <@{log['moderator_id']}>\n"
+                        f"> {Config.emoji['pencil']} Reason: {log['reason']}\n"
+                        f"> {Config.emoji['clock']} Time: <t:{ts_unix}:R>"
+                    )
+                ))
 
-        self.proofs_selector = discord.ui.Select(
-            placeholder="Show Proofs...",
-            min_values=1,
-            max_values=1,
-            options=self.options
+        case_list = discord.ui.Container(
+            discord.ui.TextDisplay(content="# Log's Overview"),
+            discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
+            *cases,
         )
 
-        self.proofs_selector.callback = self.proofs_selector_callback
-        self.add_item(self.proofs_selector)
+        self.add_item(case_info)
+        self.add_item(case_list)
+        self.add_item(self.pagination())
 
-    async def proofs_selector_callback(self, interaction: discord.Interaction):
-        if not interaction.guild:
+    def pagination(self) -> discord.ui.ActionRow:
+        row = discord.ui.ActionRow()
+
+        prev_button: discord.ui.Button = discord.ui.Button(
+            style=discord.ButtonStyle.secondary,
+            emoji=emoji["left"],
+            disabled=self.page <= 0,
+        )
+        prev_button.callback = self.previous_button_callback
+        row.add_item(prev_button)
+
+        page_indicator: discord.ui.Button = discord.ui.Button(
+            label=f"Page {self.page + 1}/{self.total_pages}",
+            style=discord.ButtonStyle.secondary,
+            disabled=True,
+        )
+        row.add_item(page_indicator)
+
+        next_button: discord.ui.Button = discord.ui.Button(
+            style=discord.ButtonStyle.secondary,
+            emoji=emoji["right"],
+            disabled=self.page >= self.total_pages - 1,
+        )
+        next_button.callback = self.next_button_callback
+        row.add_item(next_button)
+
+        return row
+
+    async def previous_button_callback(self, interaction: discord.Interaction) -> None:
+        new_view = CaseListView(self.user, self.case_list_data, page=self.page - 1, db=self.db)
+        await interaction.response.edit_message(view=new_view, allowed_mentions=discord.AllowedMentions.none())
+
+    async def next_button_callback(self, interaction: discord.Interaction) -> None:
+        new_view = CaseListView(self.user, self.case_list_data, page=self.page + 1, db=self.db)
+        await interaction.response.edit_message(view=new_view, allowed_mentions=discord.AllowedMentions.none())
+
+    async def proofs_button_callback(self, interaction: discord.Interaction) -> None:
+        assert interaction.guild is not None
+        custom_id = interaction.custom_id
+        if custom_id is None:
             return
-        case_id = int(self.proofs_selector.values[0])
-        proofs_msg_id = self.proofs[case_id]
 
-        await interaction.response.defer()
+        case_id_str = custom_id.split(":", 1)[1] if ":" in custom_id else None
+        if case_id_str is None:
+            return
+        case_id = int(case_id_str)
 
+        proofs_references = await self.db.get_proof_references(interaction.guild.id, case_id=case_id)
+        if len(proofs_references) <= 0:
+            await interaction.response.send_message(
+                embed=simple_embed("No Proofs Found for the given case id", 'cross'), ephemeral=True
+            )
+            return
 
-        if not self.logs_channel_id:
+        logs_channel_id = self.db.get_channel(interaction.guild.id, "logs_channel")
+
+        await interaction.response.defer(ephemeral=True)
+
+        if not logs_channel_id:
             await interaction.followup.send(
                 embed=simple_embed(
                     "Proofs cannot be retrieved: logging channel is not configured.",
@@ -427,63 +417,29 @@ class ProofsView(discord.ui.View):
                 ephemeral=True
             )
             return
-        
+
         if self.channel is None:
-            if self._guild_id == interaction.guild.id:
+            self.channel = interaction.guild.get_channel(logs_channel_id)
 
-                self.channel = interaction.guild.get_channel(self.logs_channel_id)
+            if self.channel is None:
+                try:
+                    self.channel = await interaction.guild.fetch_channel(logs_channel_id)
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                    await interaction.followup.send(
+                        embed=simple_embed(
+                            "Proofs cannot be retrieved: logging channel is missing or inaccessible.",
+                            "cross"
+                        ),
+                        ephemeral=True
+                    )
+                    return
 
-                if self.channel is None:
-                    try:
-                        self.channel = await interaction.guild.fetch_channel(self.logs_channel_id)
-                    except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                        await interaction.followup.send(
-                            embed=simple_embed(
-                                "Proofs cannot be retrieved: logging channel is missing or inaccessible.",
-                                "cross"
-                            ),
-                            ephemeral=True
-                        )
-                        return
-            else:
-                if self.guild is None:
-                    self.guild =  interaction.client.get_guild(self._guild_id)
-
-                    if self.guild is None:
-                        try:
-                            self.guild = await interaction.client.fetch_guild(self._guild_id)
-                        except (discord.NotFound, discord.HTTPException):
-                             await interaction.followup.send(
-                            embed=simple_embed(
-                                "Proofs cannot be retrieved: supplementary guild is missing or inaccessible.",
-                                "cross"
-                            ),
-                            ephemeral=True
-                        )
-                        return
-                    
-                self.channel = self.guild.get_channel(self.logs_channel_id)
-
-                if self.channel is None:
-                    try:
-                        self.channel = await self.guild.fetch_channel(self.logs_channel_id)
-                    except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                        await interaction.followup.send(
-                            embed=simple_embed(
-                                "Proofs cannot be retrieved: logging channel is missing or inaccessible.",
-                                "cross"
-                            ),
-                            ephemeral=True
-                        )
-                        return
-
-            
         if not isinstance(self.channel, discord.TextChannel):
             return
 
         files: list[discord.File] = []
 
-        for message_id in proofs_msg_id:
+        for message_id in proofs_references:
             try:
                 message = await self.channel.fetch_message(message_id)
             except discord.NotFound:
@@ -504,10 +460,7 @@ class ProofsView(discord.ui.View):
                 try:
                     data = await attachment.read()
                     files.append(
-                        discord.File(
-                            fp=io.BytesIO(data),
-                            filename=attachment.filename
-                        )
+                        discord.File(fp=io.BytesIO(data), filename=attachment.filename)
                     )
                 except discord.HTTPException:
                     continue
@@ -526,7 +479,7 @@ class ProofsView(discord.ui.View):
             content=f"Proofs for case `{case_id}`",
             files=files,
             ephemeral=True
-        )
+        )  
 
 class AppealForumCustomize(discord.ui.Modal):
     name = discord.ui.Label(

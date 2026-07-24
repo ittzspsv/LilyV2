@@ -15,7 +15,6 @@ from src.core.logging.lily_logging import LilyLoggingController
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.utils.lily_utility import utcnow
 
-from ..components.sLilyModerationComponents import CaseProofsView, ProofsView
 from ....utils.components.sLIlyGlobalComponents import CommandInfo
 
 
@@ -417,9 +416,7 @@ class LilyModerationController:
         target_user_id: int,
         user: discord.Member | discord.User,
         moderator: discord.User | discord.Member | None = None,
-        mod_type: str = "all",
-        page_start: int = 0,
-        page_end: int = 5
+        mod_type: str = "all"
     ):
 
         if interaction.guild is None:
@@ -435,9 +432,7 @@ class LilyModerationController:
             "guild_id": interaction.guild.id,
             "target_user_id": target_user_id,
             "moderator_id": moderator.id if moderator else None,
-            "mod_type": mod_type,
-            "page_start": page_start,
-            "page_end": page_end
+            "mod_type": mod_type
         }
 
         result = await self.bot_db.fetch_mod_logs(**payload)
@@ -446,22 +441,8 @@ class LilyModerationController:
             await interaction.response.send_message(embed=simple_embed("No cases found.", 'cross'))
             return
 
-        embed =  build_mod_logs_embed(
-            user=user,
-            display_logs=result["logs"],
-            mod_type_counts=result["counts"],
-            total_count=result["total_logs"],
-            page_start=page_start
-        )
-        """ This is basically to handle secondary guild.  IN cases where you guys need to have an appeal server and you wanna fetch the modlogs from an secondary server only """
-
-        _guild_id = self.bot_db.get_secondary_guild_id(interaction.guild.id) or interaction.guild.id
-        logging_channel_id = self.bot_db.get_channel(_guild_id, "logs_channel")
-        if logging_channel_id is not None and result["proofs_exists"]:
-            view = ProofsView(result["logs"], logging_channel_id, _guild_id)
-            await interaction.response.send_message(embeds=embed, view=view)
-        else:
-            await interaction.response.send_message(embeds=embed)
+        view = CaseListView((user.display_name.title(), user.display_avatar.url), result, self.bot_db)
+        await interaction.response.send_message(view=view, allowed_mentions=discord.AllowedMentions.none())
 
     async def moderation_insights(self, interaction: discord.Interaction):
         if interaction.guild is None:
