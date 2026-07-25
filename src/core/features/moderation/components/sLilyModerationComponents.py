@@ -129,9 +129,6 @@ class ModerationInsights(discord.ui.LayoutView):
             except discord.HTTPException:
                 pass
 
-from typing import Optional
-import discord
-
 
 def action_log(
     action: str,
@@ -668,7 +665,8 @@ class AppealModal(discord.ui.Modal):
             name=f"{interaction.user.display_name}'s {self.case['mod_type'].title()} Appeal",
             file=avatar,
             applied_tags=[tag] if tag else [],
-            embeds=[appeal_embed, case_info_embed]
+            embeds=[appeal_embed, case_info_embed],
+            content=f"<@{self.case['moderator_id']}>"
         )
 
         assert interaction.client.user is not None

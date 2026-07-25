@@ -643,6 +643,11 @@ class LilyModerationController:
             await interaction.response.send_message(embed=simple_embed("Unable to find the case", 'cross'))
             return
 
+        moderator = case["moderator_id"]
+        if interaction.user.id != moderator:
+            await interaction.response.send_message(embed=simple_embed(f"This action has been denied.  Only <@{moderator}> can Initiate it."))
+            return
+
         try:
             member = await interaction.guild.fetch_member(case["target_user_id"])
             if case["mod_type"] == "mute":
@@ -719,6 +724,11 @@ class LilyModerationController:
 
         if case is None:
             await interaction.response.send_message(embed=simple_embed("Unable to find the case", 'cross'))
+            return
+
+        moderator = case["moderator_id"]
+        if interaction.user.id != moderator:
+            await interaction.response.send_message(embed=simple_embed(f"This action has been denied.  Only <@{moderator}> can Initiate it."))
             return
         try:
             member = await interaction.guild.fetch_member(case["target_user_id"])

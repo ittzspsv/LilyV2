@@ -66,6 +66,10 @@ class LilyModeration(commands.Cog):
             appeal = await bot_db.get_appeal_complete(message.channel.id)
             if appeal is None:
                 return
+
+            if appeal["moderator_id"] != message.author.id:
+                await message.add_reaction("❌")
+                return
             
             member: discord.Member | None = self.cached_members.get(appeal["target_user_id"])
             if member is None:

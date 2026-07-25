@@ -238,7 +238,6 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             print(e)
 
-
     @customize.command(name="role", description="Customize your role")
     @app_commands.checks.cooldown(1, 5.0)
     async def customize_role(
