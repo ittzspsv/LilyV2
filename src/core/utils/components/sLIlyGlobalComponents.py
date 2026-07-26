@@ -8,7 +8,7 @@ from src.core.utils.embeds.sLilyEmbed import simple_embed
 
 
 
-from typing import List
+from typing import List, Dict, Any
 
 class CommandInfo(discord.ui.LayoutView):
     def __init__(self, ctx: commands.Context ,cmd_name: str, cmd_usage: List[str]):
@@ -56,79 +56,97 @@ class Avatar(discord.ui.LayoutView):
         self.add_item(action_row)
 
 class RoleCustomizationModal(discord.ui.Modal):
-    def __init__(self, role_id: int ,db: BotGlobalsDatabaseAccess, role_name: str) -> None:
+    def __init__(self, role_id: int ,db: BotGlobalsDatabaseAccess, role_name: str, role_config: Dict[str, Any]) -> None:
         super().__init__(title="Role Configuration")
 
         self.db = db
         self.role_id = role_id
         self.role_name = role_name
 
-    role_type = discord.ui.TextInput(
-        label='Role Type',
-        style=discord.TextStyle.short,
-        placeholder='What kind of role is this',
-        required=True,
-        max_length=100
-    )
-
-    ban_limit = discord.ui.TextInput(
-        label='Ban Limit',
-        style=discord.TextStyle.short,
-        placeholder='Hardcoded Limit that resets 24 hrs',
-        required=True,
-        max_length=5,
-        default="0"
-    )
-
-    ban_queue_option = discord.ui.Label(
-        text='Ban Queue',
-        description='Should ban`s undergo a validation before action?',
-        component=discord.ui.RadioGroup(
-            options=[
-                discord.RadioGroupOption(label="Yes", value="1", description="Their bans require approval through /moderation queue before execution."),
-                discord.RadioGroupOption(label="No", value="0", description="Their bans are executed instantly without queue validation.")
-            ]
+        self.role_type = discord.ui.TextInput(
+            label='Role Type',
+            style=discord.TextStyle.short,
+            placeholder='What kind of role is this',
+            required=True,
+            max_length=100,
+            default=role_config.get("role_type", "staff")
         )
-    )
 
-    assignment_scope = discord.ui.Label(
-        text='Role Assignment Scope',
-        description='Choose how broadly this role can assign roles',
-        component=discord.ui.RadioGroup(
-            options=[
-                discord.RadioGroupOption(
-                    label="None",
-                    value="none",
-                    description="This role cannot assign any roles."
-                ),
-                discord.RadioGroupOption(
-                    label="All",
-                    value="all",
-                    description="This role can assign all available roles."
-                ),
-                discord.RadioGroupOption(
-                    label="Except",
-                    value="except",
-                    description="This role can assign all roles except selected restricted roles."
-                ),
-                discord.RadioGroupOption(
-                    label="Specified",
-                    value="specific",
-                    description="This role can only assign specifically selected roles."
-                ),
-            ]
+        self.ban_limit = discord.ui.TextInput(
+            label='Ban Limit',
+            style=discord.TextStyle.short,
+            placeholder='Hardcoded Limit that resets 24 hrs',
+            required=True,
+            max_length=5,
+            default=str(role_config.get("ban_limit", "45"))
         )
-    )
 
-    assignment_roles = discord.ui.Label(
-        text='Role Assignments',
-        description='Select roles allowed under the chosen assignment scope',
-        component=discord.ui.RoleSelect(
-            min_values=1,
-            max_values=25,
-            required=False
+        _bq_option: int = role_config.get("ban_queue", 0)
+        _assign_scope: str = role_config.get("assignment_scope", "none") or "none"
+
+        self.ban_queue_option = discord.ui.Label(
+            text='Ban Queue',
+            description='Should ban`s undergo a validation before action?',
+            component=discord.ui.RadioGroup(
+                options=[
+                    discord.RadioGroupOption(label="Yes", value="1", description="Their bans require approval through /moderation queue before execution.", default=_bq_option == 1),
+                    discord.RadioGroupOption(label="No", value="0", description="Their bans are executed instantly without queue validation.", default=_bq_option != 1)
+                ],
+            )
         )
-    )
+
+        self.assignment_scope = discord.ui.Label(
+            text='Role Assignment Scope',
+            description='Choose how broadly this role can assign roles',
+            component=discord.ui.RadioGroup(
+                options=[
+                    discord.RadioGroupOption(
+                        label="None",
+                        value="none",
+                        description="This role cannot assign any roles.",
+                        default=_assign_scope == "none"
+                    ),
+                    discord.RadioGroupOption(
+                        label="All",
+                        value="all",
+                        description="This role can assign all available roles.",
+                        default=_assign_scope == "all"
+                    ),
+                    discord.RadioGroupOption(
+                        label="Except",
+                        value="except",
+                        description="This role can assign all roles except selected restricted roles.",
+                        default=_assign_scope == "except"
+                    ),
+                    discord.RadioGroupOption(
+                        label="Specified",
+                        value="specific",
+                        description="This role can only assign specifically selected roles.",
+                        default=_assign_scope == "specific"
+                    ),
+                ]
+            )
+        )
+
+        self.assignment_roles = discord.ui.Label(
+            text='Role Assignments',
+            description='Select roles allowed under the chosen assignment scope',
+            component=discord.ui.RoleSelect(
+                min_values=1,
+                max_values=25,
+                required=False,
+                default_values=[
+                    discord.Object(id=role_id)
+                    for role_id in role_config.get("assignment_roles", [])
+                ]
+            )
+        )
+
+        self.add_item(self.role_type)
+        self.add_item(self.ban_limit)
+        self.add_item(self.ban_queue_option)
+        self.add_item(self.assignment_roles)
+        self.add_item(self.assignment_scope)
 
     async def on_submit(self, interaction: discord.Interaction):
         if not interaction.guild:

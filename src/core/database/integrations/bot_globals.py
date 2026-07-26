@@ -395,6 +395,53 @@ class BotGlobalsDatabaseAccess(LilyDatabaseAccess):
         except Exception as exc:
             return {"success": False, "message": str(exc)}
 
+    async def get_role_configuration(
+        self,
+        guild_id: int,
+        role_id: int,
+    ) -> Dict[str, Any]:
+        row = await self.fetch_one(
+            """
+            SELECT
+                guild_id,
+                role_id,
+                ban_limit,
+                ban_queue,
+                assignment_scope,
+                role_type,
+                role_name
+            FROM roles
+            WHERE guild_id = ? AND role_id = ?
+            """,
+            (guild_id, role_id),
+        )
+
+        if row is None:
+            return {}
+
+        assignment_rows = await self.fetch_all(
+            """
+            SELECT target_role_id
+            FROM role_assignments
+            WHERE guild_id = ? AND role_id = ?
+            """,
+            (guild_id, role_id),
+        )
+
+        return {
+            "guild_id": row["guild_id"],
+            "role_id": row["role_id"],
+            "ban_limit": row["ban_limit"],
+            "ban_queue": row["ban_queue"],
+            "assignment_scope": row["assignment_scope"],
+            "role_type": row["role_type"],
+            "role_name": row["role_name"],
+            "assignment_roles": {
+                assignment["target_role_id"]
+                for assignment in assignment_rows
+            },
+        }
+
     async def set_prefix(self, guild_id: int, prefix: str) -> None:
         if guild_id not in self.cache:
             self.cache[guild_id] = {

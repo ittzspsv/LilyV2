@@ -568,11 +568,12 @@ class LilyUtility(commands.Cog):
 
     @permission(command_name="configure_role")
     @configure.command(name="role", description="Configure some attributes of the role")
+    @app_commands.guild_only()
     async def configure_role(self, interaction: discord.Interaction, role: discord.Role):
-        try:
-            await interaction.response.send_modal(RoleCustomizationModal(role.id, self.bot.db, role.name))
-        except Exception as e:
-            print(e)
+        assert interaction.guild is not None
+        bot_db: BotGlobalsDatabaseAccess = self.bot.db
+        role_config = await bot_db.get_role_configuration(interaction.guild.id, role.id)
+        await interaction.response.send_modal(RoleCustomizationModal(role.id, self.bot.db, role.name, role_config))
 
     @app_commands.command(name="nick", description="Set a nickname for a member")
     @permission(command_name="nick")
