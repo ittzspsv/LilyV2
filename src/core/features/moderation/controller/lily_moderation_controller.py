@@ -645,7 +645,7 @@ class LilyModerationController:
 
         moderator = case["moderator_id"]
         if interaction.user.id != moderator:
-            await interaction.response.send_message(embed=simple_embed(f"This action has been denied.  Only <@{moderator}> can Initiate it."))
+            await interaction.response.send_message(embed=simple_embed(f"This action has been denied.  Only <@{moderator}> can Initiate it.", 'cross'))
             return
 
         try:
@@ -728,7 +728,7 @@ class LilyModerationController:
 
         moderator = case["moderator_id"]
         if interaction.user.id != moderator:
-            await interaction.response.send_message(embed=simple_embed(f"This action has been denied.  Only <@{moderator}> can Initiate it."))
+            await interaction.response.send_message(embed=simple_embed(f"This action has been denied.  Only <@{moderator}> can Initiate it.", 'cross'))
             return
         try:
             member = await interaction.guild.fetch_member(case["target_user_id"])

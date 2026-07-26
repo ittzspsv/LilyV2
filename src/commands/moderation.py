@@ -85,17 +85,22 @@ class LilyModeration(commands.Cog):
 
             if member is None:
                 await message.add_reaction("❌")
+                await message.reply("This member is no longer in the server. The appeal can be safely rejected.")
                 return
-            
-            await member.send(
-                embed = discord.Embed(
-                    title=f"Message From {message.guild.name}'s Staff Team",
-                    color=16777215,
-                    description=f'### > {self.strip_mention(message.content, message.guild.me.id)}',
-                )
-            )
 
-            await message.add_reaction("✅")
+            try:
+                await member.send(
+                    embed = discord.Embed(
+                        title=f"Message From {message.guild.name}'s Staff Team",
+                        color=16777215,
+                        description=f'### > {self.strip_mention(message.content, message.guild.me.id)}',
+                    )
+                )
+
+                await message.add_reaction("✅")
+            except discord.Forbidden:
+                await message.add_reaction("❌")
+                await message.reply("This member is no longer in the server. The appeal can be safely rejected.")
             
         else:
             appeal = await bot_db.get_current_active_appeal(message.author.id)
