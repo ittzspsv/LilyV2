@@ -9,7 +9,7 @@ from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from src.core.features.permissions.lily_permissions import permission
+from src.core.features.permissions.lily_permissions import app_permission
 from src.core.utils import lily_utility as LilyUtility
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.features.management.controller.lily_management_controller import LilyManagementController
@@ -229,7 +229,7 @@ class LilyManagement(commands.Cog):
 
 
     @staff.command(name='data', description='shows data for a particular staff')
-    @permission(command_name="staff_data")
+    @app_permission(command_name="staff_data")
     @app_commands.guild_only()
     async def staff_data(self, interaction: discord.Interaction, user: discord.Member| discord.User | None = None):
         if not user:
@@ -238,7 +238,7 @@ class LilyManagement(commands.Cog):
             await self.controller.fetch_staff_detail(interaction, user)
 
     @staff.command(name='list', description='shows all staff registered name with the count')
-    @permission(command_name="staff_list")
+    @app_permission(command_name="staff_list")
     @app_commands.guild_only()
     async def staffs(self, interaction: discord.Interaction):
         if self.controller is not None:
@@ -246,21 +246,21 @@ class LilyManagement(commands.Cog):
 
 
     @infraction.command(name='issue', description='Issue an infraction')
-    @permission(command_name="strike_add")
+    @app_permission(command_name="strike_add")
     @app_commands.guild_only()
     async def staffstrike(self, interaction: discord.Interaction, staff: discord.Member):
         if self.controller is not None:
             await self.controller.strike_staff(interaction, staff)
 
     @infraction.command(name='remove', description='Remove an infraction')
-    @permission(command_name="strike_remove")
+    @app_permission(command_name="strike_remove")
     @app_commands.guild_only()
     async def removestrike(self, interaction: discord.Interaction, infraction_id: str):
         if self.controller is not None:
             await self.controller.remove_strike_staff(interaction, int(infraction_id))
 
     @infraction.command(name="edit", description="Edit a reason of a infraction")
-    @permission(command_name="strike_edit")
+    @app_permission(command_name="strike_edit")
     @app_commands.guild_only()
     async def strike_edit(self, interaction: discord.Interaction, infraction_id: str, new_reason: str):
         if self.controller is not None:
@@ -268,7 +268,7 @@ class LilyManagement(commands.Cog):
 
     @staff.command(name='edit', description='edits a staff data')
     @app_commands.autocomplete(timezone=timezone_autocomplete)
-    @permission(command_name="staff_edit")
+    @app_permission(command_name="staff_edit")
     @app_commands.guild_only()
     async def EditStaff(self, interaction: discord.Interaction, staff: discord.Member | discord.User, name: str , joined_on: str | None = None, timezone: str | None = None,responsibility: str | None = None):
         if self.controller is not None:
@@ -276,28 +276,28 @@ class LilyManagement(commands.Cog):
 
     @staff.command(name="self_edit", description="edits your staff data")
     @app_commands.autocomplete(timezone=timezone_autocomplete)
-    @permission(command_name="staff_self_edit")
+    @app_permission(command_name="staff_self_edit")
     @app_commands.guild_only()
     async def self_edit_staff_data(self, interaction: discord.Interaction, name: str, timezone: str | None =None):
         if self.controller is not None:
             await self.controller.edit_staff(interaction, interaction.user.id, name, None, timezone, None)
 
     @infraction.command(name='show', description='shows infractions for a concurrent staff')
-    @permission(command_name="strike_show")
+    @app_permission(command_name="strike_show")
     @app_commands.guild_only()
     async def strikes(self, interaction: discord.Interaction, staff: discord.Member):
         if self.controller is not None:
             await self.controller.list_strikes(interaction, staff)
 
     @staff.command(name='add', description='Adds a member to staff_data')
-    @permission(command_name="staff_add")
+    @app_permission(command_name="staff_add")
     @app_commands.guild_only()
     async def add_staff(self, interaction: discord.Interaction, staff: discord.Member):
         if self.controller is not None:
             await self.controller.add_staff(interaction, staff)
 
     @staff.command(name='remove', description='Removes a member from staff_data')
-    @permission(command_name="staff_remove")
+    @app_permission(command_name="staff_remove")
     @app_commands.guild_only()
     async def remove_staff(self, interaction: discord.Interaction, staff: discord.Member | discord.User, reason: str):
         if self.controller is not None:
@@ -305,7 +305,7 @@ class LilyManagement(commands.Cog):
 
 
     @staff.command(name='roles', description='Returns all staff roles')
-    @permission(command_name="staff_roles")
+    @app_permission(command_name="staff_roles")
     @app_commands.guild_only()
     async def get_all_staff_roles(self, interaction: discord.Interaction):
         if self.controller is not None:
@@ -313,28 +313,28 @@ class LilyManagement(commands.Cog):
 
 
     @loa.command(name='add', description='Assigns a staff leave')
-    @permission(command_name="loa_add")
+    @app_permission(command_name="loa_add")
     @app_commands.guild_only()
     async def add_loa(self, interaction: discord.Interaction, staff: discord.Member, *, reason: str):
         if self.controller is not None:
             await self.controller.add_loa(interaction, staff, reason)
 
     @loa.command(name='delete', description='Delete an LOA entry from the database')
-    @permission(command_name="loa_delete")
+    @app_permission(command_name="loa_delete")
     @app_commands.guild_only()
     async def loa_delete(self, interaction: discord.Interaction, leave_id: int):
         if self.controller is not None:
             await self.controller.loa_delete(interaction, leave_id)
 
     @loa.command(name='remove', description='Removes a staff leave')
-    @permission(command_name="loa_remove")
+    @app_permission(command_name="loa_remove")
     @app_commands.guild_only()
     async def remove_loa(self, interaction: discord.Interaction, staff: discord.Member):
         if self.controller is not None:
             await self.controller.remove_loa(interaction, staff)
 
     @loa.command(name="show", description="List all LOA for a particular staff")
-    @permission(command_name="loa_show")
+    @app_permission(command_name="loa_show")
     @app_commands.guild_only()
     async def show_loa(self, interaction: discord.Interaction, staff: discord.Member | None =None):
         if staff is None:
@@ -346,49 +346,49 @@ class LilyManagement(commands.Cog):
             await self.controller.list_loa(interaction, current_staff)
 
     @loa.command(name="request", description="Request LOA")
-    @permission(command_name="loa_request")
+    @app_permission(command_name="loa_request")
     @app_commands.guild_only()
     async def request_loa(self, interaction: discord.Interaction):
         if self.controller is not None:
             await self.controller.request_loa(interaction)
 
     @rank.command(name='promote', description='Promotes a staff to upper rank')
-    @permission(command_name="rank_promote")
+    @app_permission(command_name="rank_promote")
     @app_commands.guild_only()
     async def promote(self, interaction: discord.Interaction, staff: discord.Member, * ,reason: str):
         if self.controller is not None:
             await self.controller.update_staff(interaction, staff, reason, "promotion")
     
     @rank.command(name='demote', description='Demotes a staff to lower rank')
-    @permission(command_name="rank_demote")
+    @app_permission(command_name="rank_demote")
     @app_commands.guild_only()
     async def demote(self, interaction: discord.Interaction, staff: discord.Member, *, reason: str):
         if self.controller is not None:
             await self.controller.update_staff(interaction, staff, reason, "demotion")
 
     @quota.command(name="add", description="Adds a staff quota to check by")
-    @permission(command_name="quota_add")
+    @app_permission(command_name="quota_add")
     @app_commands.guild_only()
     async def add_quota(self, interaction: discord.Interaction, quota_role: discord.Role, minimum_ms: int, minimum_msg: int, check_by: QuotaCheckBy):
         if self.controller is not None:
             await self.controller.add_staff_quota(interaction, quota_role, minimum_ms, minimum_msg, check_by)
 
     @quota.command(name="list", description="List all defined quotas for this server")
-    @permission(command_name="quota_list")
+    @app_permission(command_name="quota_list")
     @app_commands.guild_only()
     async def list_quota(self, interaction: discord.Interaction):
         if self.controller is not None:
             await self.controller.fetch_staff_quota(interaction)
 
     @quota.command(name="remove", description="Remove a defined quota by its ID")
-    @permission(command_name="quota_remove")
+    @app_permission(command_name="quota_remove")
     @app_commands.guild_only()
     async def remove_quota(self, interaction: discord.Interaction, quota_id: str):
         if self.controller is not None:
             await self.controller.remove_staff_quota(interaction, quota_id)
 
     @quota.command(name="check", description="Check quota for a given staff")
-    @permission(command_name="quota_check")
+    @app_permission(command_name="quota_check")
     @app_commands.guild_only()
     async def check_quota(self, interaction: discord.Interaction, staff: discord.Member | None = None):
         staff_member = staff or interaction.user
@@ -397,28 +397,28 @@ class LilyManagement(commands.Cog):
 
 
     @quota.command(name="evaluate", description="Evaluates Staff quota and updates the results")
-    @permission(command_name="quota_evaluate")
+    @app_permission(command_name="quota_evaluate")
     @app_commands.guild_only()
     async def evaluate_staff_quota(self, interaction: discord.Interaction, role: discord.Role):
         if self.controller is not None:
             await self.controller.evaluate_staff_quota(interaction, role)
         
     @staff_role.command(name="remove", description="Removes a staff role from the database")
-    @permission(command_name="staff_role_remove")
+    @app_permission(command_name="staff_role_remove")
     @app_commands.guild_only()
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
         if self.controller is not None:
             await self.controller.remove_role(interaction, role.id)
 
     @staff_role.command(name="remove_raw", description="Removes a staff role from the database")
-    @permission(command_name="staff_role_remove_raw")
+    @app_permission(command_name="staff_role_remove_raw")
     @app_commands.guild_only()
     async def remove_role_raw(self, interaction: discord.Interaction, role: str):
         if self.controller is not None:
             await self.controller.remove_role(interaction, int(role))
 
     @rank.command(name="configure", description="Configure staff ranks")
-    @permission(command_name="rank_configure")
+    @app_permission(command_name="rank_configure")
     @app_commands.guild_only()
     async def rank_configure(self, interaction: discord.Interaction):
         bot_db: BotGlobalsDatabaseAccess = self.bot.db
@@ -434,7 +434,7 @@ class LilyManagement(commands.Cog):
             print(e)
 
     @staff.command(name="coverage", description="get the timezone coverage of all the staffs")
-    @permission(command_name="staff_coverage")
+    @app_permission(command_name="staff_coverage")
     @app_commands.guild_only()
     async def staff_coverage(self, interaction: discord.Interaction):
         if self.controller is not None:

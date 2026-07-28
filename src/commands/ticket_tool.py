@@ -1,6 +1,6 @@
 from discord.ext import commands
 from typing import Optional
-from src.core.features.permissions.lily_permissions import permission
+from src.core.features.permissions.lily_permissions import app_permission, app_permission
 from src.core.features.ticketing.controller.lily_ticketing_controller import LilyTicketingController
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 import json
@@ -30,7 +30,7 @@ class LilyTicketTool(commands.Cog):
 
     """
     @ticket.command(name='spawn', description='spawn in ticket processor')
-    @permission(command_name="spawn_ticket", restrict=True)
+    @app_permission(command_name="spawn_ticket", restrict=True)
     async def spawnticket(self, ctx: commands.Context):
         if self.controller is None:
             return
@@ -48,7 +48,7 @@ class LilyTicketTool(commands.Cog):
     """       
     @app_commands.guild_only()
     @ticket.command(name="close", description="Close a ticket thread")
-    @permission(command_name="ticket_close")
+    @app_permission(command_name="ticket_close")
     @app_commands.checks.cooldown(1, 20)
     async def CloseTicket(self, interaction: discord.Interaction, * ,reason: str="No reason provided"):
          if self.controller is not None:
@@ -56,7 +56,7 @@ class LilyTicketTool(commands.Cog):
          
     @app_commands.guild_only()
     @ticket.command(name='rename', description='renames a ticket channel')
-    @permission(command_name="ticket_rename")
+    @app_permission(command_name="ticket_rename")
     @app_commands.checks.cooldown(1, 10)
     async def rename_ticket(self, interaction: discord.Interaction, * ,name: str):
          if self.controller is not None:
@@ -64,7 +64,7 @@ class LilyTicketTool(commands.Cog):
 
     @app_commands.guild_only()
     @ticket.command(name='add', description='adds a member to the ticket')
-    @permission(command_name="ticket_add")
+    @app_permission(command_name="ticket_add")
     @app_commands.checks.cooldown(1, 5)
     async def ticket_add(self, interaction: discord.Interaction, user: discord.Member):
          if self.controller is not None:
@@ -72,7 +72,7 @@ class LilyTicketTool(commands.Cog):
 
     @app_commands.guild_only()
     @ticket.command(name='stats', description='Retrive your ticket stats')
-    @permission(command_name="ticket_stats")
+    @app_permission(command_name="ticket_stats")
     @app_commands.checks.cooldown(1, 5)
     async def ticket_stats(self, interaction: discord.Interaction, staff: discord.Member | None=None):
         if self.controller is not None:
@@ -82,7 +82,7 @@ class LilyTicketTool(commands.Cog):
 
 
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @permission(command_name="ticket_update")
+    @app_permission(command_name="ticket_update")
     @ticket.command(name='update', description='Update the ticket config')
     async def ticket_update(
         self,

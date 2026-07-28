@@ -8,7 +8,7 @@ import time
 
 from io import BytesIO
 from src.core.utils.embeds.sLilyEmbed import simple_embed
-from src.core.features.permissions.lily_permissions import permission
+from src.core.features.permissions.lily_permissions import app_permission, permission
 from src.core.utils.components.sLIlyGlobalComponents import CommandInfo as CI
 from src.core.utils.embeds.sLilyEmbed import ParseAdvancedEmbed
 from src.core.utils.types.types import ChannelEnum, CommandEnum, NotifiersEnum
@@ -125,7 +125,7 @@ class LilyUtility(commands.Cog):
 
     # SERVER UTILITY
     @app_commands.command(name='list', description='lists the total number of users in the server')
-    @permission(command_name="list", restrict=True)
+    @app_permission(command_name="list", restrict=True)
     async def ServerList(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
@@ -158,7 +158,7 @@ class LilyUtility(commands.Cog):
         
     @app_commands.command(name='purge',description='Purge Message with specified amount')
     @app_commands.checks.cooldown(1, 10.0)
-    @permission(command_name="purge")
+    @app_permission(command_name="purge")
     async def purge(self, interaction: discord.Interaction, amount: int=0, member: discord.Member | None = None):
         if amount > 1000:
             await interaction.response.send_message(embed=simple_embed("You cannot purge more than 1000 messages!", 'cross'))
@@ -175,7 +175,7 @@ class LilyUtility(commands.Cog):
             deleted = await interaction.channel.purge(limit=amount, check=check, bulk=True)
             await interaction.followup.send(embed=simple_embed(f"Deleted {len(deleted)} message(s)."))
         except discord.Forbidden:
-            await interaction.followup.send(embed=simple_embed("I do not have permission to delete messages.", 'cross'))
+            await interaction.followup.send(embed=simple_embed("I do not have app_permission to delete messages.", 'cross'))
         except discord.HTTPException as e:
             await interaction.followup.send(embed=simple_embed("An Unknown error occured", 'cross'))
 
@@ -197,7 +197,7 @@ class LilyUtility(commands.Cog):
 
     @app_commands.command(name='role',description='Assigns/Removes a specified role from the user (not case-sensitive)')
     @app_commands.checks.cooldown(1, 5.0)
-    @permission(command_name="role")
+    @app_permission(command_name="role")
     async def role(self, interaction: discord.Interaction, user: discord.Member, role: discord.Role):
         if interaction.guild is None or isinstance(interaction.user, discord.User):
             await interaction.response.send_message(embed=simple_embed("You can only use this command inside an guild"))
@@ -295,13 +295,13 @@ class LilyUtility(commands.Cog):
             await role.edit(**parameters, reason=f"Role customized by {interaction.user}")
             await interaction.followup.send("Successfully updated role!")
         except discord.Forbidden:
-            await interaction.followup.send(embed=simple_embed("I don't have permission to edit roles", 'cross'))
+            await interaction.followup.send(embed=simple_embed("I don't have app_permission to edit roles", 'cross'))
         except ValueError as e:
             await interaction.followup.send(embed=simple_embed(f"Invalid parameter value: {e}", 'cross'))
         except discord.HTTPException as e:
             await interaction.followup.send(embed=simple_embed(f"An Unknown error occured while editing a role", 'cross'))
 
-    @permission(command_name="set_rolecustomize")
+    @app_permission(command_name="set_rolecustomize")
     @set.command(name="rolecustomize", description="Allows a person to customize a role without manage roles")
     async def set_role_customize(self, interaction: discord.Interaction, member: discord.Member, role: discord.Role):
         if interaction.guild is None:
@@ -317,7 +317,7 @@ class LilyUtility(commands.Cog):
         await interaction.response.send_message(embed=simple_embed(f"Successfully added customizable entry for {member.mention} with {role.mention}"))
         await member.send(f"Hey, You can now customize {role.name} (dev_id: {role.id}) in {interaction.guild.name}.  Use `/customize role` to see what happens!")
 
-    @permission(command_name="remove_rolecustomize")
+    @app_permission(command_name="remove_rolecustomize")
     @remove.command(name="rolecustomize", description="Removes a person from customizing a role without manage roles")
     async def remove_role_customize(self, interaction: discord.Interaction, member: discord.Member, role: discord.Role):
         if interaction.guild is None:
@@ -335,7 +335,7 @@ class LilyUtility(commands.Cog):
 
     @customize.command(name='bot', description='Customize the bot for this server (visually)')
     @app_commands.checks.cooldown(1, 5.0)
-    @permission(command_name="edit_profile", restrict=True)
+    @app_permission(command_name="edit_profile", restrict=True)
     async def edit_profile(self, interaction: discord.Interaction, bio: str, avatar: discord.Attachment, banner: discord.Attachment):
         await interaction.response.defer()
         try:
@@ -394,7 +394,7 @@ class LilyUtility(commands.Cog):
     
     @app_commands.command(name="embed_create", description="Creates an embed based on JSON config and sends it to a specific channel")
     @app_commands.checks.cooldown(1, 80.0)
-    @permission(command_name="create_embed", restrict=True)
+    @app_permission(command_name="create_embed", restrict=True)
     async def create_embed(self, interaction: discord.Interaction, channel_to_send: discord.TextChannel, * ,embed_json_config: str = "{}"):
         if interaction.guild is None:
             await interaction.response.send_message(embed=simple_embed("This command can only be executed inside an guild", 'cross'))
@@ -433,7 +433,7 @@ class LilyUtility(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"Unhandled Exception: {str(e)}")
 
-    @permission(command_name="set_channel")
+    @app_permission(command_name="set_channel")
     @set.command(name="channel", description="Creates an embed based on JSON config and sends it to a specific channel")
     async def assign_channel(self, interaction: discord.Interaction, type: ChannelEnum, channel: discord.TextChannel):
         if interaction.guild is None:
@@ -448,7 +448,7 @@ class LilyUtility(commands.Cog):
 
     @set.command(name="notifiers", description="Creates a notifier (webhook) when an value updates")
     @app_commands.checks.cooldown(1, 20.0)
-    @permission(command_name="set_notifiers")
+    @app_permission(command_name="set_notifiers")
     async def set_notifiers(self, interaction: discord.Interaction, type: NotifiersEnum, channel: discord.TextChannel, webhook_url: str):
         if interaction.guild is None:
             await interaction.response.send_message(embed=simple_embed("This command can only be used inside an guild", 'cross'))
@@ -466,10 +466,10 @@ class LilyUtility(commands.Cog):
             await interaction.response.send_message(embed=simple_embed(f"Successfully assigned a webhook to listen `{type.value}`"))
 
     @app_commands.guild_only()
-    @permission(command_name="set_permission")
+    @app_permission(command_name="set_permission")
     @set.command(
-        name="permission",
-        description="Allocates permission to a role for a command"
+        name="app_permission",
+        description="Allocates app_permission to a role for a command"
     )
     @app_commands.autocomplete(command=command_autocomplete)
     async def set_permission(
@@ -491,15 +491,15 @@ class LilyUtility(commands.Cog):
 
         await interaction.response.send_message(
             embed=simple_embed(
-                f"Successfully assigned `{formatted}` permission to {role.mention}"
+                f"Successfully assigned `{formatted}` app_permission to {role.mention}"
             )
         )
 
     @app_commands.guild_only()
-    @permission(command_name="remove_permission")
+    @app_permission(command_name="remove_permission")
     @remove.command(
-        name="permission",
-        description="Removes a command permission from a role"
+        name="app_permission",
+        description="Removes a command app_permission from a role"
     )
     @app_commands.autocomplete(command=command_autocomplete)
     async def remove_permission(
@@ -522,11 +522,11 @@ class LilyUtility(commands.Cog):
 
         await interaction.response.send_message(
             embed=simple_embed(
-                f"Successfully removed `{formatted}` permission from {role.mention}"
+                f"Successfully removed `{formatted}` app_permission from {role.mention}"
             )
         )
         
-    @permission(command_name="permissions")
+    @app_permission(command_name="permissions")
     @app_commands.command(name="permissions", description="List out permissions that a role has")
     async def permissions(self, interaction: discord.Interaction, role: discord.Role):
         if interaction.guild is None:
@@ -554,7 +554,7 @@ class LilyUtility(commands.Cog):
             embed=discord.Embed(title="Permissions", description=", ".join(permissions), color=16777215)
         )
 
-    @permission(command_name="set_prefix")
+    @app_permission(command_name="set_prefix")
     @set.command(name="prefix", description="Change prefix of the bot")
     async def set_prefix(self, interaction: discord.Interaction, prefix: str):
         if interaction.guild is None:
@@ -566,7 +566,7 @@ class LilyUtility(commands.Cog):
 
         await interaction.response.send_message(embed=simple_embed(f"Successfully assigned **{prefix}** as prefix"))
 
-    @permission(command_name="configure_role")
+    @app_permission(command_name="configure_role")
     @configure.command(name="role", description="Configure some attributes of the role")
     @app_commands.guild_only()
     async def configure_role(self, interaction: discord.Interaction, role: discord.Role):
@@ -576,7 +576,7 @@ class LilyUtility(commands.Cog):
         await interaction.response.send_modal(RoleCustomizationModal(role.id, self.bot.db, role.name, role_config))
 
     @app_commands.command(name="nick", description="Set a nickname for a member")
-    @permission(command_name="nick")
+    @app_permission(command_name="nick")
     async def set_nickname(self, interaction: discord.Interaction, member: discord.Member, name: str):
         if member is None and name is None:
             bot_mention = interaction.guild.me.mention if interaction.guild else "@Lily"
@@ -618,7 +618,7 @@ class LilyUtility(commands.Cog):
         except discord.Forbidden:
             await interaction.response.send_message(
                 embed=simple_embed(
-                    "I don't have permission to change that member's nickname.", 'cross'
+                    "I don't have app_permission to change that member's nickname.", 'cross'
                 )
             )
 

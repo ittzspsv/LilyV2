@@ -53,7 +53,6 @@ class LilyBloxFruits(commands.Cog):
         )
 
     @bloxfruits.command(name='update_value', description='updates an value of an item in blox fruits')
-    @permission(command_name="update_value", restrict=True)
     @app_commands.autocomplete(name=fruits_autocomplete)
     @app_commands.choices(
         rarity=[
@@ -100,6 +99,9 @@ class LilyBloxFruits(commands.Cog):
     ):
         if self.db is None:
             return
+
+        if interaction.user.id not in (1488556914605428988, 1375441535528865832, 956179986774102106):
+            return await interaction.response.send_message("Permission Denied", ephemeral=True)
 
         def parse_number(value: str | None) -> int | None:
             if value is None:
