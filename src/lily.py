@@ -12,6 +12,7 @@ from src.core.features.moderation.components.sLilyModerationComponents import Ap
 from src.core.configs.path import CONFIG_DB
 from src.api.app import LilyAPI
 import uvicorn
+import re
 
 
 class Lily(commands.Bot):
@@ -19,7 +20,7 @@ class Lily(commands.Bot):
         intents = discord.Intents.all() 
         intents.presences = False
         intents.members = False
-        intents.message_content = True
+        intents.message_content = False
 
         self.lily_session = None
         self.db: Optional[BotGlobalsDatabaseAccess] = None
@@ -64,7 +65,21 @@ class Lily(commands.Bot):
 
         self.tree.on_error = self.on_app_command_error
         
+    
     def prefix(self, bot: commands.Bot, message: discord.Message):
+        if bot.user is None:
+            return []
+
+        mention = re.escape(bot.user.mention)
+
+        match = re.match(
+            rf"^{mention}\s*",
+            message.content
+        )
+
+        if match:
+            return match.group(0)
+
         prefixes = commands.when_mentioned(bot, message)
 
         if (
