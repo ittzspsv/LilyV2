@@ -65,21 +65,16 @@ class Lily(commands.Bot):
         self.tree.on_error = self.on_app_command_error
         
     def prefix(self, bot: commands.Bot, message: discord.Message):
-        if not message.guild:
-            return Config.bot_command_prefix
+        prefixes = commands.when_mentioned(bot, message)
 
-        if self.db is None:
-            return Config.bot_command_prefix
+        if (
+            message.reference
+            and isinstance(message.reference.resolved, discord.Message)
+            and message.reference.resolved.author.id == bot.user.id
+        ):
+            prefixes.append("")
 
-        member_prefix = self.db.get_prefix_member(
-            message.author.id,
-            message.guild.id
-        )
-
-        if member_prefix is not None:
-            return member_prefix
-
-        return self.db.get_prefix(message.guild.id)
+        return prefixes
 
     async def on_ready(self):
         print('Logged on as', self.user)
