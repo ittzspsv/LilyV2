@@ -1,5 +1,5 @@
 <div align="center" style="display: flex; align-items: center; justify-content: center; gap: 16px;">
-  <img src=".github/images/Chiaki.png" width="80" />
+  <img src=".github/images/_Chiaki.png" width="80" />
   <h1 style="margin: 0;">Lily V2</h1>
 </div>
 
@@ -17,6 +17,7 @@ All modules are based on **Cogs**, meaning they can be removed or placed dependi
 
 ## LIST OF AVAILABLE MODULES
 
+- **Lily Application**: Focused on handling form Applications
 - **Lily Moderation**: focused on moderation
 - **Lily Management**: focused on staff management
 - **Lily Logging**: focused on error logging and debugging
@@ -38,7 +39,7 @@ All modules are based on **Cogs**, meaning they can be removed or placed dependi
 - requests
 - pillow
 - rapidfuzz
-- aiosqlite
+- asqlite
 
 ---
 
