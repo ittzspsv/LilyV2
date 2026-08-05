@@ -110,3 +110,5 @@ class CommandEnum(str, Enum):
 
     AppealManagement = "mod_appeal_management"
     AppealHandlers = "mod_appeal_handlers"
+
+    SetAutomod = "set_automod"

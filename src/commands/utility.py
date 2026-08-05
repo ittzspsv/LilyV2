@@ -15,7 +15,7 @@ from src.core.utils.embeds.sLilyEmbed import ParseAdvancedEmbed
 from src.core.utils.types.types import ChannelEnum, CommandEnum, NotifiersEnum
 from src.core.logging.lily_logging import LilyLoggingController
 from src.core.database.integrations.bot_globals import BotGlobalsDatabaseAccess
-from src.core.utils.components.sLIlyGlobalComponents import RoleCustomizationModal, Avatar
+from src.core.utils.components.sLIlyGlobalComponents import RoleCustomizationModal, Avatar, AutomodUpdate
 from src.core.visuals.cards.quote import make_quote_card
 from discord.ext import commands
 from discord import app_commands
@@ -24,6 +24,8 @@ from discord import app_commands
 class LilyUtility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+        self.automod_cache = {}
 
         self.ctx_menu = app_commands.ContextMenu(
             name="Quote",
@@ -725,6 +727,23 @@ class LilyUtility(commands.Cog):
             "Successfully sent!",
             ephemeral=True
         )
+
+
+    @set.command(name="automod", description="Updates an automod (add / remove new entries)")
+    @app_permission(command_name="set_automod")
+    @app_commands.guild_only()
+    async def set_automod(
+        self,
+        interaction: discord.Interaction,
+    ) -> None:
+
+        assert interaction.guild is not None
+        
+        rules = await interaction.guild.fetch_automod_rules()
+        
+        
+        view = AutomodUpdate(rules)
+        await interaction.response.send_message(view=view, ephemeral=True)
 
 
 
