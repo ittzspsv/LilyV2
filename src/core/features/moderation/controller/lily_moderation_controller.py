@@ -13,6 +13,7 @@ import matplotlib.dates as mdates
 from src.core.database.integrations.bot_globals import BanLimitStatus
 from src.core.features.moderation.components.sLilyModerationComponents import *
 from src.core.features.moderation.utils.moderation_utils import mute_parser
+from src.core.features.permissions.lily_permissions import has_app_permission
 from src.core.utils.embeds.sLilyEmbed import simple_embed
 from src.core.utils.lily_utility import utcnow
 
@@ -28,10 +29,10 @@ async def _validate_moderation_target(
 ) -> Optional[Tuple[discord.Member | discord.User, BanLimitStatus, List[int]]]:
 
     if isinstance(ctx, commands.Context):
-        bot = cast(Lily, ctx.bot)
+        bot = cast("Lily", ctx.bot)
         author = ctx.author
     else:
-        bot = cast(Lily, ctx.client)
+        bot = cast("Lily", ctx.client)
         author = ctx.user
 
     if ctx.guild is None:
@@ -94,10 +95,10 @@ async def ban_user(
     proofs: list = []
 ):
     if isinstance(ctx, commands.Context):
-        bot = cast(Lily, ctx.bot)
+        bot = cast("Lily", ctx.bot)
         author = ctx.author
     else:
-        bot = cast(Lily, ctx.client)
+        bot = cast("Lily", ctx.client)
         author = ctx.user
 
     assert bot.db is not None
@@ -150,9 +151,9 @@ async def quarantine_user(
     proofs: list = []
 ):
     if isinstance(ctx, commands.Context):
-        bot = cast(Lily, ctx.bot)
+        bot = cast("Lily", ctx.bot)
     else:
-        bot = cast(Lily, ctx.client)
+        bot = cast("Lily", ctx.client)
 
 
     if ctx.guild is None:
@@ -211,10 +212,10 @@ async def mute_user(
     proofs: list = []
 ):
     if isinstance(ctx, commands.Context):
-        bot = cast(Lily, ctx.bot)
+        bot = cast("Lily", ctx.bot)
         author = ctx.author
     else:
-        bot = cast(Lily, ctx.client)
+        bot = cast("Lily", ctx.client)
         author = ctx.user
 
     if ctx.guild is None:
@@ -298,10 +299,10 @@ async def unmute(
     reason: str = "No reason provided"
 ):
     if isinstance(ctx, commands.Context):
-        bot = cast(Lily, ctx.bot)
+        bot = cast("Lily", ctx.bot)
         author = ctx.author
     else:
-        bot = cast(Lily, ctx.client)
+        bot = cast("Lily", ctx.client)
         author = ctx.user
 
     if not isinstance(author, discord.Member):
@@ -341,10 +342,10 @@ async def unban(
     reason: str = "No reason provided"
 ):
     if isinstance(ctx, commands.Context):
-        bot = cast(Lily, ctx.bot)
+        bot = cast("Lily", ctx.bot)
         author = ctx.author
     else:
-        bot = cast(Lily, ctx.client)
+        bot = cast("Lily", ctx.client)
         author = ctx.user
 
     if user is None:
@@ -380,10 +381,10 @@ async def release(
     reason: str = "No reason provided"
 ):
     if isinstance(ctx, commands.Context):
-        bot = cast(Lily, ctx.bot)
+        bot = cast("Lily", ctx.bot)
         author = ctx.author
     else:
-        bot = cast(Lily, ctx.client)
+        bot = cast("Lily", ctx.client)
         author = ctx.user
 
     if member is None:
@@ -431,10 +432,10 @@ async def warn(
     proofs=[]
 ):
     if isinstance(ctx, commands.Context):
-        bot = cast(Lily, ctx.bot)
+        bot = cast("Lily", ctx.bot)
         author = ctx.author
     else:
-        bot = cast(Lily, ctx.client)
+        bot = cast("Lily", ctx.client)
         author = ctx.user
 
     if ctx.guild is None:
@@ -481,7 +482,7 @@ async def case_edit(
     case_statement: str,
     absolute: bool = False
 ):
-    bot = cast(Lily, interaction.client)
+    bot = cast("Lily", interaction.client)
 
     assert bot.db is not None
     bot_db = bot.db
@@ -497,7 +498,7 @@ async def case_delete(
     interaction: discord.Interaction,
     case_id: int
 ):
-    bot = cast(Lily, interaction.client)
+    bot = cast("Lily", interaction.client)
 
     assert bot.db is not None
     bot_db = bot.db
@@ -514,7 +515,7 @@ async def ms(
     page_start: int = 0,
     page_end: int = 5
 ):
-    bot = cast(Lily, interaction.client)
+    bot = cast("Lily", interaction.client)
 
     assert bot.db is not None
     bot_db = bot.db
@@ -565,7 +566,7 @@ async def mod_logs(
         )
         return
 
-    bot = cast(Lily, interaction.client)
+    bot = cast("Lily", interaction.client)
     assert bot.db is not None
     bot_db = bot.db
 
@@ -597,7 +598,7 @@ async def moderation_insights(
         )
         return
 
-    bot = cast(Lily, interaction.client)
+    bot = cast("Lily", interaction.client)
 
     assert bot.db is not None
     bot_db = bot.db
@@ -669,7 +670,7 @@ async def setup_mod_appeal(
 
     me = interaction.guild.me
 
-    bot = cast(Lily, interaction.client)
+    bot = cast("Lily", interaction.client)
 
     assert bot.db is not None
     bot_db = bot.db
@@ -766,7 +767,7 @@ async def accept_appeal(
     if interaction.guild is None:
         return
 
-    bot = cast(Lily, interaction.client)
+    bot = cast("Lily", interaction.client)
     assert bot.db is not None
     bot_db = bot.db
 
@@ -804,7 +805,11 @@ async def accept_appeal(
         return
 
     moderator = case["moderator_id"]
-    if interaction.user.id != moderator:
+    if (
+        interaction.user.id != moderator
+        and
+        has_app_permission(interaction, "mod_appeal_management") is False
+    ):
         await interaction.response.send_message(embed=simple_embed(f"This action has been denied.  Only <@{moderator}> can Initiate it.", 'cross'))
         return
 
@@ -864,7 +869,7 @@ async def reject_appeal(
             delete_after=5,
         )
 
-    bot = cast(Lily, interaction.client)
+    bot = cast("Lily", interaction.client)
     assert bot.db is not None
     bot_db = bot.db
 
@@ -894,7 +899,11 @@ async def reject_appeal(
         return
 
     moderator = case["moderator_id"]
-    if interaction.user.id != moderator:
+    if (
+        interaction.user.id != moderator
+        and
+        has_app_permission(interaction, "mod_appeal_management") is False
+    ):
         await interaction.response.send_message(embed=simple_embed(f"This action has been denied.  Only <@{moderator}> can Initiate it.", 'cross'))
         return
     try:
