@@ -106,6 +106,7 @@ class CommandEnum(str, Enum):
     ModAcronyms = "mod_acronyms"
 
     ApplicationManagement = "application_management"
+    ApplicationStaff = "application_staff"
     ApplicationBlockUnblock = "applicant_block_unblock"
 
     AppealManagement = "mod_appeal_management"
