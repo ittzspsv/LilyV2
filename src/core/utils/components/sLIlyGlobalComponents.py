@@ -301,22 +301,28 @@ class AutomodUpdateModal(discord.ui.Modal):
 
         exempt_channels = self.exempt_channels.component.values
 
-        trigger = discord.AutoModTrigger(
-            keyword_filter=keyword_filter,
-            regex_patterns=regex_patterns,
-            allow_list=allow_list
-        )
 
-        await self.rule.edit(
-            trigger=trigger,
-            exempt_roles=exempt_roles,
-            exempt_channels=exempt_channels
-        )
+        try:
+            trigger = discord.AutoModTrigger(
+                        keyword_filter=keyword_filter,
+                        regex_patterns=regex_patterns,
+                        allow_list=allow_list
+                    )
+            
+            await self.rule.edit(
+                trigger=trigger,
+                exempt_roles=exempt_roles,
+                exempt_channels=exempt_channels
+            )
 
-        await interaction.response.send_message(
-            embed=simple_embed("Automod rule updated successfully."),
-            ephemeral=True
-        )
+            await interaction.response.send_message(
+                embed=simple_embed("Automod rule updated successfully."),
+                ephemeral=True
+            )
+        except Exception as e:
+            await interaction.response.send_message(
+                embed=simple_embed(f'Failed to update automod: {e}', 'cross')
+            )
 
 class AutomodUpdate(discord.ui.LayoutView):
     def __init__(self, automod_rules: List[discord.AutoModRule]) -> None:
